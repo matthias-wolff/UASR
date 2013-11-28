@@ -1,0 +1,84 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Code fragment: Common UASR session start-up
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+var sBuf;                                                                       # A string buffer
+var sDirInfo;
+var sDBrev;                                                                     # Database revision                            
+
+## Default function overloads                                                   # -------------------------------------
+"\n// Overloads       : "                                                -MSG2; # Protocol (on verbose level 2)
+"-FEA_pfa" "function" ?instance if                                              # Function -FEA_pfa present >>
+  "pfa" "" -CFG_get sBuf =;                                                     #   Get primary feature type
+  sBuf if                                                                       #   Primary features specified >>
+    "-FEA_pfa_$[sBuf]" "function" ?instance if                                  #     Have pfa-override >>
+      "\n//                   -FEA_pfa_$[sBuf]"                          -MSG2; #       Protocol (on verbose level 2)
+      /disarm -FEA_pfa_$[sBuf] /disarm -FEA_pfa  =;                             #       Override prim. feature analysis
+    end                                                                         #     <<
+    "-FEA_ipfa_$[sBuf]" "function" ?instance if                                 #     Have ipfa-override >>
+      "\n//                   -FEA_ipfa_$[sBuf]"                         -MSG2; #       Protocol (on verbose level 2)
+      /disarm -FEA_ipfa_$[sBuf] /disarm -FEA_ipfa =;                            #       Override prim. fea. synthesis
+    end                                                                         #     <<
+  end                                                                           #   <<
+end                                                                             # <<
+"-SIG_import" "function" ?instance if                                           # Function -SIG_import present >>
+  ( "sig.ext" "" "S" -CFG_get_ex ) "wav" == if                                  #   Signal files' extension is "wav" >>
+    "\n//                   -SIG_import_wav"                             -MSG2; #     Protocol (on verbose level 2)
+    /disarm -SIG_import_wav /disarm -SIG_import =;                              #     Guess we use the wav import filter
+  end                                                                           #   <<
+end                                                                             # <<
+
+## - Database and custom settings                                               # -------------------------------------
+"\n// Database        : "                                                 -MSG; # Protocol
+( "info" "S"          -CFG_get_path ) sDirInfo -sset;                           # Get data directory
+( "db.include" "" "S" -CFG_get_ex   ) sBuf     -sset;                           # Get configured database include file
+sBuf if                                                                         # Include was configured >>
+  sBuf /noerror include ?error if                                               #   Include it, failed >>
+    "../db/$[sBuf]" include ?error if                                           #     Include from old pos., failed >>
+      "FATAL: cannot load database include file.\n" -ERROR; quit;               #       EL FATAL
+    end                                                                         #     <<
+  end                                                                           #   <<
+  "$[sBuf]"                                                               -MSG; #   Protocol
+else                                                                            # << include was not configured >>
+  "db" "" -CFG_get ".itp" + sBuf =;                                             #   Get standard database include file
+  "$[sDirInfo]/$[sBuf]" /noerror include ?error not if                          #   Std. database include file found >>
+    "$[sDirInfo]/$[sBuf]"                                                 -MSG; #     Say so
+  else                                                                          #   << not found >>
+    "../db/$[sBuf]" /noerror include ?error if                                  #     Try at old location, not found >>
+      "n/a"                                                               -MSG; #       Say so
+    else                                                                        #    << found >>
+      "db/$[sBuf]"                                                        -MSG; #       Say so
+    end                                                                         #    <<
+  end                                                                           #  <<
+end                                                                             # <<
+-DB_version sDBrev =;                                                           # Get database version
+( sDBrev "" != ) ( sDBrev "?" != ) &&  if                                       # String rev number exists  >>  
+  "\n//                   Revision $[sDBrev]"                              -MSG;#   Protocol svn version if existing 
+end                                                                             # <<
+"customize" "" "S" -CFG_get_ex sBuf =;                                          # Get custom include file
+sBuf if "\n// Customization   : $[sBuf]" -MSG; sBuf include; end                # If configured, include it
+"exp" "" "S" -CFG_get_ex sBuf =;                                                # Silently get experiment code
+sBuf "" == not if "\n// Experiment      : ${sBuf}" -MSG; end                    # Protocol
+
+## EOF

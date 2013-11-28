@@ -1,0 +1,664 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<
+<    AUTHOR : n/a
+<    PACKAGE: manual
+<
+<    Copyright 2013 UASR contributors (see COPYRIGHT file)
+<    - Chair of System Theory and Speech Technology, TU Dresden
+<    - Chair of Communications Engineering, BTU Cottbus
+<
+<    This file is part of UASR.
+<
+<    UASR is free software: you can redistribute it and/or modify it under the
+<    terms of the GNU Lesser General Public License as published by the Free
+<    Software Foundation, either version 3 of the License, or (at your option)
+<    any later version.
+<
+<    UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+<    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+<    FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+<    more details.
+<
+<    You should have received a copy of the GNU Lesser General Public License
+<    along with UASR. If not, see [http://www.gnu.org/licenses/].
+-->
+<html>
+<head>
+  <meta http-equiv="Content-Type" content= "text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta name="description" content=   "UASR documentation - UASR script tools/CHK.xtp">
+  <meta name="author" content="">
+  <meta name="generator" content="UASR_DOC">
+  <title>UASR script tools/CHK.xtp</title>
+  <link rel=stylesheet type="text/css" href="../../default.css">
+</head>
+<script type="text/javascript" src="../../default.js"></script>
+<script type="text/javascript">__sRootPath="../../..";</script>
+<body>
+
+  <div id="clp_tools/CHK.xtp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        UASR script <span class="mid">tools/CHK.xtp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('','tools/CHK.xtp','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden">General</td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><nobr><b>CHK</b> $1 $2</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Author</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Matthias Wolff
+</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Synopsis</h3>
+    <p>Database check-up tool
+ </p>
+  <h3>Arguments</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>$1</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Command or 'help'
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>$2</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Setup file or, if 1st arg. is 'help', command
+
+      </td>
+    </tr>  </table>
+  <!--{{ CUSTOM_DOC -->
+	<a name="usage"></a><h3>Contents</h3>
+  <div class="indent"><ul class="linklist">
+    <li class="linklist"><a class="linklist" href="#usage">Usage</a></li>
+    <li class="linklist"><a class="linklist" href="#reference">Reference</a></li>
+  </ul></div>
+  
+	<a name="usage"></a><h3>Usage</h3>
+	<pre class="code">   
+ dlabpro CHK.xtp &lt;command&gt; &lt;cfgfile&gt; [options]
+ dlabpro CHK.xtp help [&lt;command&gt;]</pre>
+
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td><b>$1</b>: command</td>
+			<td>Command, one of the following:<br>&nbsp;
+				<table class="indent" cellpadding="3" cellspacing="0">
+					<tr>
+						<td class="hidden"><a href="#clp_fea" class="code"><b>fea</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">Check primary feature vector files</td>
+					</tr>
+					<tr>
+						<td class="hidden"><a href="#clp_fls" class="code"><b>fls</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">Check set of file lists</td>
+					</tr>
+					<tr>
+						<td class="hidden"><a href="#clp_sig" class="code"><b>sig</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">Check signal files</td>
+					</tr>
+				</table><br>
+				or "help"
+			</td>
+		</tr>
+		<tr>
+			<td><b>$2</b>: cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+
+	  <tr><td class="rowgroup" colspan="2">Options</td></tr>
+		<tr>
+			<td><b>-h</b>, <b>--help</b></td>
+			<td>Display help and exit</td>
+		</tr>
+		<tr>
+			<td><b>-P</b>&lt;key&gt;=&lt;value&gt;</td>
+			<td>Define or override <a href="util/cfg.itp.html#index:cfgk">configuration key-value pairs</a></td>
+		</tr>
+		<tr>
+			<td><b>-v</b>&lt;n&gt;</td>
+  		<td>Verbose level
+  			<table>
+  				<tr><td class="hidden">-v1&nbsp;&nbsp;&nbsp;</td><td class="hidden">minimal screen protocol (default)</td></tr>
+  				<tr><td class="hidden">-v2</td><td class="hidden">extended screen protocol</td></tr>
+  				<tr><td class="hidden">-v3</td><td class="hidden">even more screen protocol, program may break</td></tr>
+  			</table>
+  		</td>
+		</tr>
+<!--  <tr><td class="hidden" colspan="2"><span class="small">There are further, individual options to some commands.</span></td></tr> -->
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+	</table>
+
+  <!-- <h3>Description</h3> -->
+
+  </div>
+  </div>
+
+  <!-- == CHK.xtp fea ====================================================== -->
+  <div id="clp_fea" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        CHK.xtp <span class="mid">fea</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_fea','CHK.xtp fea','../..');"><img src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>CHK.xtp <b>fea</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Check primary feature vector files</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+
+  <a name="fea_description"></a><h3>Description</h3>
+	<p>Checks the primary feature vector files of the database.</p>
+
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+ dlabpro CHK.xtp fea &lt;cfgfile&gt; [options]</pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see section <a href="#usage">Usage</a> above).</p>
+
+  <h4>Example</h4>
+	<pre class="code">
+ dlabpro CHK.xtp fea myconfig.cfg</pre>
+	<p>Checks the primary feature vector files of the <code>myconfig.cfg</code> UASR setup.</p>
+
+	</div>
+	</div>
+
+  <!-- == CHK.xtp fls ====================================================== -->
+  <div id="clp_fls" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        CHK.xtp <span class="mid">fls</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_fls','CHK.xtp fls','../..');"><img src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../)automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>CHK.xtp <b>fls</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Check set of file lists</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+
+  <a name="fls_description"></a><h3>Description</h3>
+	<p>Checks the presence and consistency of <a href="../util/cfg.itp.html#index:flists">file lists</a>.</p>
+
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+ dlabpro CHK.xtp fls &lt;cfgfile&gt; [options]</pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see section <a href="#usage">Usage</a> above).</p>
+
+  <h4>Example</h4>
+	<pre class="code">
+ dlabpro CHK.xtp fls myconfig.cfg</pre>
+	<p>Checks the file lists of the <code>myconfig.cfg</code> UASR setup.</p>
+
+	</div>
+	</div>
+
+  <!-- == CHK.xtp sig ====================================================== -->
+  <div id="clp_sig" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        CHK.xtp <span class="mid">sig</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_sig','CHK.xtp sig','../..');"><img src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>CHK.xtp <b>sig</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Check signal files</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+
+  <a name="sig_description"></a><h3>Description</h3>
+  <p>Checks the signal files of the database.</p>
+
+  <h4>Start and Command Line Options</h4>
+  <p>The program is started as follows:</p>
+  <pre class="code">
+ dlabpro CHK.xtp sig &lt;cfgfile&gt; [options]</pre>
+  <table cellpadding="3" cellspacing="0" class="indent">
+    <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+    <tr><th>Argument/Option</th><th>Description</th></tr>
+    <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+    <tr>
+      <td>cfgfile</td>
+      <td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+    </tr>
+  </table>
+  <p>The standard command line options are accepted (see section <a href="#usage">Usage</a> above).</p>
+
+  <h4>Example</h4>
+  <pre class="code">
+ dlabpro CHK.xtp sig myconfig.cfg</pre>
+  <p>Checks the signal files of the <code>myconfig.cfg</code> UASR setup.</p>
+
+  </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <div class="footer">End of user documentation.</div>
+  <div id="reference" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar"><b>Reference</b>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('reference','Reference','../..');"><img src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe2">
+
+  <!--}} CUSTOM_DOC -->
+  <a name="functions"></a><h3>Functions</h3>
+  <table cellSpacing="0" cellPadding="4" border="0">
+    <tr>
+      <td class="rowgroup" colSpan="2">Functions</td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-usage"><code class="link">-usage</code></a></td>
+      <td><code><b>-usage</b>(sCmd)</code><br>&nbsp;<br> Prints help on usage
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_fls"><code class="link">-CMD_fls</code></a></td>
+      <td><code><b>-CMD_fls</b></code><br>&nbsp;<br> Checks a set of file lists for integrity.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_fcu"><code class="link">-CMD_fcu</code></a></td>
+      <td><code><b>-CMD_fcu</b>(sType)</code><br>&nbsp;<br> Database file check-up
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_fea"><code class="link">-CMD_fea</code></a></td>
+      <td><code><b>-CMD_fea</b></code><br>&nbsp;<br> Checks if all feature files contained in the "all" file list are present.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_sig"><code class="link">-CMD_sig</code></a></td>
+      <td><code><b>-CMD_sig</b></code><br>&nbsp;<br> Checks if all signal and label files contained in the "all" file list are
+ present.
+      </td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <div id="clp_-usage">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-usage</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-usage','-usage','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-usage</b>(sCmd)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/CHK.xtp(34)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Prints help on usage
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sCmd</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-CMD_fls">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_fls</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_fls','-CMD_fls','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_fls</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/CHK.xtp(91)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Checks a set of file lists for integrity.
+
+  </div>
+  </div>
+  <div id="clp_-CMD_fcu">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_fcu</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_fcu','-CMD_fcu','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_fcu</b>(sType)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/CHK.xtp(234)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Database file check-up
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sType</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-CMD_fea">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_fea</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_fea','-CMD_fea','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_fea</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/CHK.xtp(278)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Checks if all feature files contained in the "all" file list are present.
+
+  </div>
+  </div>
+  <div id="clp_-CMD_sig">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_sig</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_sig','-CMD_sig','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_sig</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/CHK.xtp(285)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Checks if all signal and label files contained in the "all" file list are
+ present.
+
+  </div>
+  </div>
+<div class="footer">End of page</div>
+</body>
+</html>
+

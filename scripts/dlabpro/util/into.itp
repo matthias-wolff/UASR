@@ -1,0 +1,112 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: DRESS into-files
+##
+## AUTHOR : Guntram Strecha
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+function -INTO_get_contour(idInto,n,whose,idContour)
+{
+  data idAux;
+  data idAux1;
+  data idAux2;
+  data idAux3;
+  var  nTime;
+  var  iTime1;
+  var  iTime2;
+  var  i;
+  var  idx;
+  var  nDur;
+  var  sPos;
+  var  sVal;
+
+  :idInto["unit"]: 0 idAux1 -compress;
+  idAux1 1 idInto "dura" idInto -find_comp 1 idAux2 -lookup;
+  0 0 idAux2 NULL 0 "sum" { } /rec -aggregate -dfetch nTime =;
+
+  idContour -reset;
+  "unit" 255 idContour -addcomp;
+  whose "f0"  == if "~F0"  -type double idContour -addcomp; "fpos" sPos =; "fval" sVal =; end
+  whose "int" == if "~INT" -type double idContour -addcomp; "ipos" sPos =; "ival" sVal =; end
+  n idContour -allocate; 1.0 0 idContour -fill;
+  
+  :idInto[sVal].==-1: idInto -dmark;
+  idInto -1 -1 idAux /mark /noerror -delete;
+  idInto -unmark;
+  
+  0 i =; 1 idx = ; 0 iTime1 =; 0 nDur =;
+  
+  label L1; i n < idx idAux.nrec <= && if
+    label L2;
+      "\n$[i]/$[n] $[idx]/$[idAux.nrec] $[iTime1] $[iTime2]/$[nTime] $[nTime i * n /]" -MSG2;
+      nTime i * iTime2 n * > idx idAux.nrec < && if
+      idx 0 > idx -- "unit" idAux -find_comp idAux -sfetch idx "unit" idAux -find_comp idAux -sfetch != && if
+        nDur iTime1 +=;
+      end
+      idx "dura" idAux -find_comp idAux -dfetch nDur =;
+      nDur idx sPos idAux -find_comp idAux -dfetch * iTime1 + iTime2 =;
+      idx ++=;
+      goto L2;
+    end
+    idx -- "unit" idAux -find_comp -sfetch i 0 idContour -sstore;
+    idx --  sVal  idAux -find_comp -dfetch i 1 idContour -dstore;
+    i ++=;
+    goto L1;
+  end
+}
+
+## Extracts f0 contour from an into data object
+##
+## @cgen:index
+## @param idInto data
+##          The into data instance.
+## @param n
+##          The target number of sampling points of f0 contour
+## @param idF0 data
+##          The resulting f0 contour data instance.
+## @return nothing
+function -INTO_get_f0(idInto,n,idF0)
+{
+  var  nBaseF0; "syn.baseF0" "100" "S" -CFG_get_ex nBaseF0 =;
+  
+  idInto n "f0" idF0 -INTO_get_contour;
+  :idF0=idF0*nBaseF0:;
+}
+
+## Extracts intensity contour from an into data object
+##
+## @cgen:index
+## @param idInto data
+##          The into data instance.
+## @param n
+##          The target number of sampling points of intensity contour
+## @param idInt data
+##          The resulting intensity contour data instance.
+## @return nothing
+function -INTO_get_int(idInto,n,idInt)
+{
+  var  nBaseI0; "syn.baseI0" "10.39720770839917918" "S" -CFG_get_ex nBaseI0 =;
+  
+  idInto n "int" idInt -INTO_get_contour;
+  :idInt=idInt*nBaseI0:;
+}
+
+## EOF

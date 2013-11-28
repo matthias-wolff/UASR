@@ -1,0 +1,46 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Include all utility functions - DO NOT USE UNLESS ACTUALLY NEEDED!
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"am.itp"        include;                                                        # Acoustic model
+"cfg.itp"       include;                                                        # UASR configuration files
+"data.itp"      include;                                                        # For dLabPro class data
+"fea.itp"       include;                                                        # Feature analysis and transformation
+"fst.itp"       include;                                                        # For dLabPro class fst
+"gmm.itp"       include;                                                        # For dLabPro class gmm
+"histogram.itp" include;                                                        # For dLabPro class histogram
+"ica.itp"       include;                                                        # Fast-ICA (Hyvärinen method)
+"into.itp"      include;                                                        # DRESS into-files
+"lab.itp"       include;                                                        # Labels
+"lm.itp"        include;                                                        # Language model
+"lx.itp"        include;                                                        # Lexicon
+"os.itp"        include;                                                        # Operating system dependent
+"prosody.itp"   include;                                                        # Prosody
+"sig.itp"       include;                                                        # Signals
+"spp.itp"       include;                                                        # Signal pre-processing
+"svm.itp"       include;                                                        # For dLabPro class svm
+"uasr.itp"      include;                                                        # UASR
+"var.itp"       include;                                                        # For dLabPro class var
+
+## EOF

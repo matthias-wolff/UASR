@@ -1,0 +1,589 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<
+<    AUTHOR : n/a
+<    PACKAGE: manual
+<
+<    Copyright 2013 UASR contributors (see COPYRIGHT file)
+<    - Chair of System Theory and Speech Technology, TU Dresden
+<    - Chair of Communications Engineering, BTU Cottbus
+<
+<    This file is part of UASR.
+<
+<    UASR is free software: you can redistribute it and/or modify it under the
+<    terms of the GNU Lesser General Public License as published by the Free
+<    Software Foundation, either version 3 of the License, or (at your option)
+<    any later version.
+<
+<    UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+<    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+<    FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+<    more details.
+<
+<    You should have received a copy of the GNU Lesser General Public License
+<    along with UASR. If not, see [http://www.gnu.org/licenses/].
+-->
+<html>
+<head>
+  <meta http-equiv="Content-Type" content= "text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta name="description" content=   "UASR documentation - UASR script util/lm.itp">
+  <meta name="author" content="">
+  <meta name="generator" content="UASR_DOC">
+  <title>UASR script util/lm.itp</title>
+  <link rel=stylesheet type="text/css" href="../../default.css">
+</head>
+<script type="text/javascript" src="../../default.js"></script>
+<script type="text/javascript">__sRootPath="../../..";</script>
+<body>
+
+  <div id="clp_util/lm.itp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        UASR script <span class="mid">util/lm.itp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('','util/lm.itp','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden">General</td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><nobr><b>lm</b> </nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Author</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Matthias Wolff
+</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Synopsis</h3>
+    <p>Utility functions: Language model
+ </p>
+  <!--{{ CUSTOM_DOC -->
+  <!--}} CUSTOM_DOC -->
+  <a name="functions"></a><h3>Functions</h3>
+  <table cellSpacing="0" cellPadding="4" border="0">
+    <tr>
+      <td class="rowgroup" colSpan="2">Functions</td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FSG_load"><code class="link">-FSG_load</code></a></td>
+      <td><code><b>-FSG_load</b>(sFile,sFilter,idRules)</code><br>&nbsp;<br>Loads a context free and/or regular grammar (set of rules) from a text file.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FSG_load_builtin"><code class="link">-FSG_load_builtin</code></a></td>
+      <td><code><b>-FSG_load_builtin</b>(sId,idRules)</code><br>&nbsp;<br> Loads the rule set of a built-in finite state grammar.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FSG_compile"><code class="link">-FSG_compile</code></a></td>
+      <td><code><b>-FSG_compile</b>(idRules,idTrmTab,idTosTab,itFsg)</code><br>&nbsp;<br> Compiles a context free and/or regular grammar (given as set of rules) into a
+ finite state machine.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-GRM_get"><code class="link">-GRM_get</code></a></td>
+      <td><code><b>-GRM_get</b></code><br>&nbsp;<br> Obtains the recognition grammar.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LM_get"><code class="link">-LM_get</code></a></td>
+      <td><code><b>-LM_get</b>(idLX,itLM)</code><br>&nbsp;<br> Loads the configured language model.
+      </td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <div id="clp_-FSG_load">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FSG_load</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FSG_load','-FSG_load','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FSG_load</b>(sFile,sFilter,idRules)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lm.itp(60)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3>Loads a context free and/or regular grammar (set of rules) from a text file. Each line in the file defines one rule
+or a set of rules sharing that same left side. Multiple right sides on one line are separated by commas. Rules
+consist of a sequence of white space separated strings which denote named states, termial symbols or non-terminal
+symbols (for details see dcoumentation of <a href="#clp_-FSG_compile" class="code">-FSG_compile</a>). The first
+string defines the rule's left side, all other strings define the right side.
+<h4>Example (<code>sFiler</code>="GRM:")</h3>
+<pre class="code">
+&nbsp;
+FOO: what ever ...
+&nbsp;
+GRM: (S) H hundert (A) und (B) ZE
+GRM: (A) (F)
+GRM: (A) (B)
+GRM: (S) (B)
+&nbsp;
+BAR: what ever ...
+</pre>
+<h4>See also</h4>
+<ul class="linklist">
+<li class="linklist"><a href="#clp_-FSG_load_builtin" class="code">-FSG_load_builtin</a></li>
+<li class="linklist"><a href="#clp_-FSG_compile" class="code">-FSG_compile</a></li>
+</ul>
+
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFile</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Path of text file to be loaded
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFilter</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Line filter (consider only lines starting with the given string),
+commit "" to read all lines
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idRules</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Will be filled with the rule set
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> <code>TRUE</code> if successfull, <code>FALSE</code> otherwise
+
+  </div>
+  </div>
+  <div id="clp_-FSG_load_builtin">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FSG_load_builtin</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FSG_load_builtin','-FSG_load_builtin','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FSG_load_builtin</b>(sId,idRules)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lm.itp(114)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Loads the rule set of a built-in finite state grammar. The following table lists the available grammars.
+ <table class="indent" style="margin-top:6pt;">
+   <tr><th><code>sId</code></th><th>Description</th></tr>
+   <tr><td>"&lt;CMD&gt;"   </td><td>Single command</td></tr>
+   <tr><td>"&lt;VA+CMD&gt;"</td><td>Voice activation keyword plus single command</td></tr>
+   <tr><td>"&lt;PLG&gt;"   </td><td>Phone loop grammer (free phoneme recognition)</td></tr>
+ </table>
+ <h4>See also</h4>
+ <ul class="linklist">
+   <li class="linklist"><a href="#clp_-FSG_load" class="code">-FSG_load</a></li>
+   <li class="linklist"><a href="#clp_-FSG_compile" class="code">-FSG_compile</a></li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sId</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Identifier of the built-in grammar
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idRules</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Will be filled with the rule set
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> <code>TRUE</code> if successful, <code>FALSE</code> if <code>sId</code> does not denote a built-in grammar.
+
+  </div>
+  </div>
+  <div id="clp_-FSG_compile">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FSG_compile</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FSG_compile','-FSG_compile','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FSG_compile</b>(idRules,idTrmTab,idTosTab,itFsg)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lm.itp(195)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Compiles a context free and/or regular grammar (given as set of rules) into a
+ finite state machine.
+ <h4>Remarks</h4>
+ <ul>
+   <li>The rule set <em>must not</em> be recursive. If so the function will
+     run an endless loop! This is to be fixed.</li>
+ </ul>
+ <h4>See also</h4>
+ <ul class="linklist">
+   <li class="linklist"><a href="#clp_-FSG_load" class="code">-FSG_load</a></li>
+   <li class="linklist"><a href="#clp_-FSG_load_builtin" class="code">-FSG_load_builtin</a></li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idRules</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          <p>Set of context free or regular rules. Each record defines exactly one rule. The first component
+          defines rule's left side, the remaining components define the rule's right side. Trailing empty cells will
+          be ignored. All components must be symbolic (strings).</p>
+          <p>Each cell defines either a named state of the finite state grammar, a terminal symbol or a non-terminal
+          symbol (the latter two are transition names of the grammer):<br>
+          <b>Named states:</b> a string enclosed in parentheses is interpreted as state name, e.g. "(A)". The
+          names "(S)" and "(F)" are reserved and denote the start and final states.<br>
+          <b>Named transitions:</b> a string not enclosed in parathesis is considered a transition name. Transition
+          names consist of an input symbol and, optionally, an output symbol, a logarithmic weight, and a stack push or pop token;
+          all separared by a colon ":" (e.g. "in:out:0:+token", no white spaces!). There are two types of transition names:<br>
+          <b>&nbsp;&nbsp;&nbsp;Terminal symbols:</b> transition name is considered a terminal symbol if and
+          only if its input symbol (the part before the colon or, if there is no colon, the entire string) is
+          contained in the terminal symbol table (parameter <code>idTrmTab</code>).<br>
+          <b>&nbsp;&nbsp;&nbsp;Non-terminal symbols:</b> all other strings are considered non-terminal symbols. The symbol "S" is
+          reserved and denotes the start rule. Non-terminal symbols must not contain an output symbols, hence they
+          <em>must not</em> contain any colons. A transition with an infinite weight (e.&nbsp;g. "::INF") is not added to the
+          grammar. However, the path up to the transtion's start state und from the transition's end state will be correctly
+          inserted. Rules with infinite weight are useful in connection with stack tokens in order to re-use previosly addad
+          paths in the grammar.</p>
+          <p>The first string (component 0) defines the left side of a rule, all other strings define the right side.
+          There are two types of rules:<br>
+          <b>Regular rules:</b> the left side is a state name. Such rules are expanded by appending a path of
+          (named) states and transitions to the named state on the rule's left side. If the last string does not
+          denote a named state, the last generated transition will terminate at the final state. Example:
+          <code>{ "(S)" "foo" "bar" "(B)" }</code>.<br>
+          <b>Context free rules:</b> the left side is a non-terminal. All transitions named after the non-terminal
+          on the rule's left side will be replaced by the path defined by the right side. Example:
+          <code>{ "S" "foo" "bar" }</code>.</p>
+          <p>In both cases, the rule expansion will properly regard named states in the rule. That is, if the state
+          exists it will be used and if it does not exists, it will be created.<br>&nbsp;</p>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idTrmTab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Table of terminal input symbols. The symbols are expected in component 0, other components will be ignored.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idTosTab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Will be filled with the table of terminal output symbol found in the grammar rules (may be
+          <code>NULL</code>)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itFsg</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Finite state grammar to be created
+
+      </td>
+    </tr>  </table>
+  <h3>See also</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><a href="#clp_-FSG_load">-FSG_load</a>
+    </td>
+  </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-GRM_get">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-GRM_get</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-GRM_get','-GRM_get','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-GRM_get</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lm.itp(463)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Obtains the recognition grammar.
+ <p>This default implementation returns the grammar specified through the
+ configuration keys <code>&lt;uasr.lm*&gt; and <code>&lt;uasr.lx*&gt;.
+ Databases may overwrite this function in order to provide a custom
+ grammar:</p>
+ <pre class="code">
+ &nbsp;
+  /disarm -MY_GRAMMAR /disarm -GRM_get =;
+ </pre>
+ <h4>See also</h4>
+ <ul>
+   <li><a href="../train/am.itp.html#clp_-HMM_process" class="linklist"><code>-HMM_process</code></a></li>
+ </ul>
+ 
+
+    <h3>Return value</h3> the recognition grammar (fst)
+
+  </div>
+  </div>
+  <div id="clp_-LM_get">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LM_get</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LM_get','-LM_get','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LM_get</b>(idLX,itLM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lm.itp(498)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Loads the configured language model.
+ <h4>See also</h4>
+ <ul class="linklist">
+   <li class="linklist"><a href="#clp_-FSG_load" class="code">-FSG_load</a></li>
+   <li class="linklist"><a href="#clp_-FSG_compile" class="code">-FSG_compile</a></li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLX</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Lexicon (list of terminal symbols of the language model)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itLM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Filled with the language model transducer
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.lm&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.lm.fsg&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.lm.imp&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+<div class="footer">End of page</div>
+</body>
+</html>
+

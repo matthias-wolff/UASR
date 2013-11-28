@@ -1,0 +1,1848 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<
+<    AUTHOR : n/a
+<    PACKAGE: manual
+<
+<    Copyright 2013 UASR contributors (see COPYRIGHT file)
+<    - Chair of System Theory and Speech Technology, TU Dresden
+<    - Chair of Communications Engineering, BTU Cottbus
+<
+<    This file is part of UASR.
+<
+<    UASR is free software: you can redistribute it and/or modify it under the
+<    terms of the GNU Lesser General Public License as published by the Free
+<    Software Foundation, either version 3 of the License, or (at your option)
+<    any later version.
+<
+<    UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+<    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+<    FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+<    more details.
+<
+<    You should have received a copy of the GNU Lesser General Public License
+<    along with UASR. If not, see [http://www.gnu.org/licenses/].
+-->
+<html>
+<head>
+  <meta http-equiv="Content-Type" content= "text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta name="description" content=   "UASR documentation - UASR script util/lab.itp">
+  <meta name="author" content="">
+  <meta name="generator" content="UASR_DOC">
+  <title>UASR script util/lab.itp</title>
+  <link rel=stylesheet type="text/css" href="../../default.css">
+</head>
+<script type="text/javascript" src="../../default.js"></script>
+<script type="text/javascript">__sRootPath="../../..";</script>
+<body>
+
+  <div id="clp_util/lab.itp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        UASR script <span class="mid">util/lab.itp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('','util/lab.itp','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden">General</td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><nobr><b>lab</b> </nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Author</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Matthias Eichner
+</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Synopsis</h3>
+    <p>Utility functions: Labels
+ </p>
+  <!--{{ CUSTOM_DOC -->
+    <a name="index:labfmt" title="Label component format"></a>
+    <h3>Label component format</h3>
+    <p>In UASR the label convension is that every feature vector
+    has a label. So no labels will be lost by working with these
+    vectors. The disadvantage is that we lose the boundaries of one label
+    after another identical one. So there is a configuration option
+    <a href="cfg.itp.html#index:cfgk"><code>&quot;uasr.fea.labidx&quot;</code></a>
+    which enables label indices.
+    With this options the labels looks like &quot;NAME[INDEX]&quot;.</p>
+    <p>To support these labels the function <code>data.-gen_index</code> and
+    <code>statistics.-update</code> ignores the indices in brackets
+    if the option <code>/label</code> is used.</p>
+    <p><span class="warning">Warning: UASR supports that label format only
+    for FEA.xtp and HMM.xtp</span></p>
+  <!--}} CUSTOM_DOC -->
+  <a name="functions"></a><h3>Functions</h3>
+  <table cellSpacing="0" cellPadding="4" border="0">
+    <tr>
+      <td class="rowgroup" colSpan="2">Functions</td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_strip"><code class="link">-LAB_strip</code></a></td>
+      <td><code><b>-LAB_strip</b>(idSrc,idLab,idDst)</code><br>&nbsp;<br> Separates symbolic and numeric components
+ 
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_shrink"><code class="link">-LAB_shrink</code></a></td>
+      <td><code><b>-LAB_shrink</b>(nIc,idData)</code><br>&nbsp;<br> Shrinks the data type of symbolic components to the minimal possible length.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_acceptor"><code class="link">-LAB_acceptor</code></a></td>
+      <td><code><b>-LAB_acceptor</b>(idLab,idLtab,nUnk,itLab)</code><br>&nbsp;<br> Creates an acceptor for a label sequence.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_get_map"><code class="link">-LAB_get_map</code></a></td>
+      <td><code><b>-LAB_get_map</b></code><br>&nbsp;<br> Returns the database-2-UASR label map.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_get_tab"><code class="link">-LAB_get_tab</code></a></td>
+      <td><code><b>-LAB_get_tab</b></code><br>&nbsp;<br> Returns the database specific UASR label table.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_import"><code class="link">-LAB_import</code></a></td>
+      <td><code><b>-LAB_import</b>(sDir,sTid,idLab)</code><br>&nbsp;<br> Abstract method for signal label import.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_export"><code class="link">-LAB_export</code></a></td>
+      <td><code><b>-LAB_export</b>(sDir,sTid,idLab)</code><br>&nbsp;<br> Abstract method for signal label export.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_export_esps"><code class="link">-LAB_export_esps</code></a></td>
+      <td><code><b>-LAB_export_esps</b>(sDir,sTid,idLab)</code><br>&nbsp;<br> Under construction; do not use.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_import_ascii"><code class="link">-LAB_import_ascii</code></a></td>
+      <td><code><b>-LAB_import_ascii</b>(sDir,sTid,idLab)</code><br>&nbsp;<br> Label import from ASCII file.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_import_esps"><code class="link">-LAB_import_esps</code></a></td>
+      <td><code><b>-LAB_import_esps</b>(sDir,sTid,idSC)</code><br>&nbsp;<br> Label import from ESPS label file.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_import_dummy"><code class="link">-LAB_import_dummy</code></a></td>
+      <td><code><b>-LAB_import_dummy</b>(sDir,sTid,idLab)</code><br>&nbsp;<br> Creates a dummy label channel.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_import_nothing"><code class="link">-LAB_import_nothing</code></a></td>
+      <td><code><b>-LAB_import_nothing</b>(sDir,sTid,idLab)</code><br>&nbsp;<br> Creates a "no" label channel.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_import_flist"><code class="link">-LAB_import_flist</code></a></td>
+      <td><code><b>-LAB_import_flist</b>(sDir,sTid,idLab)</code><br>&nbsp;<br> Creates a label channel with exactly one label looked up from an extra
+ component of the complete file list.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_ts2sc"><code class="link">-LAB_ts2sc</code></a></td>
+      <td><code><b>-LAB_ts2sc</b>(idTS,idSC)</code><br>&nbsp;<br> Convert label description from timestamp to sample/count
+ 
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_sc2ts"><code class="link">-LAB_sc2ts</code></a></td>
+      <td><code><b>-LAB_sc2ts</b>(idSC,idTS)</code><br>&nbsp;<br> Convert label description from sample/count to timestamp
+ 
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_map"><code class="link">-LAB_map</code></a></td>
+      <td><code><b>-LAB_map</b>(idLab,idLabMapped)</code><br>&nbsp;<br> 
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_get_fst"><code class="link">-LAB_get_fst</code></a></td>
+      <td><code><b>-LAB_get_fst</b>(itAM,itGP)</code><br>&nbsp;<br> Creates a (phoneme) labelling transducer from a set of acoustic models (AMs).
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-LAB_from_into"><code class="link">-LAB_from_into</code></a></td>
+      <td><code><b>-LAB_from_into</b>(idInto,idLab)</code><br>&nbsp;<br> Convertes into data object (e.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-TRL_import"><code class="link">-TRL_import</code></a></td>
+      <td><code><b>-TRL_import</b>(sDir,sTid,idTrl)</code><br>&nbsp;<br> Imports the transliteration of one turn.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-SNS_get_tab"><code class="link">-SNS_get_tab</code></a></td>
+      <td><code><b>-SNS_get_tab</b></code><br>&nbsp;<br> Returns the database specific sensor ID table.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-SNS_get_ext"><code class="link">-SNS_get_ext</code></a></td>
+      <td><code><b>-SNS_get_ext</b>(sSns)</code><br>&nbsp;<br> Safely converts a sensor name to a file extension.
+      </td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <div id="clp_-LAB_strip">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_strip</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_strip','-LAB_strip','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_strip</b>(idSrc,idLab,idDst)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(42)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Separates symbolic and numeric components
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSrc</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Source data
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with the label components (may be
+          <code>NULL</code> or identical with <code>idSrc</code>)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idDst</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Destination instance to be filled with the numeric components (may
+          be identical with <code>idSrc</code>)
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> nothing
+
+  </div>
+  </div>
+  <div id="clp_-LAB_shrink">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_shrink</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_shrink','-LAB_shrink','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_shrink</b>(nIc,idData)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(73)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Shrinks the data type of symbolic components to the minimal possible length.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nIc</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Zero-based index of (symbolic) component to shrink, -1 to shrink
+          all symbolic components
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idData</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to process
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> nothing
+
+  </div>
+  </div>
+  <div id="clp_-LAB_acceptor">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_acceptor</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_acceptor','-LAB_acceptor','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_acceptor</b>(idLab,idLtab,nUnk,itLab)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(108)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Creates an acceptor for a label sequence.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The label sequence
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLtab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The label table (symbols expected in component 0)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nUnk</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Index of unkown labels (index of garbage or OOV label, or -1)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itLab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Filled with the label acceptor
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> If <code>nUnk</code> is non-negative, the function returns
+         <code>TRUE</code><code>TRUE</code>. Otherwise it returns
+         <code>FALSE</code> if <code>idLab</code> contains any invalid labels
+         (i.e. labels not found in <code>idLtab</code>).
+
+  </div>
+  </div>
+  <div id="clp_-LAB_get_map">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_get_map</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_get_map','-LAB_get_map','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_get_map</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(142)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Returns the database-2-UASR label map. The map is a data instance containing
+ two columns: (0) the database dependent label and (1) the UASR label mapped to the database dependent label.
+ <p>The function proceeds as follows:</p>
+ <ol>
+   <li>Try to load the ASCII file named "labmap.txt" located in the <a href="cfg.itp.html#index:datadirs">info
+     directory</a> or specified by the <a href="cfg.itp.html#index:cfgk">configuration key
+     <code>&lt;uasr.lab.map&gt;</code></a>. If either of these files exists, return a map containing its
+     contents.</li>
+   <li>Call <a href="#clp_-LAB_get_tab" class="code">-LAB_get_tab</a> and a data instance containing two identical
+     components mapping the UASR labels to themselves.</li>
+ </ol>
+ 
+
+    <h3>Return value</h3> The label map (<code>data</code> instance)
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.lab.map&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-LAB_get_tab">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_get_tab</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_get_tab','-LAB_get_tab','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_get_tab</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(168)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Returns the database specific UASR label table.
+ 
+
+    <h3>Return value</h3> The label table (<code>data</code> instance)
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.classes&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.fea.labidx&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-LAB_import">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_import</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_import','-LAB_import','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_import</b>(sDir,sTid,idLab)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(219)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Abstract method for signal label import. The function must be overwritten
+ depending on the database, for example:
+ <pre class="code">&nbsp;
+  /disarm <a href="#clp_-LAB_import_dummy"><code class="link">-LAB_import_dummy</code></a> /disarm -LAB_import =;
+ </pre>
+ <p>The result instance <code>idLab</code> must be filled with an RLE-compressed
+ label stream and have the following format:</p>
+ <table class="indent">
+   <tr><th colspan="2">Component</th><th>Description</th></tr>
+   <tr><th>No.</th><th>Type</th><th> </th></tr>
+   <tr><td>0</td><td><code>string</code></td><td>Label name</td></tr>
+   <tr><td>1</td><td><code>long</code></td><td>Label position (samples)</td></tr>
+   <tr><td>2</td><td><code>long</code></td><td>Label length (samples)</td></tr>
+ </table>
+ <p>The result instance may also have only one string component and one record.
+ In this case, the only label <code>idLab[0,0]</code> is used for the entire
+ signal.</p>
+ <h4>See also</h4>
+ <p>
+    <a href="sig.itp.html#clp_-SIG_label"><code class="link">-SIG_label</code></a>
+ </p>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sDir</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Path to label files
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sTid</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Turn identifier. See <code>-SIG_import</code> for the format
+          of this identifier
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with RLE-compressed label stream
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-LAB_export">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_export</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_export','-LAB_export','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_export</b>(sDir,sTid,idLab)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(240)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Abstract method for signal label export. The function must be overwritten
+ depending on the database, for example:
+ <pre class="code">&nbsp;
+  /disarm <a href="#clp_-LAB_export_esps"><code class="link">-LAB_import_esps</code></a> /disarm -LAB_export =;
+ </pre>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sDir</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Path to label files
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sTid</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Turn identifier. See <code>-SIG_import</code> for the format
+          of this identifier
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with RLE-compressed label stream
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-LAB_export_esps">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_export_esps</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_export_esps','-LAB_export_esps','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_export_esps</b>(sDir,sTid,idLab)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(255)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Under construction; do not use.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sDir</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Path to label files
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sTid</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Turn identifier. See <code>-SIG_import</code> for the format
+          of this identifier
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance containing the label stream
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-LAB_import_ascii">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_import_ascii</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_import_ascii','-LAB_import_ascii','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_import_ascii</b>(sDir,sTid,idLab)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(287)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Label import from ASCII file. The file is expected to contain exactly one label entry per line. One entry
+ has to consist of three white space separated fields: 1. the label name, 2. the label offset (in samples),
+ and 3. the label length (in samples). Label files <em>must</em> have the extension ".lab".
+ <p>This function may overwrite <a href="#clp_-LAB_import"><code class="link">-LAB_import</code></a>:</p>
+ <pre class="code">&nbsp;
+  /disarm -LAB_import_ascii /disarm <a href="#clp_-LAB_import"><code class="link">-LAB_import</code></a> =;
+ </pre>
+ <h4>Structure of Result</h4>
+ <table class="indent">
+   <tr><th colspan="2">Component</th><th>Description</th></tr>
+   <tr><th>No.</th><th>Name</th><th> </th></tr>
+   <tr><td>0</td><td><code>&lt;sLid&gt;</code></td><td>Label name</td></tr>
+   <tr><td>1</td><td><code>POS</code></td><td>Label position (samples)</td></tr>
+   <tr><td>2</td><td><code>CNT</code></td><td>Label length (samples)</td></tr>
+ </table>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sDir</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Path to label files
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sTid</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          IZFP_RS measurement identifier. See <code>-SIG_import</code> for the format
+          of this identifier
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with labels
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-LAB_import_esps">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_import_esps</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_import_esps','-LAB_import_esps','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_import_esps</b>(sDir,sTid,idSC)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(322)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Label import from ESPS label file. This function may overwrite <a
+ href="#clp_-LAB_import"><code class="link">-LAB_import</code></a>:
+ <pre class="code">&nbsp;
+  /disarm -LAB_import_esps /disarm <a href="#clp_-LAB_import"><code class="link">-LAB_import</code></a> =;
+ </pre>
+ <h4>Structure of Result</h4>
+ <table class="indent">
+   <tr><th colspan="2">Component</th><th>Description</th></tr>
+   <tr><th>No.</th><th>Name</th><th> </th></tr>
+   <tr><td>0</td><td><code>&lt;sLid&gt;</code></td><td>Label name</td></tr>
+   <tr><td>1</td><td><code>POS</code></td><td>Label position (samples)</td></tr>
+   <tr><td>2</td><td><code>CNT</code></td><td>Label length (samples)</td></tr>
+ </table>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sDir</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Path to label files
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sTid</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Turn identifier. See <code>-SIG_import</code> for the format
+          of this identifier
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSC</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with labels
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-LAB_import_dummy">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_import_dummy</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_import_dummy','-LAB_import_dummy','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_import_dummy</b>(sDir,sTid,idLab)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(349)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Creates a dummy label channel. This function may overwrite <a
+ href="#clp_-LAB_import"><code class="link">-LAB_import</code></a>:
+ <pre class="code">&nbsp;
+  /disarm -LAB_import_dummy /disarm <a href="#clp_-LAB_import"><code class="link">-LAB_import</code></a> =;
+ </pre>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sDir</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Not used, may be <code>NULL</code>.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sTid</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Not used, may be <code>NULL</code>.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with labels
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-LAB_import_nothing">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_import_nothing</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_import_nothing','-LAB_import_nothing','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_import_nothing</b>(sDir,sTid,idLab)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(376)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Creates a "no" label channel. This function may overwrite <a
+ href="#clp_-LAB_import"><code class="link">-LAB_import</code></a>:
+ <pre class="code">&nbsp;
+  /disarm -LAB_import_nothing /disarm <a href="#clp_-LAB_import"><code class="link">-LAB_import</code></a> =;
+ </pre>
+ <h4>Remarks</h4>
+ <ul>
+   <li>This is planned to become the default behavior of <a  class="code"
+     href="#clp_-LAB_import">-LAB_import</a></li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sDir</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Not used, may be <code>NULL</code>.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sTid</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Not used, may be <code>NULL</code>.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Will be reset
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-LAB_import_flist">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_import_flist</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_import_flist','-LAB_import_flist','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_import_flist</b>(sDir,sTid,idLab)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(407)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Creates a label channel with exactly one label looked up from an extra
+ component of the complete file list. See <a
+ href="cfg.itp.html#clp_-CFG_get_flist"><code
+ class="link">-CFG_get_flist</code></a> (<code>sKey</code>="all") for details.
+ This function may overwrite <a href="#clp_-LAB_import"><code
+ class="link">-LAB_import</code></a>:
+ <pre class="code">&nbsp;
+  /disarm -LAB_import_flist /disarm <a href="#clp_-LAB_import"><code class="link">-LAB_import</code></a> =;
+ </pre>
+ <h4>Remarks</h4>
+ <ul>
+   <li>To save computation time, the function stores the complete file list
+     in a global data instance <code>.__LAB_idFall</code> upon the first call
+     in the UASR session. If the session modifies the file list later, you
+     must destroy <code>.__LAB_idFall</code> to use the new list!</li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sDir</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Not used, may be <code>NULL</code>.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sTid</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Turn identifier. See <code>-SIG_import</code> for the format
+          of this identifier
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with labels
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-LAB_ts2sc">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_ts2sc</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_ts2sc','-LAB_ts2sc','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_ts2sc</b>(idTS,idSC)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(434)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Convert label description from timestamp to sample/count
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idTS</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Label sequence in timestamp format
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSC</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with labels in sample/count format
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-LAB_sc2ts">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_sc2ts</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_sc2ts','-LAB_sc2ts','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_sc2ts</b>(idSC,idTS)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(506)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Convert label description from sample/count to timestamp
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSC</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance in sample/count format
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idTS</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Label sequence to be filled with labels in timestamp format
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-LAB_map">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_map</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_map','-LAB_map','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_map</b>(idLab,idLabMapped)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(535)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLabMapped</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-LAB_get_fst">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_get_fst</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_get_fst','-LAB_get_fst','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_get_fst</b>(itAM,itGP)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(565)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Creates a (phoneme) labelling transducer from a set of acoustic models (AMs).
+ Composing an inverted decoding result with the resulting transducer converts
+ the Gaussian indices of to model (e.g. phoneme) indices. The result is a
+ per-frame AM label sequence.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itAM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The acoustic model
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itGP</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Filled with the labelling transducer (may be identical with
+          <code>itAM</code>)
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-LAB_from_into">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LAB_from_into</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LAB_from_into','-LAB_from_into','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LAB_from_into</b>(idInto,idLab)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(589)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Convertes into data object (e.g. imported from into file import filter) to
+ label data object;.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idInto</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The into data instance.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The resulting label data instance.
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-TRL_import">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-TRL_import</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-TRL_import','-TRL_import','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-TRL_import</b>(sDir,sTid,idTrl)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(619)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Imports the transliteration of one turn. The result contains one
+ symbolic component filled with lexicon entries. This default implementation
+ imports a ASCII file containing exactly one lexicon entry per line from the
+ file named "<code>&lt;sDir&gt;</code>/<code>&lt;sTid&gt;</code>.txt".
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sDir</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Path to transliteration files
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sTid</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Turn identifier. See <code>-SIG_import</code> for the format
+          of this identifier
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idTrl</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with transliteration
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> <code>TRUE</code> if the transliteration was successfully imported
+         and <code>FALSE</code> otherwise.
+
+  </div>
+  </div>
+  <div id="clp_-SNS_get_tab">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-SNS_get_tab</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-SNS_get_tab','-SNS_get_tab','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-SNS_get_tab</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(656)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Returns the database specific sensor ID table. The function proceeds as
+ follows:
+ <ol>
+   <li>Check the <a href="cfg.itp.html#index:cfgf">configuration</a> for a key named <code>uasr.sensor</code>. If
+     found, return a list containing one entry with the value of that key.</li>
+   <li>Try to load the ASCII file named "sensors.txt" located in the <a href="cfg.itp.html#index:datadirs">info
+     directory</a> or specified by the <a href="cfg.itp.html#index:cfgk">configuration key
+     <code>&lt;uasr.am.sensors&gt;</code></a>. If either of these files exists, return a list containing its
+     contents.</li>
+   <li>Return a list containing one empty entry indicating that there is only one sensor (which is typically the case
+     for speech processing).</li>
+ </ol>
+ 
+
+    <h3>Return value</h3> The sensor table (<code>data</code> instance)
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.sensor&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"></td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-SNS_get_ext">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-SNS_get_ext</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-SNS_get_ext','-SNS_get_ext','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-SNS_get_ext</b>(sSns)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lab.itp(691)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Safely converts a sensor name to a file extension. If <code>sSns</code> is
+ already a file extension, the function will just return it.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Sensor name
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> File extension (string)
+
+  </div>
+  </div>
+<div class="footer">End of page</div>
+</body>
+</html>
+

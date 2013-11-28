@@ -1,0 +1,2515 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<
+<    AUTHOR : n/a
+<    PACKAGE: manual
+<
+<    Copyright 2013 UASR contributors (see COPYRIGHT file)
+<    - Chair of System Theory and Speech Technology, TU Dresden
+<    - Chair of Communications Engineering, BTU Cottbus
+<
+<    This file is part of UASR.
+<
+<    UASR is free software: you can redistribute it and/or modify it under the
+<    terms of the GNU Lesser General Public License as published by the Free
+<    Software Foundation, either version 3 of the License, or (at your option)
+<    any later version.
+<
+<    UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+<    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+<    FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+<    more details.
+<
+<    You should have received a copy of the GNU Lesser General Public License
+<    along with UASR. If not, see [http://www.gnu.org/licenses/].
+-->
+<html>
+<head>
+  <meta http-equiv="Content-Type" content= "text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta name="description" content=   "UASR documentation - UASR script train/am.itp">
+  <meta name="author" content="">
+  <meta name="generator" content="UASR_DOC">
+  <title>UASR script train/am.itp</title>
+  <link rel=stylesheet type="text/css" href="../../default.css">
+</head>
+<script type="text/javascript" src="../../default.js"></script>
+<script type="text/javascript">__sRootPath="../../..";</script>
+<body>
+
+  <div id="clp_train/am.itp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        UASR script <span class="mid">train/am.itp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('','train/am.itp','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden">General</td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><nobr><b>am</b> </nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Author</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Matthias Wolff
+</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Synopsis</h3>
+    <p>Training functions: Hidden Markov models
+ </p>
+  <!--{{ CUSTOM_DOC -->
+  <!--}} CUSTOM_DOC -->
+  <a name="functions"></a><h3>Functions</h3>
+  <table cellSpacing="0" cellPadding="4" border="0">
+    <tr>
+      <td class="rowgroup" colSpan="2">Functions</td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_save"><code class="link">-HMM_save</code></a></td>
+      <td><code><b>-HMM_save</b>(sFile,itHMM)</code><br>&nbsp;<br> Saves an HMM instance to a zipped DN3 file.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_load"><code class="link">-HMM_load</code></a></td>
+      <td><code><b>-HMM_load</b>(sFile,nDim,itHMM)</code><br>&nbsp;<br> Restores an HMM instance stored by the <a href="#clp_-HMM_save"><code
+ class="link">-HMM_save</code></a> function.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_update_pls"><code class="link">-HMM_update_pls</code></a></td>
+      <td><code><b>-HMM_update_pls</b>(itDec,nU,itHMM)</code><br>&nbsp;<br> EXPERIMENTAL; gather HMM layer duration statistics for HMM synthesis
+ 
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_analyze"><code class="link">-FEA_analyze</code></a></td>
+      <td><code><b>-FEA_analyze</b>(idLtb,iFI,sSns)</code><br>&nbsp;<br> Gathers feature information required for the secondary feature
+ transformation.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_create"><code class="link">-HMM_create</code></a></td>
+      <td><code><b>-HMM_create</b>(nDim,itHMM)</code><br>&nbsp;<br> Creates empty HMM's.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_setup"><code class="link">-HMM_setup</code></a></td>
+      <td><code><b>-HMM_setup</b>(itHMM)</code><br>&nbsp;<br> Setup Gaussians and transition probabilities from statistics and reference
+ counters
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_merge_stats"><code class="link">-HMM_merge_stats</code></a></td>
+      <td><code><b>-HMM_merge_stats</b>(itSrc,itDst)</code><br>&nbsp;<br> EXPERIMENTAL, to be replaced by <code>statistics -join</code>.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_init"><code class="link">-HMM_init</code></a></td>
+      <td><code><b>-HMM_init</b>(itHMM,sSns)</code><br>&nbsp;<br> Initializes HMM's.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_update"><code class="link">-HMM_update</code></a></td>
+      <td><code><b>-HMM_update</b>(itHMM,sSns,nSpl,nIte)</code><br>&nbsp;<br> Baum-Welch or Viterbi update iteration of HMMs.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_split"><code class="link">-HMM_split</code></a></td>
+      <td><code><b>-HMM_split</b>(itHMM,sSns,nSpl,nIte)</code><br>&nbsp;<br> HMM state splitting.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_eval"><code class="link">-HMM_eval</code></a></td>
+      <td><code><b>-HMM_eval</b>(itHMM,sSns,nSpl,nIte)</code><br>&nbsp;<br> Evaluation with test set.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_assess"><code class="link">-HMM_assess</code></a></td>
+      <td><code><b>-HMM_assess</b>(itHMM,sSns,nSpl,nIte)</code><br>&nbsp;<br> Decodes all files in the test set through all HMMs.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_eval_fnc"><code class="link">-HMM_eval_fnc</code></a></td>
+      <td><code><b>-HMM_eval_fnc</b>(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)</code><br>&nbsp;<br> Result function to <code>-HMM_process</code> for the evaluation of HMMs.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_process"><code class="link">-HMM_process</code></a></td>
+      <td><code><b>-HMM_process</b>(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)</code><br>&nbsp;<br> Decodes a data set of signals (turns) through a recognition network using the
+ Viterbi- or forward-backward-procedure and passes the decoding results to the user defined function
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-XXM_assess_log"><code class="link">-XXM_assess_log</code></a></td>
+      <td><code><b>-XXM_assess_log</b>(sFilePref,sFileSuff,idLtb,idFlst,idAsc)</code><br>&nbsp;<br> Creates or continues the assessment log file and the label confusion matrix.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-XXM_assess_hist"><code class="link">-XXM_assess_hist</code></a></td>
+      <td><code><b>-XXM_assess_hist</b>(sFilePref,sFileSuff,idLtb,idFlst,idAsc)</code><br>&nbsp;<br> Creates per-model NLL histograms.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-XVL_partition"><code class="link">-XVL_partition</code></a></td>
+      <td><code><b>-XVL_partition</b>(nPart,idFXvl,idFTrn,idFTst)</code><br>&nbsp;<br> Get file lists for a cross validation partition
+ This function may be customized through overwriting.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_Act"><code class="link">-HMM_Act</code></a></td>
+      <td><code><b>-HMM_Act</b>(itHMM,sAct)</code><br>&nbsp;<br> HMM Action function
+ 
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_tidyup"><code class="link">-HMM_tidyup</code></a></td>
+      <td><code><b>-HMM_tidyup</b>(sSns,nSpl,nIte)</code><br>&nbsp;<br> Removes HMM and log files of one training iteration.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_ite"><code class="link">-HMM_ite</code></a></td>
+      <td><code><b>-HMM_ite</b>(iF,sSns,iFI,bBw,bLab,itHMM)</code><br>&nbsp;<br> DEPRECATED.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_adapt_fnc"><code class="link">-HMM_adapt_fnc</code></a></td>
+      <td><code><b>-HMM_adapt_fnc</b>(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)</code>
+      </td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_save">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_save</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_save','-HMM_save','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_save</b>(sFile,itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(50)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Saves an HMM instance to a zipped DN3 file. The function removes the feature
+ statistics' before saving the HMM to spare disk space. An HMM instance saved
+ by this function may be restored using dLabPro's <code>-restore</code>
+ method for recognition. For further training, however, you <em>must</em>
+ use the <a href="#clp_-HMM_load"><code class="link">-HMM_load</code></a>
+ function to restore the HMM instance.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFile</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Path name of HMM file
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance to save
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> TRUE if successful, FALSE otherwise
+
+  </div>
+  </div>
+  <div id="clp_-HMM_load">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_load</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_load','-HMM_load','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_load</b>(sFile,nDim,itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(79)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Restores an HMM instance stored by the <a href="#clp_-HMM_save"><code
+ class="link">-HMM_save</code></a> function.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFile</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Path name of HMM file
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nDim</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Total dimension of feature space (sum of most and least significant
+          feature dimensions)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance to restore
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> TRUE if successful, FALSE otherwise
+
+  </div>
+  </div>
+  <div id="clp_-HMM_update_pls">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_update_pls</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_update_pls','-HMM_update_pls','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_update_pls</b>(itDec,nU,itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(122)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> EXPERIMENTAL; gather HMM layer duration statistics for HMM synthesis
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itDec</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Decoded path through one(!) HMM
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nU</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The zero based index of the HMM <code>idDec</code> was decoded by
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The HMM instance
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_analyze">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_analyze</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_analyze','-FEA_analyze','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_analyze</b>(idLtb,iFI,sSns)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(155)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Gathers feature information required for the secondary feature
+ transformation.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLtb</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Label table of multiclass statistics, e.g. phoneme labels. The
+          labels of the feature vectors must be found in this table
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">object&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iFI</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          A pre-initialized feature information object to be filled. A proper
+          object is made by <a href="../util/fea.html#clp_-FEA_info"><code
+          class="link">-FEA_info</code></a> when <code>NULL</code> is
+          committed for parameter <code>sFile</code>.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+          (typical case for speech recognition)
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_create">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_create</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_create','-HMM_create','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_create</b>(nDim,itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(218)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Creates empty HMM's.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nDim</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Total dimension of feature space (sum of most and least significant
+          feature dimensions)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance to be created
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_setup">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_setup</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_setup','-HMM_setup','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_setup</b>(itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(245)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Setup Gaussians and transition probabilities from statistics and reference
+ counters
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The HMM to set up
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>%lt;am.train&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>%lt;am.mapexp&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_merge_stats">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_merge_stats</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_merge_stats','-HMM_merge_stats','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_merge_stats</b>(itSrc,itDst)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(269)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> EXPERIMENTAL, to be replaced by <code>statistics -join</code>.
+ HACK: The function justs adds the statistics data which messes up minima and
+       maxima!
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itSrc</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Source HMM (to be merged into <code>itDst</code>)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itDst</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Destination HMM
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_init">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_init</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_init','-HMM_init','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_init</b>(itHMM,sSns)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(282)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Initializes HMM's.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance to be initialized
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Sensor ID, <code>NULL</code> or empty for one-channel recordings (typical case for speech recognition)
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_update">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_update</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_update','-HMM_update','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_update</b>(itHMM,sSns,nSpl,nIte)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(328)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Baum-Welch or Viterbi update iteration of HMMs. After completing the update
+ the function will save a copy of <code>itHMM</code> in the model folder.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance to be updated (may be empty; in this case the function
+          will automatically restore the previous iteration from the model
+          folder).
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+          (typical case for speech recognition)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nSpl</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Number of state splits of HMM to be updated
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nIte</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Previous update iteration of HMM to be updated
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>__CFG_nJobs</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.actb[nSpl]_[nIte]&gt;(Default</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.acta[nSpl]_[nIte]&gt;(Default</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.updlab[nSpl]&gt;(Default:)</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_split">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_split</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_split','-HMM_split','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_split</b>(itHMM,sSns,nSpl,nIte)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(410)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> HMM state splitting.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance to be split
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Sensor ID, <code>NULL</code> or empty for one-channel recordings (typical case for speech recognition)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nSpl</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Previous number of state splits of HMM to be split
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nIte</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Number of update iterations of HMM to be split
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.act[nSpl]&gt;(Default:split)</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_eval">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_eval</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_eval','-HMM_eval','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_eval</b>(itHMM,sSns,nSpl,nIte)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(466)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Evaluation with test set. After completion, the function will write and/or
+ continue log files in the log folder.
+ <p>This standard implementation calls:</p>
+ <pre class="code">
+ &nbsp;
+ &nbsp;itHMM sSns nSpl nIte "test" "-HMM_eval_fnc" "&lt;uasr.am.eval.mode&gt;V" <a class="code" href="#clp_-HMM_process">-HMM_process</a>
+ </pre>
+ <p>Databases may overwrite this function in order to provide a custom evaluation</p>
+ <pre class="code">
+ &nbsp;
+ &nbsp;/disarm -MY_eval /disarm -HMM_eval =;
+ </pre>
+ <h4>Developers' <span class="TODO">TODO</span> list</h4>
+ <ul>
+   <li>How to provide a custom result function to <a class="code"
+       href="#clp_-HMM_process">-HMM_process</a>?</li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance to be evaluated (may be empty; in this case the
+          function will automatically restore the previous iteration from the
+          model folder).
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+          (typical case for speech recognition)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nSpl</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Number of state splits of HMM to be evaluated
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nIte</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Previous update iteration of HMM to be evaluated
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.eval.mode&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_assess">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_assess</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_assess','-HMM_assess','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_assess</b>(itHMM,sSns,nSpl,nIte)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(518)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Decodes all files in the test set through all HMMs. This yields a vector of
+ neglog likelihoods (NLLs), one for each HMM, per test file. The NLL values are normalized to the length
+ of the test file (i.e. to the number of feature vectors). All these vectors will be concatenated to a matrix whose
+ rows (components) contain the NLLs for one HMM and whose columns (records) contain the NLLs for one test file. The
+ function saves this matrix as a file named <code>hmm_assess-&ltHMM-id&gt;.dn3</code> in the log directory
+ (configured through <a href="../util/cfg.itp.html#index:cfgk" class="code">&lt;uasr.dir.log&gt;</a>). It also saves
+ one NLL histogram per HMM in files named <code>hmm_assess-&lt;HMM-id&gt;-&lt;unit-id&gt;.dn3</code>. If the
+ evaluation file list (configured through <a href="../util/cfg.itp.html#index:cfgk"
+ class="code">&lt;uasr.flist.test&gt;</a>) contains a label component, the function will classify each test file by
+ assigning it the label of the HMM giving the lowest NLL for it. By comparing the detected labels to the labels known
+ from the file list, the function computes a label recognition rate which is returned. If the evaluation file list
+ does not contain labels the function returns 1.
+ <p>This function may overwrite <a href="../train/am.itp.html#clp_-HMM_eval"><code
+ class="link">-HMM_eval</code></a>:</p>
+ <pre class="code">&nbsp;
+    /disarm -HMM_assess /disarm <a href="../train/am.itp.html#clp_-HMM_eval" class="code">-HMM_eval</a> =;
+ </pre>
+ <h4>Developers' Notes</h4>
+ <ul>
+   <li>Specify by which HMMs each file is to be assessed?</li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance to be assessed
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+          (typical case for speech recognition)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nSpl</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Number of state splits of HMM to be assessed
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nIte</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Update iteration of HMM to be assessed
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> The label recognition rate or 1 if no correct labels are known.
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.dir.fea&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.dir.model&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.fea.ext&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.flist.test&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.pfa.crate&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.sig.srate&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_eval_fnc">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_eval_fnc</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_eval_fnc','-HMM_eval_fnc','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_eval_fnc</b>(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(633)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Result function to <code>-HMM_process</code> for the evaluation of HMMs.
+ <h4>See also</h4>
+ <ul>
+   <li><a class="code" href="#clp_-HMM_process" class="linklist">-HMM_process</a></li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance being evaluated
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Sensor ID, <code>NULL</code> or empty for one-channel recordings (typical case for speech recognition)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nSpl</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Number of state splits of HMM to be evaluated
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nIte</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Update iteration of HMM to be evaluated
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sHint</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Hint, see documentation of function <a class="code" href="#clp_-HMM_process"
+          class="linklist">-HMM_Process</a>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">file&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iF</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The turn (file) being evaluated
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itRes</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The recognition result of the turn (file) being evaluated
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">object&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iL</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Container for log objects
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> If <code>sHint</code> is "L", the function returns a real number &le;1 indicating the recognition rate over
+         the entire test set, if possible the product of correctness and accuracy. If <code>sHint</code> is "I", the
+         function return "Evaluation". In all other cases it returns 0.
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>__AM_nEtdr</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.sil&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.gbg&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.dir.log&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.dir.trl&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_process">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_process</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_process','-HMM_process','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_process</b>(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(1154)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Decodes a data set of signals (turns) through a recognition network using the
+ Viterbi- or forward-backward-procedure and passes the decoding results to the user defined function
+ <code>sResFnc</code>. The recognition network is built by composing the Kleene closure of all HMMs contained in
+ <code>itHMM</code> with the recognition grammar obtained through <a class="code"
+ href="../util/lm.itp.html#clp_-GRM_get">-GRM_get</a>.
+ <h4>Result Function <code>sResFnc</code></h4>
+ <p>The result function is called from <code>-HMM_process</code> before, during and after processing the turn list.
+ Its signature is</p>
+ <pre class="code">
+ &nbsp;
+ &nbsp;function -HMM_process_result(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)
+ </pre>
+ <p>and its parameters are</p>
+ <table class="indent">
+   <tr><th>Type  </th><th>Identifier</th><th>Description</th></tr>
+   <tr><td>hmm   </td><td><code>itHMM</code></td><td>The HMM set (as described below)</td></tr>
+   <tr><td>string</td><td><code>sSns</code> </td><td>Sensor ID (as described below)</td></tr>
+   <tr><td>number</td><td><code>sSpl</code> </td><td>Split number (as described below)</td></tr>
+   <tr><td>number</td><td><code>sIte</code> </td><td>Iteration number (as described below)</td></tr>
+   <tr><td>string</td><td><code>sHint</code></td><td>
+     One of the following:
+     <table style="margin-top:3pt; margin-bottom:3pt">
+       <tr><td class="hidden">"I"</td><td class="hidden">The first call. The function is expected to return a
+         human-readable text identifying its purpose (e.g. "Evaluation" or "Training iteration").</td></tr>
+       <tr><td class="hidden">"F"</td><td class="hidden">The second call, before the decoding of the first turn of
+         the data set. On this call the function may prepare the container object <code>iL</code> for later use
+         during the processing of individual decoding results, e.g. by creating and initializing <code>data</code>,
+         <code>var</code> or other instances in the container.</td></tr>
+       <tr><td class="hidden">""</td><td class="hidden">Called once per turn with <code>itRes</code> containing the
+         decoding result for that turn. The function may use the data inside the container <code>iL</code>
+         initialized in the first place.</td></tr>
+       <tr><td class="hidden">"L"</td><td class="hidden">The last call, after the decoding of the last turn of the
+         data set. The function is expected to return a real number (preferrably between 0 an 1) indicating the
+         success of the HMM process. On evaluations, this return value might be the product of correctness and
+         accuracy.</td></tr>
+     </table>
+     </td></tr>
+   <tr><td>file</td><td><code>iF</code></td><td>A file list. Its current file specifies the turn being
+     decoded.</td></tr>
+   <tr><td>fst</td><td><code>itRes</code></td><td>The decoding result (only if <code>sHint</code>="")</td></tr>
+   <tr><td>object</td><td><code>iL</code></td><td>Container object for the use of the evaluation function. This
+     instance will be committed on every call to the result function except the very first one
+     (<code>sHint</code>="I").</td></tr>
+ </table>
+ <p>Known result functions are:</p>
+ <ul>
+   <li class="linklist"><a class="code" href="#clp_-HMM_eval_fnc">-HMM_eval_fnc</a></li>
+   <li class="linklist"><a class="code" href="../HMM.xtp.html#clp_-HMM_label_fnc">-HMM_label_fnc</a></li>
+ </ul>
+ <h4>Examples</h4>
+ <h5>1. Using <code>-HMM_process</code> in a script</h5>
+ <p>The following program performs a Viterbi-evaluation of the HMM "0_10" (split 0, iteration 10; a <a
+ href="../util/cfg.itp.html#index:cfgf">configuration file</a> is to be passed as first argument to the
+ script):</p>
+ <pre class="code">
+  &nbsp;
+  &nbsp;"$UASR_HOME/scripts/dlabpro/util/@.itp"   <span class="c-key">include</span>;
+  &nbsp;"$UASR_HOME/scripts/dlabpro/train/am.itp" <span class="c-key">include</span>;
+  &nbsp;"$1" TRUE <a class="code" href="../util/cfg.itp.html#clp_-CFG_init">-CFG_init</a>;
+  &nbsp;"$UASR_HOME/scripts/dlabpro/util/uasr_session.itp" <span class="c-key">include</span>;
+  &nbsp;
+  &nbsp;hmm itHMM;
+  &nbsp;itHMM NULL 1 10 "test" "-HMM_eval_fnc" "TV" -HMM_process;
+ </pre>
+ <h5>2. Modifying the evaluation procedure of <a href="../HMM.xtp.html#clp_trn" class="code">HMM.xtp</a><code>
+ trn</code></h5>
+ <p>HMM training uses <code>-HMM_process</code> for the model evaluation. To implement a custom procedure
+ you need to overwrite the result function, e.g. in your database include script:</p>
+ <pre class="code">
+  &nbsp;
+  &nbsp;function -MY_hmm_eval_func(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)
+  &nbsp;{
+  &nbsp;  sHint "I" == if "My procedure" return; end
+  &nbsp;  sHint "F" == if
+  &nbsp;    <span class="c-cmt"># Do initialization stuff here</span>
+  &nbsp;    0 return;
+  &nbsp;  end
+  &nbsp;  sHint "L" == if
+  &nbsp;    <span class="c-cmt"># Do clean up stuff here</span>
+  &nbsp;    1 return;
+  &nbsp;  end
+  &nbsp;
+  &nbsp;  <span class="c-cmt"># Per turn evaluation stuff goes here</span>
+  &nbsp;  0 return;
+  &nbsp;}
+  &nbsp;
+  &nbsp;/disarm -MY_hmm_eval_fnc /disarm <a class="code" href="#clp_-HMM_eval_fnc">-HMM_eval_fnc</a> =;
+ </pre>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          An HMM set. May be empty in which case the function tries to load the model named
+          "&lt;<code>nSpl</code>&gt;_&lt;<code>nIte</code>&gt;" from the model directory.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+          (typical case for speech recognition)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nSpl</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Number of state splits of HMM, may be -1
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nIte</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Update iteration of HMM, may be -1
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sDatSet</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          File list identifier, see function <a class="code"
+          href="../util/cfg.itp.html#clp_-CFG_get_flist">-CFG_get_flist</a>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sResFnc</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Identifier of user defined result function, see description below
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sMode</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          A string of two characters, the first specifies the decoding
+          constraints, the second specifies the decoder type.
+          <table style="margin-top:3pt">
+            <tr><th>1st char.</th><th>Decoder constraints</th></tr>
+            <tr><td>0</td><td>Free recognition with grammar</td></tr>
+            <tr><td>I</td><td>-- reserved -- (for HMM initialization)</td></tr>
+            <tr><td>F</td><td>Forced alignment on labels with enforcement of the label boundaries</td></tr>
+            <tr><td>L</td><td>Forced alignment on labels (phoneme sequence)</td></tr>
+            <tr><td>T</td><td>Forced alignment on transliteration (word sequence)</td></tr>
+            <tr><th>2st char.</th><th>Decoder type</th></tr>
+            <tr><td>V</td><td>Viterbi</td></tr>
+            <tr><td>F</td><td>-- reserved -- (Forward-backward)</td></tr>
+          </table>
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> a real number &le;1 indicating the recognition rate over the entire
+         test set, typically the product of correctness and accuracy
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.dir.model&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.dir.log&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.dir.fea&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.flist.sep&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.flist.test&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.pfa.crate&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.sig.srate&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.fea.labidx&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-XXM_assess_log">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-XXM_assess_log</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-XXM_assess_log','-XXM_assess_log','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-XXM_assess_log</b>(sFilePref,sFileSuff,idLtb,idFlst,idAsc)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(1399)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Creates or continues the assessment log file and the label confusion matrix. Both files will be written into
+ the log folder. The log file name is "&lt;<code>sFilePref</code>&gt;_assess&lt;<code>sFileSuff</code>&gt;.dn3";
+ the confusion matrix file name is "&lt;<code>sFilePref</code>&gt;_assess-cmx&lt;<code>sFileSuff</code>&gt;.dn3".
+ The log file will always be written, the confusion matrix will only be writte if the configuration key
+ <code>&lt;uasr.am.eval.assess&gt;</code> contains the string "cmx".
+ <p>Present log files will be continued if and only if the configuration key <code>uasr.xvl</code> is
+ <code>TRUE</code>. Otherwise present log files will be overwritten. Please be advised that the
+ <code>uasr.xvl</code> key is <em>not</em> intended to be used in configuration files or on the command line.</p>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFilePref</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Prefix identifying the model ("hmm-&lt;spl&gt-&lt;ite&gt" for HMMs, "svm" for SVM, etc.)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFileSuff</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Suffix identifying the sensor
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLtb</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Label table (component 0 must contain the symbolic labels)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFlst</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The assessment file list with the following component structure:
+          <table>
+            <tr><th>Comp.</th><th>Type  </th><th>Description</th></tr>
+            <tr><td>   0 </td><td>string</td><td>File name</td></tr>
+            <tr><td>   1 </td><td>string</td><td>File label (optional)</td></tr>
+          </table>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idAsc</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The assessment result object (created within <code>-HMM_assess</code> and <code>-SVM_training.xtp</code>)
+          The instance is expected to contain at least <code>idLtb.nrec</code> numeric components and exactly
+          <code>idF.nrec</code> records. Extra components will be ignored. The cells <code>idAsc[nF,nM]</code>
+          contains a distance value (e.g. neglog. likelihood or neglog. probability) of file <code>nF</code> from
+          the model <code>nM</code>.
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> The label recognition rate or -1 if no correct labels are known.
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.eval.assess&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.gbg&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.gbg.thrsh&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.dir.log&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.xvl&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-XXM_assess_hist">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-XXM_assess_hist</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-XXM_assess_hist','-XXM_assess_hist','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-XXM_assess_hist</b>(sFilePref,sFileSuff,idLtb,idFlst,idAsc)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(1516)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Creates per-model NLL histograms.
+ <p>Present histogram files will be continued if and only if the configuration key <code>uasr.xvl</code> is
+ <code>TRUE</code>. Otherwise present histogram files will be overwritten. Please be advised that the
+ <code>uasr.xvl</code> key is <em>not</em> intended to be used in configuration files or on the command line.</p>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFilePref</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Prefix identifying the model ("hmm-&lt;spl&gt-&lt;ite&gt" for HMMs, "svm" for SVM, etc.)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFileSuff</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Suffix identifying the sensor
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLtb</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Label table (component 0 must contain the symbolic labels)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFlst</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The assessment file list with the following component structure:
+          <table>
+            <tr><th>Comp.</th><th>Type  </th><th>Description</th></tr>
+            <tr><td>   0 </td><td>string</td><td>File name</td></tr>
+            <tr><td>   1 </td><td>string</td><td>File label (optional)</td></tr>
+          </table>
+          Can be <code>NULL</code>. In this case <code>idAsc</code> must contain a symbolic component named "REF"
+          which provies the reference labels. If <code>idFlst</code> is not <code>NULL</code> <em>and</em>
+          <code>idAsc</code> contains a reference label component, the function will use the file list labels.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idAsc</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The assessment result object (created within <code>-HMM_assess</code> and <code>-SVM_training.xtp</code>)
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.eval.assess&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.dir.log&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.xvl&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-XVL_partition">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-XVL_partition</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-XVL_partition','-XVL_partition','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-XVL_partition</b>(nPart,idFXvl,idFTrn,idFTst)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(1617)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Get file lists for a cross validation partition
+ <p>This function may be customized through overwriting.</p>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nPart</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Partition index
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFXvl</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Cross validation file list
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFTrn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Will be filled with the training set of the <code>nPart</code>'th partition
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFTst</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Will be filled with the test set of the <code>nPart</code>'th partition
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_Act">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_Act</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_Act','-HMM_Act','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_Act</b>(itHMM,sAct)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(1642)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> HMM Action function
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sAct</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          <p>Comma seperated list of actions</p>
+          <p>
+          Possible actions for topology training: split, bn, up, uprc, hmm, mix, tprun, prun
+          (Description see: <a href="amtopo.itp.html">amtopo.itp</a>)<br>
+          Possible actions for Gaussian parameter reduction: vargm, ldl
+          (Description see: <a href="amgmm.itp.html">amgmm.itp</a>)<br>
+          Configuration keys to use this function: <code>uasr.am.train.act[0-9], uasr.am.train.acta[0-9]_[0-9], uasr.am.train.actb[0-9]_[0-9]</code>
+          (see <a href="../util/cfg.itp.html">Configuration keys</a>)
+          </p>
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_tidyup">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_tidyup</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_tidyup','-HMM_tidyup','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_tidyup</b>(sSns,nSpl,nIte)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(1671)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Removes HMM and log files of one training iteration.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Sensor ID, <code>NULL</code> or empty for one-channel recordings (typical case for speech recognition)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nSpl</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Previous number of state splits of HMM to be split
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nIte</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Number of update iterations of HMM to be split
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_ite">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_ite</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_ite','-HMM_ite','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_ite</b>(iF,sSns,iFI,bBw,bLab,itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(1707)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> DEPRECATED.
+ Being replaced by <a class="code"href="#clp_-HMM_process">-HMM_process</a>.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">file&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iF</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          File list specifying a set feature files to initialize the models from
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+          (typical case for speech recognition)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">object&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iFI</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Feature information object (see ...}
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">boolean&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>bBw</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          <code>TRUE</code> to do a Baum-Welch update, <code>FALSE</code> to
+          do a Viterbi update
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">boolean&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>bLab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          <code>TRUE</code> to do labelwise update, <code>FALSE</code> to do
+          the update without labels
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Acoustic models to be updated
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;sig.srate&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;pfa.crate&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_adapt_fnc">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_adapt_fnc</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_adapt_fnc','-HMM_adapt_fnc','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_adapt_fnc</b>(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(1849)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nSpl</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nIte</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sHint</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iF</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itRes</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iL</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+<div class="footer">End of page</div>
+</body>
+</html>
+

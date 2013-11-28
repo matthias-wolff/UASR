@@ -1,0 +1,1447 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: Primary and secondary feature analysis and synthesis
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Global instances
+FBAproc  __FEA_iSfa;                                                            # Secondary feature analysis processor
+
+
+## == UTILITIES ==                                                              # =====================================
+
+## Loads a feature information object or creates an initial one. The feature
+## information object controls the secondary feature transformation (see
+## function <a href="../util/fea.itp.html#clp_-FEA_sfa"><code
+## class="link">-FEA_sfa</code></a>).
+##
+## <a name="index:iFI" title="Feature information object"></a>
+## <p>The feature information object is structured as follows:</p>
+## <table class="indent">
+##   <tr>
+##     <th><code><b>iFI</b></code></th>
+##     <th>Symbol&nbsp;</th>
+##     <th>Description</th>
+##   </tr>
+##   <tr>
+##     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt04l.gif"> <code>var <b>nDim</b></code></nobr></td>
+##     <td class="hidden">&nbsp;<i>N</i></td>
+##     <td class="hidden">Feature space dimension, sum of most and least
+##       significant dimensions</td>
+##   </tr>
+##   <tr>
+##     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt04l.gif"> <code>data <b>idDlt</b></code></nobr></td>
+##     <td class="hidden">&nbsp;<b><i>&Delta;</i></b></td>
+##     <td class="hidden">Delta computation table (dimension <i>N</i>&times;2,
+##       neutral: zero-matrix)</td>
+##   </tr>
+##   <tr>
+##     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt04l.gif"> <code>data <b>idX</b></code></nobr></td>
+##     <td class="hidden">&nbsp;<i><b>x</b><sub>0</sub></i></td>
+##     <td class="hidden">Feature offset vector (dimension <i>N</i>, neutral:
+##       zero-vector)</td>
+##   </tr>
+##   <tr>
+##     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt04l.gif"> <code>data <b>idW</b></code></nobr></td>
+##     <td class="hidden">&nbsp;<b><i>W</i></b></td>
+##     <td class="hidden">Linear transformation matrix (dimension
+##        <i>N</i>&times;<i>N</i>, neutral: identity matrix)</td>
+##   </tr>
+##   <tr>
+##     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt03l.gif"> <code>data <b>idPrz</b></code></nobr></td>
+##     <td class="hidden">&nbsp;</td>
+##     <td class="hidden">Feature vector component priorization info, e.g.
+##       Eigenvalues in case of PCA or neg. entropies in case of ICA</td>
+##   </tr>
+## </table>
+## <p>If <code>sFile</code> is <code>NULL</code> or an empty string, the
+## function creates a neutral feature information object, i.e. passig it to <a
+## href="../util/fea.itp.html#clp_-FEA_sfa"><code class="link">-FEA_sfa</code
+## ></a> will leave the input feature vectors unchanged.</p>
+##
+## <h4>Remarks</h4>
+## <ul>
+##   <li>The standard secondary feature transformation is <i><b>y</b></i> =
+##   <i><b>W</b></i> &middot; (delta(<i><b>x</b></i>,<i><b>&Delta;</b></i>) +
+##   <i><b>x</b><sub>0</sub></i>), where <i><b>x</b></i> denotes the original
+##   and <i><b>y</b></i> the transformed feature vector.</li>
+## </ul>
+##
+## @cgen:index
+## @param sFile
+##          File name of feature information object to be restored. If
+##          <code>NULL</code> or empty, a neutral feature information object
+##          will be created
+## @param iFI object
+##          An <em>empty</em> object to be initialized
+function -FEA_info(sFile,iFI)
+{
+  data idAux;                                                                   # Auxilary data instance
+  var  nBdim;                                                                   # Base dimension
+  var  nDdim;                                                                   # Number of delta components
+  var  sDltW;                                                                   # Delta weighting vector
+
+  sFile not if "\n// Creating feature information object ..." -MSG; end         # Protocol
+  var  iFI.nDim;                                                                # Dimension of primary feature vector
+  data iFI.idDlt;                                                               # Delta computation table
+  data iFI.idDltW;                                                              # Delta weighting vector
+  data iFI.idX;                                                                 # Feature offset vector
+  data iFI.idW;                                                                 # Linear transformation matrix
+  data iFI.idPrz;                                                               # Priorization info
+  "pfa.dim" 0 -CFG_get nBdim =;                                                 # Get feature dimension w/o deltas
+  -FEA_delta_tab iFI.idDlt =;                                                   # Get delta table
+  ( "sfa.delta.wght" "-1 0 0 0 0 0 1" "S" -CFG_get_ex ) sDltW =;                # Get delta weighting vector
+  { { $[sDltW] } } iFI.idDltW =;                                                # Covert to data
+  sFile if sFile iFI -restore; end                                              # Load feature info object
+  iFI.idX -is_empty not if iFI.idX.dim iFI.nDim =; end                          # Override dimension
+  :not(iFI.idDlt.dim==nBdim) || not(iFI.idDlt.nrec==2): if                      # Delta table corrupt >>
+    iFI.idDlt -is_empty not if "Invalid delta table." 1 -WARNING end            #   Warning if table was not empty
+    -type short nBdim 2 iFI.idDlt -array;                                       #   Create neutral delta table
+  end                                                                           # <<
+  iFI.idDlt NULL 0 "sum" idAux      -aggregate;                                 # Count delta components
+  idAux     NULL 0 "sum" idAux /rec -aggregate;                                 # ...
+  :idAux[0,0]: nDdim =;                                                         # ...
+  :iFI.nDim=ent(nBdim)+nDdim;                                                   # Inc. feature dim. by delta comps.
+  iFI.idX   -is_empty if -type double iFI.nDim 1 iFI.idX -array;   end          # Create neutral feature offset vector
+  iFI.idW   -is_empty if iFI.nDim unit iFI.idW =;                  end          # Create neutral linear trafo. matrix
+  iFI.idPrz -is_empty if -type double iFI.nDim 1 iFI.idPrz -array; end          # Create empty priorization info
+  sFile not if " done (N=$[iFI.nDim], $[nBdim]/$[nDdim])" -MSG; end             # Protocol
+}
+
+## <p>Creates a delta computation table. Non-zero values in the first(second)
+## record of the table define feature vector components for which
+## delta(delta-delta) features shall be computed. For details see documentation
+## of dLabPro method <code>FBAproc -delta</code>.</p>
+## <p>The function is entirely controlled by the session configuration. In any
+## case it returns a table with &lt;uasr.fea.pfa.dim&gt; components (i.e. the
+## dimension of the primary feature vector) and 2 records. The following types
+## of delta tables are supported.</p>
+##
+## <h4>&lt;uasr.sfa.delta&gt;="none"</h4>
+## <p>No delta/delta-delta features will be computed. In this case the function
+## returns a blank table.</p>
+##
+## <h4>&lt;uasr.sfa.delta&gt;="pattern"</h4>
+## <p>The delta table will be built repeating patterns for deltas and
+## delta-deltas. The following configuration values are used (all may be
+## omitted):</p>
+## <table cellpadding="3">
+##   <tr><th>Key</th><th>Type</th><th>Default</th><th>Description</th></tr>
+##   <tr><td><code>uasr.sfa.delta.dpat</code></td><td>string</td><td>"1 0"</td>
+##     <td>Delta pattern, white space sepatated list of ones and zeros</td></tr>
+##   <tr><td><code>uasr.sda.delta.dofs</code></td><td>number</td><td>0</td>
+##     <td>Offset of delta pattern (component index to start pattern at)</td></tr>
+##   <tr><td><code>uasr.sfa.delta.drep</code></td><td>number</td><td>0</td>
+##     <td>Number of repetitions of delta pattern (0 for infinite repetition)</td></tr>
+##   <tr><td><code>uasr.sfa.delta.ddpat</code></td><td>string</td><td>"1 0"</td>
+##     <td>Delta-delta pattern, white space sepatated list of ones and zeros</td></tr>
+##   <tr><td><code>uasr.sfa.delta.ddofs</code></td><td>number</td><td>0</td>
+##     <td>Offset of delta-delta pattern (component index to start pattern at)</td></tr>
+##   <tr><td><code>uasr.sfa.delta.ddrep</code></td><td>number</td><td>0</td>
+##     <td>Number of repetitions of delta-delta pattern (0 for infinite repetition)</td></tr>
+## </table>
+## @cgen:index
+## @return The delta computation table
+function -FEA_delta_tab()
+{
+  ## Local functions                                                            # -------------------------------------
+  function -FEA_delta_tab_pat(sType)                                            # Create delta tab. record from pattern
+  {                                                                             # >>
+    data idPat;                                                                 #   Pattern buffer
+    var  sPat;                                                                  #   Pattern config value
+    var  nOfs;                                                                  #   Pattern offset config value
+    var  nRep;                                                                  #   Pattern repetitions config value
+    "sfa.delta.${sType}pat" "1" "S" -CFG_get_ex sPat -sset;                     #   Get pattern from config. silently
+    { { ${sPat} } } idPat =;                                                    #   Make data instance from pattern
+    "sfa.delta.${sType}ofs" 0 "S" -CFG_get_ex nOfs -vset;                       #   Get offset from config. silently
+    "sfa.delta.${sType}rep" 0 "S" -CFG_get_ex nRep -vset;                       #   Get repets. from config. silently
+    nRep 0 <= if :nRep=(nDim-nOfs)/idPat.dim + 1; end                           #   If <=0 get no.repets. automatically
+    :idPat=(ones(nRep,1).*.idPat)';                                             #   Repeat pattern and transpose
+    nDim idPat -reallocate;                                                     #   In-/deflate to actual dimension
+    idPat nOfs idPat /rec -shift;                                               #   Shift by offset
+    idPat ' return;                                                             #   Transpose back and return
+  }                                                                             # <<
+
+  ## Local variables                                                            # -------------------------------------
+  var  sDelta;                                                                  # Delta table type
+  var  nDim;                                                                    # Dimension of delta table
+  data idDlt;                                                                   # Delta table (return value)
+  
+  "sfa.delta" "" "S" -CFG_get_ex sDelta -sset;                                  # Get delta mode as string
+  "pfa.dim"    0 "S" -CFG_get_ex nDim   -vset;                                  # Get primary fea. dim. as number
+  -type short nDim 2 idDlt -array;                                              # Create blank delta table
+  "sfa" "delta" "," -CFG_get_item 0 < if idDlt return; end                      # Explicitly no deltas
+  sDelta "" == sDelta "none" == ||    if idDlt return; end                      # Explicitly no deltas
+
+  ## Delta pattern                                                              # -------------------------------------
+  sDelta "pattern" == if                                                        # Pattern type >>
+    "d"  -FEA_delta_tab_pat idDlt -copy;                                        #   Make delta pattern
+    "dd" -FEA_delta_tab_pat idDlt -cat;                                         #   Make delta-delta pattern
+    idDlt return;                                                               #   Return delta table
+  end                                                                           # <<
+
+  ## Unknown delta table type                                                   # -------------------------------------
+  "Delta table type \"${sDelta}\" unknown. No delta computation." -ERROR;       # Error message
+  idDlt return;                                                                 # Return blank delta table
+}
+
+## Saves one feature file. The function evaluates the
+## <code>uasr.fea.savecompressed</code> configuration key. If this key exists
+## and its value is <code>TRUE</code>, the feature vectors will be compressed
+## from floating to fixed point type before saving.
+##
+## @cgen:index
+## @param sFile string
+##          Path name of feature file
+## @param idSrc data
+##          Data instance to save
+## @return TRUE if successful, FALSE otherwise
+function -FEA_save(sFile,idSrc)
+{
+  data idAux;                                                                   # Auxilary data instance
+  idSrc idAux -copy;                                                            # Copy source
+  var bCmpr; "fea.savecompressed" FALSE -CFG_get bCmpr -bset;                   # Compress features?
+  bCmpr if idAux idAux -quantize; end                                           # Compress features!
+  sFile idAux /zip -save ?error if                                              # Save to file; failed >>
+    FALSE return;                                                               #   Return FALSE
+  end                                                                           # <<
+  TRUE return;                                                                  # Ok
+}
+
+## Obtains the primary feature vector sequence for one turn and sensor. The turn is defined by the current position of
+## the file list <code>iF</code>. The function is provided for conveniently iterating data sets.
+##
+## <h4>Example</h4>
+## <pre class="code">
+##  &nbsp;
+##  file iF;
+##  data idFea;
+##  ( "test" "" <a href="cfg.itp.html#clp_-CFG_get_flist" class="code">-CFG_get_flist</a> ) iF -set flist;
+##    <span class="c-key">label</span> L_F; iF -next <span class="c-key">if</span>
+##    iF NULL "" idFea -FEA_get;
+##    ...
+##    <span class="c-key">goto</span> L_F;
+##  <span class="c-key">end</span>
+## </pre>
+## 
+## <h4>Remarks</h4>
+## <p>In the (default) automatic mode (<code>sMode</code>="A"), the function proceeds as follows:</p>
+## <ul>
+##   <li>Try to load the feature vector file stored in <a href="cfg.itp.html#index:cfgk"
+##     class="code">&lt;uasr.dir.fea&gt;</a>.</li>
+##   <li>If no such file exists:<ul>
+##     <li>Call <a href="sig.itp.html#clp_-SIG_get" class="code">-SIG_get</a>, </li>
+##     <li><em>Only</em> if <a href="xfg.itp.html#index:cfgk" class="code">&lt;uasr.fea.pm&gt;</a> is
+##      <code>TRUE</code>: load the pitch mark file stored in <a href="cfg.itp.html#index:cfgk"
+##     class="code">&lt;uasr.dir.sig&gt;</a> or, if no such file exists, computes pitchmarks,
+##     <li>Perform the primary feature analysis by calling <a href="fea.itp.html#clp_-FEA_pfa"
+##       class="code">-FEA_pfa</a>, and</li>
+##     <li><em>Only</em> if <a href="xfg.itp.html#index:cfgk" class="code">&lt;uasr.fea.f0&gt;</a> is
+##      <code>TRUE</code>: append the mean fundamental frequency as additional feature vector component.</li>
+##     </ul></li>
+##   <li>If neither a feature vector nor a signal file exists: clear <code>idFea</code> and return <code>FALSE</code>,
+##       otherwise return <code>TRUE</code>.</li>
+## </ul>
+##
+## @cgen:index
+## @param iF file
+##          File list instance
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings (typical case for speech recognition)
+## @param sMode string
+##          Exactly one of the following characters
+##          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+##            <tr><th>Character     </th><th>Description</th></tr>
+##            <tr><td><code>A</code></td><td>Default behavior (see above)</td></tr>
+##            <tr><td><code>F</code></td><td>Load feature file</td></tr>
+##            <tr><td><code>S</code></td><td>Load signal file and perform primary feature analysis</td></tr>
+##          </table>
+##          If empty or invalid, "A" is assumed.
+## @param idFea data
+##          Will be filled with the feature vector sequence
+## @return <code>TRUE</code> if successful, <code>FALSE</code> otherwise.
+## @global .__bCprFea                      CRW
+## @global .__bDirFea                      CRW
+## @global .__bDirSig                      CRW
+## @global .__bF0Fea                       CRW
+## @global .__bExtFea                      CRW
+## @global .__bPmFea                       CRW
+## @global &lt;uasr.dir.fea.&gt;           R
+## @global &lt;uasr.dir.sig.&gt;           R
+## @global &lt;uasr.fea.ext&gt;            R
+## @global &lt;uasr.fea.f0&gt;             R
+## @global &lt;uasr.fea.pm&gt;             R
+## @global &lt;uasr.fea.pm.level&gt;       R
+## @global &lt;uasr.fea.savecompressed&gt; R
+## @global &lt;uasr.sig.srate&gt;          R
+function -FEA_get(iF,sSns,sMode,idFea)
+{
+  ## Check/create session persistent variables                                  # -------------------------------------
+  ".__bCprFea" "var" ?instance not if                                           # Is there a global __bCprFea? No >>
+    var .__bCprFea;                                                             #   Create one
+    ( "fea.savecompressed" FALSE -CFG_get ) .__bCprFea =;                       #   Get compress feature files option
+  end                                                                           # <<
+  ".__sDirFea" "var" ?instance not if                                           # Is there a global __sDirFea? No >>
+    var .__sDirFea;                                                             #   Create one
+    ( "fea" "S" -CFG_get_path ) .__sDirFea =;                                   #   Silently get feature files path
+  end                                                                           # <<
+  ".__sDirSig" "var" ?instance not if                                           # Is there a global __sDirSig? No >>
+    var .__sDirSig;                                                             #   Create one
+    ( "sig" "S" -CFG_get_path ) .__sDirSig =;                                   #   Silently get signal files path
+  end                                                                           # <<
+  ".__bF0Fea" "var" ?instance not if                                            # Is there a global __bF0Fea? No >>
+    var .__bF0Fea;                                                              #   Create one
+    ( "fea.f0" FALSE -CFG_get ) .__bF0Fea =;                                    #   Get F0-as-feature option
+  end                                                                           # <<
+  ".__sExtFea" "var" ?instance not if                                           # Is there a global __sExtFea? No >>
+    var .__sExtFea;                                                             #   Create one
+    ( "fea.ext" "" -CFG_get ) .__sExtFea =;                                     #   Get feature files extension
+    ( .__sExtFea "1" "left" -VAR_strop ) "." == if                              #   Extension has heading period >>
+      .__sExtFea "-1" "right" -VAR_strop ) .__sExtFea =;                        #     Remove it
+    end                                                                         #   <<
+  end                                                                           # <<
+  ".__bPmFea" "var" ?instance not if                                            # Is there a global __bPmFea? No >>
+    var .__bPmFea;                                                              #   Create one
+    ( "fea.pm" FALSE -CFG_get ) .__bPmFea =;                                    #   Get pitch sync. fea. extr. option
+  end                                                                           # <<
+
+  ## Initialize                                                                 # -------------------------------------
+  idFea -reset;                                                                 # Clear destination object
+  ( sSns -SNS_get_ext ) sSns =;                                                 # Make extension out of sensor name
+  var sF; "$[.__sDirFea]/$[iF.sfile]$[sSns].$[.__sExtFea]" sF =;                # Make path name of feature file
+  .__bPmFea if                                                                  # Pitch sync. feature extraction >>
+    PMproc iPM;                                                                 #   Create pitch mark processor
+    "sig.srate" 16000  -CFG_get iPM set srate;                                  #   Configure PM processor
+    "fea.pm.level" 2.0 -CFG_get iPM set level;                                  #   Configure PM processor
+  end                                                                           # <<
+
+  ## Try loading primary feature vector file                                    # -------------------------------------
+  sMode "S" != if                                                               # Feature extraction not forced >>
+    "\n     - loading: $[sF] ..."                                      3 -MSGX; #   Protocol
+    sF idFea /noerror -restore;                                                 #   Try to load features from file
+  end                                                                           # <<
+  idFea -is_empty if                                                            # Force pfa or load failed >>
+
+    sMode "S" != if                                                             #   Feature extaction not forced >>
+      " FAILED (or empty)" 3 -MSGX;                                             #     Protocol
+      sMode "F" == if FALSE return; end                                         #     Loading features forced: error
+    end                                                                         #   <<
+    data idSig;                                                                 #   Signal
+    data idPm;                                                                  #   Pitch marks
+
+    ## Try loading signal file                                                  #   - - - - - - - - - - - - - - - - - -
+    ( iF sSns idSig -SIG_get not ) ( idSig -is_empty ) || if                    #   Load signal file, failed >>
+      "Cannot obtain features. Re-run with option -v3!" 2 -WARNING;             #     This was the last hope ... :�(
+      FALSE return;                                                             #     Return FALSE
+    end                                                                         #   <<
+
+    ## Process pitch                                                            #   - - - - - - - - - - - - - - - - - -
+    .__bPmFea .__bF0Fea || if                                                   #   Processing pitch >>
+      "\n     - pitch sync. analysis"                                  3 -MSGX; #     Protocol
+      "$[.__sDirSig]/$[iF.sfile]$[sSns].pm" sF =;                               #     Make path name of pitch mark file
+      "\n     - loading: $[sF] ..."                                    3 -MSGX; #     Protocol
+      sF "pm" idPm stdfile /noerror -import ?error if                           #     Have NO pitch mark file >>
+        " FAILED, doing pitch analysis ..."                            3 -MSGX; #     Protocol
+        idPm 0 idPm.dim idPm -delete;                                           #       Del. all comps.of PM inst.(?)
+        idSig idPm iPM -analyze;                                                #       Compute pitch marks
+      else                                                                      #     << Have pitch mark file >>
+        idPm -type short idPm -tconvert;                                        #       Convert pitch marks to short
+      end                                                                       #     <<
+    " ok"                                                              3 -MSGX; #     Protocol
+    end                                                                         #   <<
+
+    ## Primary feature analysis                                                 #   - - - - - - - - - - - - - - - - - -
+    .__bPmFea if                                                                #   Pitch sync. feature analysis >>
+      idSig idPm idFea -FEA_pfa;                                                #     Do it
+    else                                                                        #   << Pitch async. feature analysis >>
+      idSig NULL idFea -FEA_pfa;                                                #     Do it
+    end                                                                         #   <<
+
+    ## Add F0 as additional feature component                                   #   - - - - - - - - - - - - - - - - - -
+    ## HACK! Find a general solution for additional feature components!         #
+    .__bF0Fea if                                                                #   Use fundamental freq. as feature >>
+      idPm ( "sig.srate" 16000 -CFG_get ) ( "pfa.crate" 160 -CFG_get )          #     Convert pitch marks to F0 contour
+      idFea.nrec FALSE idF0 -PM2F0;                                             #     |
+      "F0" -type short idFea.dim -- idFea -insertcomp;                          #     Insert F0 feature component
+      :idFea[idFea.dim-2]=idF0[0];                                              #     Copy F0 contour
+    end                                                                         #   <<
+
+  else                                                                          # << Loading features ok >>
+    " ok"                                                              3 -MSGX; #   Protocol
+    .__bCprFea if idFea idFea -dequantize; end                                  #   Decompress features!
+  end                                                                           # <<
+  "($[idFea.nrec] frames)"                                             3 -MSGX; # Protocol
+  "."                                                                    -MSG2; # Protocol
+
+	".idLabMap2" "data" ?instance not if;                                         # Try to load second label map >>
+		data .idLabMap2;                                                            #   |
+    255 2 .idLabMap2 -addncomps;
+		"info" "S" -CFG_get_path "/labmap2.txt" + "ascii" .idLabMap2                #   |
+      stdfile /noerror -import;                                                 #   |
+	end                                                                           # <<
+	.idLabMap2 -is_empty not if;                                                  # Use second label map >>
+		data idAux;                                                                 #   Auxiliary data instance
+		idFea .idLabMap2 idFea.dim 1 - 0 idAux -gen_index;                          #   Find label indices
+		idAux 0 .idLabMap2 1 1 idAux -lookup;                                       #   Map labels
+		0 idFea.dim 1 - idFea -get_cname idAux -set_cname;                          #   Restore component name
+		idFea idFea.dim 1 - 1 idFea -delete;                                        #   Delete old labels
+		idAux idFea -join;                                                          #   Add new labels
+	end                                                                           # <<
+  TRUE return;                                                                  # Ok
+}
+
+## Abstract function to import one external primary feature file.
+##
+## @cgen:index
+## @param sFile string
+##          Path name of external feature file
+## @param idFea data
+##          Data instance to be filled with feature vector sequence
+function -FEA_import(sFile,idFea)
+{
+  idFea -reset;                                                                 # Clear destination instance
+  "Abstract function -FEA_import not configured." -ERROR;                       # Error message
+}
+
+## Imports and compresses a raw spectrogram file. The raw file is expected to
+## contain a sequence of <a href="../util/cfg.itp.html#index:cfgk" class="code">&lt;import.raw.dim&gt;</a>-dimensional
+## vectors. The file starts with the values of the first vector, continues with the values of the second vector and do
+## forth. This function may overwrite
+## <a href="#clp_-FEA_import"><code class="link">-FEA_import</code></a>:
+## <pre class="code">&nbsp;
+##  /disarm -FEA_import_raw /disarm <a href="#clp_-FEA_import" class="code">-FEA_import</a> =;
+## </pre>
+## <h4>Remarks</h4>
+## <ul>
+##   <li>The following data must be provided through <a href="../util/cfg.itp.html#index:cfgk">configuration keys</a>:
+##       <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+##         <tr>
+##           <th>Information</th>
+##           <th>Configuration Key</th>
+##           <th>Default</th>
+##         </tr>
+##         <tr>
+##           <td>Byte order</td>
+##           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.byteorder</a></td>
+##           <td>"" (meaning "do not change")</td>
+##         </tr>
+##         <tr>
+##           <td>Increment between two channels (spectral lines), default 1</td>
+##           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.cinc</a></td>
+##           <td>1</td>
+##         </tr>
+##         <tr>
+##           <td>Physical unit of channel (spectral, component) axis; default: "kHz"</td>
+##           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.cunit</a></td>
+##           <td>"kHz"</td>
+##         </tr>
+##         <tr>
+##           <td>Number of channels in raw file</td>
+##           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.dim</a></td>
+##           <td><code>&lt;uasr.pfa.dim&gt;</code></td>
+##         </tr>
+##         <tr>
+##           <td>Number of records to import</td>
+##           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.nrec</a></td>
+##           <td>-1 (meaning "all")</td>
+##         </tr>
+##         <tr>
+##           <td>Raw data values' type</td>
+##           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.dtype</a></td>
+##           <td>n/a</td>
+##         </tr>
+##         <tr>
+##           <td>Raw header size [bytes]</td>
+##           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.header</a></td>
+##           <td>0</td>
+##         </tr>
+##         <tr>
+##           <td>Time increment between two feature vectors [ms], default 10</td>
+##           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.rinc</a></td>
+##           <td>10</td>
+##         </tr>
+##         <tr>
+##           <td>Output feature vector dimension</td>
+##           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">pfa.dim</a></td>
+##           <td>n/a</td>
+##         </tr>
+##       </table></li>
+##   <li>On verbose level 3 and higher (global variable <a href="uasr.itp.html" class="code">.__UTL_nVlevel</a>) the
+##       function displays a message including length of the imported feature vector sequence in milliseconds.</li>
+##   <li>The function reduces the spectral dimension from <a href="../util/cfg.itp.html#index:cfgk"
+##       class="code">&lt;import.raw.dim&gt;</a> to <a href="../util/cfg.itp.html#index:cfgk"
+##       class="code">&lt;pfa.dim&gt;</a> by averaging adjacent spectral lines.</li>
+##   <li><a href="../util/cfg.itp.html#index:cfgk" class="code">&lt;import.raw.dim&gt;</a> must be an integer multiple
+##       of <a href="../util/cfg.itp.html#index:cfgk" class="code">&lt;pfa.dim&gt;</a>.</li>
+## </ul>
+##
+## @cgen:index
+## @param sFile string
+##          Path name of external feature file
+## @param idFea data
+##          Data instance to be filled with feature vector sequence
+## @global &lt;import.raw.byteorder&gt; R
+## @global &lt;import.raw.cinc&gt;      R
+## @global &lt;import.raw.cunit&gt;     R
+## @global &lt;import.raw.dim&gt;       R
+## @global &lt;import.raw.dtype&gt;     R
+## @global &lt;import.raw.header&gt;    R
+## @global &lt;import.raw.rinc&gt;      R
+## @global &lt;import.raw.nrec&gt;      R
+## @global &lt;import.raw.dim&gt;       R
+## @global .__UTL_nVlevel               R
+function -FEA_import_raw(sFile,idFea)
+{
+  file iF;                                                                      # File import filter
+  var  sByteorder; "import.raw.byteorder" ""      "S" -CFG_get_ex sByteorder =; # Silently get signal byte order
+  var  sStype;     "import.raw.dtype"     "short"     -CFG_get    sStype     =; # Get sampling rate
+  var  nDim;       "pfa.dim"              32          -CFG_get    nDim       =; # Get target dimension
+  var  nRawDim;    "import.raw.dim"       nDim    "S" -CFG_get_ex nRawDim    =; # Silently get number of channels
+  var  nNrec;      "import.raw.nrec"      -1      "S" -CFG_get_ex nNrec      =; # Silently get number of records
+  var  nPool;      nRawDim nDim / nPool =;                                      # Number of components to pool
+  nDim nRawDim == not if                                                        # Averaging vector components >>
+    data idT; :unit(nDim).*.(ones(1,nPool)./nPool): idT =;                      #   Create pooling trafo. matrix
+  end                                                                           # <<
+
+  "\n     - Loading $[sFile] ..."                                      3 -MSGX; # Protocol
+  idFea -reset; -type $[sStype] nRawDim idFea -addncomps;                       # Prepare destination instance
+  sByteorder "" == not if "/$[sByteorder]" sByteorder =; end                    # Make an option out of sByteorder
+  "import.raw.header" 0 "S" -CFG_get_ex iF -set raw_head;                       # Silently get header size
+  sFile "raw" idFea iF $[sByteorder] -import;                                   # Import raw data
+  idFea 0 nNrec idFea /rec -select;                                             # Trim raw data
+  idFea -type double idFea -tconvert;                                           # Convert to double (UASR standard!)
+  nDim nRawDim == not if :idFea=idT*idFea; end                                  # Average nPool adjacent components
+  "import.raw.rinc"  10    "S" -CFG_get_ex idFea -set rinc;                     # Silently get record increment (in ms)
+  "import.raw.cunit" "kHz" "S" -CFG_get_ex idFea -set cunit;                    # Silently get phys. comp. unit
+  ( ( "import.raw.cinc" 1 "S" -CFG_get_ex ) nPool * ) idFea -set cinc;          # Silently get component increment
+  .__UTL_nVlevel 3 >= if                                                        # On verbose level 3 >>
+    " done (${idFea.nrec*idFea.rinc} ms)"                                -echo; #   Protocol
+  end                                                                           # <<
+}
+
+
+## == PRIMARY FEATURE ANALYSIS/SYNTHESIS ==                                     # =====================================
+
+## Sets one field in the session's global FBAproc.
+##
+## @param sField string
+##          the field name
+## @param value any
+##          the new value
+## @param bNoError boolean
+##          Allow or disallow error messages when setting the field 
+function -FBA_set_field(sField,value,bNoError)
+{
+  var sOption; bNoError if "/noerror" else "" end sOption -sset;                # Make option string for -set
+  value "" + "5" "left" -VAR_strop "data:" == if;
+    value "" + "?data:?" "replace" -VAR_strop value =;
+    0 var nId;
+    ".__FBA_data_$[nId]" "" ?instance while nId ++= end;
+    data .__FBA_data_$[nId];
+    $[value] .__FBA_data_0 =;
+    .__FBA_data_0 value =;
+  end;
+  value .__FEA_iPfa $[sOption] -set $[sField] ?error not if                     # Set the field, if successfull >>
+    "\n       - setting $[sField] = $[value]"                         3 -MSGX;  #   Protocol
+  end                                                                           # <<
+}
+
+## Scans the configuration for primary analysis keys and configures the current
+## analysis processor with the respective values.
+##
+## @param sKey string
+##          the fully qualified parent key of the keys to set
+function -FBA_configure(sKey)
+{
+  data idCfg;                                                                   # FBAproc configuration keys
+  data idAux;                                                                   # Auxiliary data instance
+  var  i;                                                                       # Loop counter
+
+  .__CFG_idCfg "$[sKey]." "search" idAux -strop;                                # Find subtree sKey in configuration
+  :idAux[0].==0: .__CFG_idCfg -dmark;                                           # Mark the elements
+  .__CFG_idCfg 0 0 idCfg /mark /noerror -select;                                # Copy them to idCfg
+  .__CFG_idCfg -unmark;                                                         # Clear marks
+  :idCfg[0]: "?$[sKey].?" "replace" idCfg -strop;                               # Trim key names
+  idCfg "." "search" idAux -strop;                                              # Seek keys with children
+  :idAux.>=0: idCfg /comp -dmark; idCfg 0 0 idCfg /mark /noerror -delete;       # Delete them
+  0 i =; label L_CFG; i idCfg.nrec < if                                         # Loop over FBAproc keys >>
+    "${idCfg[i,0]}" ( "$[sKey].${idCfg[i,0]}" "" -CFG_get ) 0 -FBA_set_field;   #   Set field of session's FBAproc
+    i ++=; goto L_CFG;                                                          #   The next one, please ...
+  end                                                                           # <<
+}
+
+## Creates a primary feature analysis/synthesis processor instance.
+## <h4>Remarks</h4>
+## <ul>
+##   <li>If successful, the function creates an instance
+##     <code>.__FEA_iPfa</code> in the global scope.</li>
+##   <li>Applications <em>do not</em> need to call this function. It is
+##     automatically called by the <code>-FEA_[i]pfa</code> functions.</li>
+## </ul>
+##
+## @cgen:index
+## @global .__FEA_iPfa                      CW
+## @global .__FEA_nPfaDim                   CW
+## @global .__FEA_sAnaOpt                   CW
+## @global .__FEA_sSynOpt                   CW
+## @global &lt;uasr.pfa.dim&gt;             R
+## @global &lt;uasr.pfa.crate&gt;           R
+## @global &lt;uasr.pfa.len&gt;             R
+## @global &lt;uasr.pfa.wlen&gt;            R
+## @global &lt;uasr.pfa.FBA.*&gt;           R
+## @global &lt;uasr.pfa.&lt;sType&gt;.*&gt; R
+## @global &lt;uasr.pfa.anaoptions&gt;      R 
+## @global &lt;uasr.pfa.synoptions&gt;      R 
+## @param sType string
+##          The analysis type, see documentation of configuration key
+##          <code>uasr.pfa</code> for accptable values.
+function -FEA_pfa_init(sType)
+{
+  ## Create session persistent variables                                        # -------------------------------------
+  ".__FEA_iPfa"      ""   ?instance     if .__FEA_iPfa -destroy; end            # Destroy previous analysis processor
+  ".__FEA_nPfaDim"  "var" ?instance not if var .__FEA_nPfaDim;   end            # Primary feature vector dimension
+  ".__FEA_sAnaOpt"  "var" ?instance not if var .__FEA_sAnaOpt;   end            # Options on -analyze
+  ".__FEA_sSynOpt"  "var" ?instance not if var .__FEA_sSynOpt;   end            # Options on -synthesize
+
+  ## Create and configure signal analysis/synthesis processor                   # -------------------------------------
+  "\n     - Creating $[sType]proc"                                     3 -MSGX; # Protocol
+  $[sType]proc .__FEA_iPfa;                                                     # Create analysis processor
+
+  ## Default common settings (may be overwritten by pfa.FBA.* keys)             # -------------------------------------
+  ( "pfa.dim" 30 -CFG_get ) .__FEA_nPfaDim  =;                                  # Get primary feature vector dimension
+  "coeff"   .__FEA_nPfaDim TRUE -FBA_set_field;                                 # Reasonably guess no. of coefficients
+  "out_dim" .__FEA_nPfaDim TRUE -FBA_set_field;                                 # Reasonably guess output dimension
+
+  ## Common setting (CANNOT be overwritten by pfa.FBA.* keys)                   # -------------------------------------
+  ## NOTE: these keys have the highest priority because UASR programs rely on   #
+  ##       their values!                                                        #
+  "crate"  ( "pfa.crate"          160     -CFG_get    ) FALSE -FBA_set_field;   # Set frame continuation rate
+  "len"    ( "pfa.len"            512     -CFG_get    ) FALSE -FBA_set_field;   # Set frame length
+  "wlen"   ( "pfa.wlen"           400     -CFG_get    ) FALSE -FBA_set_field;   # Set window length
+  "wtype"  ( "pfa.window"  "Blackman" "S" -CFG_get_ex ) FALSE -FBA_set_field;   # Set window
+  "srate"  ( "sig.srate"        16000     -CFG_get    ) FALSE -FBA_set_field;   # Set sampling rate
+
+  ## Set all fields mentioned in the configurarion                              # -------------------------------------
+  "uasr.pfa.FBA"      -FBA_configure;                                           # Configure FBAproc
+  "uasr.pfa.$[sType]" -FBA_configure;                                           # Configure <sType>proc
+
+  ## Options on -analyze and -synthesize                                        # -------------------------------------
+  ( "pfa.anaoptions" "" "S" -CFG_get_ex ) .__FEA_sAnaOpt -sset;                 # Initialize options on -analyze
+  ( "pfa.synoptions" "" "S" -CFG_get_ex ) .__FEA_sSynOpt -sset;                 # Initialize options on -synthesize
+  .__FEA_sAnaOpt if "\n       - $[.__FEA_sAnaOpt] -analyze"    3 -MSGX; end     # Protocol
+  .__FEA_sSynOpt if "\n       - $[.__FEA_sSynOpt] -synthesize" 3 -MSGX; end     # Protocol
+
+  ## Analysis-dependent check-up                                                # -------------------------------------
+  "-$[sType]_check" "function" ?instance if                                     # Have a check function >>
+    "\n     - Checking $[sType]proc"                                   3 -MSGX; #   Proudly tell everybody 
+    -$[sType]_check;                                                            #   Call it
+  end                                                                           # <<
+  .__UTL_nVlevel 4 >= if .__FEA_iPfa -status; end                               # Protocol
+}
+
+## Primary feature analysis. This is a standard implementation; the function may
+## be overwritten:
+## <pre class="code">
+##  /disarm <a href="#clp_-FEA_pfa_ext"><code class="link">-FEA_pfa_ext</code></a> /disarm -FEA_pfa =;</pre>
+##
+## @cgen:index
+## @global .__FEA_iPfa     RW
+## @global .__FEA_sAnaOpt  R
+## @param idSig data
+##          Signal to be analyzed, must contain exactly one numeric component,
+##          may contain one label component.
+## @param idPM data
+##          Pitch marks for pitch synchronous analysis, may be NULL
+## @param idFea data
+##          Will be filled with the Melfilter output vectors. Labels will be
+##          copied from <code>idSig</code>.
+## @see -FEA_ipfa
+## @see -FEA_pfa_init
+function -FEA_pfa(idSig,idPM,idFea)
+{
+  ## Initialize                                                                 # -------------------------------------
+  idSig idFea == if data idS; else var idS; end idSig idS =;                    # idSig -> idS
+  idFea -reset;                                                                 # Clear feature vector sequence
+
+  ## Validation                                                                 # -------------------------------------
+  ".__FEA_iPfa" "" ?instance not if                                             # No FBAproc present >> 
+    ( "pfa" "" -CFG_get ) -FEA_pfa_init;                                        #   Create one
+  end                                                                           # <<
+  ".__FEA_iPfa" "" ?instance not if                                             # Check session's FBAproc (failed) >>
+    "Could not get primary feature analysis processor" -ERROR; leave;           #   Error
+  end                                                                           # <<
+  :idS.rinc != (1000/.__FEA_iPfa.srate): if                                     # Sampling rate mismatch >> 
+    "Unexpected sampling rate (signal: ${idS.rinc}, "                           #   Warn
+    "FBAproc: ${1000/.__FEA_iPfa.srate})." + 1 -WARNING;                        #   |
+  end                                                                           # <<
+
+  ## Do analysis                                                                # -------------------------------------
+  idS idPM idFea NULL .__FEA_iPfa $[.__FEA_sAnaOpt] -analyze;                   # Run feature analysis
+}
+
+## Primary feature synthesis. This is a standard implementation; the function
+## may be overwritten:
+## <pre class="code">&nbsp;
+##  /disarm <a href="#clp_-FEA_ipfa_CP"><code class="link">-FEA_ipfa_CP</code></a> /disarm -FEA_ipfa =;
+## </pre>
+##
+## @cgen:index
+## @global .__FEA_iPfa    RW
+## @global .__FEA_sSynOpt R
+## @param idFea data
+##          The features
+## @param idSig data
+##          Data instance to be filled with the signal
+function -FEA_ipfa(idFea,idPM,idSig)
+{
+  ## Initialize                                                                 # -------------------------------------
+  idSig -reset;                                                                 # Clear feature vector sequence
+
+  ## Validation                                                                 # -------------------------------------
+  ".__FEA_iPfa" "" ?instance not if                                             # No FBAproc present >> 
+    ( "pfa" "" -CFG_get ) -FEA_pfa_init;                                        #   Create one
+  end                                                                           # <<
+  ".__FEA_iPfa" "" ?instance not if                                             # Check session's FBAproc (failed) >>
+    "Could not get primary feature synthesis processor" -ERROR; leave;          #   Error
+  end                                                                           # <<
+
+  ## Do synthesis                                                               # -------------------------------------
+  #data idPitch;                                                                # Pitch
+  #data idEx;                                                                   # Amplitude modulated pitch
+  #idPM -type short idPitch -tconvert;                                          # TODO: amplitude modulation of excitation 
+  #idFea idPitch idEx  .__FEA_iPfa -modEx2;                                     # data is broken. FIXME!
+  idFea idPM idSig .__FEA_iPfa $[.__FEA_sSynOpt] -synthesize;                   # Run signal synthesis
+}
+
+## Dummy primary feature analysis if primary features are imported rather than
+## computed by a signal anaylsis. This function may
+## overwrite <a href="#clp_-FEA_pfa"><code class="link">-FEA_pfa</code></a>:
+## <pre class="code">&nbsp;
+##  /disarm -FEA_pfa_ext /disarm <a href="#clp_-FEA_pfa"><code class="link">-FEA_pfa</code></a> =;
+## </pre>
+##
+## @cgen:index
+## @param idSig data
+##          Signal to be analyzed, must contain exactly one numeric component,
+##          may contain one label component.
+## @param idPM data
+##          Not used
+## @param idFea data
+##          Will be filled with a copy of <code>idSig</code>.
+function -FEA_pfa_ext(idSig,idPM,idFea)
+{
+  "Cannot compute external features." -ERROR;                                   # Error message
+}
+
+## Dummy primary feature synthesis if primary features are imported rather than
+## computed by a signal anaylsis. This function may overwrite <a
+## href="#clp_-FEA_ipfa"><code class="link">-FEA_ipfa</code></a>.
+function -FEA_ipfa_ext(idSig,idPM,idFea)
+{
+  "Cannot synthesize external features." -ERROR;                                # Error message
+}
+
+## Dummy primary feature analysis if no primary features analysis is done an the
+## signal is used as "features". This function may overwrite <a
+## href="#clp_-FEA_pfa"><code class="link">-FEA_pfa</code></a>.
+function -FEA_pfa_none(idSig,idPM,idFea)
+{
+  idSig idFea -copy;                                                            # Just copy data
+}
+
+## Dummy primary feature analysis if no primary features analysis is done an the
+## signal is used as "features". This function may overwrite <a
+## href="#clp_-FEA_ipfa"><code class="link">-FEA_ipfa</code></a>.
+function -FEA_ipfa_none(idSig,idPM,idFea)
+{
+  idFea idSig -copy;                                                            # Just copy data
+}
+
+## Primary feature analysis through short-term log-magnitude spectrum. Figure 1
+## shows what the function does in detail.
+## <p class="figure"><nobr>
+##   <object data="../../resources/figures/FeaAnalysisLmag.svg" type="image/svg+xml" width="567" height="754">
+##     <param name="src" value="../../resources/figures/FeaAnalysisLmag.svg">
+##     <img src="../../resources/figures/FeaAnalysisLmag.png" alt="Figure 1: Computation of short term (log-) magnitude spectrum" width="567" height="754">
+##   </object><a href="../../resources/figures/FeaAnalysisLmag.svg" target="_blank"><img src="../../resources/zoom.gif" width="17"
+##   height="17" border="0" alt="Enlarge image"></a></nobr></p>
+## <p class="figure">Figure 1: Computation of short term (log-) magnitude spectrum</p>
+##
+## <p>This function may overwrite <a href="#clp_-FEA_pfa" class="code">-FEA_pfa</a>:</p>
+## <pre class="code">&nbsp;
+## /disarm -FEA_pfa_lmag /disarm <a href="#clp_-FEA_pfa"><code class="link">-FEA_pfa</code></a> =;</pre>
+##
+## <h4>Remarks</h4>
+## <ul>
+##   <li>When used for the first time in a session, the function calls <a href="#clp_-FEA_pfa_init"
+##     class="code">-FEA_pfa_init</a><code>("FFT")</code> in order to initialize the underlying <code>FFTproc</code>.
+##     Most of the configuration values and global variables listed below are accessed from <a
+##     href="#clp_-FEA_pfa_init" class="code">-FEA_pfa_init</a> rather than from <code>-FEA_pfa_lmag</code>.</li>
+##   <li>The output dimension is clipped to 2<sup><a href="cfg.itp.html#index:cfgk"
+##     class="code">&lt;uasr.pfa.FFT.order&gt;</a>-1</sup> or &lt;uasr.pfa.dim&gt;, whichever is smaller.</li>
+##   <li>The trailing (<a href="cfg.itp.html#index:cfgk" class="code">&lt;uasr.pfa.wlen&gt;</a> / <a
+##     href="cfg.itp.html#index:cfgk" class="code">&lt;uasr.pfa.crate&gt;</a>) -1 vectors will be trimmed (as their
+##     zero padding distorts the spectrum).</li>
+## </ul>
+##
+## @cgen:index
+## @param idSig data
+##          Signal to be analyzed, must contain exactly one numeric component,
+##          may contain one label component.
+## @param idPM data
+##          Pitch marks for pitch synchronous analysis, may be <code>NULL</code>
+## @param idFea data
+##          Will be filled with the primary output vectors. Labels will be
+##          copied from <code>idSig</code>.
+## @global .__FEA_iPfa                CRW
+## @global .__FEA_nPfaDim             CRW
+## @global .__FEA_nPfaCavg            CRW
+## @global &lt;uasr.pfa.cavg&gt;      R
+## @global &lt;uasr.pfa.dim&gt;       R
+## @global &lt;uasr.pfa.crate&gt;     R
+## @global &lt;uasr.pfa.FFT.order&gt; R
+## @global &lt;uasr.pfa.preem&gt;     R
+## @global &lt;uasr.pfa.window&gt;    R
+## @global &lt;uasr.pfa.wlen&gt;      R
+function -FEA_pfa_lmag(idSig,idPM,idFea)
+{
+  var nTrim;                                                                    # Number of zero-padded vectors to trim
+
+  ## Validation                                                                 # -------------------------------------
+  ".__FEA_iPfa" "" ?instance not if                                             # Have no analysis processor >>
+    "FFT" -FEA_pfa_init;                                                        #   Create one
+    ".__FEA_iPfa" "" ?instance not if                                           #   Check session's FBAproc (failed) >>
+      "Could not get primary feature analysis processor" -ERROR; leave;         #     Error
+    else                                                                        #   << ok, do special initialization
+      :pow(2,.__FEA_iPfa.order-1): .__FEA_iPfa -set out_dim;                    #     Set anti aliasing lowpass cutoff
+    end                                                                         #   <<
+  end                                                                           # <<
+
+  ## Initialize                                                                 # -------------------------------------
+  idFea -reset;                                                                 # Clear feature vector sequence
+
+  ## Do analysis                                                                # -------------------------------------
+  idSig NULL idFea NULL .__FEA_iPfa /rmdc /lmag $[.__FEA_sAnaOpt] -analyze;     # Calculate power spectrum
+  :idFea = idFea * 20;                                                          # Compute decibels
+  idFea idFea -FEA_cavg;                                                        # Do spectral averaging
+  ( ( idFea.dim -- ) idFea -get_comp_type ) 256 < if                            # Have labels >>
+    idFea .__FEA_nPfaDim :idFea.dim-.__FEA_nPfaDim-1: idFea -delete;            #   Final low pass preserving labels
+  else                                                                          # << Don't have labels >>
+    idFea .__FEA_nPfaDim :idFea.dim-.__FEA_nPfaDim: idFea -delete;              #   Final low pass
+  end                                                                           # <<
+  :nTrim = ent((idSig.nrec-.__FEA_iPfa.wlen)/.__FEA_iPfa.crate)+1;              # No. of non-zero-padded frames ...
+  idFea 0 nTrim idFea /rec -select;                                             # ... to keep
+}
+
+## Place holder for primary feature synthesis from short-term log-magnitude
+## spectrum. This function may overwrite <a href="#clp_-FEA_ipfa"><code
+## class="link">-FEA_ipfa</code></a>.
+##
+## @param idFea data
+##          The features
+## @param idSig data
+##          Data instance to be filled with the signal
+function -FEA_ipfa_lmag(idSig,idPM,idFea)
+{
+  idSig -reset;                                                                 # Clear destination instance
+  "Function '-FEA_ipfa_FWT' not implemented." -ERROR;                           # Error message
+}
+
+## Primary feature analysis through fast Wavelet transform. This function may
+## overwrite <a href="#clp_-FEA_pfa"><code class="link">-FEA_pfa</code></a>.
+##
+## <h4>Developers' Notes</h4>
+## <ul>
+##   <li>This function does special post-processing of the FWT features which
+##     should either be removed or applied to <em>all</em> feature extractions.
+##     </li>
+## </ul>
+##
+## @cgen:index
+## @global .__FEA_iPfa    RW
+## @global .__FEA_sAnaOpt R
+## @param idSig data
+##          Signal to be analyzed, must contain exactly one numeric component,
+##          may contain one label component.
+## @param idPM data
+##          Pitch marks for pitch synchronous analysis, may be NULL
+## @param idFea data
+##          Will be filled with the Melfilter output vectors. Labels will be
+##          copied from <code>idSig</code>.
+function -FEA_pfa_FWT(idSig,idPM,idFea)
+{
+  var nTrim;
+
+  ## Validation                                                                 # -------------------------------------
+  ".__FEA_iPfa" "" ?instance not if "FWT" -FEA_pfa_init; end                    # Check/create FWTproc
+  ".__FEA_iPfa" "" ?instance not if                                             # Check session's FBAproc (failed) >>
+    "Could not get primary feature analysis processor" -ERROR; leave;           #   Error
+  end                                                                           # <<
+
+  ## Initialize                                                                 # -------------------------------------
+  idFea -reset;                                                                 # Clear feature vector sequence
+
+  ## Do analysis                                                                # -------------------------------------
+  idSig NULL idFea NULL __FEA_iPfa $[.__FEA_sAnaOpt] -analyze;                  # Calculate fast wavelet transform
+
+  ## Post-processing                                                            # -------------------------------------
+  ( ( idFea.dim -- ) idFea -get_comp_type ) 256 < if                            # Have labels >>
+    idFea .__FEA_nPfaDim :idFea.dim-.__FEA_nPfaDim-1: idFea -delete;            #   Final low pass preserving labels
+  else                                                                          # << Don't have labels >>
+    idFea .__FEA_nPfaDim :idFea.dim-.__FEA_nPfaDim: idFea -delete;              #   Final low pass
+  end                                                                           # <<
+  :nTrim = ent((idSig.nrec-.__FEA_iPfa.wlen)/.__FEA_iPfa.crate)+1;              # No. of non-zero-padded frames ...
+  idFea 0 nTrim idFea /rec -select;                                             # ... to keep
+}
+
+## Place holder for FWT primary feature synthesis. This function may overwrite
+## <a href="#clp_-FEA_ipfa"><code class="link">-FEA_ipfa</code></a>.
+##
+## @param idFea data
+##          The features
+## @param idSig data
+##          Data instance to be filled with the signal
+function -FEA_ipfa_FWT(idFea,idPM,idSig)
+{
+  idSig -reset;                                                                 # Clear destination instance
+  "Function '-FEA_ipfa_FWT' not implemented." -ERROR;                           # Error message
+}
+
+## Checks the FTTproc
+function -FTT_check()
+{
+  var nLen; ( "pfa.wlen" 4 -CFG_get ) nLen -vset;                               # Get window length
+  ( "pfa.len" 4 -CFG_get ) nLen != if                                           # <pfa.len> != <pfa.wlen> >>
+    "<pfa.len> must be equal to <pfa.wlen>! Setting to $[nLen]." 1 -WARNING;    #   Not good ...
+  end                                                                           # <<
+  ( "pfa.crate" 4 -CFG_get ) nLen != if                                         # <pfa.crate> != <pfa.wlen> >>
+    "<pfa.crate> must be equal to <pfa.wlen>! Setting to $[nLen]." 1 -WARNING;  #   Not good ...
+  end                                                                           # <<
+  nLen .__FEA_iPfa -set wlen;                                                   # Set window length
+  nLen .__FEA_iPfa -set len;                                                    # Set frame length
+  nLen .__FEA_iPfa -set crate;                                                  # Set frame continuation rate
+  ( "sig.srate" 16000 -CFG_get ) .__FEA_iPfa -set srate;                        # Set sampling rate
+  ( "pfa.window" "Rectangle" "S" -CFG_get_ex ) "Rectangle" != if                # Set window not "Rectangle" >>
+    "<pfa.window> must be \"Rectangle\"! Corrected." 1 -WARNING;                #   Not good ...
+  end                                                                           # <<
+}
+
+
+## == SECONDARY FEATURE ANALYSIS/SYNTHESIS ==                                   # =====================================
+
+## Secondary feature analysis.
+##
+## @cgen:index
+## @param idFea data
+##          The primary feature vectors
+## @param iFI object
+##          Feature information object
+## @param nMsf number
+##          Number of most significant secondary features (MSF) or -1 to
+##          indicate all features are "most" significant
+## @param idMsf data
+##          Data instance to be filled with the most significant secondary
+##          features, may be <code>NULL</code>
+## @param idLsf data
+##          Data instance to be filled with the least significant secondary
+##          features, may be <code>NULL</code>
+function -FEA_sfa(idFea,iFI,nMsf,idMsf,idLsf)
+{
+  ## Initialize                                                                 # -------------------------------------
+  .__FEA_iSfa.delta_table NULL == if
+    data idDlt;  iFI.idDlt  idDlt  =; idDlt  .__FEA_iSfa -set delta_table;
+    data idDltW; iFI.idDltW idDltW =; idDltW .__FEA_iSfa -set delta_weights;
+    .__FEA_iSfa -internalize *;                                                 # HACK: will cause a crash otherwise
+                                                                                # when accessed outside this function!
+  end
+
+  ## Do transformations                                                         # -------------------------------------
+  idFea idMsf .__FEA_iSfa -delta;                                    "." -MSG2; # idFea = delta(idFea,idDlt)
+  iFI.idW idMsf iFI.idX + * idMsf =;                                 "." -MSG2; # idFea = iFI.idW*(idFea+iFI.idX)
+
+  ## Split MSF and LSF                                                          # -------------------------------------
+  nMsf 0 < if leave; end                                                        # Do not split -> that's it
+  var  nIcLab;                                                                  # Component index
+  var  nLsf;                                                                    # Number of LSF'S
+  data idF;                                                                     # Copy of idFea
+  data idLab;                                                                   # Labels
+  idMsf idF =;                                                                  # Copy transformed feature vectors
+  idF.dim nIcLab =;                                                             # Get number of tailing label comps.
+  label L_LAB;                                                                  # ...
+  nIcLab 0 > nIcLab 1 - idF -get_comp_type 256 <= && if                         # ...
+    nIcLab --=; goto L_LAB;                                                     # ...
+  end                                                                           # ...
+  nMsf 0 < if nIcLab nMsf =; end                                                # Number of MSF's not spec. --> all
+  nMsf nIcLab > if nIcLab nMsf =; end                                           # To many MSF's spec. --> existing
+  nIcLab nMsf - nLsf =;                                                         # Compute number of LSF's
+  idF nIcLab idF.dim nIcLab - idLab -select;                                    # Copy labels
+  idMsf if idF 0    nMsf idMsf -select; idLab idMsf -join; end                  # Copy MSF's
+  idLsf if idF nMsf nLsf idLsf -select; idLab idLsf -join; end       "." -MSG2; # Copy LSF's
+}
+
+## Inverse secondary feature analysis.
+##
+## @cgen:index
+## @param idMsf data
+##          The most significant secondary features
+## @param idLsf data
+##          The least significant secondary features
+## @param iFI object
+##          Feature information object
+## @param idFea data
+##          Data instance to be filled with the primary feature vectors
+function -FEA_isfa(idMsf,idLsf,nDim,iFI,idFea)
+{
+  data idAux;
+
+  ## Join MSF and LSF
+  idMsf idFea =;
+  idLsf idFea -join;
+
+  ## Do transformation                                                          # -------------------------------------
+  iFI.idW inv idFea * iFI.idX - idFea =;                             "." -MSG2; # idFea = idFea * inv(iFI.idW) - iFI.idX  
+  idFea 0 nDim idFea -select;
+}
+
+## Computes a PCA feature transformation matrix from a data set.
+##
+## @cgen:index
+## @param iF file
+##          File list defining a set of feature files to gather the PCA
+##          statistics from
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+##          (typical case for speech recognition)
+## @param idLtb data
+##          Label table
+## @param nMsf number
+##          Number of most significant secondary features (MSF) or -1 to
+##          indicate all features are "most" significant
+## @param iFI object
+##          Feature information object, the function will modify the fields
+##          <code>iFI.idW</code> and <code>iFI.idPrz</code>
+function -FEA_pca(iF,sSns,idLtb,nMsf,iFI)
+{
+  statistics iS;
+  data       idAux;                                                             # Auxilary data instance #1
+  data       idCov;                                                             # Covariance matrices
+  data       idV;                                                               # Eigenvector matrix
+  data       idL;                                                               # Eigenvalue matrix
+  var        nCond;                                                             # PCA matrix condition number
+  var        sDirLog;                                                           # Log directory
+
+  ## Initialize                                                                 # -------------------------------------
+  nMsf 0 < if idV.dim nMsf =; end                                               # Number of MSF's not spec. --> all
+
+  ## PCA statistics                                                             # -------------------------------------
+  "\n\n   PCA statistics "                                                -MSG; # Protocol
+  iF sSns idLtb iFI iS -FEA_stat;                                               # Gather feature PCA statistics
+
+  ## Compute PCA transformation matrix                                          # -------------------------------------
+  "\n   Computing PCA transformation matrix "                             -MSG; # Protocol
+  idAux iS /sn -cov;                                                            # Get covariance matrix
+  idAux NULL 0 "mean" idCov /block -aggregate;                        "." -MSG; # Compute mean covariance matrix
+  idCov idV idL matrix -eigen;                                        "." -MSG; # Eigenvector transformation
+  :iFI.idW   = idV'*iFI.idW;                                                    # Compute new linear trafo. matrix
+  :iFI.idPrz = mdiag(idL);                                            "." -MSG; # Compute priorization info
+  :nCond = idL[0,0]/idL[nMsf-1,nMsf-1];                                         # Compute PCA matrix condition number
+  " done (cond=$[nCond])"                                                 -MSG; # Protocol
+
+  ## Check condition number of PCA matrix                                       # -------------------------------------
+  nCond 1000 > if                                                               # PCA matrix ill-conditioned >>
+    "PCA matrix ill-conditioned. Use fewer MSFs?" 1                   -WARNING; #   Warning message
+  end                                                                           # <<
+
+  ## Log covariance matrix and eigenvalues                                      # -------------------------------------
+  var bNwr; FALSE bNwr =;                                                       # Write protection flag
+  ".__CFG_bNwr" "var" ?instance if .__CFG_bNwr bNwr =; end                      # Copy global (if exists)
+  bNwr not if                                                                   # Not write-protected >>
+    "log" "S" -CFG_get_path sDirLog =;                                          #   Get log folder silently
+    var sExt; ".dn3" sExt =; sSns if ".$[sSns]$[sExt]" sExt =; end              #   Make file extension
+    "$[sDirLog]/cov$[sExt]"   idCov       /zip -save;                           #   Save covariance matrix
+    "$[sDirLog]/eigen$[sExt]" iFI.idPrz ' /zip -save;                           #   Save eigenvectors
+  end                                                                           # <<
+
+  ## -- PIMP PCA WITH NEGENTROPY PRIORIZATION -->
+#  "\n\n   NEGENTROPY PRIORIZATION OF PCA MATRIX" -MSG;
+#  data idXca;
+#  data idNent;
+#  iFI.idLft idXca -copy;
+#  iFI.idLft -reset;
+#  iFI.idPrz -reset;
+#  iF sSns iFI idXca idNent -FEA_priorize;
+#  idXca iFI.idLft -copy;
+#  :idNent[0]=.log(idNent[0]);
+#  "log" "" -CFG_get_path "/idNent.xml" + idNent /xml -save;
+  ## <--
+}
+
+## Permutates a linear feature transformation (PCA or ICA) matrix such that
+## applying the transformation will yield components ordered by descending
+## negative entropy. The function estimates the skewness and excess of the
+## feature vectors transformed through <code>idXca</code> from the specified
+## file list. Before transforming the features through <code>idXca</code>, all
+## transformations specified by <code>iFI</code> (i.e. delta computation,
+## normalization, PCA and ICA) will be applied.
+##
+## <h4>Remarks</h4>
+## <ul>
+##   <li>If you use the function to priorize the PCA or ICA transformation
+##     matrices in <code>iFI</code> make sure to reset the respective instance
+##     in <code>iFI</code> prior to calling the function and pass its contents
+##     separately as <code>idXca</code>. Otherwise the feature vectors will be
+##     multiplied with the transformation matrix twice!</li>
+## </ul>
+##
+## @cgen:index
+## @param iF file
+##          File list defining a set of feature files to gather statistics from
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+##          (typical case for speech recognition)
+## @param iFI object
+##          Feature information object
+## @param idXca data
+##          Linear feature transformation matrix, will be permutated
+## @param idNent data
+##          Will be filled with the negative entropies of the vector components
+##          after permutation, may be <code>NULL</code>
+function -FEA_priorize(iF,sSns,iFI,idXca,idNent)
+{
+  statistics iS;                                                                # Feature statistics
+  data       idFea;                                                             # Feature vectors of one turn
+  data       idSkew;                                                            # Skewness of statistics
+  data       idExcs;                                                            # Excess (Kurtosis) of statistics
+  data       idJ;                                                               # Neg. entropies
+  data       idJs;                                                              # Neg. entropies, sorted
+  data       idE;                                                               # Unit matrix
+  data       idI;                                                               # Sort index
+  data       idP;                                                               # Permutation matrix
+  var        i;                                                                 # Generic loop index
+
+  "\n   Priorizing XCA transformation matrix by neg. entropy"  -MSG; 0 1 -PBAR; # Protocol and begin progress bar
+  "\n   - Gathering statistics from $[iF.len] samples ..."               -MSG2; # Protocol (verbose level 2)
+  4 iFI.nDim 1 NULL 0 iS -setup;                                                # Setup statistics
+  iF -reset; label L_FILE; iF -next if                                          # Loop over files >>
+    "\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "                   -MSG2; #   Protocol
+    :(iF.nfile+1)/iF.len: 1 -PBAR;                                              #   Display progress
+    iF sSns "A" idFea -FEA_get not if goto L_FILE end;               "." -MSG2; #   Load feature file
+    idFea iFI -1 idFea NULL -FEA_sfa;                                "." -MSG2; #   Call secondary feature analysis
+    idXca idFea * idFea =;                                           "." -MSG2; #   Whiten feature vectors
+    idFea -1 NULL iS -update;                                     ". ok" -MSG2; #   Update statistics
+    goto L_FILE;                                                                #   End of file loop
+  end                                                                           # <<
+  "\n  " -MSG2; "done\n" -MSG;                                                  # Protocol
+
+  "\n   - Computing permutation "                                        -MSG2; # Protocol (verbose level 2)
+  idSkew iS -skew;                                                              # Get skewness
+  idExcs iS -excs;                                                              # Get excess
+  idSkew.dim unit idE =                                                         # Make unit matrix  
+  :idJ = 1/12.*(idSkew').^2 + 1/48.*(idExcs').^2;                               # Compute neg. entropy
+  idJ 0 idJs -sortdown;                                                         # Sort neg. entropy vector
+  idJs idJ 0 0 idI -gen_index;                                                  # Generate sort index
+  idNent if idJs idNent -copy; idI idNent -join; end                 "." -MSG2; # Copy sorted neg. entropies
+  label L_PERM; i idSkew.dim < if                                               # Loop over vector dimensions >>
+    :idE[idI[i,0]]: ' idP -cat;                                                 #   Use index to generate permutation
+    i ++=; goto L_PERM;                                                         #   End of loop
+  end                                                                "." -MSG2; # <<
+  idXca ' idP * ' idXca =;                                           "." -MSG2; # Permutate transformation matrix
+                                                                                # NOTE: transposition by convention!
+  " done"                                                                -MSG2; # Protocol (verbose level 2)
+}
+
+## == FEATURE STATISTICS ==                                                     # =====================================
+
+## Gather feature statistics.
+##
+## @cgen:index
+## @param iF file
+##          File list defining a set of feature files to gather statistics from
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+##          (typical case for speech recognition)
+## @param idLtb data
+##          Label table of multiclass statistics, may be NULL to gather a single
+##          class ("pool") statistics
+## @param iFI object
+##          Feature information object
+## @param iS statistics
+##          Statistics instance to be gatherd
+## @return nothing
+function -FEA_stat(iF,sSns,idLtb,iFI,iS)
+{
+  var  K;                                                                       # Number of statistics classes
+  var  F;                                                                       # Number of defective turns
+  data idFea;                                                                   # Feature vector sequence
+  data idAux;                                                                   # Auxilary data instance
+
+  ## Initialize                                                                 # -------------------------------------
+  idLtb if idLtb.nrec K =; else 1 K =; end                                      # Get number of statistics classes
+  4 iFI.nDim K idLtb 0 iS -setup;                                               # Create statistics
+  iF -reset;                                                                    # Rewind file list
+  "" iF -set path;                                                              # Clear path
+  "" iF -set ext;                                                               # Clear file extension
+
+  ## Gather statistics                                                          # -------------------------------------
+  "\n   Gathering feature statistics (N=$[iFI.nDim], K=$[K], I=$[iF.len])"-MSG; # Protocol
+  0 1 -PBAR;                                                                    # Begin progress bar
+  label L_FILE                                                                  # Head of file loop
+  iF -next if                                                                   # Get next file >>
+    "\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "                   -MSG2; #   Protocol
+    :(iF.nfile+1)/iF.len: 1 -PBAR;                                              #   Display progress
+    iF sSns "A" idFea -FEA_get not if F ++=; goto L_FILE; end        "." -MSG2; #   Load feature file
+    idFea iFI -1 idFea NULL -FEA_sfa;                                "." -MSG2; #   Call secondary feature analysis
+    idFea -1 NULL iS /label -update ?error if                                   #   Update statistics, on error >>
+      .__UTL_nVlevel 1 <= if "in file $[iF.nfile] ('$[iF.sfile]')" -ERROR; end  #     Show bogus file name
+    end                                                              "." -MSG2; #   <<
+    " ok" -MSG2;                                                                #   Protocol
+    goto L_FILE;                                                                #   End of file loop
+  end                                                                           # <<
+  "\n  "                                                                 -MSG2; # Protocol (verbose lebel 2)
+  "done\n"                                                                -MSG; # Protocol
+  F if "$[F]/$[iF.len] turns defective!" 1 -WARNING; end                        # Warn on defective feature files
+  "\n   Statistics summary"                                               -MSG; # Protocol
+  iS.dat abs NULL 0 "max" idAux -aggregate;                                     # Comp. max. absolute stat. sum
+  idAux NULL 0 "max" idAux /rec -aggregate;                                     # ...
+  "\n   - Max. abs. sum : ${idAux[0,0]}"                                  -MSG; # Print it
+  .__UTL_nVlevel 1 > if iS -status; else "\n" -echo; end                        # Print status of statistics
+}
+
+## Internal function for generation of label map from HMMs
+##
+## @param itHMM hmm Hidden-Markov-Models
+function -FEA_vad_genlab(itHMM)
+{
+	data idAux1;
+	data idAux2;
+	data idGTab;
+	"~UID" itHMM.ud.dim itHMM.ud -rindex;
+	itHMM.ud itHMM.ud.dim 1 - "~FT" itHMM.ud -find_comp "~XT" itHMM.ud -find_comp
+		idAux1 -expand;
+	:itHMM.td["~TIS"]: NULL 0 "max" idAux2 /rec -aggregate;
+	-type long 1 :idAux2[0,0]+1: idAux2 -array; 0 1 idAux2 -fill;
+	idAux2 itHMM.td 0 "~TIS" itHMM.td -find_comp idAux2 -gen_index;
+	idAux2 0 idAux1 0 1 idGTab -lookup;
+	:itHMM.ud[0]: "." "cmp" idAux1 -strop;                                        #     Find pause
+	:itHMM.ud[0]: "#" "cmp" idAux2 -strop;                                        #     Find trash
+	idAux1 0 .!= idAux2 0 .!= .&& idAux1 =;                                       #     Join pause & trash
+	idGTab 0 idAux1 0 1 idAux2 -lookup;
+	idAux2 ' return;
+}
+
+## Internal function for initialization of VADproc instance
+##
+## @global .__VADproc                      CRW
+## @global &lt;uasr.vad&gt;                R
+## @global &lt;uasr.vad.presp&gt;          R
+## @global &lt;uasr.vad.postsp&gt;         R
+## @global &lt;uasr.vad.minsp&gt;          R
+## @global &lt;uasr.vad.minsi&gt;          R
+## @global &lt;uasr.vad.maxsp&gt;          R
+## @global &lt;uasr.vad.pow.thr&gt;        R
+## @global &lt;uasr.vad.gmm.model&gt;      R
+## @global &lt;uasr.vad.gmm.feainfo&gt;    R
+function -FEA_vad_init()
+{
+	".__VADproc" "VADproc" ?instance not if; VADproc .__VADproc; end;             # Create VADproc instance
+	"vad"        .__VADproc.vad_type "S" -CFG_get_ex .__VADproc -set vad_type;    # Read configuration
+	"vad.presp"  .__VADproc.pre_sp   "S" -CFG_get_ex .__VADproc -set pre_sp;      # Read configuration
+	"vad.postsp" .__VADproc.post_sp  "S" -CFG_get_ex .__VADproc -set post_sp;     # Read configuration
+	"vad.minsp"  .__VADproc.min_sp   "S" -CFG_get_ex .__VADproc -set min_sp;      # Read configuration
+	"vad.minsi"  .__VADproc.min_si   "S" -CFG_get_ex .__VADproc -set min_si;      # Read configuration
+	"vad.maxsp"  .__VADproc.max_sp   "S" -CFG_get_ex .__VADproc -set max_sp;      # Read configuration
+	.__VADproc.vad_type "pow" == if;                                              # VADtype: pow >>
+		"vad.pow.thr"   .__VADproc.pow_thr "S" -CFG_get_ex .__VADproc.pow_thr  =;   #   Read configuration
+	end;                                                                          # <<
+	.__VADproc.vad_type "gmm" == if;                                              # VADtype: gmm >>
+		hmm itHMM;                                                                  #   HMMs
+		data idAux;                                                                 #   Label map
+		"model" "S" -CFG_get_path "/" + "vad.gmm.model" "" -CFG_get +               #   Restore HMM
+			".hmm" + itHMM -restore;                                                  #   |
+		?error not if;
+			itHMM -gmm_mix;                                                           #     Mix GMMs
+			".__VADproc.gmm" "gmm" ?instance not if;                                  #     GMMs dont exist ? >>
+				gmm .__VADproc_gmm; .__VADproc_gmm .__VADproc -set gmm;                 #       Create them
+			end;                                                                      #     <<
+			".__VADproc.gmm_lab" "data" ?instance not if;                             #     GMM labels dont exist ? >>
+				data .__VADproc_gmm_lab; .__VADproc_gmm_lab .__VADproc -set gmm_lab;    #       Create them
+			end;                                                                      #     <<
+			itHMM.gm .__VADproc.gmm -copy;                                            #     Copy GMMs to VADproc
+			itHMM -FEA_vad_genlab .__VADproc.gmm_lab =;                               #     Generate labels from HMM
+			".__VADproc_fi" "object" ?instance not if; object .__VADproc_fi; end;     #     Create feature info object
+			"model" "S" -CFG_get_path "/" + "vad.gmm.feainfo" "feainfo.object" "S"    #     Restore feature info object
+				-CFG_get_ex + .__VADproc_fi -FEA_info;                                  #     |
+		end;                                                                        #   <<
+	end;                                                                          # <<
+}
+
+## Write voice activity information for every frame in idFrames to
+## a new component named VAD.
+##
+## @param idFrames data The frames to analyze.
+##          If there is only one frame, that frame is analyzed and the voice activity of the
+##          frame that is .__VADproc -get_delay in the past is returned.
+##          If there is more than one frame, all frames are analyzed and the voice activity
+##          is written to a new component named "VAD" in <code>idFrames</code>.
+## @param nMode number
+##          A number that specifies the input data type committed through <code>idFrames</code>.
+##          <table cellpadding="3">
+##            <tr><th>Num.</th><th>Description</th></tr>
+##            <tr><td>0</td><td>Signal (one numeric component)</td></tr>
+##            <tr><td>1</td><td>Primary feature vector sequence</td></tr>
+##            <tr><td>2</td><td>Secondary feature vector sequence</td></tr>
+##          </table>
+## @global .__VADproc                      R
+function -FEA_vad(idFrames,nMode)
+{
+	data idNld;                                                                   # Neg. log. Gaussian density array
+	".__VADproc" "VADproc" ?instance not if; -FEA_vad_init; end;                  # Initialize VADproc instance
+	idFrames idNld =;
+  nMode 0 == if                                                                 # Signal data committed >>
+    idNld NULL idNld -FEA_pfa;                                                  #   Call primary feature analysis
+  end                                                                           # <<
+  nMode 1 <= if                                                                 # Do secondary feature analysis >>
+    idNld .__VADproc_fi .__VADproc.gmm.mean.dim idNld NULL -FEA_sfa;            #   Call secondary feature analysis
+  end                                                                           # <<
+	idNld.nrec 1 == if;                                                           # Only one frame >>
+		idNld 0 .__VADproc -vad_one return;                                         #   Parse Frame through VAD & return
+	else;                                                                         # << More than one frame >>
+		idNld .__VADproc -vad;                                                      #   Parse Frames through VAD
+		:idNld["VAD"]: idFrames -join;                                              #   Join VAD labels to frames
+	end;                                                                          # <<
+	TRUE return;                                                                  # Return
+}
+
+## Spectral resampling according to <code>&lt;pfa&#x002E;cavg&gt;</code>.
+##
+## @global .__FEA_nPfaCavg       CW
+## @global .__FEA_nPfaCavgOutDim CW
+## @global &lt;pfag&gt;          R
+## @global &lt;pfa.cavg&gt;      R
+## @global &lt;pfa.dim&gt;       R
+## @param idSrc data Data to resample
+##          sfd
+## @param idDst data Spectral resampled data.
+##          label will be removed
+function -FEA_cavg(idSrc,idDst)
+{
+  ".__FEA_nPfaCavg"  "var" ?instance not if                                     # Create __FEA_nPfaCavg 
+    var  .__FEA_nPfaCavg; "pfa.cavg" 1 "S" -CFG_get_ex .__FEA_nPfaCavg =;       #  | Silently get nr. of spec.lines to avg.
+  end;                                                                          #  |
+  
+  .__FEA_nPfaCavg 2 < if                                                        # if: Spectral resampling is not desired? 
+    idSrc idDst =;                                                              #  copy source to destination
+    return;                                                                     #  return
+  end;                                                                          # end
+  
+  ".__FEA_nPfaCavgOutDim" "var" ?instance not if                                # Create __FEA_nPfaCavgOutDim 
+    var .__FEA_nPfaCavgOutDim;                                                  #  | define __FEA_nPfaCavgOutDim
+    "pfa.dim"  0 "S" -CFG_get_ex .__FEA_nPfaCavgOutDim =;                       #  | Silently get dimension after cavg
+    .__FEA_nPfaCavgOutDim 0 == if                                               #  | if: is dimension of pfa is not set?
+      "Dimension of pfa output is not avialable."  -ERROR;                      #  |   it have to be set -> ERROR
+      idSrc idDst =;                                                            #  |   copy source to destination
+      return;                                                                   #  |   return
+    end;                                                                        #  | end
+    "pfa" "" "S" -CFG_get_ex "ext" == not if                                    #  | if: pfa != "ext"  
+      :ent(.__FEA_iPfa.out_dim / .__FEA_nPfaCavg): .__FEA_nPfaCavgOutDim =;     #  |   compute dimension after cavg
+      .__FEA_nPfaCavgOutDim .__FEA_nPfaCavg * .__FEA_iPfa.out_dim == not if     #  |   if: not an integer
+        "<uasr.pfa.cavg> must be an integer divider of $[.__FEA_iPfa.out_dim] " #  |     Error
+        " resp. <uasr.pfa.dim>*<uasr.pfa.cavg> == " +  -ERROR;                  #  |     |
+        idSrc idDst =;                                                          #  |     copy source to destination
+        return;                                                                 #  |     return
+      end;                                                                      #  |   end
+    end;                                                                        #  | end
+  end;                                                                          # creation successfully
+  
+  ".__FEA_idPfaCavg" "data" ?instance not if                                    # if: first time run?
+    data .__FEA_idPfaCavg;                                                      #   Create __FEA_idPfaCavg
+    :.__FEA_idPfaCavg = unit(.__FEA_nPfaCavgOutDim).*.(ones(1,.__FEA_nPfaCavg)./ .__FEA_nPfaCavg);#     Average adjacent spectral lines
+  end;                                                                          # end
+
+  data idAux;                                                                   # auxiliary data object
+  data idDescr;                                                                 # source data descriptions
+  data idLab;                                                                   # label data object
+    
+  idSrc idAux =;                                                                # copy source data to aux. data
+
+  ( ( idAux.dim -- ) idAux -get_comp_type ) 256 < if                            # if: label?
+    idAux idAux.dim -- 1 idLab -select;                                         #   copy label
+    idAux idAux.dim -- 1 idAux -delete;                                         #   remove label
+  end;                                                                          # end
+
+  :.__FEA_nPfaCavg*.__FEA_nPfaCavgOutDim: idAux.dim == not if                   # if: source data dim. to small?
+    "FEA_cavg: wrong dimension of input data (input.dim=$[idAux.dim]; "         #     no => error
+    "pfa.cavg=$[.__FEA_nPfaCavg]; pfa.dim=$[.__FEA_nPfaCavgOutDim])" + -ERROR;  #     |  
+    idSrc idDst =;                                                              #     copy source to destination
+    return;                                                                     #     return
+  end;                                                                          # end
+
+  idDst -reset;                                                                 # reset destination data (no problem if idSrc == idDst because of idAux)
+  idAux idDescr -copy_descr;                                                    # Remember data descriptions
+  :idDst=.__FEA_idPfaCavg*idAux;                                                # Multiply with averaging matrix
+  idDescr idDst -copy_descr;                                                    # Restore data descriptions
+  :idAux.cinc*.__FEA_nPfaCavg: idDst -set cinc;                                 # Correct frequency increment
+
+  idLab idDst -join;                                                            # Restore label
+}
+
+## Feature dependent quantization and conversion to type short
+##
+## @param idSrc data Data to convert
+## @return data Converted data
+function -FEA_quantize(idSrc,nS,nC,sPfa,nB)
+{
+  ## Validation                                                                 # -------------------------------------
+  sPfa NULL != if                                                               # FBAproc given >>
+    sPfa -FEA_pfa_init;                                                         #   Create
+  end                                                                           # <<
+  ".__FEA_iPfa" "" ?instance not if                                             # No FBAproc present >> 
+    ( "pfa" "" -CFG_get ) -FEA_pfa_init;                                        #   Create one
+  end                                                                           # <<
+  ".__FEA_iPfa" "" ?instance not if                                             # Check session's FBAproc (failed) >>
+    "Could not get primary feature analysis processor" -ERROR; leave;           #   Error
+  end                                                                           # <<
+
+  idSrc nS nC nB .__FEA_iPfa -quantize return;
+}
+
+## Feature dependent quantization and conversion to type short
+##
+## @param idSrc data Data to convert
+## @return data Converted data
+function -FEA_dequantize(idSrc,nS,nC,sPfa,nB)
+{
+  ## Validation                                                                 # -------------------------------------
+  sPfa NULL != if                                                               # FBAproc given >>
+    sPfa -FEA_pfa_init;                                                         #   Create
+  end                                                                           # <<
+  ".__FEA_iPfa" "" ?instance not if                                             # No FBAproc present >> 
+    ( "pfa" "" -CFG_get ) -FEA_pfa_init;                                        #   Create one
+  end                                                                           # <<
+  ".__FEA_iPfa" "" ?instance not if                                             # Check session's FBAproc (failed) >>
+    "Could not get primary feature analysis processor" -ERROR; leave;           #   Error
+  end                                                                           # <<
+
+  idSrc nS nC nB .__FEA_iPfa -dequantize return;
+}
+
+## EOF

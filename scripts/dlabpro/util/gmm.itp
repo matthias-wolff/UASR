@@ -1,0 +1,64 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: For dLabPro class gmm
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Renders a two dimensional Gaussian mixture model on a data instance.
+##
+## @param nXs   First value of x-axis
+## @param nXe   Last value of x-axis
+## @param nYs   First value of y-axis
+## @param nYe   Last value of y-axis
+## @param nPtsX Number of data points on x-axis
+## @param nPtsY Number of data points on y-axis
+## @param iGmm  A two-dimensional(!!) Gaussian mixture model
+## @return A data instance containing <code>(nXe-nXs)/nPtsX</code> records and
+##         <code>(nYe-nYs)/nPtsY</code> components filled with the GMM's
+##         probability density values. 
+function -GMM_plot(nXs,nXe,nYs,nYe,nPtsX,nPtsY,iGmm)
+{
+  data idZ;
+  data idV;
+  data idAux;
+  var  nY
+  var  nC;
+  var  nIncX; :(nXe-nXs)/nPtsX: nIncX =;
+  var  nIncY; :(nYe-nYs)/nPtsY: nIncY =;
+
+  nYs nY =; 0 nC =; nC nPtsY < while
+    -type double 1 nPtsX idV   -array; nXs nIncX idV   -fill;
+    -type double 1 nPtsX idAux -array; nY  0     idAux -fill; idAux idV -join;
+    idV NULL idAux iGmm -density;
+    idAux idZ -join;
+    nC ++=; nIncY nY +=;
+  end
+
+  nXs   idZ -set rofs;
+  nIncX idZ -set rinc;
+  ""    idZ -set runit;
+  nYs   idZ -set cofs;
+  nIncY idZ -set cinc;
+  idZ return;
+}
+
+## EOF

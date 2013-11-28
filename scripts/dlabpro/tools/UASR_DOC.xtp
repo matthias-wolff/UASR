@@ -1,0 +1,1115 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - UASR documentation generator
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/tools
+##
+## ARGUMENTS:
+##   $1: - reserved for: UASR database name (optional) -
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"../util/cfg.itp"  include;                                                     # UASR configuration files
+"../util/data.itp" include;                                                     # For dLabPro class data
+"../util/os.itp"   include;                                                     # Operating system dependent
+"../util/uasr.itp" include;                                                     # UASR
+"../util/var.itp"  include;                                                     # For dLabPro class var
+
+## Global settings
+0 var UDM_OT_CLARG;
+1 var UDM_OT_FHEAD;
+2 var UDM_OT_FRETV;
+3 var UDM_OT_FFARG;
+4 var UDM_OT_FGLOB;
+5 var UDM_OT_FSEE;
+
+data __udc_idNavS;
+{
+  { "#functions"                      "Functions"      }
+  { "#"                               "Script"         }
+  { "index.html"                      "Package"        }
+  { "%RPATH%/automatic/kwdindex.html" "Keyword Index"  }
+  { "%RPATH%/automatic/fncindex.html" "Function Index" }
+  { "%RPATH%/home.html"               "Home"           }
+} __udc_idNavS =;
+
+data __udc_idKwd;                                                               # Key word list
+
+## == FUNCTIONS ==                                                              # =====================================
+
+## Concatencate path and file names.
+##
+## @param sPath string
+##          Path name
+## @param sFile string
+##          File name
+## @return <code>sFile</code> if <code>sPath</code> is empty or
+##         <code>sPath</code>+"/"+<code>sFile</code> otherwise
+function -make_fname(sPath,sFile)
+{
+  NULL sPath == if sFile return; end                                            # Path variable NULL -> just the file
+  ""   sPath == if sFile return; end                                            # Path empty --> just the file
+  "${sPath}/${sFile}" return;                                                   # Concatentate path and file names
+}
+
+## Returns the relative path to the documentation root folder for a
+## documentation (or dLabPro script) file name.
+##
+## @param sFname string
+##          Name of a documentation or dLabPro script file including the
+##          package name, e.g. <code>"util/cfg.itp.html"</code>
+## @return the relative path to the documentation root folder, e.g.
+##         <code>"../.."</code>
+function -make_rpath(sFname)
+{
+  var nLen;                                                                     # Length of path name; no. of folders
+  var nLen1;                                                                    # Length of path name w/o path seps.
+  var sRpath;                                                                   # The return value
+
+  sFname "" "len" -VAR_strop nLen =;                                            # Get length of path name
+  sFname "?/?" "replace" -VAR_strop "" "len" -VAR_strop nLen1 =;                # Get length of path name w/o seps.
+  :nLen=nLen-nLen1;                                                             # Get number of path separators
+
+  ".." sRpath =;                                                                # Initilaize return value
+  label L_1; nLen 0 > if                                                        # For every path separator >>
+    sRpath "/.." + sRpath =;                                                    #   Add one parent folder
+    nLen --=; goto L_1;                                                         #   End of loop
+  end                                                                           # <<
+
+  sRpath return;                                                                # Return result
+}
+
+## Make signature string of a script or function parameter list.
+##
+## @param nDob number
+##          Index of first paramater DOM object in <code>iDgn.dom</code>
+## @param iDgn DGen
+##          Document generator instance
+## @return The signature string, e.g. <code>"$1 $2 $3"</code> or
+##         <code>"(nParam1,sParam2)"</code>
+function -make_signature(nDob,iDgn)
+{
+  var nDobt;                                                                    # DOM object type
+  var bFirst;                                                                   # First paramater flag
+  var sSgn; ""  sSgn =;                                                         # Signature (return value)
+  var sDel; " " sDel =;                                                         # Parameter delimiter
+
+  nDob 0 < nDob iDgn.dom.nrec >= || if "" return; end                           # No (more) paramaters, no service
+  :nDobt=iDgn.dom[nDob,0];                                                      # Get DOM object type
+  :(nDobt==.UDM_OT_CLARG) || (nDobt==.UDM_OT_FFARG): not if "" return; end      # Wrong DOM object type, no service
+  :nDobt==.UDM_OT_FFARG: if "(" sSgn =; "," sDel =; end                         # Begin signature, function param. del.
+  TRUE bFirst =; label L_DOB; nDob iDgn.dom.nrec < if                           # Loop over DOM objects >>
+    bFirst if FALSE bFirst =; else sSgn sDel + sSgn =; end                      #   Add paramater delimiter
+    sSgn :iDgn.dom[nDob,1]: + sSgn =;                                           #   Add paramater identifier
+    nDob ++=; :nDobt==iDgn.dom[nDob,0]: if goto L_DOB; end                      #   Next DOM object of same type?
+    end                                                                         # <<
+  :nDobt==.UDM_OT_FFARG: if sSgn ")" + sSgn =; end                              # Finish signature
+  sSgn return;                                                                  # Return signature
+}
+
+## Adds a function to the global function list.
+##
+## @param sScr string
+##          Script name (package qualified)
+## @param sFid string
+##          Function identifier
+## @param sSgn string
+##          Function signature
+## @param sSyn string
+##          The function's documentation synopsis
+function -fnc_add(sScr,sFid,sSgn,sSyn)
+{
+  var nR;
+
+  ".__udc_idFnc" "data" ?instance not if
+    data .__udc_idFnc;
+    "scr" 128 .__udc_idFnc -addcomp;
+    "fid"  48 .__udc_idFnc -addcomp;
+    "sgn" 255 .__udc_idFnc -addcomp;
+    "syn" 255 .__udc_idFnc -addcomp;
+    "url" 255 .__udc_idFnc -addcomp;
+  end
+
+  .__udc_idFnc.nrec nR =;
+  nR ++ .__udc_idFnc -reallocate;
+  sScr nR 0 .__udc_idFnc -sstore;
+  sFid nR 1 .__udc_idFnc -sstore;
+  sSgn nR 2 .__udc_idFnc -sstore;
+  sSyn nR 3 .__udc_idFnc -sstore;
+}
+
+## Scans custom HTML code from a documentation file.
+##
+## @param sFname string
+##          Name of documentation file to be scanned
+## @param idCd data
+##          Will be filled with the custom documentation text
+function -scan_cdc(sFname,idCd)
+{
+  DGen iDgn;                                                                    # Document generator instance
+  idCd -reset;                                                                  # Reset destination instance
+  sFname iDgn /noerror -load;                                                   # Load documentation file
+  "<!--{{ CUSTOM_DOC -->" "<!--}} CUSTOM_DOC -->" idCd "copy"                   # Copy custom HTML
+    iDgn -edit_section;                                                         # |
+}
+
+## Scans generated HTML code within a document generator for keyword index
+## entries. <a name="index:kwdmake" title="Keyword index | Add a keyword"></a>
+## A keyword index entry is defined by the following HTML code:
+## <pre class="code">
+## 
+##   &lt;a name="index&#58;&lt;href&gt;" title="&lt;keyword&gt;"&gt;&lt;/a&gt;
+## </pre>
+## <h4>Remarks</h4>
+## <ul>
+##   <li>The key word definitions are expected <em>exactly</em> as shown above.
+##     Neither the order of the attributes must be altered nor any extra spaces
+##     or even line breaks must be contained.
+## </ul>
+##
+## @param iDgn DGen
+##          Document generator instance containing the script's DOM and to be
+##          filled with the generated documentation text
+function -scan_keywords(iDgn)
+{
+  data idIdx;                                                                   # Keyword index
+  data idBuf;                                                                   # String manipulation buffer
+  data idDst;                                                                   # Local keyword list
+  data idAux;                                                                   # Auxilary data instance
+  var  nKwd;                                                                    # Current keyword
+  var  sHref; "" sHref =;                                                       # Href of current HTML file
+
+  iDgn.gen "<a name=\"index:" "search" idIdx -strop;                            # Scan for keywords
+  idIdx idAux -copy; 0 1 idAux -fill; idAux idIdx -join;                        # Append line numbers
+  :idIdx[0].<0: idIdx -dmark; idIdx 0 0 idIdx /mark -delete;                    # Filter for keywords
+  idIdx.nrec 0 == if leave; end                                                 # No keywords found -> forget it!
+
+  :iDgn.spl[0,1]: "" == not if "${iDgn.spl[0,1]}/" sHref =; end                 # Make href
+  sHref "${iDgn.spl[1,1]}.html" + sHref =;                                      # ...
+  label L_KEY; nKwd idIdx.nrec < if                                             # Loop over keyword definitions >>
+    iDgn.gen :idIdx[nKwd,1]: 1 idBuf /rec -select;                              #   Select line of current keyword def.
+    idBuf "" "len" idAux -strop;                                                #   Get length of line
+    idBuf "${idAux[0,0]-idIdx[nKwd,0]-9}" "right"   idBuf -strop;               #   Trim everything before keyword def.
+    idBuf "</a>"                          "search"  idAux -strop;               #   Search end of keyword def.
+    idBuf "${idAux[0,0]}"                 "left"    idBuf -strop;               #   Trim the end and everything beyond
+    idBuf "?title=?"                      "replace" idBuf -strop;               #   Remove "title="
+    idBuf "?>?"                           "replace" idBuf -strop;               #   Remove ">"
+    idBuf "\""                            "split"   idBuf -strop;               #   Split a double quotation marks
+    idBuf 1 1 idBuf -delete;                                                    #   Remove space between name and title
+    idBuf 0 2 idBuf -select;                                                    #   Keep values of name and title attr.
+    idBuf idDst -cat;                                                           #   Append to destination
+    nKwd ++=; goto L_KEY;                                                       #   End of keyword definitions loop
+  end                                                                           # <<
+
+  idDst 0 1 idAux "" -DATA_slice;                                               # Separated hrefs and keywords
+  idAux "?index:?${sHref}#index:" "replace" idAux -strop;                       # Finish hrefs
+  idAux idDst -join;                                                            # Join hrefs to keywords
+  idDst .__udc_idKwd -cat;                                                      # Append new keywords
+}
+
+## Scans the JavaDoc of a function for the specified key. The key must stand at
+## the very beginning of a JavaDoc line.
+##
+## @param sTag string
+##         JavaDoc tag to scan for
+## @param nDob number
+##          Zero based index of function object in <code>iDgn.dom</code>
+## @param iDgn DGen
+##          Document generator instance
+## @return The zero-based component index in <code>iDgn.txt</code> starting with
+##         <code>sTag</code> or -1 if the tag was not found.
+function -scan_jvdtag(sTag,nDob,iDgn)
+{
+  :iDgn.dom[nDob,0]==.UDM_OT_FHEAD: not if                                      # nDob does not point to a function >>
+    "Token $[nDob] is not a function" -ERROR;                                   #   Error
+    TRUE return;                                                                #   To be ignored!
+  end                                                                           # <<
+  
+#  :iDgn.spl[1,1]=="am.itp" && iDgn.dom[nDob,1]=="-HMM_save": if 10 break; end;   # Debuggin'
+  var sJvd;                                                                     # Current JavaDoc line
+  var nTxt;  :iDgn.dom[nDob,6]:               nTxt  =;                          # First/current text line to scan
+  var nXtxt; ( :iDgn.dom[nDob,7]: nTxt + ) -- nXtxt =;                          # Last text line to scan
+  label L_TXT; nTxt nXtxt <= if                                                 # Loop over JavaDoc lines >>
+    :iDgn.txt[nTxt,0]: sJvd =;                                                  #   Get current JavaDoc line
+    ( sJvd " \t\n\r" "trim"   -VAR_strop ) sJvd =;                              #   Trim white spaces off line
+    ( sJvd sTag      "search" -VAR_strop ) 0 == if                              #   Starts with sTag >>
+      nTxt return;                                                              #     Return text line of tag
+    end                                                                         #   <<
+    nTxt ++=; goto L_TXT;                                                       #   Next JavaDoc line
+  end                                                                           # <<
+  -1 return;                                                                    # Tag not found
+}
+
+## Generates a clip header.
+##
+## @param sTitle string
+##          Clip title (being printed in bold letters)
+## @param sSubtitle string
+##          Clip subtitle, may be empty bot <em>not</em> <code>NULL</code>
+## @param idNav data
+##          Navigation buttons, component 0 is expected to contain link targets,
+##          component 1 is expected to contain link labels.
+## @param iDgn DGen
+##          Document generator instance
+function -gen_clip_head(sTitle,sSubtitle,idNav,iDgn)
+{
+  "clp_${sTitle}" var sPrnt;
+  sSubtitle "UASR script" "search" -VAR_strop 0 == if "" sPrnt =; end
+  iDgn
+<%
+  <div id="clp_${sTitle}">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        ${sSubtitle} <span class="mid">${sTitle}</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('${sPrnt}','${sTitle}','%RPATH%');"><img 
+        src="%RPATH%/resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" 
+        alt="Print"></a> %>
+  idNav "\n        <a class=\"navbar\" href=\"" "\">" "</a>" iDgn -table;
+  iDgn
+<%
+      </td>
+    </tr>
+  </table> 
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> %>
+}
+
+## Inserts a key/value pair in a clip header. The function must be called
+## after <a href="#fnc_-gen_clip_head"><code
+## class="link">-gen_clip_head</code></a> and before <a
+## href="#fnc_-gen_clip_body"><code class="link">-gen_clip_body</code></a>.
+##
+## @param sGroup string
+##          Name of key group, may be empty but <em>must not</em> be
+##          <code>NULL</code>
+## @param sKey string
+##          Key string, may be empty but <em>must not</em> be <code>NULL</code>
+## @param sValue string
+##          Value string
+## @param iDgn DGen
+##          Document generator instance
+function -gen_clip_hitem(sGroup,sKey,sValue,iDgn)
+{
+  "\n    <tr>"                                                         iDgn >>;
+  "\n      <td class=\"hidden\">"                                      iDgn >>;
+  sGroup                                                               iDgn >>;
+  "</td>"                                                              iDgn >>;
+  "\n      <td class=\"hidden\">&nbsp;&nbsp;&nbsp;</td>"               iDgn >>;
+  "\n      <td class=\"hidden\">"                                      iDgn >>;
+  sKey                                                                 iDgn >>;
+  "</td>"                                                              iDgn >>;
+  "\n      <td class=\"hidden\">:&nbsp;&nbsp;&nbsp;</td>"              iDgn >>;
+  "\n      <td class=\"hidden\">"                                      iDgn >>;
+  sValue                                                               iDgn >>;
+  "</td>"                                                              iDgn >>;
+  "\n    </tr>"                                                        iDgn >>;
+}
+
+## Generates the end of a clip's header and the beginning of its body.
+##
+## @param iDgn DGen
+##          Document generator instance
+function -gen_clip_body(iDgn)
+{
+  "\n  </table>"                                                       iDgn >>;
+  "\n  </div>"                                                         iDgn >>;
+  "\n  <div class=\"mframe2\">"                                        iDgn >>;
+}
+
+## Generates the end of a clip.
+##
+## @param iDgn DGen
+##          Document generator instance
+function -gen_clip_foot(iDgn)
+{
+  "\n  </div>"                                                         iDgn >>;
+  "\n  </div>"                                                         iDgn >>;
+}
+
+## Generates the HTML page header.
+##
+## @param sTitle string
+##          Page title
+## @param iDgn DGen
+##          Document generator instance
+function -gen_html_head(sTitle,iDgn)
+{
+  "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">"                 iDgn >>;
+  "\n<!-- UASR: Unified Approach to Speech Synthesis and Recognition"                iDgn >>;
+  "\n<"                                                                              iDgn >>;
+  "\n<    AUTHOR : n/a"                                                              iDgn >>;
+  "\n<    PACKAGE: manual"                                                           iDgn >>;
+  "\n<"                                                                              iDgn >>;
+  "\n<    Copyright 2013 UASR contributors (see COPYRIGHT file)"                     iDgn >>;
+  "\n<    - Chair of System Theory and Speech Technology, TU Dresden"                iDgn >>;
+  "\n<    - Chair of Communications Engineering, BTU Cottbus"                        iDgn >>;
+  "\n<"                                                                              iDgn >>;
+  "\n<    This file is part of UASR."                                                iDgn >>;
+  "\n<"                                                                              iDgn >>;
+  "\n<    UASR is free software: you can redistribute it and/or modify it under the" iDgn >>;
+  "\n<    terms of the GNU Lesser General Public License as published by the Free"   iDgn >>;
+  "\n<    Software Foundation, either version 3 of the License, or (at your option)" iDgn >>;
+  "\n<    any later version."                                                        iDgn >>;
+  "\n<"                                                                              iDgn >>;
+  "\n<    UASR is distributed in the hope that it will be useful, but WITHOUT ANY"   iDgn >>;
+  "\n<    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS" iDgn >>;
+  "\n<    FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for"   iDgn >>;
+  "\n<    more details."                                                             iDgn >>;
+  "\n<"                                                                              iDgn >>;
+  "\n<    You should have received a copy of the GNU Lesser General Public License"  iDgn >>;
+  "\n<    along with UASR. If not, see [http://www.gnu.org/licenses/]."              iDgn >>;
+  "\n-->"                                                                            iDgn >>;
+  iDgn 
+<%
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta name="description" content="UASR documentation - $[sTitle]">
+  <meta name="author" content="">
+  <meta name="generator" content="UASR_DOC">
+  <title>$[sTitle]</title>
+  <link rel=stylesheet type="text/css" href="%RPATH%/default.css">
+</head>
+<script type="text/javascript" src="%RPATH%/default.js"></script>
+<script type="text/javascript">__sRootPath="%RPATH%/..";</script>
+<body>
+%>
+}
+
+## Generates the HTML page footer.
+##
+## @param iDgn DGen
+##          Document generator instance
+function -gen_html_foot(iDgn)
+{
+  "\n<div class=\"footer\">End of page</div>"                          iDgn >>;
+  "\n</body>"                                                          iDgn >>;
+  "\n</html>\n"                                                        iDgn >>;
+}
+
+## Gets the synopsis from JavaDoc text. The synopsis is the first sentence of
+## the full documentation text.
+##
+## @param nR number
+##          First record of full documentation text stored in
+##          <code>idTxt</code>
+## @param nXR number
+##          Number of records of full documentation text stored in
+##          <code>idTxt</code>
+## @param idTxt data
+##          Documentation texts table (texts expected in component 0, all
+##          other components will be ignored)
+## @return The synopsis text or an empty string if no synopsis text could be
+##         found.
+function -jvd_synopsis(nR,nXR,idTxt)
+{
+  data idAux;
+  var  sSyn;
+  
+  idTxt nR nXR idAux /rec -select;
+  idAux "" "rcat" idAux -strop;
+  idAux "." "split" idAux -strop;
+  idAux "?<p>?" "replace" idAux -strop;                                         # HACK: Strip all HTML tags!
+  0 0 idAux -sfetch return;
+}
+
+## Renders custom HTML documentation text.
+##
+## @param idCd data
+##          Custom documentation (returned by <a href="#fnc_-scan_cdc"><code 
+##          class="link">-scan_cdc</code></a>). May be <code>NULL</code>
+## @param iDgn DGen
+##          Document generator instance
+function -gen_cdc(idCd,iDgn)
+{
+  "\n  <!--{{ CUSTOM_DOC -->\n" iDgn >>;                                        # Write opening scanner mark
+  idCd if                                                                       # idCd non-NULL >>
+    idCd -is_empty not if idCd "" "" "\n" iDgn -table; end                      #   Write custom documentation text
+  end                                                                           # <<
+  "  <!--}} CUSTOM_DOC -->" iDgn >>;                                            # Write closing scanner mark
+}
+
+## Renders the documentation text associated with a specified DOM object.
+##
+## @param sPrefix string
+##          Prefix text to be placed before the DOM obejct's documentation
+##          text, ignored if there is no documentation text. May be empty but
+##          <em>must not</em> be <code>NULL</code>
+## @param sSuffix string
+##          Suffix text to be placed after the DOM obejct's documentation
+##          text, ignored if there is no documentation text. May be empty but
+##          <em>must not</em> be <code>NULL</code>
+## @param nDob number
+##          Index of the DOM object in <code>iDgn.dom</code>
+## @param bPre boolean
+##          Render documentation text as preformatted HTML
+## @param iDgn DGen
+##          Document generator instance
+function -gen_dtxt(sPrefix,sSuffix,nDob,bPre,iDgn)
+{
+  data idTxt;                                                                   # Documentation text
+
+  iDgn.txt :iDgn.dom[nDob,6]: :iDgn.dom[nDob,7]: idTxt /rec -select;            # Copy documentation text
+  idTxt.nrec 0 == if leave; end                                                 # No text, no service 
+  "" sPrefix == not if "\n    ${sPrefix}" iDgn >>; end                          # Write prefix text
+  bPre              if "\n    <pre>"      iDgn >>; end                          # Begin preformatted HTML
+  idTxt "" "" "" iDgn -table;                                                   # Write documentation text
+  bPre              if "\n    </pre>"     iDgn >>; end                          # End preformatted HTML
+  "" sSuffix == not if "\n    ${sSuffix}" iDgn >>; end                          # Write suffix text
+}
+
+## Renders the documentation for script or function parameters. The function
+## generates an HTML table with one row per parameter starting with the
+## parameter <code>nDob</code>. The table is continued from <code>nDob</code>
+## as long as DOM objects of the same type (script or function parameter)
+## follow.
+##
+## @param sPrefix string
+##          Prefix text to be placed before the DOM obejct's documentation
+##          text, ignored if there is no documentation text. May be empty but
+##          <em>must not</em> be <code>NULL</code>
+## @param sSuffix string
+##          Suffix text to be placed after the DOM obejct's documentation
+##          text, ignored if there is no documentation text. May be empty but
+##          <em>must not</em> be <code>NULL</code>
+## @param nDob number
+##          Index of the DOM object of the first parameter in
+##          <code>iDgn.dom</code>
+## @param iDgn DGen
+##          Document generator instance
+function -gen_params(sPrefix,sSuffix,nDob,iDgn)
+{
+  var nDobt;                                                                    # DOM object type
+
+  nDob 0 < nDob iDgn.dom.nrec >= || if leave; end                               # Invalid DOM object index, no service
+  :nDobt=iDgn.dom[nDob,0];                                                      # Get DOM object type
+  :(nDobt==.UDM_OT_CLARG) || (nDobt==.UDM_OT_FFARG): not if leave; end          # Wrong DOM object type, no service
+  "" sPrefix == not if "\n  ${sPrefix}" iDgn >>; end                            # Write prefix text
+  "\n  <table>" iDgn >>;                                                        # Begin HTML table
+  label L_DOB; nDob iDgn.dom.nrec < if                                          # Loop over DOM objects >>
+    "\n    <tr>"                                                iDgn >>;        #   Begin table row
+    "\n      <td class=\"hidden\">&nbsp;&nbsp;</td>"            iDgn >>;        #   Empty cell
+    "\n      <td class=\"hidden\">"                             iDgn >>;        #   Parameter type
+    :iDgn.dom[nDob,2]=="": not if "${iDgn.dom[nDob,2]}&nbsp;"   iDgn >>; end    #   ...
+    "\n      </td>"                                             iDgn >>;        #   ...
+    "\n      <td class=\"hidden\">&nbsp;</td>"                  iDgn >>;        #   Empty cell
+    "\n      <td class=\"hidden\"><code><b>${iDgn.dom[nDob,1]}" iDgn >>;        #   Parameter name
+               "</b></code></td>"                               iDgn >>;        #   ...
+    "\n      <td class=\"hidden\">&nbsp;</td>"                  iDgn >>;        #   Empty cell
+    "\n      <td class=\"hidden\">"                             iDgn >>;        #   Documentation text
+    "" "" nDob FALSE                                            iDgn -gen_dtxt; #   ...
+    "\n      </td>"                                             iDgn >>;        #   ...
+    "\n    </tr>"                                               iDgn >>;        #   End table row
+    nDob ++=; :nDobt==iDgn.dom[nDob,0]: if goto L_DOB; end                      #   Next DOM object of same type?
+  end                                                                           # <<
+  "  </table>" iDgn >>;                                                         # End HTML table
+  "" sSuffix == not if "\n  ${sSuffix}" iDgn >>; end                            # Write suffix text
+}
+
+## Renders the documentation for functions' access to gloabl instances. The
+## function generates an HTML table with one row per global instance starting
+## with the the first <code>.UDM_OT_FGLOB</code> DOM object found after
+## <code>nDob</code> but <em>before</em> the next <code>.UDM_OT_CLARG</code> or
+## <code>.UDM_OT_FHEAD</code> DOM object.
+##
+## @param sPrefix string
+##          Prefix text to be placed before the DOM object's documentation
+##          text, ignored if there is no documentation text. May be empty but
+##          <em>must not</em> be <code>NULL</code>
+## @param sSuffix string
+##          Suffix text to be placed after the DOM object's documentation
+##          text, ignored if there is no documentation text. May be empty but
+##          <em>must not</em> be <code>NULL</code>
+## @param nDob number
+##          Index of the function (<code>.UDM_OT_FHEAD</code>) DOM object in
+##          <code>iDgn.dom</code>
+## @param iDgn DGen
+##          Document generator instance
+function -gen_globals(sPrefix,sSuffix,nDob,iDgn)
+{
+  nDob ++=;
+  nDob 0 < nDob iDgn.dom.nrec >= || if leave; end                               # Invalid DOM object index, no service
+
+	## Seek first global variable                                                 # -------------------------------------
+  label L_DOB_S; nDob iDgn.dom.nrec < if                                        # Loop over DOM objects >>
+    :iDgn.dom[nDob,0]==.UDM_OT_CLARG: if leave; end                             #   Command line arg -> forget it
+    :iDgn.dom[nDob,0]==.UDM_OT_FHEAD: if leave; end                             #   Next function -> forget it
+    :iDgn.dom[nDob,0]==.UDM_OT_FGLOB: not if nDob ++=; goto L_DOB_S; end        #   Seeking first global variable
+  end                                                                           # <<
+  :(iDgn.dom[nDob,0]==.UDM_OT_FGLOB): not if leave; end                         # Check DOM object type
+
+  ## Generate documentation for access to global variables                      # -------------------------------------
+  "" sPrefix == not if "\n  ${sPrefix}" iDgn >>; end                            # Write prefix text
+  "\n  <table>" iDgn >>;                                                        # Begin HTML table
+  label L_DOB; nDob iDgn.dom.nrec < if                                          # Loop over DOM objects >>
+    "\n    <tr>"                                                iDgn >>;        #   Begin table row
+    "\n      <td class=\"hidden\">&nbsp;&nbsp;</td>"            iDgn >>;        #   Empty cell
+    "\n      <td class=\"hidden\"><code>${iDgn.dom[nDob,1]}"    iDgn >>;        #   Variable name
+               "</code></td>"                                   iDgn >>;        #   ...
+    "\n      <td class=\"hidden\">&nbsp;&nbsp;</td>"            iDgn >>;        #   Empty cell
+    "\n      <td class=\"hidden\">"                             iDgn >>;        #   Access
+    ( :iDgn.dom[nDob,2]: "C" "search" -VAR_strop ) -1 > if                      #   ... create
+      "<span style=\"color:#0000FF\">create</span>&nbsp;"       iDgn >>;        #   ...
+    end                                                                         #   ...
+    ( :iDgn.dom[nDob,2]: "R" "search" -VAR_strop ) -1 > if                      #   ... read
+      "<span style=\"color:#008000\">read</span>&nbsp;"         iDgn >>;        #   ...
+    end                                                                         #   ...
+    ( :iDgn.dom[nDob,2]: "W" "search" -VAR_strop ) -1 > if                      #   ... write
+      "<span style=\"color:#D00000\">write</span>&nbsp;"        iDgn >>;        #   ...
+    end                                                                         #   ...
+               "</td>"                                          iDgn >>;        #   ...
+    "\n    </tr>"                                               iDgn >>;        #   End table row
+    nDob ++=; :iDgn.dom[nDob,0]==.UDM_OT_FGLOB: if goto L_DOB; end              #   Next DOM object is also a glob.var.
+  end                                                                           # <<
+  "  </table>" iDgn >>;                                                         # End HTML table
+  "" sSuffix == not if "\n  ${sSuffix}" iDgn >>; end                            # Write suffix text
+}
+
+## Renders the "see also" references for a functions. The function generates a
+## link list starting with the the first <code>.UDM_OT_SEE</code> DOM object
+## found after <code>nDob</code> but <em>before</em> the next
+## <code>.UDM_OT_FHEAD</code> DOM object.
+##
+## @param sPrefix string
+##          Prefix text to be placed before the DOM object's documentation
+##          text, ignored if there is no documentation text. May be empty but
+##          <em>must not</em> be <code>NULL</code>
+## @param sSuffix string
+##          Suffix text to be placed after the DOM object's documentation
+##          text, ignored if there is no documentation text. May be empty but
+##          <em>must not</em> be <code>NULL</code>
+## @param nDob number
+##          Index of the function (<code>.UDM_OT_FHEAD</code>) DOM object in
+##          <code>iDgn.dom</code>
+## @param iDgn DGen
+##          Document generator instance
+function -gen_sees(sPrefix,sSuffix,nDob,iDgn)
+{
+  data idSees;                                                                  # List of see tags (DOM objects)
+  data idAux;                                                                   # Auxiliary data
+  var  sLabel;                                                                  # HTML link label
+  var  sHref;                                                                   # HTML link reference
+  var  nSee;                                                                    # Loop counter
+
+  ## Initialize                                                                 # -------------------------------------
+  nDob ++=;                                                                     # Next DOM object
+  nDob 0 < nDob iDgn.dom.nrec >= || if leave; end                               # Invalid DOM object index, no service
+
+  ## Scan see tags                                                              # -------------------------------------
+  nDob iDgn.dom.nrec < while                                                    # Loop over DOM objects >>
+    :iDgn.dom[nDob,0]==.UDM_OT_FHEAD: if break; end                             #   Next function head -> that's it
+    :iDgn.dom[nDob,0]==.UDM_OT_FSEE: if                                         #   See tag >>
+      iDgn.dom nDob 1 idAux /rec -select; idAux idSees -cat;                    #     Get it
+    end                                                                         #   <<
+    nDob ++=;                                                                   #   Next DOM object
+  end                                                                           # <<
+  idSees.nrec 0 == if leave; end                                                # No see tags --> get out of here
+
+  ## Generate HTML                                                              # -------------------------------------
+  "" sPrefix == not if "\n  ${sPrefix}" iDgn >>; end                            # Write prefix text
+  "\n  <table>" iDgn >>;                                                        # Begin HTML table
+  0 nSee =; nSee idSees.nrec < while                                            # Loop over see tags of function >>
+    :idSees[nSee,1]: sLabel =;                                                  #   Make link label
+    :idSees[nSee,2]: sHref  =; sHref "" == if "#clp_" sLabel + sHref =; end     #   Make link reference
+    "\n    <tr>"                                                       iDgn >>; #   Write HTML
+    "\n      <td class=\"hidden\">&nbsp;&nbsp;</td>"                   iDgn >>; #   Write HTML
+    "\n      <td class=\"hidden\"><a href=\"" sHref + "\">" +                   #   |
+       sLabel + "</a>" +                                               iDgn >>; #   Write HTML
+    "\n    </td>"                                                      iDgn >>; #   Write HTML
+    "\n  </tr>"                                                        iDgn >>; #   Write HTML
+    nSee ++=;                                                                   #   Next see tag
+  end                                                                           # <<
+  "  </table>" iDgn >>;                                                         # End HTML table
+  "" sSuffix == not if "\n  ${sSuffix}" iDgn >>; end                            # Write suffix text
+}
+
+## Generates the documentation for one dLabPro function.
+##
+## @param nDob number
+##          Index of the function's DOM object in <code>iDgn.dom</code>
+## @param nMode number
+##          Rendering mode, 0: function overview, 1: full documentation
+## @param iDgn DGen
+##          Document generator instance containing the script's DOM and to be
+##          filled with the generated documentation text
+function -doc_fnc(nDob,nMode,iDgn)
+{
+  var nRdob; -1 nRdob =;                                                        # Return value DOM object index
+  var nPdob; -1 nPdob =;                                                        # Parameter list DOM object index
+  var sFid;  "" sFid  =;                                                        # Function identifier
+  var sSgn;  "" sSgn  =;                                                        # Function signature
+  var sSyn;                                                                     # Function documentation synopsis
+  var sUrl;                                                                     # Function's documentaion URL
+  var sSrc;                                                                     # Source file name
+  var nLine;                                                                    # Source line
+
+  ## Validate                                                                   # -------------------------------------
+  nDob 0 < nDob iDgn.dom.nrec >= || if leave; end                               # Invalid DOM object index
+  :iDgn.dom[nDob,0]==.UDM_OT_FHEAD: not if leave; end                           # DOM object is no function
+
+  ## Initialize                                                                 # -------------------------------------
+  :iDgn.dom[nDob+1,0]==.UDM_OT_FRETV: if                                        # Have return value >>
+    nDob ++ nRdob =;                                                            #   Remember return value's DOM index
+    :iDgn.dom[nDob+2,0]==.UDM_OT_FFARG: if nDob 2 + nPdob =; end                #   Get argument list's DOM index
+  else                                                                          # << Have not return value >>
+    :iDgn.dom[nDob+1,0]==.UDM_OT_FFARG: if nDob ++ nPdob =; end                 #   Get argument list's DOM index
+  end                                                                           # <<
+  :iDgn.dom[nDob,1]: sFid =;                                                    # Get function identifier
+  nPdob iDgn -make_signature sSgn =;                                            # Get parameter signature
+  "<code><b>${sFid}</b>${sSgn}</code>" sSgn =;                                  # Finish function signature
+  :iDgn.spl[0,1]: :iDgn.spl[1,1]: -make_fname sSrc =;                           # Get source file name
+  :nLine=iDgn.tsq[iDgn.dom[nDob,4],0];                                          # Get source line
+
+  ## Generate HTML                                                              # -------------------------------------
+  nMode 0 == if                                                                 # Mode 0: Function overview >>
+
+    ## Function overview                                                        #   - - - - - - - - - - - - - - - - - -
+    "\n    <tr>"                                                 iDgn >>;       #   Begin HTML table row
+    "\n      <td><a href=\"#clp_${sFid}\"><code class=\"link\">" iDgn >>;       #   Link to function's clip
+               "${sFid}</code></a></td>"                         iDgn >>;       #   ...
+    "\n      <td>${sSgn}"                                        iDgn >>;       #   Begin table cell; fnct. signature
+    :iDgn.dom[nDob,6]: :iDgn.dom[nDob,7]: iDgn.txt -jvd_synopsis sSyn =;        #   Get JavaDoc synopsis
+    sSyn "" == not if                                                           #   Have synopsis >>
+      "<br>&nbsp;<br>" iDgn >>; sSyn iDgn >>; "." iDgn >>;                      #     Write it to document
+    end                                                                         #   <<
+    "\n      </td>"                                              iDgn >>;       #   End table cell
+    "\n    </tr>"                                                iDgn >>;       #   End table row
+    iDgn.gen "?@cgen:index?" "replace" iDgn.gen -strop;                         #   Remove occurrences of @cgen:index
+
+    ( "@cgen:index" nDob iDgn -scan_jvdtag ) 0 >=  if                           #   Function shall be indexed >>
+      sSrc sFid sSgn sSyn -fnc_add;                                             #     Add to function list
+    end                                                                         #   <<
+
+  else                                                                          # << Mode 1: Full documentation >>
+
+    ## Full documentation                                                       #   - - - - - - - - - - - - - - - - - -
+    sFid "Function" .__udc_idNavS                     iDgn -gen_clip_head;      #   Begin function clip header
+    "" "Signature" sSgn                               iDgn -gen_clip_hitem;     #   Signature
+    "" "Source"    "${sSrc}(${nLine})"                iDgn -gen_clip_hitem;     #   Source location
+                                                      iDgn -gen_clip_body;      #   Begin function clip body
+    "<h3>Description</h3>"  ""            nDob  FALSE iDgn -gen_dtxt;           #   Documentation text
+    "<h3>Parameters</h3>"              "" nPdob       iDgn -gen_params;         #   Parameter documentation
+    "<h3>Return value</h3>"            "" nRdob FALSE iDgn -gen_dtxt;           #   Documentation of return value
+    "<h3>Access to Configuration and "                                          #   |
+    "Global Instances</h3>" +          "" nDob        iDgn -gen_globals;        #   Config. and global var. access doc.
+    "<h3>See also</h3>"                "" nDob        iDgn -gen_sees;           #   See also list
+                                                      iDgn -gen_clip_foot;      #   End function clip
+    iDgn.gen "?@cgen:index?" "replace" iDgn.gen -strop;                         #   Remove occurrences of @cgen:index
+
+  end                                                                           # <<
+}
+
+## Generates the alphabetical function index page.
+##
+## @param idFni data
+##          Function list (generated by <a href="#clp_-fnc_add"><code
+##          class="link">-fnc_add</code></a>)
+## @param iDgn DGen
+##          Document generator instance
+function -doc_fncindex(idFni,iDgn)
+{
+  data idNav;
+  var  nF;
+
+  .__udc_idNavS .__udc_idNavS.nrec 3 - 3 idNav /rec -select;                    # Get navi buttons
+  idNav 1 1 idNav /rec -delete;                                                 # Delete self-reference
+  "UASR function index" iDgn -gen_html_head;                                    # HTML page header
+  "UASR function index" "" idNav iDgn -gen_clip_head;                           # Begin script clip header
+  iDgn -gen_clip_body;                                                          # Begin script clip body
+  "\n  <h3>Function Index</h3>"                                        iDgn >>; # Write header of function list
+  "\n  <table cellSpacing=\"0\" cellPadding=\"4\" border=\"0\">"       iDgn >>; # ...
+  "\n    <tr><td class=\"rowgroup\" colSpan=\"3\">Functions</td></tr>" iDgn >>; # ...
+  "\n    <tr><th>Name</th><th>Script</th><th>Description</th></tr>"    iDgn >>; # ...
+  0 nF =; label L_FNC; nF idFni.nrec < if                                       # Loop over function list >>
+    "\n    <tr>"                                                       iDgn >>; #   Begin table row
+    "\n      <td><a href=\"${idFni[nF,0]}.html#clp_${idFni[nF,1]}\">"  iDgn >>; #   Function identifier
+    "<code class=\"link\">" :idFni[nF,1]: + "</code></a></td>" +       iDgn >>; #   ...
+    "\n      <td><code>" :idFni[nF,0]: + "</code></td>" +              iDgn >>; #   Script name
+    "\n      <td>" :idFni[nF,2]: +                                     iDgn >>; #   Signature
+    "" :idFni[nF,3]: == not if "<br>&nbsp;<br>" :idFni[nF,3]: + iDgn >>; end    #   Synopsis
+    "</td>"                                                            iDgn >>; #   End of signature/synopsis cell
+    "\n    </tr>"                                                      iDgn >>; #   End table row
+    nF ++=; goto L_FNC;                                                         #   End of loop
+  end                                                                           # <<
+  "\n  </table>"                                                       iDgn >>; # Write footer of function list
+  iDgn -gen_clip_foot;                                                          # Clip footer
+  iDgn -gen_html_foot;                                                          # Write HTML page footer
+}
+
+## Generates the keyword index page.
+##
+## @param idKwd data
+##          Keyword list (generated by <a href="#clp_-scan_keywords"><code
+##          class="link">-scan_keywords</code></a>)
+## @param iDgn DGen
+##          Document generator instance
+function -doc_kwdindex(idKwd,iDgn)
+{
+  data idNav;
+  data idSec;
+  data idAux;
+  var  sBuf;
+  var  sSecs;
+  var  nKwd;
+  var  nSec;
+  {
+    { "A" "#A-E" }
+    { "F" "#F-N" }
+    { "O" "#O-T" }
+    { "U" "#U-V" }
+    { "W" "#W-Z" }
+  } idSec =;
+
+  idSec idKwd -cat;
+  :idKwd[0]: "" "upr" idAux -strop;
+  idAux idKwd -join;
+  idKwd 2 idKwd -sortup;
+  
+  .__udc_idNavS .__udc_idNavS.nrec 2 - 2 idNav /rec -select;                    # Get navi buttons
+  "" sSecs =; 0 nSec =; label L_SEC; nSec idSec.nrec < if                       # Loop over sections >>
+    :idSec[nSec,1]: "?#?" "replace" -VAR_strop sBuf =;                          #   Get anchor name
+    sSecs "<a href=\"#${sBuf}\">[${sBuf}]</a>&nbsp;" + sSecs =;                 #   Section link
+    nSec ++=; goto L_SEC;                                                       #   End of section loop
+  end                                                                           # << 
+  "UASR keyword index" iDgn -gen_html_head;                                     # HTML page header
+  "UASR keyword index" "" idNav iDgn -gen_clip_head;                            # Begin script clip header
+  "Contents" "" sSecs iDgn -gen_clip_hitem;                                     # Links to sections
+  iDgn -gen_clip_body;                                                          # Begin script clip body
+  "\n  <h3>Keyword Index</h3>"                                         iDgn >>; # Write header of keyword index
+  "\n  <table cellSpacing=\"0\" cellPadding=\"4\" border=\"0\">"       iDgn >>; # ...
+  0 nKwd =; label L_KWD; nKwd idKwd.nrec < if                                   # Loop over keywords >>
+    :idKwd[nKwd,0]: "" "len" -VAR_strop 1 == if                                 #   Is section header >>
+      nKwd 0 == not if                                                          #     Is not the first one >>
+        "\n    <tr><td class=\"hidden\">&nbsp;</td></tr>"              iDgn >>; #       Insert empty row
+      end                                                                       #     <<
+      :idKwd[nKwd,1]: "?#?" "replace" -VAR_strop sBuf =;                        #     Get anchor name
+      "\n    <tr><td class=\"rowgroup\">"                              iDgn >>; #     Begin table row
+      "<a name=\"${sBuf}\"></a>${sBuf}"                                iDgn >>; #     Write section header
+      "</td></tr>"                                                     iDgn >>; #     End table row
+    else                                                                        #   << Is keyword entry >>
+      "\n    <tr><td class=\"hidden\">"                                iDgn >>; #     Begin table row
+      "\n  <a href=\"${idKwd[nKwd,1]}\" class=\"linklist\">"           iDgn >>; #     Write keyword entry
+      "${idKwd[nKwd,0]}</a>"                                           iDgn >>; #     ...
+      "</td></tr>"                                                     iDgn >>; #     End table row
+    end                                                                         #   <<
+    nKwd ++=; goto L_KWD;                                                       #   End of loop
+  end                                                                           # <<
+  "\n  </table>"                                                       iDgn >>; # Write footer of function list
+  iDgn -gen_clip_foot;                                                          # Clip footer
+  iDgn -gen_html_foot;                                                          # Write HTML page footer
+}
+
+## Generates the documentation for one dLabPro script.
+##
+## @param idCd data
+##          Custom documentation (returned by <a href="#fnc_-scan_cdc"><code 
+##          class="link">-scan_cdc</code></a>). May be <code>NULL</code>
+## @param iDgn DGen
+##          Document generator instance containing the script's DOM and to be
+##          filled with the generated documentation text
+function -doc_script(idCd,iDgn)
+{
+  var  sScript;                                                                 # Package qualified script name
+  var  sSgn;                                                                    # Script signature
+  var  nDob;                                                                    # Current DOM object
+  var  bFirst;                                                                  # First-function flag
+
+  ## Initialize                                                                 # -------------------------------------
+  :iDgn.spl[0,1]: :iDgn.spl[1,1]: -make_fname sScript =;                        # Get package qualified script name
+  1 iDgn -make_signature sSgn =;                                                # Get parameter signature
+  "<nobr><b>${iDgn.spl[2,1]}</b> ${sSgn}</nobr>" sSgn =;                        # Complete script signature
+
+  ## HTML header                                                                # -------------------------------------
+  "UASR script ${sScript}"                 iDgn -gen_html_head;                 # HTML page header
+
+  ## Generate script clip                                                       # -------------------------------------
+  sScript "UASR script " .__udc_idNavS     iDgn -gen_clip_head;                 # Begin script clip header
+  "General" "Signature" sSgn               iDgn -gen_clip_hitem;                # Script signature
+  ""        "Author"    "${iDgn.spl[4,1]}" iDgn -gen_clip_hitem;                # Script author
+                                           iDgn -gen_clip_body;                 # Begin script clip body
+  "\n    <h3>Synopsis</h3>"                iDgn >>;                             # Section caption
+  "\n    <p>${iDgn.spl[3,1]}</p>"          iDgn >>;                             # Synopsis text
+  "<h3>Description</h3>" "" 0 TRUE         iDgn -gen_dtxt;                      # Documentation text
+  "<h3>Arguments</h3>" "" 1                iDgn -gen_params;                    # Argument documentation
+  idCd                                     iDgn -gen_cdc;                       # Custom HTML documentation text
+
+  ## - Overview of functions                                                    # - - - - - - - - - - - - - - - - - - 
+  FALSE bFirst =; 0 nDob =; label L_FNCOVR; nDob iDgn.dom.nrec < if             # Loop over DOM objects >>
+    :iDgn.dom[nDob,0]!=.UDM_OT_FHEAD:          if nDob ++=; goto L_FNCOVR; end  #   Skip non-function objects
+    "@cgen:ignore" nDob iDgn -scan_jvdtag 0 >= if nDob ++=; goto L_FNCOVR; end  #   Skip ignored functions
+    bFirst not if                                                               #   It's the first function >>
+      "\n  <a name=\"functions\"></a><h3>Functions</h3>"             iDgn >>;   #     Write header of function list
+      "\n  <table cellSpacing=\"0\" cellPadding=\"4\" border=\"0\">" iDgn >>;   #     ...
+      "\n    <tr>"                                                   iDgn >>;   #     ...
+      "\n      <td class=\"rowgroup\" colSpan=\"2\">Functions</td>"  iDgn >>;   #     ...
+      "\n    </tr>"                                                  iDgn >>;   #     ...
+      TRUE bFirst =;                                                            #     Remember we already had a fnct.
+    end                                                                         #    <
+    nDob 0 iDgn -doc_fnc;                                                       #   Generate overview
+    nDob ++=; goto L_FNCOVR;                                                    #   End of loop
+  end                                                                           # <<
+  bFirst if "\n  </table>" iDgn >>; end                                         # Writer footer of function list
+
+  ## - End of script clip                                                       # - - - - - - - - - - - - - - - - - - -
+  iDgn -gen_clip_foot;                                                          # Clip footer
+
+  ## Function documentation                                                     # -------------------------------------
+  0 nDob =; label L_FNCFUL; nDob iDgn.dom.nrec < if                             # Loop over DOM objects >>
+    :iDgn.dom[nDob,0]==.UDM_OT_FHEAD: if                                        #   It's a function >>
+      "@cgen:ignore" nDob iDgn -scan_jvdtag 0 < if                              #     It's not ignored >>
+        nDob 1 iDgn -doc_fnc;                                                   #       Document it!
+      end                                                                       #     <<
+    end                                                                         #   <<
+    nDob ++=; goto L_FNCFUL;                                                    #   End of loop
+  end                                                                           # <<
+
+  ## HTML footer                                                                # -------------------------------------
+  iDgn -gen_html_foot;                                                          # Write HTML page footer
+}
+
+## Generates the documentation for one package.
+##
+## @param idS data
+##          List of scripts, including one DOM (nested <code>DGen</code>
+##          instance) and one custom documentation text (nested
+##          <code>data</code> instance) per script
+## @param nS0 number
+##          Index of first script of package in <code>idS</code>
+## @param nXS number
+##          Number of scripts of package
+## @param idCd data
+##          Custom documentation of package (returned by <a
+##          href="#fnc_-scan_cdc"><code class="link">-scan_cdc</code></a>).
+##          May be <code>NULL</code>
+## @param iDgn DGen
+##          Document generator instance to be filled with the generated
+##          documentation text
+function -doc_package(idS,nS0,nXS,idCd,iDgn)
+{
+  data idNav;                                                                   # Navigation buttons
+  var  nS;                                                                      # Current script
+  var  sName;                                                                   # Package name
+  var  sUrl;                                                                    # Script documentation URL
+  var  sSnp;                                                                    # Script documentation synopsis
+  var  sTdi;                                                                    # Toc node's DIV id
+  var  sIcon;                                                                   # Toc icon file name
+
+  ## Create TOC document                                                        # -------------------------------------
+  ".__udc_iToc" "DGen" ?instance not if DGen .__udc_iToc; end                   # Create TOC document
+
+  ## Validate                                                                   # -------------------------------------
+  nS0 0 < nS0 idS.nrec >= || if leave; end                                      # Invalid start index
+  nXS 0 <= if leave; end                                                        # Bad number of script
+
+  ## Initialize                                                                 # -------------------------------------
+  iDgn -reset;                                                                  # Reset document generator
+  :idS[nS0,0]: sName =;                                                         # Get package name
+  .__udc_idNavS .__udc_idNavS.nrec 3 - 3 idNav /rec -select;                    # Get navi buttons
+  {                                                                             # Fake a source property list
+    { "PACKAGE" "${sName}" }                                                    # | Package name
+    { "NAME"    "index"    }                                                    # | "Script" name
+  } iDgn.spl =;                                                                 # |
+
+  ## Open TOC node of package                                                   # -------------------------------------
+  "" sName == not if                                                            # Not the [root] package >>
+    "toc${nS0}" sTdi =;                                                         #   New package toc leaf!
+    "automatic/${sName}/index.html" "?//?/" "replace" -VAR_strop sUrl =;        #   Get package documentation URL
+    "\n      <div class=\"tocNode\" id=\"$[sTdi]\">"            .__udc_iToc >>; #   Write TOC node
+    "\n        <a href=\"javascript:__tocToggle('$[sTdi]');\">" .__udc_iToc >>; #   ...
+    "[&minus;]</a>&nbsp;<img src=\"resources/pkg_obj.gif\""     .__udc_iToc >>; #   ...
+    " class=\"tocIcon\">&nbsp;<a href=\"$[sUrl]\""              .__udc_iToc >>; #   ...
+    " target=\"contFrame\">$[sName]</a>"                        .__udc_iToc >>; #   ...
+  end                                                                           # <<
+
+  ## Generate HTML and add leafs to TOC                                         # -------------------------------------
+  "UASR package ${sName}" iDgn -gen_html_head;                                  # Write HTML page header
+  sName "UASR package" idNav iDgn -gen_clip_head;                               # Begin package clip header
+  nS0 nS =; nS :nS0+nXS: < while                                                # Loop over scripts >>
+    "automatic/${sName}/${idS[nS,1]}.html" "?//?/" "replace" -VAR_strop sUrl =; #   Get script documentation URL
+    3 1 idS.iDgn${nS}.spl -sfetch sSnp =;                                       #   Get script synopsis
+    sSnp "?\n?" "replace" -VAR_strop sSnp =;                                    #   ...
+    sSnp "?\r?" "replace" -VAR_strop sSnp =;                                    #   ...
+      nS nS0 == if "Scripts" else "" end                                        #   |
+      "<a href=\"${idS[nS,1]}.html\">${idS[nS,1]}</a>" sSnp                     #   |
+    iDgn -gen_clip_hitem;                                                       #   Add link to script's documentation
+    ( "${idS[nS,1]}" "4" "right" -VAR_strop ) ".itp" == if                      #   Itp script >>
+      "lib_obj.gif" sIcon =;                                                    #     Library icon
+    else                                                                        #   << other script >>
+      "exe_obj.gif" sIcon =;                                                    #     Runnable icon
+    end                                                                         #   <<
+    "\n        <div class=\"tocLeaf\"><a href=\"$[sUrl]\""      .__udc_iToc >>; #   Write TOC leaf
+    " target=\"contFrame\" title=\"$[sSnp]\"\n          >"      .__udc_iToc >>; #   ...
+    "<img src=\"resources/blank_stc.gif\" class=\"tocIcon\">"     .__udc_iToc >>; #   ...
+    "&nbsp;<img src=\"resources/$[sIcon]\" class=\"tocIcon\">"  .__udc_iToc >>; #   ...
+    "&nbsp;${idS[nS,1]}</a></div>"                              .__udc_iToc >>; #   ...
+    nS ++=;                                                                     #   End of loop
+  end                                                                           # <<
+  iDgn -gen_clip_body;                                                          # Begin package clip body
+  idCd iDgn -gen_cdc;                                                           # Custom HTML documentation text
+  iDgn -gen_clip_foot;                                                          # Clip footer
+  iDgn -gen_html_foot;                                                          # Write HTML page footer
+
+  ## Close TOC node of package
+  "" sName == not if                                                            # Not the [root] package >>
+    "\n      </div>"                                            .__udc_iToc >>; #   Write to document
+  end                                                                           # <<
+}
+
+## == MAIN PROGRAM ==                                                           # =====================================
+
+"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
+"\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
+"\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
+"\n// dLabPro VID     : " -version +                                      -MSG; # Protocol
+"\n// UASR VID        : " -UASR_version +                                 -MSG; # Protocol
+
+DGen iCdc;                                                                      # Custom documentation scanner
+DGen iDgn;                                                                      # Index document generator
+DGen iToc;                                                                      # TOC document generator
+data idL;                                                                       # Langauge list (name, ext, parse)
+data idS;                                                                       # Script list (incl. parsed scrips)
+data idSTmp;                                                                    # Temporary script list
+data idP;                                                                       # Package list
+data idCdc;                                                                     # Custom documentation text
+data idKwi;                                                                     # Keyword index list
+data idAux;                                                                     # Auxilary data instance
+data idAux2;                                                                    # Auxilary data instance #2
+var  nL;                                                                        # Language index
+var  nS;                                                                        # Index of current script in idS
+var  nP;                                                                        # Index of current package in idP
+var  sSpath;                                                                    # Script path
+var  sDpath;                                                                    # Documentation path
+var  sRpath;                                                                    # Documentation root path (relative)
+var  sFname;                                                                    # Documentation file name
+var  sLname;                                                                    # Documentation language name
+var  sParser;                                                                   # Documentation parser name
+
+## Init language list                                                           # -------------------------------------
+{ { "dlabpro" "*.?tp" "uasr" } { "perl" "*.pl" "perl" } } idL =;                # Init language list (name, ext, parse)
+
+## Get paths                                                                    # -------------------------------------
+"$UASR_HOME/scripts"  "?\\?/" "replace" -VAR_strop sSpath -sset;                # UASR path (normalized for Windows!)
+"$UASR_HOME/manual/automatic" "?\\?/" "replace" -VAR_strop sDpath -sset;        # UASR doc. path (norm'd for Windows!)
+$$ 1 ==  if                                                                     # Have DB name as argument >>
+  var sDhd; ( "$UASR_HOME-data/$1" "?\\?/" "replace" -VAR_strop ) dDhd =;       #   The database home directory
+  sDhd "/scripts" +          sSpath =;                                          #   Script files
+  sDhd "/manual/automatic" + sDpath =;   |                                      #   Manual files
+end                                                                             # <<  
+"\n// UASR scripts    : ${sSpath}"                                        -MSG; # Protocol
+"\n// UASR manual     : ${sDpath}"                                        -MSG; # Protocol
+"\n"                                                                      -MSG; # Protocol
+
+## List packages and scripts                                                    # -------------------------------------
+idS -reset;                                                                     # Clear script list
+0 nL =; nL idL.nrec < while                                                     # Loop over all languages >>
+  "\n   s (dir ) - ${sSpath}/${idL[nL,0]}" -MSG;                                #   Protocol
+	"${sSpath}/${idL[nL,0]}" :idL[nL,1]: TRUE idSTmp -SH_find;                    #   Find files in language script path
+	idSTmp "?${sSpath}/${idL[nL,0]}/?" "replace" idSTmp -strop;                   #   Normalize script path names
+	idSTmp "" "splitp" idSTmp -strop;                                             #   Split path(=packeage)/file name
+	{ "${idL[nL,0]}" 0 $[idSTmp.nrec] } 0 1 2 idAux -expand; idAux idSTmp -join;  #   Create language name list
+	{ "${idL[nL,2]}" 0 $[idSTmp.nrec] } 0 1 2 idAux -expand; idAux idSTmp -join;  #   Create language parse list
+	idSTmp idS -cat;                                                              #   Collect all in script list
+nL ++=; end;                                                                    # <<
+{ { "spkg" } { "sfil" } { "slng" } { "sprs" } } 0 idS -set_cnames;              # Name package and file name component
+idS 0 idS -sortup;                                                              # Sort by package (=path component)
+idS 0 idP -compress;                                                            # Create package list
+## Sort script lists                                                            # -------------------------------------
+idAux -reset;                                                                   # Clear auxilary table
+0 nP =; nP idP.nrec < while                                                     # Loop over packages >> 
+  idS :idP[nP,1]: :idP[nP,2]: idAux2 /rec -select;                              #   Get scrips of package
+  idAux2 1 idAux2 -sortup;                                                      #   Sort by script name
+  idAux2 idAux -cat;                                                            #   Append to sorted list
+  nP ++=;                                                                       #   Next package
+end                                                                             # <<
+idAux idS =;                                                                    # Copy sorted list
+
+## Scan scripts                                                                 # -------------------------------------
+0 nS =; nS idS.nrec < while                                                     # Loop over scripts >>
+  :idS[nS,0]: :idS[nS,1]: -make_fname sFname =;                                 #   Make file name
+	:idS[nS,2]: sLname =;                                                         #   Get language name
+	:idS[nS,3]: sParser =;                                                        #   Get parser name
+  "\n   s ($[sParser]) - ${sSpath}/${sLname}/${sFname}"                   -MSG; #   Protocol
+  DGen idS.iDgn${nS};                                                           #   Create document scanner instance
+  data idS.idCd${nS};                                                           #   Create custom documentaion instance
+  "${sSpath}/${sLname}/${sFname}" sParser NULL idS.iDgn${nS} -scan;             #   Scan script
+  "${sDpath}/${sFname}.html"        idS.idCd${nS} -scan_cdc;                    #   Scan custom HTML form doc. file
+  :idS[nS,0]: 0 1 idS.iDgn${nS}.spl -sstore;                                    #   HACK: Correct package name
+  nS ++=;                                                                       #   End of loop
+end                                                                             # <<
+
+## Generate HTML documentation for scripts                                      # -------------------------------------
+0 nS =; nS idS.nrec < while                                                     # Loop over scripts >>
+  :idS[nS,0]: :idS[nS,1]: -make_fname sFname =;                                 #   Make file name
+  sFname -make_rpath sRpath =;                                                  #   Get relative path to doc. root
+  "\n   g - ${sDpath}/${sFname}.html"                                     -MSG; #   Protocol
+  idS.idCd${nS} idS.iDgn${nS} -doc_script;                                      #   Create HTML doc. for script
+  idS.iDgn${nS} -scan_keywords;                                                 #   Scan for keywords
+  idS.iDgn${nS}.gen "?%RPATH%?${sRpath}" "replace" idS.iDgn${nS}.gen -strop;    #   Replace %RPATH% key
+  "${sDpath}/${sFname}.html" idS.iDgn${nS} -write;                              #   Write document
+  nS ++=;                                                                       #   End of loop
+end                                                                             # <<
+
+## Generate HTML documentation for packages                                     # -------------------------------------
+0 nP =; nP idP.nrec < while                                                     # Loop over packages >>
+  :idP[nP,0]: "index.html" -make_fname sFname =;                                #   Make documentation file name
+  sFname -make_rpath sRpath =;                                                  #   Get relative path to doc. root
+  "\n   g - ${sDpath}/${sFname}" -MSG;                                          #   Protocol
+  "${sDpath}/${sFname}" idCdc -scan_cdc;                                        #   Scan custom HTML form doc. file
+  idS :idP[nP,1]: :idP[nP,2]: idCdc iDgn -doc_package;                          #   Create HTML doc. for package
+  iDgn -scan_keywords;                                                          #   Scan for keywords
+  iDgn.gen "?%RPATH%?${sRpath}" "replace" iDgn.gen -strop;                      #   Replace %RPATH% key
+  "${sDpath}/${sFname}" iDgn -write;                                            #   Write document
+  nP ++=;                                                                       #   End of loop
+end                                                                             # <<
+
+## Generate function index                                                      # -------------------------------------
+iDgn -reset;                                                                    # Reset document generator
+.__udc_idFnc 1 .__udc_idFnc -sortup;                                            # Sort by function name
+.__udc_idFnc iDgn -doc_fncindex;                                                # Create function index page
+"\n   g - ${sDpath}/fncindex.html" -MSG;                                        # Protocol
+iDgn.gen "?%RPATH%?.." "replace" iDgn.gen -strop;                               # Replace %RPATH% key
+"${sDpath}/fncindex.html" iDgn -write;                                          # Write document
+
+## Generated keyword index                                                      # -------------------------------------
+iDgn -reset;                                                                    # Reset document generator
+.__udc_idKwd iDgn -doc_kwdindex;                                                # Create keyword index page
+"\n   g - ${sDpath}/kwdindex.html" -MSG;                                        # Protocol
+iDgn.gen "?%RPATH%?.." "replace" iDgn.gen -strop;                               # Replace %RPATH% key
+"${sDpath}/kwdindex.html" iDgn -write;                                          # Write document
+
+## Update TOC                                                                   # -------------------------------------
+iDgn -reset;                                                                    # Reset document generator
+"${sDpath}/../toc.html" iDgn -load;                                             # Load TOC JavaScript document
+".__udc_iToc" "DGen" ?instance iDgn.gen -is_empty not && if                     # Have TOC JavaScript and update >>
+  "\n   u - ${sDpath}/../toc.html" -echo;                                       #   Protocol
+  "<!--{{ TOC -->" "<!--}} TOC -->" .__udc_iToc.gen "replace"                   #   |
+    iDgn -edit_section;                                                         #   Replace TOC
+  "${sDpath}/../toc.html" iDgn -write;                                          #   Write back JS file
+end                                                                             # <<
+
+"\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n"           -MSG; # Protocol
+( .__UTL_nErrors 0 > ) return;                                                  # Return error state
+
+## EOF

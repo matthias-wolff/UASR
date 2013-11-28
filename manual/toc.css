@@ -1,0 +1,70 @@
+BODY
+{
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 9pt;
+  background-color:#E1E9F0;	
+}
+.CONT
+{
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14pt;
+  font-weight: normal;
+  color: #1E4C7A;
+  margin: 0px;
+  padding: 8px;
+  page-break-after:avoid;
+  border-bottom: 1px solid #1E4C7A;
+}
+A:link
+{
+  font-family: Arial,Helvetica,sans-serif;
+  font-size: 9pt;
+  color: #1E4C7A;
+  text-decoration: none;
+}
+A:visited
+{
+  font-family: Arial,Helvetica,sans-serif;
+  font-size: 9pt;
+  color: #1E4C7A;
+  text-decoration: none;
+}
+A:hover
+{
+  font-family: Arial,Helvetica,sans-serif;
+  font-size: 9pt;
+  color: #FF3333;
+  text-decoration: none;
+}
+.noscript
+{
+	margin-top: 0px;
+	background-color: #FFE9E1;
+	color: #D23906;
+	border-bottom: 1px solid #FF9C7B;
+  padding: 8px;
+}
+DIV.tocRoot
+{
+	margin-top: 9pt;
+}
+DIV.tocNode
+{
+	padding-top: 3pt;
+  padding-left: 14pt;
+  padding-bottom: 0pt;
+	font-weight: bold;
+}
+DIV.tocLeaf
+{
+  padding-top: 1pt;
+  padding-left: 14pt;
+  font-weight: normal;
+}
+IMG.tocIcon
+{
+	border: none;
+	width: 16px;
+	height: 16px;
+	vertical-align: middle;
+}

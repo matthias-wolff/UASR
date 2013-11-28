@@ -1,0 +1,2047 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<
+<    AUTHOR : n/a
+<    PACKAGE: manual
+<
+<    Copyright 2013 UASR contributors (see COPYRIGHT file)
+<    - Chair of System Theory and Speech Technology, TU Dresden
+<    - Chair of Communications Engineering, BTU Cottbus
+<
+<    This file is part of UASR.
+<
+<    UASR is free software: you can redistribute it and/or modify it under the
+<    terms of the GNU Lesser General Public License as published by the Free
+<    Software Foundation, either version 3 of the License, or (at your option)
+<    any later version.
+<
+<    UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+<    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+<    FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+<    more details.
+<
+<    You should have received a copy of the GNU Lesser General Public License
+<    along with UASR. If not, see [http://www.gnu.org/licenses/].
+-->
+<html>
+<head>
+  <meta http-equiv="Content-Type" content= "text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta name="description" content=   "UASR documentation - UASR script util/cfg.itp">
+  <meta name="author" content="">
+  <meta name="generator" content="UASR_DOC">
+  <title>UASR script util/cfg.itp</title>
+  <link rel=stylesheet type="text/css" href="../../default.css">
+</head>
+<script type="text/javascript" src="../../default.js"></script>
+<script type="text/javascript">__sRootPath="../../..";</script>
+<body>
+
+  <div id="clp_util/cfg.itp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        UASR script <span class="mid">util/cfg.itp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('','util/cfg.itp','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden">General</td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><nobr><b>cfg</b> </nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Author</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Matthias Wolff
+</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Synopsis</h3>
+    <p>Utility functions: UASR configuration files
+ </p>
+  <!--{{ CUSTOM_DOC -->
+
+  <a name="index:cfgf" title="Configuration files"></a>
+  <h3>UASR Configuration Files</h3>
+  <p>UASR main programs (extension <code>xtp</code>) are complex and require far
+  more settings than you could reasonably pass through a command line. Therefore
+  the settings are collected in configuration files. These files contain ASCII
+  text and are formatted like Java properties files (see <a
+	href="#remarks">remarks</a> below). They basically provide a list of key-value
+	pairs.</p>
+  <p>The first command line argument of virtually all UASR main programs
+  specifies such a configuration file (which we call "custom config file" in the
+  following). You will not need to customize most of the settings but get
+  along well with the defaults. To keep your custom config files short, these
+  defaults are collected in one file
+  (<code>&lt;uasr_home&gt;/setup/default.cfg</code>) which is always loaded
+  automatically. Key-value pairs in the custom config file passed through the
+  command line override the default settings. Single keys may be altered right
+  on the command line using up to ten
+  <code>-P&lt;key&gt;=&lt;value&gt;</code> command line options. These are
+  supported by all UASR main programs and have the highest priority.</p>
+  
+  <a name="index:cfgk" title="Configuration keys"></a>
+  <h4>Configuration Keys</h4>
+  <br><table cellpadding="3" class="indent">
+    <tr><th>Key</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td><code>uasr.customize </code></td><td>string</td><td> </td><td>Custom include script (path absolute or relative to script accessing the key)</td></tr>
+    <tr><td><code>uasr.db        </code></td><td>string</td><td>"vm"</td><td>Data base name</td></tr>
+    <tr><td><code>uasr.db.include</code></td><td>string</td><td><nobr>("&lt;uasr.dir.info&gt;/&lt;uasr.db&gt;.itp")</nobr></td><td>Database dependent include script (absolute path)</td></tr>
+    <tr><td><code>uasr.exp</code></td><td>string</td><td>""</td><td>Experiment code</td></tr>
+    <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+    <tbody><!-- Signal, preprocessing and feature settings -->
+    <tr><td class="rowgroup" colspan="4">Signal and feature settings</td></tr>
+    <tr><td><code>uasr.sig.aquant        </code></td><td>number </td><td>16     </td><td>Signal quantization resultion [bits]</td></tr>
+    <tr><td><code>uasr.sig.gain          </code></td><td>number </td><td>1.0    </td><td>Gain factor (<a href="sig.itp.html#clp_-SIG_import_raw" class="code">-SIG_import_raw</a> only!)</td></tr>
+    <tr><td><code>uasr.sig.srate         </code></td><td>number </td><td>16000  </td><td>Signal sampling rate [Hz]</td></tr>
+    <tr><td><code>uasr.spp               </code></td><td>string</td><td>"none"  </td><td>Signal preprocessing type<pre>
+  "none"     - No preprocessing
+  "preemph"  - Preemphasis
+  "residual" - Residual signal</pre></td></tr>
+    <tr><td><code>uasr.fea.f0            </code></td><td>boolean</td><td>FALSE  </td><td>Extract fundamental frequency</td></tr>
+    <tr><td><code>uasr.fea.ext           </code></td><td>string </td><td>"mf"   </td><td>Extension of primary feature files</td></tr>
+    <tr><td><code>uasr.fea.pm            </code></td><td>boolean</td><td>FALSE  </td><td>Pitch synchroneous primary feature analysis</td></tr>
+    <tr><td><code>uasr.fea.pm.level      </code></td><td>number </td><td>2.0    </td><td>Voices/voiceless threshold (see <a href="../../../../dLabPro/manual/automatic/pmproc.html">dLabPro class <code>PMproc</code></a>)</td></tr>
+    <tr><td><code>uasr.fea.savecompressed</code></td><td>boolean</td><td>TRUE   </td><td>Compress feature files to short int</td></tr>
+    <tr><td><code>uasr.fea.labidx        </code></td><td>boolean</td><td>FALSE  </td><td>Add label index to label name in -SIG_label (see <a href="lab.itp.html#index:labfmt">Label component format</a>)</td></tr>
+    <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+    </tbody>
+    <tbody><!-- Primary feature extraction settings -->
+    <tr><td class="rowgroup" colspan="4"><a name="cfgk-pfa"></a>Primary feature extraction settings</td></tr>
+    <tr><td><code>uasr.pfa          </code></td><td>string</td><td>"MEL"     </td><td>Primary feature analysis type<pre>
+  "none" - No primary feature extraction
+  "ext"  - External feature extraction
+  "CP"   - Cepstrum (including MFCC)  --&gt; CPproc
+  "FFT"  - Fast Fourier transform     --&gt; FFTproc
+  "FTT"  - Fourier-t-transform        --&gt; FTTproc
+  "FWT"  - Fast Wavelet transform     --&gt; FWTproc with special settings (see <a href="fea.itp.html#clp_-FEA_pfa_FWT">-FEA_pfa_FWT</a>)
+  "LCQ"  - Line cepstral quefrencies  --&gt; LCQproc
+  "lmag" - log. magnitude spectrum    --&gt; FFTproc with special settings (see <a href="fea.itp.html#clp_-FEA_pfa_lmag">-FEA_pfa_lmag</a>)
+  "LPC"  - Linear prediction coding   --&gt; LPCproc
+  "LSF"  - Line spectral frequencies  --&gt; LSFproc
+  "MEL"  - Melfilter                  --&gt; MELproc</pre></td></tr>
+    <tr><td><code>uasr.pfa.anaoptions</code></td><td>string</td><td>         </td><td>Option(s) for <code>FBAproc -analyze</code></td></tr>
+    <tr><td><code>uasr.pfa.synoptions</code></td><td>string</td><td>         </td><td>Option(s) for <code>FBAproc -synthesize</code></td></tr>
+    <tr><td><code>uasr.pfa.dim      </code></td><td>number</td><td>30        </td><td>Dimension of primary feature vector</td></tr>
+    <tr><td><code>uasr.pfa.crate    </code></td><td>number</td><td>160       </td><td>Analysis frame rate [samples]</td></tr>
+    <tr><td><code>uasr.pfa.len      </code></td><td>number</td><td>512       </td><td>Analysis length [samples]</td></tr>
+    <tr><td><code>uasr.pfa.window   </code></td><td>string</td><td>"Blackman"</td><td>Analysis window type<pre>
+  "Hamming"   Hamming window 
+  "Hanning"   Hanning window 
+  "Rectangle" rectangular window 
+  "Triangle"  triangular window
+  "Gauss"     Gaussian window 
+  "Symexp"    symmetric exponential window 
+  "Blackman"  Blackman window</pre></td></tr>
+    <tr><td><code>uasr.pfa.wlen     </code></td><td>number</td><td>400       </td><td>Analysis window length [samples]</td></tr>
+    <tr><td><code>uasr.pfa.FBA.&lt;fieldname&gt;</code></td><td> </td><td>   </td><td>Field of <code>FBAproc</code>.</td></tr>
+    <tr><td><code>uasr.pfa.&lt;uasr.pfa&gt;.&lt;fieldname&gt;</code></td><td> </td><td> </td><td>Field of <code>&lt;uasr.pfa&gt;proc</code>.</td></tr>
+    <tr><td><code>uasr.pfa.cavg     </code></td><td>number</td><td>1         </td><td>
+    	Number of adjacent vector components (spectral lines) to average,
+    	must be an integer divider of 2<sup><code>&lt;uasr.pfa.FFT.order&gt;</code></sup>. Only valid for the
+			lmag primary feature extraction.</td></tr>
+    <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+    </tbody>
+    <tbody><!-- Secondary feature extraction settings -->
+    <tr><td class="rowgroup" colspan="4"><a name="cfgk-sfa"></a>Secondary feature extraction settings</td></tr>
+    <tr><td><code>uasr.sfa            </code></td><td>string</td><td>"std,delta,pca"</td><td>Secondary feature analysis type(s),
+      one or a comma separated list of the following strings:<pre>
+  std   - feature standardization (mean &rarr; 0, std. dev. &rarr; 1)
+  delta - compute dynamic features
+  pca   - principal component analysis
+  ica   - independent component analysis
+  red   - reduce linear feature trafo. matrix to &lt;uasr.sfa.dim&gt;</pre></td></tr>
+    <tr><td><code>uasr.sfa.dim        </code></td><td>number</td><td>24             </td><td>Dimension of secondary feature vector</td></tr>
+    <tr><td><code>uasr.sfa.delta      </code></td><td>string</td><td>"pattern"      </td><td>Delta table type,
+      see function <a href="fea.itp.html#clp_-FEA_delta_tab"><code class="link">-FEA_delta_tab</code></a> for details<pre>
+  "none"    - No delta computation
+  "pattern" - Make delta table repeating a pattern</pre></td></tr>
+    <tr><td><code>uasr.sfa.delta.wght </code></td><td>string</td><td>"-1 0 0 0 0 0 1"</td><td>Delta weighting vector (<i>w</i>(<i>k</i>-<i>L</i>), ..., <i>w</i>(<i>k</i>),
+                                                                     ..., <i>w</i>(<i>k</i>+<i>L</i>)) with <i>L</i>: delta window length</td></tr>
+    <tr><td><code>uasr.sfa.delta.dpat </code></td><td>string</td><td>"1 0"</td><td>Delta pattern, white space sepatated list of ones and zeros</td></tr>
+    <tr><td><code>uasr.sfa.delta.dofs </code></td><td>number</td><td>0    </td><td>Offset of delta pattern (component index to start pattern at)</td></tr> 
+    <tr><td><code>uasr.sfa.delta.drep </code></td><td>number</td><td>0    </td><td>Number of repetitions of delta pattern (0 for infinite repetition)</td></tr>
+    <tr><td><code>uasr.sfa.delta.ddpat</code></td><td>string</td><td>"1 0"</td><td>Delta-delta pattern, white space sepatated list of ones and zeros</td></tr>
+    <tr><td><code>uasr.sfa.delta.ddofs</code></td><td>number</td><td>0    </td><td>Offset of delta-delta pattern (component index to start pattern at)</td></tr>
+    <tr><td><code>uasr.sfa.delta.ddrep</code></td><td>number</td><td>0    </td><td>Number of repetitions of delta-delta pattern (0 for infinite repetition)</td></tr>
+    <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+    </tbody>
+    <tbody><!-- Label settings -->
+    <tr><td class="rowgroup" colspan="4">Label settings</td></tr>
+    <tr><td><code>uasr.lab.map</code></td><td>string</td><td> </td><td>Fully qualified path to label mapping table</td></tr>
+    <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+    </tbody>
+    <tbody><!-- Acoustic model settings  -->
+    <tr><td class="rowgroup" colspan="4">Acoustic model settings</td></tr>
+  	<tr><td><code>uasr.am.model          </code></td><td>string</td><td>"0_0"  </td><td>Acoustic model (phoneme HMMs) to be used for recognition. The format is
+      "&lt;split&gt;_&lt;ite&gt;" where &lt;split&gt; denotes the Gaussian splitting count and &lt;ite&gt; the
+      training iteration count.</td></tr>
+    <tr><td><code>uasr.am.classes        </code></td><td>string </td><td>       </td><td>Fully qualified path to HMM definition file</td></tr>
+    <tr><td><code>uasr.am.sensors        </code></td><td>string </td><td>       </td><td>Fully qualified path to sensor list file (not needed for speech recognition)</td></tr>
+    <tr><td><code>uasr.am.sil            </code></td><td>number </td><td>3      </td><td>Silence model</td></tr>
+    <tr><td><code>uasr.am.gbg            </code></td><td>number </td><td>3      </td><td>Garbage model</td></tr>
+    <tr><td><code>uasr.am.train          </code></td><td>string</td><td>""      </td><td>Training mode,
+		  one or a comma separated list of the following strings:<pre>
+  baum-welch - Baum-Welch training (default: Viterbi training)
+  var        - GMMs with variance vectors only (default: covariance matrices)</pre></td></tr>
+    <tr><td><code>uasr.am.train.split    </code></td><td>number </td><td>0      </td><td>Number of splits</td></tr>
+    <tr><td><code>uasr.am.train.splitbest</code></td><td>boolean</td><td>FALSE  </td><td>Split HMMs at iteration with best recognition rate</td></tr>
+    <tr><td><code>uasr.am.train.split.minrc</code></td><td>number</td><td>-1    </td><td>Minimal Gaussian reference counter for state splitting</td></tr>
+    <tr><td><code>uasr.am.train.ite0<br>
+      . . .<br>
+      uasr.am.train.ite&lt;uasr.am.train.split&gt;</code></td><td>number</td><td>0  </td><td>Number of iterations at split</td></tr>
+    <tr><td><code>uasr.am.train.act0<br>. . .<br>uasr.am.train.act&lt;uasr.am.train.split&gt;</code></td><td>string</td><td>"split"</td><td>
+      Comma seperated list of actions to do while spliting model. For possible actions with used config keys see <a href="../train/am.itp.html#clp_-HMM_Act">-HMM_Act</a>.</td></tr>
+    <tr><td><code>uasr.am.train.actb0_0<br>. . .<br>uasr.am.train.actb&lt;uasr.am.train.split&gt;_<br>
+     &lt;uasr.am.train.ite&lt;i&gt;&gt;</code></td><td>string</td><td>""</td><td>
+     Comma spereated list of actions to do before model update. For possible action see <a href="../train/am.itp.html#clp_-HMM_Act">-HMM_Act</a>.</td></tr>
+    <tr><td><code>uasr.am.train.acta0_0<br>. . .<br>uasr.am.train.acta&lt;uasr.am.train.split&gt;_<br>
+     &lt;uasr.am.train.ite&lt;i&gt;&gt;</code></td><td>string</td><td>""</td><td>
+     Comma spereated list of actions to do after model update. For possible action see <a href="../train/am.itp.html#clp_-HMM_Act">-HMM_Act</a>.</td></tr>
+    <tr><td><code>uasr.am.train.updlab0<br>. . .<br>uasr.am.train.updlab&lt;uasr.am.train.split&gt;</code></td><td>boolean</td><td>TRUE</td><td>
+      TRUE: Use labels for update (-HMM_ite_l). FALSE: Update without labels (-HMM_ite)</td></tr>
+    <tr><td><code>uasr.am.stats          </code></td><td>string</td><td>""</td><td>Extra statistics to be gathered during HMM training, any combination of the following characters:<pre>
+  L - per-HMM-layer statistics
+  M - RESERVED (per-model statistics)
+  S - RESERVED (per-state/per-Gaussian statistics)</pre>
+    <tr><td><code>uasr.am.eval           </code></td><td>string</td><td>"auto"</td><td>HMM evaluation during training, one of the following strings:<pre>
+  none   - just train, do not evaluate (equivalent to uasr.skip=T)
+  assess - use <a href="../train/am.itp.html#clp_-HMM_assess">-HMM_assess</a>
+  eval   - use <a href="../train/am.itp.html#clp_-HMM_eval">-HMM_eval</a> (normal recognition)
+  auto   - decide automatically</pre></td></tr>
+    <tr><td><code>uasr.am.eval.mode</code></td><td>string</td><td>"0"</td><td>HMM evaluation mode (only if
+      <code>&lt;uasr.am.eval&gt;</code> is "eval"), one of the following characters:<pre>
+  0 - Free recognition with grammar
+  F - Forced alignment on labels with enforcement of the label boundaries 
+  L - Forced alignment on labels ("phoneme" sequence)
+  T - Forced alignment on transliteration ("word" sequence)</pre>
+	    See documentation of function <a class="code" href="../train/am.itp.html#clp_-HMM_process">-HMM_process</a> for
+			more details.
+	  </td></tr>
+    <tr><td><code>uasr.am.eval.assess    </code></td><td>string</td><td>"cmx,hist"</td><td>Assessment mode (only if <code>&lt;uasr.am.eval&gt;</code> is "assess"),
+    comma separated list of the following strings:<pre>
+  cmx     - compute class confusion matrices
+  hist    - compute NLL x class histograms
+  loghist - compute NLL x class histograms with logarithmic counts</pre></td></tr>
+    <tr><td><code>uasr.am.eval.lab       </code></td><td>boolean</td><td>FALSE</td><td>
+      Creates labels for phonems and words in evaluation.
+      The labels are stored in <code>DirLog/evllab/</code>.<pre>
+The file extensions are:
+ .pref - phonem reference labels
+ .prec - phonem recognized labels
+ .wref - word reference labels
+ .wrec - word recognized labels</pre></td></tr>
+    <tr><td><code>uasr.am.mapexp         </code></td><td>number</td><td>0</td><td>Maximum-a-posteriori Exponent<pre>
+   0 - disable MAP Approximation
+   1 - set MAP to minimize Entropy
+  -1 - set MAP to maximize Entropy</pre></td></tr>
+    <tr><td><code>uasr.am.decode.prune   </code></td><td>number</td><td>0</td><td>Pruning constant for decoding (see <code>fst.prn_const</code>).</td></tr>
+    <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+    </tbody>
+   
+ <tbody><!-- Acoustic model adaptation settings  -->
+    <tr><td class="rowgroup" colspan="4">Acoustic model adaptation settings</td></tr>
+  	<tr><td><code>uasr.am.adapt.imean</code></td><td>number</td><td>&lt;uasr.sfa.dim&gt;</td><td>Relevance factor
+       &rho;<sub>&mu;</sub>, mark the point where the data count of the adaptation mean vector has the same weight
+       as the old mean vector.</td></tr>
+  	<tr><td><code>uasr.am.adapt.icov</code></td><td>number</td><td>&lt;uasr.sfa.dim&gt;<sup>2</sup></td><td>Relevance
+       factor &rho;<sub>&Sigma;</sub>, mark the point where the data count of the adaptation covariance matrix has the
+       same weight as the old covariance matrix.</td></tr>
+    <tr>
+      <td><code>uasr.am.adapt.ext     </code></td><td>string</td><td>"A"</td>
+      <td>Adapted model indentifier extension - "&lt;uasr.am.model&gt;_&lt;uasr.am.adapt.ext&gt;"</td>
+    </tr>
+    <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+    </tbody>
+    
+<tbody><!-- Lexicon settings -->
+    <tr><td class="rowgroup" colspan="4">Lexicon settings</td></tr>
+  	<tr><td><code>uasr.lx</code></td><td>string</td><td>  </td><td>
+  		Fully qualified name of lexicon file. If empty (default), no lexicon will be used
+    </td></tr>
+  	<tr><td><code>uasr.lx.wordpenalty</code></td><td>number</td><td>0</td><td>
+  		Penalty for every word change (0 = no penalty).
+    </td></tr>
+    <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+    </tbody>
+    <tbody><!-- Language model settings -->
+    <tr><td class="rowgroup" colspan="4">Language model settings</td></tr>
+  	<tr><td><code>uasr.lm         </code></td><td>string</td><td><code>"none"</code></td><td>
+  		Type of language model to be used for recognition:<pre>
+  none - do not use a language model (default)
+  fsg  - finite state grammar (see keys &lt;uasr.lm.fsg*&gt;)
+  imp  - import language model from file (see keys &lt;uasr.lm.imp*&gt;)
+  nmg  - (reserved for n-multigram languange models)</pre>
+	    If "none" is selected (default), arbitrary sequences of lexicon entries (see key &lt;uasr.lx&gt;) will
+      be accepted. If no lexicon is provived either, arbitrary sequences of acoustic models (e. g. phonemes,
+      see key &lt;uasr.am.model&gt;) will be accepted.
+	  </td></tr>
+  	<tr><td><code>uasr.lm.fsg</code></td><td>string</td><td> </td><td>
+  		Fully qualified name of grammar file
+    </td></tr>
+  	<tr><td><code>uasr.lm.imp</code></td><td>string</td><td> </td><td>
+  		Fully qualified name of language model file (must be a dlabpro fst object)
+    </td></tr>
+    <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+    </tbody>
+    <tbody><!-- VAD model settings -->
+    <tr><td class="rowgroup" colspan="4">VAD model settings</td></tr>
+  	<tr><td><code>uasr.vad        </code></td><td>string</td><td>"pow"</td><td>Type of the primary VAD:<pre>
+  "pow"    - Use energy based threshold (uasr.vad.pow.*)
+  "gmm"    - Use Gaussian based algorithm (uasr.vad.gmm.*)
+  "exists" - Use first component of frame as boolean
+  "none"   - Mark always as speech</pre></td></tr>
+  	<tr><td><code>uasr.vad.presp</code></td><td>number</td><td>3</td><td>Maximal number of frames before speech to mark as speech</td></tr>
+  	<tr><td><code>uasr.vad.postsp</code></td><td>number</td><td>4</td><td>Number of frames after speech to mark as speech (must be less or equal minsi)</td></tr>
+  	<tr><td><code>uasr.vad.minsp</code></td><td>number</td><td>4</td><td>Minimal speech length</td></tr>
+  	<tr><td><code>uasr.vad.minsi</code></td><td>number</td><td>10</td><td>Minimal silence length</td></tr>
+  	<tr><td><code>uasr.vad.maxsp</code></td><td>number</td><td>500</td><td>Maximal speech length</td></tr>
+  	<tr><td><code>uasr.vad.pow.thr</code></td><td>number</td><td>1000000</td><td>Threshold for energy</td></tr>
+  	<tr><td><code>uasr.vad.gmm.model</code></td><td>string</td><td></td><td>Basename of the Hidden-Markov-Model to use in model directory (for example: "3_10")</td></tr>
+  	<tr><td><code>uasr.vad.gmm.feainfo</code></td><td>string</td><td>"feainfo.object"</td><td>Name of the feature info object corresponding to gmm.model</td></tr>
+    <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+    </tbody>
+    <tbody><!-- Support Vector Machines settings -->
+    <tr><td class="rowgroup" colspan="4">Support Vector Machines settings</td></tr>
+  	<tr>
+  		<td nowrap><code>uasr.svm.sig</code></td><td>boolean</td><td>FALSE</td>
+  		<td><code>FALSE</code>: use primary feature vectors, <code>TRUE</code>: use signals as "vectors"</td>
+  	</tr>
+  	<tr>
+      <td nowrap><code>uasr.svm.sv</code></td><td>boolean</td><td>TRUE</td>
+      <td> TRUE: use supervector, FALSE: use every featurvector (option if bSig=FALSE)</td>
+    </tr>
+  	<tr>
+      <td nowrap><code>uasr.svm.incr</code></td><td>integer</td><td>0</td>
+      <td>Size of incremental training partition, 0 for conventional (non-incremental) training (default)</td>
+    </tr>
+  	<tr>
+  		<td nowrap><code>uasr.svm.kernel</code></td><td>integer</td><td>0</td>
+  		<td>SVM kernel function, one of the following:<pre>
+  0 - linear
+  1 - polynomial
+  2 - radial basis function (RBF)
+  3 - sigmoid</pre>
+	      See documentation of field <a href="../../../../dLabPro/manual/automatic/svm.html#fld_param_knl_type"
+				class="code">svm param_knl_type</a> for details.
+		  </td>
+  	</tr>
+  	<tr>
+  		<td nowrap><code>uasr.svm.grad</code></td><td>number</td><td>0</td>
+  		<td>Factor parameter in polynomial, RBF, and sigmoid kernels. See documentation of field <a
+        href="../../../../dLabPro/manual/automatic/svm.html#fld_param_knl_gradient"
+				class="code">svm param_knl_gradient</a> for details.
+		  </td>
+  	</tr>
+  	<tr>
+  		<td nowrap><code>uasr.svm.C</code></td><td>number</td><td>1000</td>
+  		<td>Soft margin regularization parameter. See documentation of field <a
+        href="../../../../dLabPro/manual/automatic/svm.html#fld_param_C"
+				class="code">svm param_C</a> for details.
+		  </td>
+  	</tr>
+  	<tr>
+  		<td nowrap><code>uasr.svm.eps</code></td><td>number</td><td>0.01</td>
+  		<td>Termination criterion. See documentation of field <a
+        href="../../../../dLabPro/manual/automatic/svm.html#fld_param_epsilon"
+				class="code">svm fld_param_epsilon</a> for details.
+		  </td>
+  	</tr>
+    <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+    </tbody>
+    <tbody><!-- Paths -->
+    <tr><td class="rowgroup" colspan="4">Paths (fully qualified)<br>
+      <span style="font-weight:normal">see function <a href="#clp_-CFG_get_path"><code class="link">-CFG_get_path</code></a> for details</span></td></tr>
+    <tr><td><code>uasr.dir.data  </code></td><td>string</td><td>("$UASR_HOME-data")</td><td>Data root directory</td></tr>
+    <tr><td><code>uasr.dir.f0    </code></td><td>string</td><td> </td><td>Path to fundamental frequency contour files</td></tr>
+    <tr><td><code>uasr.dir.fea   </code></td><td>string</td><td> </td><td>Path to feature files</td></tr>
+    <tr><td><code>uasr.dir.flists</code></td><td>string</td><td> </td><td>Path to file lists</td></tr>
+    <tr><td><code>uasr.dir.info  </code></td><td>string</td><td> </td><td>Path to database info files</td></tr>
+    <tr><td><code>uasr.dir.lab   </code></td><td>string</td><td> </td><td>Path to label files</td></tr>
+    <tr><td><code>uasr.dir.log   </code></td><td>string</td><td> </td><td>Path to log files</td></tr>
+    <tr><td><code>uasr.dir.model </code></td><td>string</td><td> </td><td>Path to feainfo/HMM/... files</td></tr>
+    <tr><td><code>uasr.dir.pm    </code></td><td>string</td><td> </td><td>Path to pitch mark files</td></tr>
+    <tr><td><code>uasr.dir.sig   </code></td><td>string</td><td> </td><td>Path to signal files</td></tr>
+    <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+    </tbody>
+
+    <tbody><!-- File lists -->
+    <tr><td class="rowgroup" colspan="4">File lists (relative to &lt;uasr.dir.flists&gt;)<br>
+      <span style="font-weight:normal">see function <a href="#clp_-CFG_get_flist"><code class="link">-CFG_get_flist</code></a> for details</span></td></tr>
+    <tr><td><code>uasr.flist.all   </code></td><td>string</td><td> </td><td>File list of complete data set</td></tr>
+    <tr><td><code>uasr.flist.dev   </code></td><td>string</td><td> </td><td>File list of development set</td></tr>
+    <tr><td><code>uasr.flist.stat  </code></td><td>string</td><td> </td><td>File list of statistics set</td></tr>
+    <tr><td><code>uasr.flist.stat_t</code></td><td>string</td><td> </td><td>File list of linear transformation statsistics set</td></tr>
+    <tr><td><code>uasr.flist.test  </code></td><td>string</td><td> </td><td>File list of test set</td></tr>
+    <tr><td><code>uasr.flist.train </code></td><td>string</td><td> </td><td>File list of training set</td></tr>
+    <tr><td class="rowgroup" colspan="4"><span style="font-weight:normal">File list settings</span></td></tr>
+    <tr><td><code>uasr.flist.sep   </code></td><td>string</td><td>"\t "</td><td>File list column separator characters</td></tr>
+    <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+    </tbody>
+
+    <tbody><!-- Raw file import filter settings -->
+    <tr><td class="rowgroup" colspan="4">Raw file import filter settings<br>
+      <span style="font-weight:normal">see functions <a href="sig.itp.html#clp_-SIG_import_raw" class="code">-SIG_import_raw</a> and
+      <a href="fea.itp.html#clp_-FEA_import_raw" class="code">-FEA_import_raw</a></span></td></tr>
+    <tr><td><code>uasr.import.raw.byteorder     </code></td><td>string</td><td>""     </td><td>Byte order<pre>
+  ""        - keep byte order
+  "little"  - little endian
+  "big"     - big endian
+  "reverse" - reverse byte order</pre></td></tr>
+    <tr><td><code>uasr.import.raw.cinc       </code></td><td>number</td><td>1      </td><td>Increment between two channels (spectral lines, <a href="fea.itp.html#clp_-FEA_import_raw" class="code">-FEA_import_raw</a> only!)</td></tr>
+    <tr><td><code>uasr.import.raw.cunit      </code></td><td>string</td><td>"kHz"  </td><td>Physical unit of channel (spectral, component) axis ( <a href="fea.itp.html#clp_-FEA_import_raw" class="code">-FEA_import_raw</a> only!)</td></tr>
+    <tr><td><code>uasr.import.raw.dim        </code></td><td>number</td><td>1      </td><td>Number of data channels (sepctral lines)</td></tr>
+    <tr><td><code>uasr.import.raw.dtype      </code></td><td>string</td><td>"short"</td><td>Data values' type</td></tr>
+    <tr><td><code>uasr.import.raw.header     </code></td><td>number</td><td>0      </td><td>Raw file header length [bytes]</td></tr>
+    <tr><td><code>uasr.import.raw.nrec       </code></td><td>number</td><td>0      </td><td>Number of records to import (0 or negative for all)</td></tr>
+    <tr><td><code>uasr.import.raw.rinc       </code></td><td>number</td><td>10     </td><td>Time increment between two feature vectors [ms] (<a href="fea.itp.html#clp_-FEA_import_raw" class="code">-FEA_import_raw</a> only!)</td></tr>
+    </tbody>
+  </table><br>
+  <a name="remarks"></a><h5 class="indent">Remarks</h5>
+  <ul>
+    <li>Keys with empty default values or default values in braces are optional
+    and not contained in the default configuration. These keys specify file or
+    folder locations and there are special rules to generate default values (see
+    functions <a href="#clp_-CFG_get_path"><code
+    class="link">-CFG_get_path</code></a>, <a href="#clp_-CFG_get_flist"><code
+    class="link">-CFG_get_flist</code></a> and <a
+    href="lab.itp.html#clp_-LAB_get_map"><code
+    class="link">-LAB_get_map</code></a>). <span class="warning"
+    style="font-weight:normal">It is not useful to access these keys through <a
+    href="#clp_-CFG_get"><code class="link">-CFG_get</code></a>!</span></li>
+    <li>UASR configuration files are much like Java properties files. There are
+    the following three exceptions:
+    	<ol>
+    		<li>string values <em>must</em> be included in double quotation marks,</li>
+    		<li>arguments are not supported by UASR, and</li>
+    		<li>There may be comments at the end of each line.</li>
+    	</ol>
+    </li>
+  </ul>
+
+  <a name="index:datadirs" title="Directory structure | Databases"></a>
+  <h3>Organization of UASR Data Files</h3>
+  <table class="indent" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;<b>&lt;</b>uasr.dir.data<b>&gt;</b></td>
+      <td class="hidden">UASR database home directory
+      	<a class="sup" href="#dirs_fn1" title="If key not specified: $UASR_HOME/data">1)</a></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;<b>&lt;</b>uasr.db<b>&gt;</b></td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="16" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Database 1</nobr></td>
+    </tr>
+    <!-- COMMON -->
+    <tbody>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="16" height="16" style="vertical-align:middle;"
+        >&nbsp;common</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="32" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Common data folder</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;f0</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Fundamental frequency files (optional)</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;fea</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Primary feature vector files</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;<b>&lt;</b>uasr.pfa<b>&gt;</b>_<b>&lt;</b>uasr.pfa.dim<b>&gt;</b></td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="64" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Feature extraction 1</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt03l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;<b>&lt;</b>uasr.pfa<b>&gt;</b>_<b>&lt;</b>uasr.pfa.dim<b>&gt;</b></td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="64" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Feature extraction 2</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt01l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/blank_stc.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;&nbsp;&nbsp;.&nbsp;.&nbsp;.</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="64" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>. . .</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;flists</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>File lists</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/file.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;all.flst</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="64" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Complete set</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden" style="color:#808080"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/file.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;dev.flst</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="64" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Development set
+        <a class="sup" href="#dirs_fn2" title="Optional, fallback to test.flst">2)</a></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden" style="color:#808080"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/file.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;stat.flst</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="64" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Statistics set
+        <a class="sup" href="#dirs_fn3" title="Optional, fallback to train.flst">3)</a></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden" style="color:#808080"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/file.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;stat_t.flst</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="64" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Linear feature transformation statistics set
+        <a class="sup" href="#dirs_fn3" title="Optional, fallback to train.flst">3)</a></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/file.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;test.flst</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="64" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Test set</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt03l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/file.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;train.flst</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="64" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Training set</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;info</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Information</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/file.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;default.cfg</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="64" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Default configuration</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/file.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;classes.txt</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="64" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Classes list (e.g. phones) and HMM definition</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden" style="color:#808080"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/file.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;labmap.txt</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="64" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Database-to-UASR label mapping table
+        <a class="sup" href="#dirs_fn4" title="Optional, use labels defined in classes.txt if missing">4)</a></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden" style="color:#808080"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt03l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/file.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;sensors.txt</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="64" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Sensors list
+        <a class="sup" href="#dirs_fn6" title="For multi-sensor data, typically not necessary for speech databases">6)</a></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;lab</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Symbolic label files</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;lexicon</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Lexicon files</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/file.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;lexicon.txt</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="64" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Lexicon (ASCII)</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden" style="color:#808080"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt03l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/file.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;lexicon.txt.fst</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="64" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Lexicon (compiled FST)</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;log</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Log files</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;model</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Model files</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;pm</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Pitch mark files (optional)</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;sig</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Signal files</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt03l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;trl</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Transliteration files</nobr></td>
+    </tr>
+    </tbody>
+
+    <!-- Scripts -->
+    <tbody>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;scripts</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="32" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Script directory</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder_grey.gif" width="16" height="16" style="vertical-align:middle;"
+        >&nbsp;bash</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr><i>&ndash; reserved for Bash scripts &ndash;</i></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="16" height="16" style="vertical-align:middle;"
+        >&nbsp;dlabpro</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>dLabPro scripts</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt03l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder_grey.gif" width="16" height="16" style="vertical-align:middle;"
+        >&nbsp;perl</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr><i>&ndash; reserved for Perl scripts &ndash;</i></nobr></td>
+    </tr>
+    </tbody>
+ 
+    <!-- EXP -->
+    <tbody>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;<b>&lt;</b>uasr.exp<b>&gt;</b></td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="32" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Experiment 1</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden" style="color:#808080"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder_grey.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;f0</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Fundamental frequency files
+				<a class="sup" href="#dirs_fn5" title="Optional, fallback to uasr/data/&lt;uasr.db&gt;/common if not exists">5)</a></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden" style="color:#808080"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder_grey.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;fea</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Primary feature vector files
+        <a class="sup" href="#dirs_fn5" title="Optional, fallback to uasr/data/&lt;uasr.db&gt;/common if not exists">5)</a></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden" style="color:#808080"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder_grey.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;flists</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>File lists
+        <a class="sup" href="#dirs_fn5" title="Optional, fallback to uasr/data/&lt;uasr.db&gt;/common if not exists">5)</a></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden" style="color:#808080"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder_grey.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;info</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Information
+        <a class="sup" href="#dirs_fn5" title="Optional, fallback to uasr/data/&lt;uasr.db&gt;/common if not exists">5)</a></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden" style="color:#808080"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder_grey.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;lab</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Symbolic label files
+        <a class="sup" href="#dirs_fn5" title="Optional, fallback to uasr/data/&lt;uasr.db&gt;/common if not exists">5)</a></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden" style="color:#808080"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder_grey.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;lexicon</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Lexicon files
+        <a class="sup" href="#dirs_fn5" title="Optional, fallback to uasr/data/&lt;uasr.db&gt;/common if not exists">5)</a></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;log</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Log files</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;model</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Model files</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden" style="color:#808080"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder_grey.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;pm</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Pitch mark files
+        <a class="sup" href="#dirs_fn5" title="Optional, fallback to uasr/data/&lt;uasr.db&gt;/common if not exists">5)</a></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden" style="color:#808080"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder_grey.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;sig</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Signal files
+        <a class="sup" href="#dirs_fn5" title="Optional, fallback to uasr/data/&lt;uasr.db&gt;/common if not exists">5)</a></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden" style="color:#808080"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt03l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder_grey.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;trl</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Transliteration files
+        <a class="sup" href="#dirs_fn5" title="Optional, fallback to uasr/data/&lt;uasr.db&gt;/common if not exists">5)</a></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt03l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;<b>&lt;</b>uasr.exp<b>&gt;</b></td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="32" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Experiment 2</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt01l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/blank_stc.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;&nbsp;&nbsp;.&nbsp;.&nbsp;.</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="48" height="16" style="vertical-align:middle;"
+        >&nbsp;.&nbsp;.&nbsp;.</td>
+    </tr>
+    </tbody>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt03l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;<b>&lt;</b>uasr.db<b>&gt;</b></td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="16" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Database 2</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt01l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt01l.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;&nbsp;&nbsp;.&nbsp;.&nbsp;.</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="16" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>. . .</nobr></td>
+    </tr>
+  </table>
+  <table class="indent">
+    <tr><td colspan="2" class="hidden">&nbsp;</td></tr>
+    <tr>
+      <td class="hidden"> </td>
+    	<td class="hidden">
+				<b>&lt;</b>uasr.xxx.yyy<b>&gt;</b> denotes the value associated with the respective
+				key in the session's configuration (see function <a href="#clp_-CFG_init"><code
+				class="link">-CFG_init</code></a>)
+    	</td>
+    </tr>
+    <tr><td colspan="2" class="hidden"><hr class="footnote"></td></tr>
+    <tr>
+      <td class="hidden"><a name="dirs_fn1"></a><sup>1)</sup>&nbsp;</td>
+      <td class="hidden">If key not specified: <code>$UASR_HOME-data</code>, deprecated: fallback to <code>$UASR_HOME/data</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"><a name="dirs_fn2"></a><sup>2)</sup>&nbsp;</td>
+      <td class="hidden">Optional, fallback to <code>test.flst</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"><a name="dirs_fn3"></a><sup>3)</sup>&nbsp;</td>
+      <td class="hidden">Optional, fallback to <code>train.flst</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"><a name="dirs_fn4"></a><sup>4)</sup>&nbsp;</td>
+      <td class="hidden">Optional, use labels defined in <code>classes.txt</code> if missing</td>
+    </tr>
+    <tr>
+      <td class="hidden"><a name="dirs_fn5"></a><sup>5)</sup>&nbsp;</td>
+      <td class="hidden">Optional, fallback to <code>&lt;uasr.dir.data&gt;/&lt;uasr.db&gt;/common</code> if not exists</td>
+    </tr>
+    <tr>
+      <td class="hidden"><a name="dirs_fn6"></a><sup>6)</sup>&nbsp;</td>
+      <td class="hidden">For multi-sensor data, typically not necessary for speech databases</td>
+    </tr>
+  </table>
+  <!--}} CUSTOM_DOC -->
+  <a name="functions"></a><h3>Functions</h3>
+  <table cellSpacing="0" cellPadding="4" border="0">
+    <tr>
+      <td class="rowgroup" colSpan="2">Functions</td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CFG_init"><code class="link">-CFG_init</code></a></td>
+      <td><code><b>-CFG_init</b>(sFile,bTerm)</code><br>&nbsp;<br> Configures an UASR session.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CFG_get"><code class="link">-CFG_get</code></a></td>
+      <td><code><b>-CFG_get</b>(sKey,default)</code><br>&nbsp;<br> Returns the value for a key from the session's configuration.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CFG_get_ex"><code class="link">-CFG_get_ex</code></a></td>
+      <td><code><b>-CFG_get_ex</b>(sKey,default,sMode)</code><br>&nbsp;<br> Returns the value for a key from the session's configuration (extended
+ function).
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CFG_get_persistent"><code class="link">-CFG_get_persistent</code></a></td>
+      <td><code><b>-CFG_get_persistent</b>(sVar,sKey,default)</code><br>&nbsp;<br> Loads the value for a key from the session's configuration persistently
+ in a global variable.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CFG_get_ex_persistent"><code class="link">-CFG_get_ex_persistent</code></a></td>
+      <td><code><b>-CFG_get_ex_persistent</b>(sVar,sKey,default,sMode)</code><br>&nbsp;<br> Loads the value for a key from the session's configuration persistently
+ in a global variable (extended function).
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CFG_get_item"><code class="link">-CFG_get_item</code></a></td>
+      <td><code><b>-CFG_get_item</b>(sKey,sValItem,sDel)</code><br>&nbsp;<br> Determines if the value for a key from the session's configuration contains
+ a specified item.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CFG_get_flist"><code class="link">-CFG_get_flist</code></a></td>
+      <td><code><b>-CFG_get_flist</b>(sKey,sMode)</code><br>&nbsp;<br> Returns the path to a file list.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CFG_get_path"><code class="link">-CFG_get_path</code></a></td>
+      <td><code><b>-CFG_get_path</b>(sKey,sMode)</code><br>&nbsp;<br> Returns a path to data files.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CFG_set"><code class="link">-CFG_set</code></a></td>
+      <td><code><b>-CFG_set</b>(sKey,sValue)</code><br>&nbsp;<br> Sets the value for a key in the UASR configuration.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CFG_del"><code class="link">-CFG_del</code></a></td>
+      <td><code><b>-CFG_del</b>(sKey)</code><br>&nbsp;<br> Deletes the topmost key in the UASR configuration.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CFG_dump"><code class="link">-CFG_dump</code></a></td>
+      <td><code><b>-CFG_dump</b>(idDst)</code><br>&nbsp;<br> Dumps the current configuration to a data instance.
+      </td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <div id="clp_-CFG_init">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CFG_init</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CFG_init','-CFG_init','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CFG_init</b>(sFile,bTerm)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/cfg.itp(58)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Configures an UASR session. The function creates a list of key/value pairs
+ from the following sources (with descending priority):
+ <ol>
+   <li><code>-P&lt;key&gt;=&lt;value&gt;</code> command line options,</li>
+   <li>the custom configuration file <code>sFile</code> and </li>
+   <li>the default configuration file <code>config/default.cfg</code>.</li>
+ </ol>
+ <h4>Remarks</h4>
+ <ul>
+   <li>Custom configuration files only need to modify present or add new
+     key/value pairs. They do not need to repeat key/value pairs contained in
+     the default configuration.</li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFile</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Path to UASR configuration file to be loaded
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">boolean&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>bTerm</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          If <code>TRUE</code>, the function will terminate the dLabPro
+          session if <code>sFile</code> could not be loaded
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> <code>TRUE</code> if successful, <code>FALSE</code> otherwise
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>__CFG_nJobs</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>__CFG_bNwr</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>__CFG_bFcc</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-CFG_get">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CFG_get</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CFG_get','-CFG_get','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CFG_get</b>(sKey,default)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/cfg.itp(207)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> <p>Returns the value for a key from the session's configuration.</p>
+ <h4>Remarks</h4>
+ <ul>
+   <li>UASR sessions are configured though configuration files.</li>
+   <li><span class="warning">Use sparingly!</span> Function is time-consuming.</li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sKey</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Configuration key
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>default</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Default value (string, number, Bool or instance) to return if <code>sKey</code> is not found
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> The string, number, Bool or instance associated with <code>sKey</code> or <code>default</code> in case of
+         errors
+
+  </div>
+  </div>
+  <div id="clp_-CFG_get_ex">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CFG_get_ex</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CFG_get_ex','-CFG_get_ex','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CFG_get_ex</b>(sKey,default,sMode)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/cfg.itp(234)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Returns the value for a key from the session's configuration (extended
+ function).
+ <h4>Remarks</h4>
+ <ul>
+   <li>UASR sessions are configured though configuration files.</li>
+   <li>The leading "uasr." of any key may be omitted.</li>
+   <li><span class="warning">Use sparingly!</span> Function is time-consuming.</li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sKey</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Configuration key
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>default</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Default value (string, number, Bool or instance) to return if <code>sKey</code> is not found
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sMode</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Empty string (default operation) or any combination of the following characters
+          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+            <tr><th>Character     </th><th>Description</th></tr>
+            <tr><td><code>S</code></td><td>Silent: do not warn if key is not found</td></tr>
+          </table>
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> The string, number, Bool or instance associated with <code>sKey</code> or <code>default</code> in case of
+         errors
+
+  </div>
+  </div>
+  <div id="clp_-CFG_get_persistent">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CFG_get_persistent</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CFG_get_persistent','-CFG_get_persistent','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CFG_get_persistent</b>(sVar,sKey,default)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/cfg.itp(263)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Loads the value for a key from the session's configuration persistently
+ in a global variable. Does not read key if global variable already exists.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sVar</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Name of the global Variable as string (should start with <code>.</code>)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sKey</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Configuration key
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>default</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Default value (string, number, Bool or instance) to return if <code>sKey</code> is not found
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> The string, number, Bool or instance associated with <code>sKey</code> or <code>default</code> in case of
+         errors
+
+  </div>
+  </div>
+  <div id="clp_-CFG_get_ex_persistent">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CFG_get_ex_persistent</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CFG_get_ex_persistent','-CFG_get_ex_persistent','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CFG_get_ex_persistent</b>(sVar,sKey,default,sMode)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/cfg.itp(288)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Loads the value for a key from the session's configuration persistently
+ in a global variable (extended function). Does not read key if global variable already exists.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sVar</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Name of the global Variable as string (should start with <code>.</code>)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sKey</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Configuration key
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>default</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Default value (string, number, Bool or instance) to return if <code>sKey</code> is not found
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sMode</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Empty string (default operation) or any combination of the following characters
+          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+            <tr><th>Character     </th><th>Description</th></tr>
+            <tr><td><code>S</code></td><td>Silent: do not warn if key is not found</td></tr>
+          </table>
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> The string, number, Bool or instance associated with <code>sKey</code> or <code>default</code> in case of
+         errors
+
+  </div>
+  </div>
+  <div id="clp_-CFG_get_item">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CFG_get_item</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CFG_get_item','-CFG_get_item','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CFG_get_item</b>(sKey,sValItem,sDel)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/cfg.itp(315)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Determines if the value for a key from the session's configuration contains
+ a specified item.
+ <h4>Remarks</h4>
+ <ul>
+   <li>UASR sessions are configured though configuration files.</li>
+   <li>The leading "uasr." of any key may be omitted.</li>
+   <li><span class="warning">Use sparingly!</span> Function is time-consuming.</li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sKey</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Configuration key
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sValItem</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Item to search
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sDel</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          String of delimiter characters separation value items
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> The zero-based index of the item in the value or -1 if the item was
+         not found
+
+  </div>
+  </div>
+  <div id="clp_-CFG_get_flist">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CFG_get_flist</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CFG_get_flist','-CFG_get_flist','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CFG_get_flist</b>(sKey,sMode)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/cfg.itp(359)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> <p>Returns the path to a file list. <a name="index:flists" title="File lists"></a>
+ The function returns the path to the file named "<code>&lt;sKey&gt;</code>.flst" in
+ the file lists directory (see function <a href="#clp_-CFG_get_path"><code
+ class="link">-CFG_get_path</code></a>). There are some fallback rules (see
+ description of parameter <code>sKey</code>).</p>
+ <h4>Remarks</h4>
+ <ul>
+   <li>The function does not guarantee that the returned path name denotes an
+     existing file or is even valid.</li>
+   <li><span class="warning">Use sparingly!</span> Function is time-consuming.</li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sKey</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Identifier of the file list to return. The following keys are supported
+          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+            <tr><th><code>sKey  </code></th><th>Description</th><th>Fall back</th></tr>
+            <tr><td><code>all   </code></td><td>Complete data set</td><td>-</td></tr>
+            <tr><td><code>dev   </code></td><td>Development set</td><td><code>test</code></td></tr>
+            <tr><td><code>stat  </code></td><td>Statistics set</td><td><code>train</code></td></tr>
+            <tr><td><code>stat_t</code></td><td>Linear feature transformation statistics set</td><td><code>train</code></td></tr>
+            <tr><td><code>test  </code></td><td>Test set</td><td>-</td></tr>
+            <tr><td><code>train </code></td><td>Training set</td><td>-</td></tr>
+          </table>
+          You can use any other "keys" as well. The function will then
+          create a file name as described above.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sMode</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Empty string (default operation) or any combination of the following characters
+          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+            <tr><th>Character     </th><th>Description</th></tr>
+            <tr><td><code>S</code></td><td>Silent: do not print messages (except errors)</td></tr>
+          </table>
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> The path name of the file list
+
+  </div>
+  </div>
+  <div id="clp_-CFG_get_path">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CFG_get_path</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CFG_get_path','-CFG_get_path','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CFG_get_path</b>(sKey,sMode)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/cfg.itp(461)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> <p>Returns a path to data files.</p>
+ <a name="index:paths" title="Paths to data files"></a>
+ <p>The function uses the following rules to determine a path name:</p>
+ <ol>
+   <li>If a key named "uasr.dir.&lt;sKey&gt;" exists in the current
+     configuration return the value of that key.</li>
+   <li>If a directory named
+     "&lt;uasr.data&gt;/&lt;uasr.db&gt;/exp/&lt;uasr.exp&gt;/&lt;sKey&gt;"
+     exists <em>or</em> a fallback is not allowed (see parameter
+     <code>sMode</code>) return that directory name.</li>
+   <li>Return the path "&lt;uasr.data&gt;/&lt;uasr.db&gt;/&lt;sKey&gt;"
+     (fallback does not apply for keys "log" and "model").</li>
+ </ol>
+ <p>&lt;uasr.xxx.yyy&gt; denotes the value associated with the respective
+ key in the current configuration (i.e. the value returned by
+ <code>"uasr.xxx.yyy" "" <a href="#clp_-CFG_get"><code
+ class="link">-CFG_get</code></a></code>).</p>
+ <h4>Remarks</h4>
+ <ul>
+   <li>Special rules apply for the feature files directory (key "fea").</li>
+   <li>The function does not guarantee that the returned path name denotes an
+     existing directory or is even valid.</li>
+   <li>If not set otherwise, the default value for &lt;uasr.data&gt; is
+     "$UASR_HOME/data", where <code>$UASR_HOME</code> is an environment
+     variable to be set by the user.</li>
+   <li><span class="warning">Use sparingly!</span> Function is time-consuming.</li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sKey</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Identifier of the path to return. The following keys are supported
+          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+            <tr><th><code>sKey  </code></th><th>Description</th></tr>
+            <tr><td><code>data  </code></td><td>Data root directory</td></tr>
+            <tr><td><code>f0    </code></td><td>Fundamental frequency contour files</td></tr>
+            <tr><td><code>fea   </code></td><td>Feature files</td></tr>
+            <tr><td><code>flists</code></td><td>File list</td></tr>
+            <tr><td><code>info  </code></td><td>Info files (classes.txt, labmap.txt, etc.)</td></tr>
+            <tr><td><code>lab   </code></td><td>Label files</td></tr>
+            <tr><td><code>log   </code></td><td>Log files</td></tr>
+            <tr><td><code>model </code></td><td>Model files (feainfo.object, HMMs, etc.)</td></tr>
+            <tr><td><code>pm    </code></td><td>Pitch mark files</td></tr>
+            <tr><td><code>sig   </code></td><td>Signal files</td></tr>
+            <tr><td><code>trl   </code></td><td>Transliteration (orthographic transcription) files</td></tr>
+          </table>
+          You can use any other "keys" as well. The function will then
+          create a path name as described above.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sMode</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Empty string (default operation) or any combination of the following characters
+          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+            <tr><th>Character     </th><th>Description</th></tr>
+            <tr><td><code>F</code></td><td>Force: do not fallback to common directory</td></tr>
+            <tr><td><code>S</code></td><td>Silent: do not print messages (except errors)</td></tr>
+          </table>
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> The path name
+
+  </div>
+  </div>
+  <div id="clp_-CFG_set">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CFG_set</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CFG_set','-CFG_set','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CFG_set</b>(sKey,sValue)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/cfg.itp(567)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Sets the value for a key in the UASR configuration.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sKey</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Configuration key
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sValue</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Value assigned to key
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-CFG_del">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CFG_del</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CFG_del','-CFG_del','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CFG_del</b>(sKey)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/cfg.itp(587)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Deletes the topmost key in the UASR configuration.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sKey</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Configuration key
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-CFG_dump">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CFG_dump</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CFG_dump','-CFG_dump','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CFG_dump</b>(idDst)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/cfg.itp(603)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Dumps the current configuration to a data instance. The result will comprise
+ exactly one string component. Each record contains a key-value-string in the
+ Java properties file format.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idDst</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with dump of current configuration
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> nothing
+
+  </div>
+  </div>
+<div class="footer">End of page</div>
+</body>
+</html>
+

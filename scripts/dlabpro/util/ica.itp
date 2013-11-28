@@ -1,0 +1,266 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: Fast-ICA (Hyvärinen method)
+##
+## AUTHOR : Thomas L. Naeth
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Orthonormalization of matrices with inverse squareroots using eigenvalue
+## decomposition
+##
+## @cgen:index
+## @param mMat data
+##          Matrix to orthonormalize
+## @return Orthonormal matrix
+function -ICA_orthonorm(mMat)
+{
+  data mEVC;                                                                    # matrix of eigenvektors
+  data mEVL;                                                                    # diagonal matrix of eigenvalues
+  data mInvsqrtEVL;                                                             # inverse squareroot of EVL
+  data mM;                                                                      # local var for matrix
+	
+  mMat mM =;                                                                    # save to local var
+  mM ' mM * mM =;                                                               # compute M'M
+  mM mEVC mEVL matrix -eigen;                                                   # compute eigenvalue decompos. of M'M
+  mEVL mdiag diag mEVL =;                                                       # get main diagonal and store
+  mEVL .sqrt inv mInvsqrtEVL =;                                                 # compute inverse square root of EVL 
+  mMat mEVC mInvsqrtEVL * mEVC ' * * mM =;                                      # compute orthonormal matrix
+  mM return;              
+}
+
+## Symmetric FastICA [HKO01] - Function to compute means for ICA
+##
+## @cgen:index
+## @param idZ data
+##          white data
+## @param mWold data
+##          initial unmixing matrix for FastICA algorithmus 
+## @param idGE1 data
+##          data of mean_1 for all columns of mWold
+## @param idGE2 data
+##          data of mean_2 for all columns of mWold
+## @return nothing
+function -ICA_comp_means(idZ,mWold,idGE1,idGE2)
+{		
+      1 var  p;                                                                 # iteration counter
+      0 var  i;                                                                 # column counter
+      0 var  j;                                                                 # row counter
+      0 var  n;                                                                 # counter for currency
+        data idErr;                                                             # changing of wi(k) to wi(k+1)
+        data idE1;                                                              # data mean_1 for column of mWold
+        data idE2;                                                              # data mean_2 for column of mWold
+        data mOnesc;                                                            # [1 1 1 ... 1] number columns of Z
+        data mOnesr;                                                            # [1;1;1;...;1] number rows of Z 
+        data mWr;                                                               # row j of Wold' (Wold(:,j)')
+        data mWnew;                                                             # new unmixing matrix
+        data mW;                                                                # unmixing matrix found by ICA
+        data idZoL;                                                             # whitened data without labels
+        data idTanhWrZoL; 
+  
+  idZ idZoL  =;                                                                 # make idZ local
+  idZoL idZoL.dim -- 1 idZoL -delete;                                           # delete labelvector 
+  -type double 1 mOnesc -addncomps;                                             # build mOnesc, mOnesr, idE1, idE2 
+  idZoL.maxrec mOnesc -allocate;
+  1 0 mOnesc -fill;
+  -type double idZoL.dim mOnesr -addncomps;
+  1 mOnesr -allocate;
+  1 0 mOnesr -fill;
+  mOnesc idE2 =;
+  0 idE2 -allocate;
+  mWold idE1 =;
+  0 idE1 -allocate; 
+  
+  label L2;                                                                     # head of column loop for mean comp
+  i mWold.maxrec < if                                                           # if > last column >>
+    i 1 mWold ' -xfetch idZoL * tanh idTanhWrZoL =;                             #  tanh[(1 column of mWold) * idZoL]  
+    idZoL mOnesr idTanhWrZoL * .* idE1 =;                                       #  arg 1. expectationvalue(8.43)[HKO01]                            
+    mOnesc idTanhWrZoL idTanhWrZoL .* - idE2 =;                                 #  arg 2. expectationvalue(8.43)[HKO01 ]
+    idE1 ' NULL 0 "mean" idE1 -aggregate;                                       #  compute expectationvalue E1 row-wise
+    idE2 ' NULL 0 "mean" idE2 -aggregate;                                       #  compute expectationvalue E2 row-wise
+    idE1 0 1 i idGE1 -xstore;                                                   #  store new column as row of GE1
+    0 0 idE2 -fetch i 0 idGE2 -store;                                           #  store new column of GE2
+    i ++=;                                                                      #  increment column counter
+    goto L2;                                                                    #  goto head of loop	
+  end                                                                           # <<
+  idGE1 ' idGE1 =;                                                              # transpose because of -xstore...
+  0 i =;                                                                        #reset column counter
+  #"stop after computation of mean values for fICA of one file" 0 break;
+}
+
+## Function to compute new unmixing matrix from mean values and old unmixing matrix
+##
+## @cgen:index
+## @param idE1 data
+##          mean value 1 for FastICA-Iteration of all data
+## @param idE2 data
+##          mean value 2 for FastICA-Iteration of all data
+## @param mWold data
+##          old unmixing matrix to manipulate
+## @return mWnew data
+##           new orthonormal unmixing matrix
+function -ICA_comp_mWnew(idE1,idE2,mWold)
+{
+  0 var  i;                                                                     # column counter
+    data mWnew;                                                                 # new unmixing matrix
+    data mWr;                                                                   # one column of mWold as row
+    data idE1c;                                                                 # one column of idE1
+    data idE2c;                                                                 # one column of idE2
+    
+  label L_mWnew;                                                                # head of column loop
+  i mWold.maxrec < if                                                           # if > last column >>
+    i 1 mWold ' -xfetch mWr =;                                                  #  get column of Wold save to rowvector 
+    i 1 idE1 ' -xfetch idE1c =;                                                 #  get column of idE1 as row
+    i 1 idE2 ' -xfetch idE2c =;                                                 #  get column of idE2
+    idE1c ' idE2c mWr ' .* - mWnew -cat;                                        #  save new wi to unmixing matrix Wnew
+    i ++=;                                                                      #  increment column counter 
+    goto L_mWnew;                                                               #  goto loop head
+  end                                                                           # <<
+  mWnew -ICA_orthonorm mWnew =;                                                 # orthonomalization of new unmixing mat
+  #"stop after computation of new ICA unmixing matrix in iteration" 0 break;
+  mWnew return;
+}
+
+## Performs one iteration of the incremental fast ICA algorithm.
+##
+## @cgen:index
+## @param iF file
+##          File list defining a set of feature files to gather the ICA
+##          statistics from
+## @param iFI object
+##          Feature information object
+## @param nI number
+##          Iteration counter
+## @param idWI data
+##          Orthonormal unmixing matrix, will be overwritten by result of the
+##          iteration
+## @return <code>TRUE</code> if another iteration should be performed,
+##         <code>FALSE</code> if no further iterations should be performed. The
+##         latter occurs if a) the algorithm converged or b) the maximal number
+##         of iterations was reached
+function -ICA_ite(iF,iFI,nI,idWI)
+{
+  var  nXV;                                                                     # Current number of sample vector
+  var  nXXV;                                                                    # Total number of sample vectors
+  data idFea;                                                                   # Feature vector sequence
+  data idWInew;                                                                 # New unmixing matrix comp. by ICA ite.
+  data idICAE1;                                                                 # ICA mean 1 of current file
+  data idICAE2;                                                                 # ICA mean 2 of current file
+  data idME1;                                                                   # Global weighted mean 1 of ite.
+  data idME2;                                                                   # Global weighted mean 2 of ite.
+  data idErr;                                                                   # changing of wi(k) to wi(k+1)
+  data idOnes;                                                                  # Ones vector of dim of idWI/idWInew
+  var  __ICA_MAXITE; 10    __ICA_MAXITE =;                                      # TODO: -> config!
+  var  __ICA_CRNCY;  0.005 __ICA_CRNCY  =;                                      # TODO: -> config!
+
+  ## Initialize                                                                 # -------------------------------------
+  nI __ICA_MAXITE > if FALSE return; end                                        # Max. iterations -> leave it!
+  -type double iFI.nDim iFI.nDim idME1   -array;                                # Global weighted mean 1
+  -type double 1        iFI.nDim idME2   -array;                                # Global weighted mean 1
+  -type double iFI.nDim iFI.nDim idICAE1 -array;                                # Cumulative means 1
+  -type double 1        iFI.nDim idICAE2 -array;                                # Cumulative means 2
+
+  ## Incremental fast ICA iteration                                             # -------------------------------------
+  "\n   Iteration $[nI] (max. $[__ICA_MAXITE]) ..." -MSG; 0 1 -PBAR;            # Protocol and begin progress bar
+  iF -reset; iF.flist iF -set flist;                                            # Reload flist
+  label L_FILE; iF -next if                                                     # Loop over files >>
+    "\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "                   -MSG2; #   Protocol
+    :(iF.nfile+1)/iF.len: 1 -PBAR;                                              #   Display progress
+    0 0 idICAE1 -fill; 0 0 idICAE2 -fill;                                       #   Delete cum. means of last file
+    iF NULL "A" idFea -FEA_get not if goto L_FILE end;               "." -MSG2; #   Load feature file
+    idFea iFI -1 idFea NULL -FEA_sfa;                                "." -MSG2; #   Call 2ndary feature analysis w.W.
+    idFea idWI idICAE1 idICAE2 -ICA_comp_means;                      "." -MSG2; #   Comp. ICA mean values for curr.file
+    idFea.nrec nXV =;                                                           #   Get number of vectors
+    :idME1 = idME1.*nXXV/(nXXV+nXV) + idICAE1.*nXV/(nXXV+nXV);                  #   Compute global weighted mean
+    :idME2 = idME2.*nXXV/(nXXV+nXV) + idICAE2.*nXV/(nXXV+nXV);                  #   Compute global weighted mean
+    nXV nXXV +=;                                                   " ok" -MSG2; #   Accumulate total no. of samples
+    goto L_FILE;                                                                #   End of file loop
+  end                                                                           # <<
+  "\n  " -MSG2; "done\n" -MSG;                                                  # Protocol
+
+  ## Compute new unmixing matrix                                                # -------------------------------------
+  "\n   Computing new unmixing matrix ..."                               -MSG2; # Protocol
+  idME1 idME2 idWI -ICA_comp_mWnew idWInew =;                    " done" -MSG2; # Compute new unmixing matrix
+
+  ## Check convergence                                                          # -------------------------------------
+  :idErr = 1-mdiag(abs(idWI'*idWInew));                                         # Compute changing of old to new W
+  idWInew idWI =;                                                               # Copy new unmixing matrix to idW
+  #idErr -print;
+  idErr NULL 0 "max" idErr -aggregate;                                          # Get maximum of changing
+  "\n   Max. change ${idErr[0,0]} (allowed ${__ICA_CRNCY})"               -MSG; # Protocol
+  :idErr[0,0]: __ICA_CRNCY > return;                                            # Return "converged"
+}
+
+## Computes an ICA feature transformation matrix from a data set.
+##
+## @cgen:index
+## @param iF file
+##          File list defining a set of feature files to gather the ICA
+##          statistics from
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+##          (typical case for speech recognition)
+## @param nMsf number
+##          Number of most significant secondary features (MSF) or -1 to
+##          indicate all features are "most" significant
+## @param iFI object
+##          Feature information object, the function will modify the fields
+##          <code>iFI.idW</code> and <code>iFI.idPrz</code>
+function -FEA_ica(iF,sSns,nMsf,iFI)
+{
+  statistics iS;
+  data       idCov;
+  data       idV;
+  data       idL;
+  data       idWI;
+  var        nI;
+
+  ## Whitening                                                                  # -------------------------------------
+  "\n\n   Whitening statistics "                                          -MSG; # Protocol
+  iF sSns NULL iFI iS -FEA_stat;                                                     # Gather feature PCA statistics
+  idCov iS -cov;                                                                # Estimate covariance matrix
+  idCov idV idL matrix -eigen;                                                  # Get Eigenvectors and -values
+  :iFI.idW = idV * inv(.sqrt(idL)) * idV' * iFI.idW;                            # Get whitening matrix
+
+  ## -- DEBUGGIN' -- CHECK WHITENING -->
+  #"\n   Verify whitening " -MSG;
+  #iS -reset;
+  #iF sSns NULL iFI iS -FEA_stat;
+  #idCov iS -cov;
+  #3 idCov -DATA_cprint;
+  ## <--
+
+  ## fICA iteration                                                             # -------------------------------------
+  "\n   Incremental fast ICA statistics "                                 -MSG; # Protocol
+  iFI.nDim unit idWI =;                                                         # Initial unmixing matrix
+  1 nI =; label L_ITE;                                                          # Incremental fast ICA iteration loop        
+  iF iFI nI idWI -ICA_ite if                                                    # Do one iteration, need one more >>
+    nI ++=; goto L_ITE;                                                         #   Increment iteration counter, loop
+  end                                                                           # <<
+
+  iF -reset; iF.flist iF -set flist;                                            # Reload flist
+  ## Priorization                                                               # -------------------------------------
+  idWI ' idWI =;                                                                # Transpose ICA transformation matrix
+  iF sSns iFI idWI iFI.idPrz -FEA_priorize;                                     # Permutate by descending neg. entropy
+  #iFI.idPrz -print;                                                             # Debugging
+  idWI iFI.idW * iFI.idW =;                                                     # Continue linear feature trafo. matrix
+}
+
+## EOF

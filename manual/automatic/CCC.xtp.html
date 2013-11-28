@@ -1,0 +1,1198 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<
+<    AUTHOR : n/a
+<    PACKAGE: manual
+<
+<    Copyright 2013 UASR contributors (see COPYRIGHT file)
+<    - Chair of System Theory and Speech Technology, TU Dresden
+<    - Chair of Communications Engineering, BTU Cottbus
+<
+<    This file is part of UASR.
+<
+<    UASR is free software: you can redistribute it and/or modify it under the
+<    terms of the GNU Lesser General Public License as published by the Free
+<    Software Foundation, either version 3 of the License, or (at your option)
+<    any later version.
+<
+<    UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+<    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+<    FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+<    more details.
+<
+<    You should have received a copy of the GNU Lesser General Public License
+<    along with UASR. If not, see [http://www.gnu.org/licenses/].
+-->
+<html>
+<head>
+  <meta http-equiv="Content-Type" content= "text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta name="description" content=   "UASR documentation - UASR script CCC.xtp">
+  <meta name="author" content="">
+  <meta name="generator" content="UASR_DOC">
+  <title>UASR script CCC.xtp</title>
+  <link rel=stylesheet type="text/css" href="../default.css">
+</head>
+<script type="text/javascript" src="../default.js"></script>
+<script type="text/javascript">__sRootPath="../..";</script>
+<body>
+
+  <div id="clp_CCC.xtp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        UASR script <span class="mid">CCC.xtp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('','CCC.xtp','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden">General</td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><nobr><b>CCC</b> $1 $2</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Author</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Constanze Tschoepe, Matthias Wolff
+</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Synopsis</h3>
+    <p>Correlation coefficient classifier
+ </p>
+  <h3>Arguments</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>$1</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Command ('cls') or 'help'
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>$2</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Setup file or, if 1st arg. is 'help', command
+
+      </td>
+    </tr>  </table>
+  <!--{{ CUSTOM_DOC -->
+	<a name="usage"></a><h3>Contents</h3>
+  <div class="indent"><ul class="linklist">
+    <li class="linklist"><a class="linklist" href="#usage">Usage</a></li>
+    <li class="linklist"><a class="linklist" href="#configuration">Configuration</a></li>
+    <li class="linklist"><a class="linklist" href="#reference">Reference</a></li>
+  </ul></div>
+	<a name="usage"></a><h3>Usage</h3>
+	<pre class="code">
+    
+  dlabpro CCC.xtp &lt;command&gt; &lt;cfgfile&gt; [options]
+  dlabpro CCC.xtp help [&lt;command&gt;]</pre>
+
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td><b>$1</b>: command</td>
+			<td>Command, one of the following:<br>&nbsp;
+				<table class="indent" cellpadding="3" cellspacing="0">
+					<tr>
+						<td class="hidden"><a href="#clp_cls" class="code"><b>cls</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">Classification</td>
+					</tr>
+					<tr>
+						<td class="hidden"><a href="#clp_trn" class="code"><b>trn</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">Training</td>
+					</tr>
+					<tr>
+						<td class="hidden"><a href="#clp_ren" class="code"><b>ren</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">Auxiliary: Render spectral windows</td>
+					</tr>
+				</table><br>
+				or "help"
+			</td>
+		</tr>
+		<tr>
+			<td><b>$2</b>: cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+
+	  <tr><td class="rowgroup" colspan="2">Options</td></tr>
+  	<tr><th>Option</th><th>Description</th></tr>
+		<tr>
+			<td><b>-h</b>, <b>--help</b></td>
+			<td>Display help and exit</td>
+		</tr>
+		<tr>
+			<td><b>-P</b>&lt;key&gt;=&lt;value&gt;</td>
+			<td>Define or override <a href="util/cfg.itp.html#index:cfgk">configuration key-value pairs</a></td>
+		</tr>
+		<tr>
+			<td><b>-v</b>&lt;n&gt;</td>
+  		<td>Verbose level
+  			<table>
+  				<tr><td class="hidden">-v1&nbsp;&nbsp;&nbsp;</td><td class="hidden">minimal screen protocol (default)</td></tr>
+  				<tr><td class="hidden">-v2</td><td class="hidden">extended screen protocol</td></tr>
+  				<tr><td class="hidden">-v3</td><td class="hidden">even more screen protocol, program may break</td></tr>
+  			</table>
+  		</td>
+		</tr>
+	  <tr><td class="hidden" colspan="2"><span class="small">There are further, individual options to the commands.</span></td></tr>
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+	</table>
+
+  <a name="configuration"></a><h3>Configuration</h3>
+	<p><code>CCC.xtp</code> is configured through a <a href="util/cfg.itp.html#index:cfgf">UASR configuration
+  file</a> (parameter <code>$2</code>). The configuration file is a Java properties file containing key-value-pairs.
+  The common configuration keys are described with the utility script <a class="code"
+  href="util/cfg.itp.html#index:cfgk">cfg.itp</a> (see there). Some commands use dedicated configuration keys which are
+  described with the command. Dedicated keys may be placed in the configuration file just like all other keys. Any key
+  (common and dedicated) may be specified or overwritten through the command line using
+  <nobr><code><b>-P</b>&lt;key&gt;=&lt;value&gt;</code></nobr> options:</p>
+  <pre class="code">
+  
+  dlabpro CCC.xtp trn myconfig.cfg -P<span class="TODO">...</span>
+  </pre>
+  <p><code>-P</code> options <em>always</em> overwrite the configuration file. The heading "<code>uasr.</code>" of the
+	keys may be omitted in <code>-P</code> options.</p>
+  <p>For further information</p>
+  <ul>
+  	<li class="indent">see documentation of <a href="util/cfg.itp.html#index:datadirs"
+  		class="code">util/cfg.itp</a> to learn more about UASR's organization of databases.</li>
+  	<li class="indent">see documentation of <a href="util/cfg.itp.html#clp_-CFG_get_path"
+			class="code">-CFG_get_path</a> to learn how UASR determines paths to the various data sets.</li>
+  	<li class="indent">see documentation of <a href="util/cfg.itp.html#clp_-CFG_get_flist"
+			class="code">-CFG_get_flist</a> to learn how UASR obtains file lists of the various data sets.</li>
+  </ul>
+
+  </div>
+  </div>
+
+  <!-- == CCC.xtp cls ====================================================== -->
+  <div id="clp_cls" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        CCC.xtp <span class="mid">cls</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_cls','CCC.xtp cls','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>CCC.xtp <b>cls</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Classification</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  <div class="indent"><ul class="linklist">
+  	<li class="linklist"><a href="#cls_description" class="linklist">Description</a></li>
+  	<li class="linklist"><a href="#cls_protocol" class="linklist">Screen Protocol</a></li>
+  </ul></div>
+
+  <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+  <a name="cls_description"></a><h3>Description</h3>
+	<p><code>CCC.xtp cls</code> is <span class="TODO">...</span></p>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+  
+  dlabpro CCC.xtp cls &lt;cfgfile&gt; [Options]
+  </pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see <a href="#usage">Usage</a>).</p>
+
+  <a name="cls_protocol"></a><h3>Screen Protocol</h3>
+	<h4>Verbose level 1 (default)</h4>
+	<p>The program will display general information and a progress bar like this:</p>
+	<pre class="code">
+		
+  // ccc.xtp revision 567<sup>1</sup>/1414<sup>2</sup>
+  // Configuration   : ccc.cfg<sup>3</sup>
+  // Database        : db/../../../data/izfp/cwt1937/common/info/cwt1937.itp<sup>4</sup>
+
+  // CCC assessment
+     - Model dir     : D:/ias/uasr/data/izfp/cwt1937/common/model (default, exists)<sup>5</sup>
+     - Feature dir   : D:/ias/uasr/data/izfp/cwt1937/common/fea/lmag_1024 (default, exists)
+     - File list     : D:/ias/uasr/data/izfp/cwt1937/common/flists/test.flst (default, exists)
+
+     Loading models ... done
+     Classifying 451 files ...
+                ___________________________________________________________
+     Progress: |0%   '     '     '     '     |50%  '     '     '     '     |100%
+               |||||||||||||||||||||||||||||||||||		
+	</pre>
+  <table class="indent">
+  	<tr><td><sup>1</sup></td><td>UASR revision</td></tr>
+  	<tr><td><sup>2</sup></td><td>dLabPro revision</td></tr>
+  	<tr><td><sup>3</sup></td><td>Configuration file</td></tr>
+  	<tr><td><sup>4</sup></td><td>Data base dependent include script</td></tr>
+  	<tr><td><sup>5</sup></td><td>Used directories and file lists</td></tr>
+  </table>	
+	
+	<h4>Verbose level 2 (command line option <code>-v2</code>)</h4>
+	<p>For each sample being classified the program will output a screen protocol like this:</p>
+	<pre class="code">
+   - 1<sup>1</sup>/451<sup>2</sup> 00000<sup>3</sup>: ("OK"<sup>4</sup>) ... 61 frames<sup>5</sup> ... 61 frames<sup>5</sup> ... done ("UNK"<sup>6</sup>).</pre>
+  <table class="indent">
+  	<tr><td><sup>1</sup></td><td>Current sample index</td></tr>
+  	<tr><td><sup>2</sup></td><td>Total number of samples</td></tr>
+  	<tr><td><sup>3</sup></td><td>Sample name</td></tr>
+  	<tr><td><sup>4</sup></td><td>Sample class (reference)</td></tr>
+  	<tr><td><sup>5</sup></td><td>Number of feature vectors for sensor 1, 2, etc.</td></tr>
+  	<tr><td><sup>6</sup></td><td>Recognition result</td></tr>
+  </table>	
+
+	<h4>Verbose level 3 (command line option <code>-v3</code>)</h4>
+	<p>For each sample being classified the program will output a screen protocol as described with
+    <code>-v2</code> plus additional information:</p>
+	<pre class="code">
+   - 1/451 00000: ("OK") ...
+     - loading: D:/ias/uasr/data/izfp/cwt1937/common/fea/lmag_1024/00000.AH.dn3<sup>1</sup> ... ok
+        61 frames .("OK"<sup>2</sup> -> 0.989074<sup>3</sup>).("UNK"<sup>2</sup> -> 0.989797<sup>3</sup>).
+     - loading: D:/ias/uasr/data/izfp/cwt1937/common/fea/lmag_1024/00000.BH.dn3<sup>1</sup> ... ok
+        61 frames .("OK"<sup>2</sup> -> 0.986205<sup>3</sup>).("UNK"<sup>2</sup> -> 0.995451<sup>3</sup>).
+    -  done ("UNK").</pre>
+  <table class="indent">
+  	<tr><td><sup>1</sup></td><td>Fully qualified path of feature vector file (sensor 1, 2, etc.)</td></tr>
+  	<tr><td><sup>2</sup></td><td>Evaluating against model of this class</td></tr>
+  	<tr><td><sup>3</sup></td><td>Fuzzy membership to class specified by <sup>2</sup></td></tr>
+  </table>	
+
+	<h4>Verbose level 4 (command line option <code>-v4</code>)</h4>
+	<p>For each sample being classified the program will output a screen protocol as described with
+    <code>-v3</code> plus additional information:</p>
+	<pre class="code">
+   - 1/451 00000: ("OK") ...
+     - loading: D:/ias/uasr/data/izfp/cwt1937/common/fea/lmag_1024/00000.AH.dn3 ... ok
+        61 frames .("OK" 0.944535<sup>1</sup> 0.83308 0.834726 0.868704 0.87575 -> 0.989074).("UNK" 0.922341<sup>1</sup> 0.85538 0.794445 0.756967 0.812557 -> 0.989797).
+     - loading: D:/ias/uasr/data/izfp/cwt1937/common/fea/lmag_1024/00000.BH.dn3 ... ok
+        61 frames .("OK" 0.937551<sup>1</sup> 0.809796 0.736358 0.790348 0.928207 -> 0.986205).("UNK" 0.946844<sup>1</sup> 0.89672 0.755449 0.796151 0.932306 -> 0.995451).
+    -  done ("UNK").</pre>
+  <table class="indent">
+  	<tr><td><sup>1</sup></td><td>Correlation coefficient (spectral window 1, 2, etc.)</td></tr>
+  </table>	
+
+  </div>
+  </div>
+
+  <!-- == CCC.xtp ren ====================================================== -->
+  <div id="clp_ren" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        CCC.xtp <span class="mid">ren</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_ren','CCC.xtp ren','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>CCC.xtp <b>ren</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Auxiliary: Render spectral windows</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  <div class="indent"><ul class="linklist">
+  	<li class="linklist"><a href="#description" class="linklist">Description</a></li>
+  </ul></div>
+
+  <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+  <a name="description"></a><h3>Description</h3>
+	<p><code>CCC.xtp ren</code> is <span class="TODO">...</span></p>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+  
+  dlabpro CCC.xtp ren &lt;cfgfile&gt; [Options]
+  </pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see <a href="#usage">Usage</a>).</p>
+
+  </div>
+  </div>
+
+  <!-- == CCC.xtp trn ====================================================== -->
+  <div id="clp_trn" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        CCC.xtp <span class="mid">trn</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_trn','CCC.xtp trn','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>CCC.xtp <b>trn</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Training</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  <div class="indent"><ul class="linklist">
+  	<li class="linklist"><a href="#description" class="linklist">Description</a></li>
+  </ul></div>
+
+  <a name="description"></a><h3>Description</h3>
+	<p><code>CCC.xtp trn</code> is <span class="TODO">...</span></p>
+
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+  
+  dlabpro CCC.xtp trn &lt;cfgfile&gt; [Options]
+  </pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see <a href="#usage">Usage</a>).</p>
+
+  <a name="trn_protocol"></a><h3>Screen Protocol</h3>
+	<span class="TODO">...</span>
+	
+	<p>The training includes an assessment step. The screen protocol of this is described with
+	<a href="#clp_cls" class="code">CCC.xtp cls</a>.</p> 
+
+  </div>
+	</div>
+  <!-- ===================================================================== -->
+  <div class="footer">End of user documentation.</div>
+  <div id="reference" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar"><b>Reference</b>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('reference','Reference','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe2">
+
+  <!--}} CUSTOM_DOC -->
+  <a name="functions"></a><h3>Functions</h3>
+  <table cellSpacing="0" cellPadding="4" border="0">
+    <tr>
+      <td class="rowgroup" colSpan="2">Functions</td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-usage"><code class="link">-usage</code></a></td>
+      <td><code><b>-usage</b>(sCmd)</code><br>&nbsp;<br> Prints help on usage
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-get_fuzzy"><code class="link">-get_fuzzy</code></a></td>
+      <td><code><b>-get_fuzzy</b>(dCorc,dMean,dSdev)</code><br>&nbsp;<br> Computes a fuzzy membership function (to the "good part" class) from
+ correlation coefficients.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CFG_get_windows"><code class="link">-CFG_get_windows</code></a></td>
+      <td><code><b>-CFG_get_windows</b>(idRef,sSensor)</code><br>&nbsp;<br> Loads the spectral windows' definition from the configuration
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_render_win"><code class="link">-FEA_render_win</code></a></td>
+      <td><code><b>-FEA_render_win</b>(idSrc,nR,nXR,nC,nXC,idDst)</code><br>&nbsp;<br> Auxiliary function rendering a window on a spectrogram for display.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_corc"><code class="link">-FEA_corc</code></a></td>
+      <td><code><b>-FEA_corc</b>(idFeaR,idW,nW,idFeaT)</code><br>&nbsp;<br> Computes the correlation coefficient between two spectrogram windows.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CCC_train"><code class="link">-CCC_train</code></a></td>
+      <td><code><b>-CCC_train</b></code><br>&nbsp;<br> Training
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CCC_assess"><code class="link">-CCC_assess</code></a></td>
+      <td><code><b>-CCC_assess</b></code><br>&nbsp;<br> Classification (assesssment mode)
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_trn"><code class="link">-CMD_trn</code></a></td>
+      <td><code><b>-CMD_trn</b></code><br>&nbsp;<br> Training command
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_cls"><code class="link">-CMD_cls</code></a></td>
+      <td><code><b>-CMD_cls</b></code><br>&nbsp;<br> Classification command
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_ren"><code class="link">-CMD_ren</code></a></td>
+      <td><code><b>-CMD_ren</b></code><br>&nbsp;<br> Window rendering command
+.
+      </td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <div id="clp_-usage">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-usage</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-usage','-usage','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-usage</b>(sCmd)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">CCC.xtp(42)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Prints help on usage
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sCmd</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-get_fuzzy">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-get_fuzzy</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-get_fuzzy','-get_fuzzy','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-get_fuzzy</b>(dCorc,dMean,dSdev)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">CCC.xtp(93)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Computes a fuzzy membership function (to the "good part" class) from
+ correlation coefficients.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>dCorc</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          ...
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>dMean</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          ...
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>dSdev</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          ...
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> ...
+
+  </div>
+  </div>
+  <div id="clp_-CFG_get_windows">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CFG_get_windows</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CFG_get_windows','-CFG_get_windows','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CFG_get_windows</b>(idRef,sSensor)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">CCC.xtp(130)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Loads the spectral windows' definition from the configuration
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idRef</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Spectrogram instance (may be empty, used to obtain default window
+          dimensions)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSensor</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Name of sensor to obtain the windows for
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> a data instance describing the windows
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.ccc.windows.[sSensor]&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.ccc.window1.[sSensor].[n]&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.ccc.windows.&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.ccc.window1.[n]&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_render_win">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_render_win</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_render_win','-FEA_render_win','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_render_win</b>(idSrc,nR,nXR,nC,nXC,idDst)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">CCC.xtp(176)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Auxiliary function rendering a window on a spectrogram for display.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSrc</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nR</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nXR</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nC</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nXC</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idDst</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_corc">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_corc</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_corc','-FEA_corc','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_corc</b>(idFeaR,idW,nW,idFeaT)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">CCC.xtp(202)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Computes the correlation coefficient between two spectrogram windows.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFeaR</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Reference spectrogram (should not contain labels)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idW</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Spectral window definition as returned by {@link -CFG_get_windows}
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nW</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Zero-based index of window to apply
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFeaT</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Test spectrogram (should not contain labels)
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> A data instance containing exactly one component and one record
+         filled with the correlation coefficient between the windows
+
+  </div>
+  </div>
+  <div id="clp_-CCC_train">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CCC_train</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CCC_train','-CCC_train','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CCC_train</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">CCC.xtp(225)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Training
+
+  </div>
+  </div>
+  <div id="clp_-CCC_assess">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CCC_assess</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CCC_assess','-CCC_assess','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CCC_assess</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">CCC.xtp(329)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Classification (assesssment mode)
+
+  </div>
+  </div>
+  <div id="clp_-CMD_trn">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_trn</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_trn','-CMD_trn','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_trn</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">CCC.xtp(447)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Training command
+
+  </div>
+  </div>
+  <div id="clp_-CMD_cls">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_cls</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_cls','-CMD_cls','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_cls</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">CCC.xtp(454)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Classification command
+
+  </div>
+  </div>
+  <div id="clp_-CMD_ren">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_ren</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_ren','-CMD_ren','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_ren</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">CCC.xtp(460)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Window rendering command
+
+  </div>
+  </div>
+<div class="footer">End of page</div>
+</body>
+</html>
+

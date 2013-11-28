@@ -1,0 +1,47 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: for dLabPro class var
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Behaves exactly like the data -strop method. However it processes a (string)
+## variable instead of a data instance.
+##
+## @cgen:index
+## @param sStr string
+##          Source string
+## @param sParam string
+##          Parameter to <code>sStrop</code>
+## @param sStrop string
+##          String operation
+## @return The result (string or number)
+function -VAR_strop(sStr,sParam,sStrop)
+{
+  data idAux;                                                                   # Auxiliary data 
+  "sStr" -type char[255] idAux -addcomp;                                        # Add string component
+  1 idAux -allocate;                                                            # Allocate one record
+  sStr 0 0 idAux -store;                                                        # Store the argument
+  idAux sParam sStrop idAux -strop;                                             # Invoke string operation
+  idAux [ 0 0 ] return;                                                         # Return result
+}
+
+## EOF

@@ -1,0 +1,446 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: Lexicon
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Create structure of pronunciation lexicon.
+## @cgen:index
+## @param sFilter string
+##          Line filter (see <a href="#clp_-LX_load" class="code">-LX_load</a>)
+## @param idLex data
+##          Lexicon data instance
+function -LX_init(sFilter,idLex)
+{
+  sFilter if "~FLT" 255 idLex -addcomp; end
+  "ORTH"            255 idLex -addcomp;
+  "PHON"            255 idLex -addcomp;
+  "W"      -type double idLex -addcomp; 
+  "NADT"   -type double idLex -addcomp;
+  "NEDT"   -type double idLex -addcomp;
+  "LEN"             255 idLex -addcomp;
+  return
+}
+
+## Loads a pronunciation lexicon from a text file. Each line in the file defines one lexicon entry. Pronunciation
+## variants may be defined giving multiple entries with identical orthographic strings. One entry consists of at least
+## two white space separated values: the orthographic and phonetic strings. An optional third column may contain a
+## word weight. In case of pronunciation variants only the weight given for the first variant will be used. Two further
+## optional columns may contain increments of the rejection thresholds.
+##
+## <h4>Example (<code>sFiler</code>="LEX:")</h3>
+## <pre class="code">
+## &nbsp;
+##   FOO: what ever ...
+## &nbsp;
+##   LEX: eins  QaIns
+##   LEX: eins  aIns
+##   LEX: zwei  tsvaI 10
+##   LEX: zwei  tsvo:
+## &nbsp;
+##   BAR: what ever ...
+## </pre>
+## 
+## <h4>See also</h4>
+## <ul class="linklist">
+##   <li class="linklist"><a href="#clp_-LX_compile" class="code">-LX_compile</a></li>
+## </ul>
+##
+## @cgen:index
+## @param sFile string
+##          Path of text file to be loaded
+## @param sFilter string
+##          Line filter (consider only lines starting with the given string), 
+##          commit "" to read all lines
+## @param idLex data
+##          Will be filled with the lexicon entries
+## @return <code>TRUE</code> if successfull, <code>FALSE</code> otherwise
+function -LX_load(sFile,sFilter,idLex)
+{
+  file iF;
+  sFilter if
+    sFilter iF -set line_flt;
+    "~FLT" 8 idLex -addcomp;
+  end
+  idLex -reset;
+  sFilter idLex -LX_init;
+  sFile "ascii" idLex iF -import ?error if FALSE return; end
+  sFilter if idLex 0 1 idLex -delete; end
+  TRUE return;
+}
+
+## Imports a database-dependent lexicon. The default implementation just calls
+## <code>sFile "" idLex </code><a href="#clp_-LX_load" class="code">-LX_load</a>.
+## Databases usually overwrite this function.
+##
+## @cgen:index
+## @param sFile string
+##          Path of text file to be loaded
+## @param idLex data
+##          Will be filled with the lexicon entries
+## @return <code>TRUE</code> if successfull, <code>FALSE</code> otherwise
+function -LX_import(sFile,idLex)
+{
+  ( sFile "" idLex -LX_load ) return;
+}
+
+## Computes a hash value of a lexicon list
+##
+## @param idLX data
+##          The lexicon list
+## @return The hash value as string
+function -LX_hash(idLX)
+{
+  data idCrc32;
+  idLX "CRC-32" "hash" idCrc32 -strop;
+  "${idCrc32[0,0]}" return;
+}
+
+## Adds one entry to a lexicon list.
+##
+## <p><b>Remark:</b> The function will always add a new entry regardless whether
+## an equally named entry already exists or not. This allows adding
+## pronunciation variants. The behavior is defined and must not be changed!</p>
+##
+## @cgen:index
+## @param sName string
+##          The orthographic string.
+## @param sEntry string
+##          The phonetic string and, optionally, the word weight, NAD
+##          confindence threshold and NED threshold, all separated by white
+##          spaces.
+## @param idLX data
+##          The lexicon list to add the entry to.
+function -LX_ladd(sName,sEntry,idLX)
+{
+  var nIdx;                                                                     # Index of entry
+  sEntry "" == if leave; end                                                    # No entry, no service
+	idLX.dim 0 == if                                                              # Empty lexicon >>
+    "ORTH" 255          idLX -addcomp;                                          #   Initialize comp. structure
+    "PHON" 255          idLX -addcomp;                                          #   ...
+    "W"    -type double idLX -addcomp;                                          #   ...
+    "TNAD" -type double idLX -addcomp;                                          #   ...
+    "TNED" -type double idLX -addcomp;                                          #   ...
+	end                                                                           # <<
+  data idCmd; { { "$[sEntry]" } } " \t" "split" idCmd -strop;                   # Parse new entry
+  idLX.nrec ++ idLX -reallocate;                                                # Add entry to lexicon
+  :nIdx=idLX.nrec-1;                                                            # Get the zero-based index
+  sName             nIdx 0 idLX -sstore;                                        # Store name (orthographic string)
+  0 0 idCmd -sfetch nIdx 1 idLX -sstore;                                        # Store phonetic string
+  0 1 idCmd -sfetch nIdx 2 idLX /noerror -dstore;                               # Store weight (or 0 if not present)
+  0 2 idCmd -sfetch nIdx 3 idLX /noerror -dstore;                               # Store nad threshold (or 0)
+  0 3 idCmd -sfetch nIdx 4 idLX /noerror -dstore;                               # Store ned threshold (or 0)
+}
+
+## Adds a pause word to a lexicon list.
+##
+## @global <am.sil> R
+## @global <am.gbg> R
+function -LX_ladd_pause(sName,idPhonTab,idLX)
+{
+  var nAux;
+  var sEntry;
+
+  "" sEntry =;
+  ( "am.sil" 3 -CFG_get ) nAux =;
+  nAux 0 >= if
+    :idPhonTab[nAux,0]: sEntry =;
+  end
+  ( "am.gbg" 4 -CFG_get ) nAux =;
+  nAux 0 >= if
+    sEntry not if
+      :idPhonTab[nAux,0]: sEntry =;
+    else
+      ( "(" sEntry + "|" + :idPhonTab[nAux,0]: + ")" + ) sEntry =;
+    end
+  end
+  sEntry if
+    sName sEntry idLX -LX_ladd; 
+  end
+}
+
+## Adds a pause word to a lexical transducer. 
+##
+## @param sName string
+##          The orthographic name of the pause word, e. g. "<PAU>"
+## @param sMode string
+##          Empty string (default operation) or any combination of the following characters
+##          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+##            <tr><th>Character     </th><th>Description</th></tr>
+##            <tr><td><code>R</code></td><td>Repeat: pause word can be repeated</td></tr>
+##            <tr><td><code>O</code></td><td>Optional: pause word can be skipped</td></tr>
+##          </table>
+## @param itLX fst
+##          The lexical transducer to add the pause word to
+## @return The unit index of the newly added pause word
+## @global &lt;am.gbg&gt; R
+## @global &lt;am.sil&gt; R
+function -LX_add_pause(sName,sMode,itLX)
+{
+  function -add_phoneme(nU,nP,sMode,itLX)
+  {                                                                             # >>
+    var nT;                                                                     #   Newly added transition index
+    nP -1 < if leave; end                                                       #   Not adding a symbol -> leave it!
+    nU 0 1 itLX -addtrans; itLX.td.nrec -- nT =;                                #   Add a transition
+    :itLX.td[nT,"~TIS"]=nP;                                                     #   Write input symbol
+    :itLX.td[nT,"~TOS"]=nU;                                                     #   Write output symbol
+    ( sMode "R" "search" -VAR_strop ) 0 >= if                                   #   Repeat mode >>
+      nU 0 0 itLX -addtrans; itLX.td.nrec -- nT =;                              #     Add a transition
+      :itLX.td[nT,"~TIS"]=nP;                                                   #     Write input symbol
+      :itLX.td[nT,"~TOS"]=-1;                                                   #     Write output symbol
+    end                                                                         #   <<
+  }                                                                             # <<
+
+  var nU;                                                                       # Pause word unit index
+  sName itLX -addunit; itLX.ud.nrec -- nU =;                                    # Add pause word FST
+  nU 1 itLX -addstates; nU 1 itLX /final -addstates;                            # Add two states
+  
+  nU ( "am.sil" -2 -CFG_get ) sMode itLX -add_phoneme;                          # Add transitions of pause phoneme
+  nU ( "am.gbg" -2 -CFG_get ) sMode itLX -add_phoneme;                          # Add transitions of garbabe phoneme
+  ( sMode "O" "search" -VAR_strop ) 0 >= if nU -1 "" itLX -add_phoneme; end     # Add epsilon path
+
+  nU return;                                                                    # Return unit index
+}
+
+## Adds a filler word to a lexical transducer. 
+##
+## @param sName string
+##          The orthographic name of the filler word, e. g. "<OOV>"
+## @param nXP number
+##          The number of phonemes
+## @param itLX fst
+##          The lexical transducer to add the filler word to
+## @return The unit index of the newly added filler word
+## @global &lt;am.gbg&gt; R
+## @global &lt;am.sil&gt; R
+function -LX_add_filler(sName,nXP,itLX)
+{
+  data idAux; { { "$[sName]" } } itLX.ud 0 0 idAux /noerror -gen_index;         # Seek filler word
+  :idAux.nrec>0: if :idAux[0,0]>=0: if :idAux[0,0]: return; end end             # Found -> return its index
+
+  var nU;                                                                       # Pause word unit index
+  var nP;                                                                       # Current phoneme index
+  var nT;                                                                       # Current transition index
+  var nTos;   -1                       nTos   =;                                # Output symbol index of filler word
+  var nAmSil; ( "am.sil" -2 -CFG_get ) nAmSil =;                                # Pause phoneme index
+  var nAmGbg; ( "am.gbg" -2 -CFG_get ) nAmGbg =;                                # Garbage phoneme index
+
+  ( itLX.os -is_empty not ) ( itLX.ud.nrec 1 <= ) || if                         # Have output symbol table >> 
+    { { "$[sName]" } } itLX.os -cat;                                            #   Add filler word to output symbols
+    ( itLX.os.nrec -- ) nTos =;                                                 #   Remember filler word index
+  end                                                                           # <<
+
+  sName itLX /lsr /fst -addunit; itLX.ud.nrec -- nU =;                          # Add filler word FST
+  ( nTos 0 < ) if nU nTos =; end                                                # Get filler wrd.idx.(if not yet known) 
+  nU 1 itLX -addstates; nU 1 itLX /final -addstates;                            # Add two states
+  nU 0 1 itLX -addtrans; itLX.td.nrec -- nT =;                                  # Add a transition
+  :itLX.td[nT,"~TIS"]=-1;                                                       # Write input symbol
+  :itLX.td[nT,"~TOS"]=nTos;                                                     # Write output symbol
+  -1 nP =; ( nP ++= ) ( nP nXP < ) while                                        # Loop over phonemes >>
+    nP nAmSil == if continue; end                                               #   Skip pause phoneme
+    nP nAmGbg == if continue; end                                               #   Skip garbage phoneme
+    nU 1 1 itLX -addtrans; itLX.td.nrec -- nT =;                                #   Add a transition
+    :itLX.td[nT,"~TIS"]=nP;                                                     #   Write input symbol
+    :itLX.td[nT,"~TOS"]=-1;                                                     #   Write output symbol
+  end                                                                           # <<
+
+  nU return;                                                                    # Return index of newly created unit
+}
+
+## Compiles a lexicon from a string list into a transducer.
+##
+## @cgen:index
+## @param idPtab data
+##          Phoneme table (list of phoneme symbols expected in component 0)
+## @param idLX data
+##          The lexicon (list of words) to be compiled. The list is expected to
+##          contain the following components:
+##          <table class="indent">
+##            <tr><th>Component</th><th>Description</th></tr>
+##            <tr><td>0</td><td>Mandatory: orthographic strings</td></tr>
+##            <tr><td>1</td><td>Mandatory: phonetic strings</td></tr>
+##            <tr><td>2</td><td>Optional: Word weigth (log. semiring), 0: neutral</td></tr>
+##            <tr><td>3</td><td>Optional: NAD confidence threshold, 0: use default</td></tr>
+##            <tr><td>4</td><td>Optional: NED confidence threshold, 0: use default</td></tr>
+##          </table>
+## @param itLX fst
+##          Instance to be filled with the lexical transducer (one FST unit per
+##          record in <code>idLX</code>)
+## @return nothing
+function -LX_compile(idPtab,idLX,itLX)
+{
+  data idAux;                                                                   # Auxilary data instance
+  data idXnf;                                                                   # Lexicon extra info
+
+  "\n   - LX_compile "                                                 3 -MSGX; # Protocol
+  idLX 1 0 idPtab itLX /greedy /index -compile;                    "." 3 -MSGX; # Compile to FST
+  idLX.dim 2 > if                                                               # Lex. has weights and/or extra info >>
+    itLX.ud idLX 0 0 idAux -gen_index;                                          #   Get index of first entry per word
+    idAux 0 idLX 2 idLX.dim 2 - idXnf -lookup;                                  #   Lookup extra information
+    idXnf.dim 1 > if                                                            #   There are more than just weights >>
+    	idXnf 1 idXnf.dim 1 - idAux -select; idAux itLX.ud -join;                 #     Copy to unit table
+    end                                                                         #   <<
+  end                                                              "." 3 -MSGX; # << (Protocol)
+  :idPtab[0]:  itLX.is -copy;                                                   # Create input symbol table
+  :itLX.ud[0]: itLX.os -copy;                                                   # Create output symbol table
+  " done\n   "                                                         3 -MSGX; # Protocol
+}
+
+## Loads the configured lexicon. The function proceeds as follows:
+## <ol>
+##   <li>Load the lexicon file specified through configuration key
+##     <code>uasr.lx</code> (if present).</li>
+##   <li>If the language model is a finite state grammar (configuration key
+##     <code>uasr.lm="fsg"</code>), additionally load lexicon entries from
+##     grammar file specified through configuration key
+##     <code>uasr.lm.fsg</code>.</li>
+##   <li>Add the pause word "&lt;PAU&gt;" and the filler word "&lt;OOV&gt;". 
+## </ol>
+##
+## <h4>See also</h4>
+## <ul class="linklist">
+##   <li class="linklist"><a href="lx.itp#clp_-LX_load" class="code">-LX_load</a></li>
+## </ul>
+##
+## @cgen:index
+## @param idAM data
+##          Acoustic models (list of terminal lexicon symbols, e.g. list of
+##          phonemes). The list of acoustic models can be obtained through <a
+##          href="lab.itp.html#clp_-LAB_get_tab" class="code">-LAB_get_tab</a>.
+##          The unit table <code>hmm.ud</code> of a Hidden Markov model set may
+##          be committed, too.
+## @param itLX fst
+##          Filled with the lexicon
+## @global &lt;uasr.am.classes&gt; R
+## @global &lt;uasr.am.gbg&gt;     R
+## @global &lt;uasr.am.sil&gt;     R
+## @global &lt;uasr.info&gt;       R
+## @global &lt;uasr.lm&gt;         R
+## @global &lt;uasr.lm.fsg&gt;     R
+## @global &lt;uasr.lx&gt;         R
+function -LX_get(idAM,itLX)
+{
+  data idLX;                                                                    # The lexicon entries
+  data idAux;                                                                   # Auxiliary data instance 
+  var  sLX;  ( "lx" ""     "S" -CFG_get_ex ) sLX -sset;                         # Get lexicon file name
+  var  sLM;  ( "lm" "none" "S" -CFG_get_ex ) sLM -sset;                         # Get language model type
+
+  ## Load lexicon entries                                                       # -------------------------------------
+  sLX if                                                                        # Have lexicon file name >>
+    "\n   - Loading lexicon from $[sLX] ..."                             -MSG2; #   Protocol (verbose level 2)
+		sLX "" idLX -LX_load;                                                       #   Load lexicon file
+    " ($[idLX.nrec] entries) "                                           -MSG2; #   Protocol (verbose level 2)
+  end                                                                           # <<
+  sLM "fsg" == if                                                               # Finite state grammar LM >>
+    ( "lm.fsg" "" -CFG_get ) sLM =;                                             #   Get finite state grammar file name
+    "\n   - Loading lexicon from $[sLM] ..."                             -MSG2; #   Protocol (verbose level 2)
+    sLM "LEX:" idAux -LX_load;                                                  #   Load lexicon entries from grammar
+    " ($[idAux.nrec] entries) "                                          -MSG2; #   Protocol (verbose level 2)
+    idAux idLX -cat;                                                            #   Append to lexicon
+  end                                                                           # <<
+
+  ## Compile lexicon                                                            # -------------------------------------
+  "<PAU>" idAM idLX -LX_ladd_pause;                                             # Add pause word
+  idLX.nrec 0 > if idAM idLX itLX -LX_compile; end                              # Compile lexicon
+  "<OOV>" idAM.nrec itLX -LX_add_filler;                                        # Add filler word
+}
+
+## Unifies, minimizes and closes a lexical transducer. The resulting transducer
+## translates phoneme into word sequences and may be composed with a language
+## model acceptor or transducer.
+##
+## <h4>Remarks</h4>
+## <p>Some lexicon entries (like the filler model "&lt;OOV&gt;") are not
+## minimizable. Hence <code>idSrc [...] -minimize</code> will fail. This
+## function only minimizes ordinary entries (e. g. words whose names do
+## <em>not</em> begin with "&lt;") and leaves all other entries alone.</p> 
+##
+## @cgen:index
+## @param itSrc fst
+##          Source transducer, is expected to contain one unit per lexicon entry
+## @param itDst fst
+##          Filled with a phoneme-to-word transducer, may be indentical with
+##          <code>itSrc</code>
+function -LX_close(itSrc,itDst)
+{
+  data idIs;  itSrc.is idIs  -copy;                                             # Save input symbol table
+  data idOs;  itSrc.os idOs  -copy;                                             # Save output symbol table
+  fst  itLex; itSrc    itLex -copy;                                             # Working copy of source instance
+  fst  itXxx;                                                                   # Non minimizable entries
+  fst  itAux;                                                                   # Auxiliary transducer
+  var  nU;                                                                      # Unit counter
+
+  ## Move special entries to itXxx                                              # -------------------------------------
+  0 nU =; nU itLex.ud.nrec < while                                              # Loop over units >>
+    ( ( nU 0 itLex.ud -fetch "<" "search" -VAR_strop ) 0 >= ) if                #   Special entry (named "<*") >>
+      itLex NULL nU itAux -copy_ui; itAux itXxx -cat;                           #     Copy to itXxx
+      nU itLex -delunit;                                                        #     Remove from itLex
+    else                                                                        #   << Ordinary unit >>
+      nU ++=;                                                                   #     Skip
+    end                                                                         #   <<
+  end                                                                           # <<
+
+  ## Process lexicon                                                            # -------------------------------------
+  itLex.ud.nrec 0 > if                                                          # Have ordinary entries >>
+    itLex itLex -union;                                                         #   Unify
+    itLex 0 itLex -minimize;                                                    #   Minimize
+  end                                                                           # <<
+  itXxx.ud.nrec 0 > if                                                          # Have special entries >>
+    itXxx itLex -cat;                                                           #   Add them
+    itLex itLex -union;                                                         #   Unify again
+  end                                                                           # <<
+  itLex 0 itLex -close;                                                         # Close
+
+  ## Word change penalty                                                        # -------------------------------------
+  "lx.wordpenalty" 0 "S" -CFG_get_ex var nWCP;                                  # Read config entry
+  nWCP 0 != if;                                                                 # Penalty active >>
+    itLex /lsr -wsr_convert;                                                    #   Convert to LSR
+    "~LSR" itLex.td -find_comp 0 < if;                                          #   No weight component present >>
+      "~LSR" -type double itLex.td -addcomp;                                    #     Create one
+    end;                                                                        #   <<
+    :itLex.td["~LSR"]+(itLex.td["~INI"].==0).*nWCP: 0 1 "~LSR" itLex.td -xstore;#   Add penalty
+  end;                                                                          # <<
+
+  ## Aftermath                                                                  # -------------------------------------
+  idIs itLex.is -copy;                                                          # Restore input symbol table
+  idOs itLex.os -copy;                                                          # Restore output symbol table
+  itLex itDst -copy;                                                            # Copy to destination instance
+}
+
+## Determines if a word list is trivial. A trivial word list contains at most
+## a pause ("<PAU>") and an out-of-vocabulary ("<OOV>") word, but no other
+## entries.
+##
+## @param idLX data
+##          the word list
+## @return <code>TRUE</code> if the word list is trivial, <code>FALSE</code>
+##         otherwise
+function -LX_is_trivial(idLX)
+{
+  idLX -is_empty if TRUE return; end                                            # An empty lexicon is trivial
+  data idAux;                                                                   # Auxiliary data instance
+  idLX { { "<PAU>" } { "<OOV>" } } 0 0 idAux /noerror -gen_index;               # Find pause and OOV entries in list
+  :idAux.>=0: idAux /comp -dmark; idAux 0 0 idAux /mark /noerror -delete;       # Remove them
+  ( idAux -is_empty ) return;                                                   # If no other entries -> trivial 
+}
+
+## EOF

@@ -1,0 +1,264 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Evolutionary optimization
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro
+##
+## ARGUMENTS:
+##   $1: Setup file or 'help'
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"../util/cfg.itp"  include;                                                     # Include configuration utilities
+"../util/data.itp" include;                                                     # Include data utilities
+"../util/os.itp"   include;                                                     # Include OS utilities
+"../util/uasr.itp" include;                                                     # Include UASR utilities
+"../util/var.itp"  include;                                                     # Include variables' utilities
+
+## Prints help on usage
+function -usage()
+{
+  "\n\n   SYNOPSIS:"                                                      -MSG;
+    "\n     EVO: Evolutionary optimization tool"                          -MSG;
+  "\n\n   USAGE:"                                                         -MSG;
+    "\n     dlabpro $__SFILE__.xtp <cfgfile> [options]"                   -MSG;
+  "\n\n   ARGUMENTS:"                                                     -MSG;
+    "\n     <cfgfile>   UASR configuration file"                          -MSG;
+  "\n\n   OPTIONS:"                                                       -MSG;
+    "\n     -h,--help       display this help and exit"                   -MSG;
+    "\n     -P<key>=<value> override config. key-value-pairs"             -MSG;
+    "\n     -v<n>           verbose level"                                -MSG;
+  "\n\n   EXAMPLE:"                                                       -MSG;
+    "\n     'dlabpro $__SFILE__.xtp . -Pcustomize=myevolution.itp'"       -MSG;
+    "\n"                                                                  -MSG;
+}
+
+## Creates the initial population. The initial population is a set of zero
+## vectors. You may overwrite this function to create a custom initial
+## population, e.g.:
+## <pre class="code">
+##  <a href="javascript:__goDlpA('function.html')">function</a> -my_population(nPopulation,idP)
+##  {
+##    <a href="javascript:__goDlpA('var.html')">var</a> nGenes; ( "gen.genes" 1 -CFG_get ) nGenes =; <span class="c-cmt"># Get number of genes</span>
+##    <a href="javascript:__goDlpA('function.html','mth_-type')">-type</a> double nGenes nPopulation idP <a href="javascript:__goDlpA('data.html','mth_-array')">-array</a>;      <span class="c-cmt"># Create zero-initialized population</span>
+##    1 0 idP <a href="javascript:__goDlpA('data.html','mth_-array')">-fill</a>;                                   <span class="c-cmt"># Initialize population with ones</span>
+##  }
+##  <a href="javascript:__goDlpA('function.html','opt__disarm')">/disarm</a> -my_population <a href="javascript:__goDlpA('function.html','opt__disarm')">/disarm</a> -EVO_population =;</pre>
+## <p>The overwritten function should be placed in an UASR customization script
+## (<a href="../util/cfg.itp.html#index:cfgk">configuration key</a>
+## <code>&lt;uasr.customize&gt;</code>).</p> 
+##
+## @param nPopulation number
+##          Number of individuals
+## @param idP data
+##          Filled with the population
+## @return nothing
+## @global &lt;gen.genes&gt; R
+function -EVO_population(nPopulation,idP)
+{
+	var nGenes; ( "gen.genes" 1 -CFG_get ) nGenes =;                              # Get number of genes
+	-type double nGenes nPopulation idP -array;                                   # Create zero-initialize population
+}
+
+## Creates children of the current population through gene recmobination.
+##
+## @param nChildren number
+##          Number of children to create
+## @param idP data
+##          The Population
+## @return nothing
+function -EVO_recombination(nChildren,idP)
+{
+	var  r; 0 ( idP.nrec -- ) 1 r -intv;                                          # Random number generator
+	var  nP;                                                                      # Randomly selected parent of a gene
+	var  nG;                                                                      # Current gene
+	var  nC;                                                                      # Current child
+	data idC; -type double idP.dim nChildren idC -array;                          # Population of children
+
+	"\n     - Recombination: $[idP.nrec] parents, $[nChildren] children"   -MSG2; # Protocol
+	0 nC =; label L_C; nC nChildren < if                                          # Loop over children >>
+	  "\n       - Child $[nC]: "                                         3 -MSGX; #   Protocol
+  	0 nG =; label L_G; nG idP.dim < if                                          #   Loop over genes >>
+	      r nP =;                                               " $[nP]" 3 -MSGX; #     Randomly select a parent
+        :idC[nC,nG]=idP[nP,nG];                                                 #     Copy gene
+	    nG ++=; goto L_G;                                                         #     Next gene
+	  end                                                                         #   <<
+	  nC ++=; goto L_C;                                                           #   Next child
+	end                                                                           # <<
+	idC idP -cat;                                                                 # Add children to population 
+	"\n      " 3 -MSGX; " done."                                           -MSG2; # Protocol
+}
+
+## Mutates the population.
+##
+## @param idP data
+##          The population
+## @return nothing
+## @global &lt;gen.mvar&gt;   R
+## @global &lt;gen.mquant&gt; R
+function -EVO_mutation(idP)
+{
+	var  nMVar;   ( "gen.mvar"   1 -CFG_get ) nMVar   =;                          # Get mutation variance
+	var  nMQuant; ( "gen.mquant" 0 -CFG_get ) nMQuant =;                          # Get mutation quantization
+  gmm  iG;                                                                      # Gaussian model
+  data idN;                                                                     # Gaussian noise
+
+	"\n     - Mutation ..."                                                -MSG2; # Protocol
+	idP.dim idP.nrec idN iG -noise; idN nMVar * idN =;                            # Create Gaussian noise
+	nMQuant 0 > if :idN = ent(idN/nMQuant)*nMQuant; end                           # Quantize noise
+	idP idN + idP =;                                                              # Add noise to genes
+	" done."                                                               -MSG2; # Protocol
+}
+
+## Evaluates one individual. The function is expected to compute the "fitness"
+## of an individual. The fitness is a non-negative value. The "fitter"
+## individual has the lower fitness value; the perfect individual has a fitness
+## of 0.
+## <p>The function is application specific and <em>must</em> be overwritten:</p>
+## <pre class="code">
+##  <span class="c-key">function</span> -my_evaluate_individual(idX,bShow)
+##  {
+##    var nFitness;
+##    :nFitness = &lt;<em>whatever</em>&gt;;
+##    bShow <span class="c-key">if</span>
+##      idX -print;
+##    <span class="c-key">end</span>
+##    nFitness <span class="c-key">return</span>;
+##  }
+##  /disarm -my_evaluate_individual /disarm -EVO_evaluate_individual =;</pre>
+## <p>The overwritten function should be placed in an UASR customization script
+## (<a href="../util/cfg.itp.html#index:cfgk">configuration key</a>
+## <code>&lt;uasr.customize&gt;</code>).</p> 
+##
+## @param idX data
+##          One vector of genes (= one individual)
+## @param bShow boolean
+##          <code>TRUE</code> when information on the individual should be
+##          printed (used at the end of the evolution to display the result)
+## @return Fitness of the individual; a non-negative value (see above) 
+function -EVO_evaluate_individual(idX,bShow)
+{
+	"You must overwrite function '-EVO_evaluate_individual'!" -ERROR;             # Must overwrite function!
+	0 return;                                                                     # Dunno dude ...
+}
+
+## Evaluates a population.
+##
+## @param idE data
+##          Data instance to be filled with the fitness values of each
+##          individual of the population
+## @param idP data
+##          The population
+## @return nothing
+function -EVO_evaluation(idE,idP)
+{
+	data idX;                                                                     # One individual
+	var  nP;                                                                      # Index of current individual
+
+	"\n     - Evaluation ..."                                              -MSG2; # Protocol
+	-type double 1 idP.nrec idE -array;                                           # Initialize fitness data
+	label L_P; nP idP.nrec < if                                                   # Loop over individuals >>
+	  "\n       - Individual $[nP]:"                                     3 -MSGX; #   Protocol
+	  idP nP 1 idX /rec -select;                                                  #   Get current individual
+	  ( idX FALSE -EVO_evaluate_individual ) nP 0 idE -dstore;                    #   Evaluate it
+	  " ${idE[nP,0]}"                                                    3 -MSGX; #   Protocol
+	  nP ++=; goto L_P;                                                           #   Next individual
+	end                                                                           # <<
+	"\n      " 3 -MSGX;                                           " done." -MSG2; # Protocol
+}
+
+## Selects the fittest individuals.
+##
+## @param nPopulation number
+##          Number of individuals to survive selection (population size)
+## @param idP data
+##          The population
+## @return nothing
+function -EVO_selection(nPopulation,idP)
+{
+	data idI;                                                                     # Individual index data
+	data idE;                                                                     # Individual fitness data 
+	var  nP;                                                                      # Index of current individual
+	
+	-type long 1 idP.nrec idI -array; 0 1 idI -fill;                              # Create individual index data
+	idE idP -EVO_evaluation;                                                      # Evaluate individuals
+	"\n     - Selection: ..."                                              -MSG2; # Protocol
+  idE idI -join; idP idI -join;                                                 # Join indivdl., index and fitness data
+	idI 1 idI -sortup;                                                            # Sort individuals by fitness
+	idI 0 nPopulation idI /rec -select;                                           # Select the nPopulation fittest
+	.__UTL_nVlevel 2 >= if                                                        # On verbose level 2 and higher >>
+	  " ... done (individuals"                                             -echo; #   Protocol
+	  label L_P; nP idI.nrec < if " ${idI[nP,0]}" -echo; nP ++=; goto L_P; end    #   Print indices of selected indivdls.
+	  ")"                                                                  -echo; #   Protocol
+  end                                                                           # <<
+	idI 0 2 idP -delete;                                                          # Delete index and fitness values
+	:idI[0,1]: return;                                                            # Return best fitness value
+}
+
+## == MAIN PROGRAM ==                                                           # =====================================
+
+"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
+## Initialize session                                                           # -------------------------------------
+"\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
+"\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
+"\n// dLabPro VID     : " -version +                                      -MSG; # Protocol
+"\n// UASR VID        : " -UASR_version +                                 -MSG; # Protocol
+( "$1" "help" == ) -UASR_help || if "$2" -usage; 0 return; end                  # Print help
+"\n// Configuration   : $1"                                               -MSG; # Protocol
+"$1" TRUE -CFG_init;                                                            # Configure session
+"util/uasr_session.itp" include;                                                # Include UASR session startup script
+
+var nPopulation;  ( "gen.population"      2 "S" -CFG_get_ex ) nPopulation  =;   # Population size
+var nChildren;    ( "gen.children"        5 "S" -CFG_get_ex ) nChildren    =;   # Number of children per generation
+var nGenerations; ( "gen.generations"   100 "S" -CFG_get_ex ) nGenerations =;   # Maximal number of generations
+var nAbort;       ( "gen.abort"       0.001 "S" -CFG_get_ex ) nAbort       =;   # Evolution abort threshold
+
+var  nG;                                                                        # Current generation
+var  nE;                                                                        # Currently best evaluation result
+var  nEmin; INF nEmin =;                                                        # Globally best evaluation result
+data idP;                                                                       # The population
+data idX;                                                                       # The fittest individual so far
+
+## Evolution                                                                    # -------------------------------------
+"\n\n   Performing evolution (max. $[nGenerations] generations)"          -MSG; # Protocol
+nPopulation idP -EVO_population;                                                # Create population
+label L_GEN; nG nGenerations < if                                               # Loop over generations >>
+  "\n   - Generation $[nG]: ..." -MSG;                                          #   Protocol
+  nChildren idP   -EVO_recombination;                                           #   Recombination
+  idP             -EVO_mutation;                                                #   Mutation
+  nPopulation idP -EVO_selection nE =;                                          #   Selection
+  " done. (best $[nE])" -MSG;                                                   #   Protocol
+  nE nEmin < if                                                                 #   Found new fittest individual >>
+    nE nEmin =;                                                                 #     Remember evaluation result
+    idP 0 1 idX /rec -select;                                                   #     Remember the individual
+    " *"                                                                  -MSG; #     Protocol
+  end                                                                           #   <<
+  nE nAbort > if nG ++=; goto L_GEN; end                                        #   Next generaration
+end                                                                             # <<
+
+## Aftermath                                                                    # -------------------------------------
+"\n   Evolution complete. Here is the best individual:"                   -MSG; # Protocol
+idX TRUE -EVO_evaluate_individual;                                              # Show individual
+
+"\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n"           -MSG; # Protocol
+0 return;                                                                       # That's it folks
+
+## EOF

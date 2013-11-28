@@ -1,0 +1,440 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - File list management tool
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/tools
+##
+## ARGUMENTS:
+##   $1: Command or 'help'
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"$UASR_HOME/scripts/dlabpro/util/cfg.itp"  include;
+"$UASR_HOME/scripts/dlabpro/util/data.itp" include;
+"$UASR_HOME/scripts/dlabpro/util/os.itp"   include;
+"$UASR_HOME/scripts/dlabpro/util/uasr.itp" include;
+"$UASR_HOME/scripts/dlabpro/util/var.itp"  include;
+
+## Prints help on usage
+function -CMD_usage(sCmd)
+{
+  sCmd "exc" == if
+    "\n\n   exc: Exclude entries from file list(s)"                       -MSG; 
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp exc <exclflst> <flstfile> ... "      -MSG;
+              "[options]"                                                 -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <exclfile>  list of entries to exclude"                     -MSG;
+      "\n     <flstfile>  file list(s) file to be processed"              -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -n          do not write output, just say what to do"       -MSG;
+      "\n     -Psep=<sep> file list column separator chars, e.g. \"\\t \""-MSG;
+    "\n\n   EXAMPLES:"                                                    -MSG;
+    "\n\n     'dlabpro $__SFILE__.xtp exc exclude.flst *.flst'"           -MSG;
+      "\n     Exclude entries in exclude.flst from all files named"       -MSG;
+      "\n     *.flst"                                                     -MSG;
+    "\n\n     'dlabpro $__SFILE__.xtp exc exclude.flst *.flst -n'"        -MSG;
+      "\n     Just tell what to do for excluding entries in exclude.flst" -MSG;
+      "\n     from all files named *.flst."                               -MSG;
+      "\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "mrg" == if
+    "\n\n   mrg: Merge file lists"                                        -MSG; 
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp mrg <flist1> [<flist2> ...] "        -MSG;
+              "[options]"                                                 -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <flist1>        first file list"                            -MSG;
+      "\n     <flist2>        second file list (optional)"                -MSG;
+      "\n     ...             (optionally more file lists)"               -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -Pi=TRUE/FALSE  interleave lists/concatenate lists 1)"      -MSG;
+      "\n     -Po=<filename>  output file 2)"                             -MSG;
+      "\n     -Pr=TRUE/FALSE  randomize file lists 1)"                    -MSG;
+      "\n     -Psep=<sep>     file list column separator chars, e.g. \"\\t \""-MSG;
+    "\n\n     1) FALSE  if omitted"                                       -MSG;
+      "\n     2) stdout if omitted"                                       -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+    "\n\n     'dlabpro $__SFILE__.xtp mrg foo.flst bar.flst -Pi=TRUE "    -MSG;
+              "-Po=result.flst'"                                          -MSG;
+      "\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "new" == if
+    "\n\n   new: Create a new file list"                                  -MSG; 
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp new <folder> <pattern>"              -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <folder>      folder to scan for files"                     -MSG;
+      "\n     <pattern>     file name pattern"                            -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+    "\n\n     'dlabpro $__SFILE__.xtp new \\. \\*.wav'"                   -MSG;
+      "\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "spl" == if
+    "\n\n   spl: Filter and/or randomly split file list"                  -MSG; 
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp spl <flstfile> [options]"            -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <flstfile>      file list file to be processed"             -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -Pl=<label>     Filter for label (2nd column in file list)" -MSG;
+      "\n     -Pn=<number>    Number of entries to pick randomly"         -MSG;
+      "\n     -Pp=<amount>    Amount (1.0=100%) of ent. to pick randomly" -MSG;
+      "\n     -Po1=<filename> First output file 1)"                       -MSG;
+      "\n     -Po2=<filename> Second output file 1)"                      -MSG;
+      "\n     -Pr=TRUE/FALSE  randomize file lists 2)"                    -MSG;
+      "\n     -Psep=<sep>     file list column separator chars, e.g. \"\\t \""-MSG;
+    "\n\n     1) stdout if omitted, discarded if <filename> empty"        -MSG;
+      "\n     2) FALSE  if omitted"                                       -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+    "\n\n     'dlabpro $__SFILE__.xtp spl all.flst -Pl=Z00 -Pn=100 -Po2='"-MSG;
+      "\n     Filter entries labelled \"Z00\" from all.flst, randomly"    -MSG;
+      "\n     pick 100, dump picked at stdout and discard all others."    -MSG;
+      "\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "srt" == if
+    "\n\n   srt: Sort a file list"                                        -MSG; 
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp spl <flstfile>"                      -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <flstfile>      file list file to be processed"             -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -Psep=<sep> file list column separator chars, e.g. \"\\t \""-MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+    "\n\n     'dlabpro $__SFILE__.xtp srt all.flst'"                      -MSG;
+      "\n"                                                                -MSG;
+    0 return;
+  end
+  "\n\n   SYNOPSIS:"                                                      -MSG;
+    "\n     File list management tool"                                    -MSG;
+  "\n\n   USAGE:"                                                         -MSG;
+    "\n     dlabpro $__SFILE__.xtp <command> [arguments] [options]"       -MSG;
+  "\n\n   ARGUMENTS:"                                                     -MSG;
+    "\n     command   exc - Exclude entries from file list(s)"            -MSG;
+    "\n               mrg - Merge file lists"                             -MSG;
+    "\n               new - Create a new file list"                       -MSG;
+    "\n               spl - Filter and/or randomly split file list"       -MSG;
+    "\n               srt - Sort a file list"                             -MSG;
+  "\n\n   OPTIONS:"                                                       -MSG;
+    "\n     -v<n>           verbose level"                                -MSG;
+    "\n     -P<key>=<value> override config. key-value-pairs"             -MSG;
+  "\n\n  Type 'dlabpro $__SFILE__.xtp help <command>' for help on a "     -MSG;
+         "specific command."                                              -MSG;
+    "\n"                                                                  -MSG;
+  0 return;
+}
+
+## EXPERIMENTAL. Creates a new file list.
+function -CMD_new()
+{
+  $$ 3 < if                                                                     # Need at least two arguments >>
+    "Too few arguments" -ERROR;                                                 #   Error message
+    "\nType 'dlabpro $__SFILE__.xtp help new' for help" -MSG;                   #   Give a little help
+    1 return;                                                                   #   Terminate program
+  end                                                                           # <<
+
+  data idF;
+  var  nF;
+
+  "$2" "$3" TRUE idF -SH_find;
+  
+  $$ 4 >= if
+    .sSep stdfile set sep;                                                      #   Set separator character(s)
+    "$4" "ascii" idF stdfile -export;
+  else
+    label L_F; nF idF.nrec < if
+      "\n${idF[nF,0]}" -echo;
+      nF ++=; goto L_F;
+    end
+  end
+  0 return;
+}
+
+## Filters and/or randomly splits a file list.
+function -CMD_spl()
+{
+  $$ 2 < if                                                                     # Need at least two arguments >>
+    "Too few arguments" -ERROR;                                                 #   Error message
+    "\nType 'dlabpro $__SFILE__.xtp help spl' for help" -MSG;                   #   Give a little help
+    1 return;                                                                   #   Terminate program
+  end                                                                           # <<
+
+	function -echo_ofx(sOf)                                                       # Echo the output file
+	{                                                                             #
+    sOf "~" == if                                                               # Filename is "~" >>
+      "(stdout)" -echo;                                                         #   -> stdout
+    else                                                                        # << other file name >>
+      sOf not if                                                                #   Filename is empty >>
+        "(junk)" -echo;                                                         #     -> discard
+      else                                                                      #   << yet another filename >>
+        sOf -echo;                                                              #     -> say it
+      end                                                                       #   <<
+    end                                                                         # <<
+	}                                                                             #
+  
+  data idF;                                                                     # File list to be split
+  data idF1;                                                                    # Picked entries
+  data idF2;                                                                    # Remaining entries
+  data idI;                                                                     # Index object for filtering
+  var  sLab; ( "l"  ""   "S" -CFG_get_ex ) sLab -sset;                          # Get label name to filter for
+  var  nSel; ( "n"  -1   "S" -CFG_get_ex ) nSel -vset;                          # Get number of entries to pick
+  var  nPep; ( "p"  -1.0 "S" -CFG_get_ex ) nPep -vset;                          # Get amount (1.0=100%) of entries to pick  
+  var  sOf1; ( "o1" "~"  "S" -CFG_get_ex ) sOf1 -sset;                          # Get name of first output file
+  var  sOf2; ( "o2" "~"  "S" -CFG_get_ex ) sOf2 -sset;                          # Get name of second output file
+  var  bRnd; ( "r" FALSE "S" -CFG_get_ex ) bRnd -bset;                          # Randomize?
+
+  var  i;                                                                       # Loop counter
+
+  ## Protocol                                                                   # -------------------------------------
+  .__UTL_nVlevel 1 > if                                                         # On verbose level 2 and up >>
+    "\n   Label to filter  : $[sLab]" -echo;                                    #   Protocol (label to filter for)
+    "\n   Entries to select: $[nSel]" -echo;                                    #   Protocol (no. of entries to pick)
+    "\n   1st output file  : "        -echo; sOf1 -echo_ofx;                    #   Protocol (1st output filename)
+    "\n   2nd output file  : "        -echo; sOf2 -echo_ofx;                    #   Protocol (2nd output filename)
+    "\n\n" -echo;                                                               #   Protocol
+  end                                                                           # <<
+
+  ## Load file list                                                             # -------------------------------------
+  .sSep stdfile set sep;                                                        # Set separator character(s)
+  "$2" "ascii" idF stdfile /strings -import;                                    # Load file list
+  idF.nrec 0 == if 1 return; end                                                # No entries, no service!
+  
+  ## Filter for label (only if -Pl specified)                                   # -------------------------------------
+  sLab if                                                                       # Label specified >>
+    idF { { "$[sLab]" } } 1 0 idI /noerror -gen_index;                          #   Search entries labelled sLab
+    :idI.==0: idF -dmark;                                                       #   Mark entries
+    idF 0 0 idF /mark /noerror -select ?error if                                #   Remove them, on error >>
+      "No entries labelled \"$[sLab]\" found. Aborting."                -ERROR; #     Error message
+      1 return;                                                                 #     Cannot go on ...
+    end                                                                         #   <<
+  end                                                                           # <<
+
+  ## Randomly split                                                             # -------------------------------------
+  nSel 0        < if idF.nrec nSel =; end                                       # Limit number of file to pick
+  nSel idF.nrec > if idF.nrec nSel =; end                                       # Limit number of file to pick
+  nPep 1.0 <= nPep 0.0 > && if :ent(nPep*idF.nrec): nSel =; end                 # calculate number of file to pick
+  idF nSel idF1 -SET_rss;                                                       # Random subset splitting
+  idF idF1 idF2 -SET_minus;                                                     # ...
+
+  ## Output selected entries                                                    # -------------------------------------
+  idF1.nrec 0 > if                                                              # Entries selected >>
+    bRnd not if idF1 0 idF1 -sortup; end                                        #   Sort
+    sOf1 "~" == if                                                              #   Dump to stdout >>
+      0 i =; label L_F1; i idF1.nrec < if                                       #     Loop over entries >>
+        "${idF1[i,0]}\t${idF1[i,1]}\n" -echo;                                   #       Print
+        i ++=; goto L_F1;                                                       #       End of printing loop
+      end                                                                       #     <<
+    else                                                                        #   << Dump to file >>
+      .sSep stdfile set sep;                                                    #     Set separator character(s)
+      sOf1 if sOf1 "ascii" idF1 stdfile -export; end                            #     Export file if name not empty
+    end                                                                         #   <<
+    idF2.nrec 0 > if                                                            #   Entries remaining >>
+      ( sOf1 "~" == ) ( sOf2 "~" == ) && if "-----\n" -echo; end                #     Print separator at stdout
+    end                                                                         #   <<
+  end                                                                           # <<
+
+  ## Output remaining entries                                                   # -------------------------------------
+  idF2.nrec 0 > if                                                              # Entries remaining >>
+    bRnd not if idF2 0 idF2 -sortup; end                                        #   Sort
+    sOf2 "~" == if                                                              #   Dump to stdout >>
+      0 i =; label L_F2; i idF2.nrec < if                                       #     Loop over entries >>
+        "${idF2[i,0]}\t${idF2[i,1]}\n" -echo;                                   #       Print
+        i ++=; goto L_F2;                                                       #       End of printing loop
+      end                                                                       #     <<
+    else                                                                        #   << Dump to file >>
+      .sSep stdfile set sep;                                                    #     Set separator character(s)
+      sOf2 if sOf2 "ascii" idF2 stdfile -export; end                            #     Print separator at stdout
+    end                                                                         #   <<
+  end                                                                           # <<
+
+  0 return;                                                                     # Ok
+}
+
+## Sorts a file list.
+function -CMD_srt()
+{
+  $$ 2 < if                                                                     # Need at least two arguments >>
+    "Too few arguments" -ERROR;                                                 #   Error message
+    "\nType 'dlabpro $__SFILE__.xtp help srt' for help" -MSG;                   #   Give a little help
+    1 return;                                                                   #   Terminate program
+  end                                                                           # <<
+
+  data idF;                                                                     # File list to be sort
+  .sSep stdfile set sep;                                                        # Set separator character(s)
+  "$2" "ascii" idF stdfile /strings -import;                                    # Load file list
+  idF.nrec 0 == if 1 return; end                                                # No entries, no service!
+  idF 0 idF -sortup;                                                            # Sort file list
+  "$2" "ascii" idF stdfile -export;                                             # Write file list
+  0 return;                                                                     # Ok
+}
+
+## Excludes entries from file list(s).
+function -CMD_exc()
+{
+  $$ 3 < if                                                                     # Need at least two arguments >>
+    "Too few arguments" -ERROR;                                                 #   Error message
+    "\nType 'dlabpro $__SFILE__.xtp help exc' for help" -MSG;                   #   Give a little help
+    1 return;                                                                   #   Terminate program
+  end                                                                           # <<
+
+  var  nArg;                                                                    # Current command line argument
+  var  sF;                                                                      # Currently processed file list
+  data idE;                                                                     # List of entries to exclude
+  data idF;                                                                     # File list
+  data idR;                                                                     # Remaining entries
+
+  ## Loop over file list to process (cmd. line arg. $3 and higher)              # -------------------------------------
+  2 nArg =; label L_ARG; nArg $$ <= if                                          # Loop over arguments from $3 up >>
+    nArg -argv sF =;                                                            #   Get command line argument
+    "-n" sF ==                           if nArg ++=; goto L_ARG; end           #   Continue on -n option
+    "-v" ( sF "2" "left" -VAR_strop ) == if nArg ++=; goto L_ARG; end           #   Continue on -vX option
+    idE -is_empty if                                                            #   1st filename is the exclude list >>
+      .__UTL_nVlevel 1 > if "\n   List to exclude: $[sF]" -echo; end            #   Protocol (filename of exclude list)
+      .sSep stdfile set sep;                                                    #     Set separator character(s)
+      sF "ascii" idE stdfile /strings -import;                                  #     Load list of items to exclude
+      idE.nrec 0 == if 0 return; end                                            #     No entries, no service!
+      nArg ++=; goto L_ARG;                                                     #     Continue
+    end                                                                         #   <<
+    "\n   - $[sF] ..."-echo;                                                    #   Protocol
+    idF -reset;                                                                 #   Clear file list
+    idR -reset;                                                                 #   Clear filtered file list
+    .sSep stdfile set sep;                                                      #   Set separator character(s)
+	  sF "ascii" idF stdfile /strings -import;                                    #   Load file list
+    idF idE idR -SET_minus;                                                     #   Exclude items
+    :idF.nrec-idR.nrec: 0 > if                                                  #   Changes? Yes >>
+      .__CFG_bNwr if                                                            #     Write disabled >>
+        " skip" -echo;                                                          #       Protocol
+      else                                                                      #     << write enabled >>
+        .sSep stdfile set sep;                                                  #       Set separator character(s)
+        "$[sF].bak" "ascii" idF stdfile -export;                                #       Save backup
+      	sF "ascii" idR stdfile -export;                                         #       Save modified file list
+        " ok" -echo;                                                            #       Protocol
+      end                                                                       #     <<
+      " (${idF.nrec-idR.nrec} files excluded)" -echo;                           #     Protocol
+    else                                                                        #   << No changes >>
+    " ok (nothing to be done)" -echo;                                           #     Protocol
+    end                                                                         #   <<
+    nArg ++=; goto L_ARG;                                                       #   End of arguments loop
+  end                                                                           # <<
+  0 return;                                                                     # Ok
+}
+
+## Merges file lists
+function -CMD_mrg()
+{
+  $$ 2 < if                                                                     # Need at least two arguments >>
+    "Too few arguments" -ERROR;                                                 #   Error message
+    "\nType 'dlabpro $__SFILE__.xtp help mrg' for help" -MSG;                   #   Give a little help
+    1 return;                                                                   #   Terminate program
+  end                                                                           # <<
+
+  var  sArg;                                                                    # Argument
+  var  nFlists;                                                                 # File counter
+  var  bRnd;  ( "r" FALSE "S" -CFG_get_ex ) bRnd =;                             # Randomize?
+  var  bIlv;  ( "i" FALSE "S" -CFG_get_ex ) bIlv =;                             # Interleave?
+  var  sFRes; ( "o" "" "S" -CFG_get_ex )    sFRes =;                            # Get output file name
+  data idFRes;                                                                  # Output file buffer
+  var  nNr;                                                                     # Largest record number
+  
+  var i;                                                                        # Loop index
+  #"\n bRnd: ${bRnd}\n bIlv: ${bIlv}\n" -echo;
+  
+  1 i =; label L; i $$ < if                                                     # Loop over all parameters
+    :i+1: -argv sArg =;
+    #"\n sArg: ${sArg}\n" -echo;
+    sArg "1" "left" -VAR_strop "-" == if                                        #   Check if first char "-"
+      i ++=; goto L;                                                            #     Argument is an option
+    end;                                                                        #   <<
+    nFlists ++=;                                                                #   Increase file counter
+    data idF${nFlists};                                                         #   Create a new file buffer
+    .sSep stdfile set sep;                                                      #   Set separator character(s)
+    "${sArg}" "ascii" idF${nFlists} stdfile /strings /noerror -import ?error if #   Import file list, on error >>
+      "No file \"${sArg}\" found. Aborting." -ERROR;                            #     Error message
+      1 return;
+    end                                                                         #   <<
+    bRnd TRUE == if                                                             #   If -Pr=TRUE
+      idF${nFlists} idF${nFlists}.nrec idF${nFlists} -SET_rss;                  #     Randomize file list
+    end;                                                                        #   <<
+    #"\n \$${i}=\"" ( :i+1: -argv ) + "\"" + -echo;
+    bIlv TRUE == if                                                             #   If -Pi=TRUE
+      idF${nFlists}.nrec nNr > if
+        :nNr=idF${nFlists}.nrec;                                                #     Store largest record number
+      end                                                                       #   << 
+    else
+      idF${nFlists} idFRes -cat;                                                #     Concatenate file lists 
+    end                                                                         #   <<
+    i ++=; goto L;
+  end                                                                           # <<
+  bIlv TRUE if                                                                  # If -Pi=TRUE -> interleave file lists
+    var k;                                                                      #   Loop index
+    data idAux;                                                                 #   Store selected record                                                                 
+    1 i =; label L1; i nNr <= if                                                #   Loop over all records
+      1 k =; label L2; k nFlists <= if                                          #     Loop over all file lists
+        :idF${k}[i,0]: -1 != if                                                 #       If element exists
+          idF${k} :i-1: 1 idAux /rec -select                                    #         Select record 
+          idAux idFRes -cat;                                                    #         Append record to output file list
+        end                                                                     #       <<
+        k ++=; goto L2; 
+      end                                                                       #     << 
+      i ++=; goto L1;
+    end                                                                         #   <<
+  end                                                                           # <<
+  sFRes "" != if
+    .sSep stdfile set sep;                                                      #   Set separator character(s)
+    "${sFRes}" "ascii" idFRes stdfile -export;                                  #   Export output file list
+    stdfile -reset;
+  else
+    #"\n\nMerged file list:\n" -echo;                                            #   Protocol
+    1 i =; label L3; i idFRes.nrec <= if                                        #   Loop over all records
+      1 k =; label L4; k idFRes.dim <= if                                       #     Loop over all components
+        "${idFRes[i-1,k-1]}\t" -echo;                                           #       Print element
+        k ++=; goto L4; 
+      end                                                                       #     <<
+      "\n" -echo;                                                               #     Protocol
+      i ++=; goto L3;
+    end                                                                         #   <<
+  end                                                                           # <<
+   
+  0 return;
+}
+
+## == MAIN PROGRAM ==                                                           # =====================================
+
+NULL TRUE -CFG_init;                                                            # Initialize configuration
+var sCmd; "$1" sCmd =;                                                          # Get command
+var sSep; ( "sep" "\t " "S" -CFG_get_ex ) sSep -sset;                           # File list separator
+
+sCmd "help" == if "$2" -CMD_usage return; end                                   # Execute commmand "-h"
+sCmd "exc"  == if      -CMD_exc   return; end                                   # Execute commmand "exc"
+sCmd "mrg"  == if      -CMD_mrg   return; end                                   # Execute commmand "mrg"
+sCmd "new"  == if      -CMD_new   return; end                                   # Execute commmand "new"
+sCmd "spl"  == if      -CMD_spl   return; end                                   # Execute commmand "spl"
+sCmd "srt"  == if      -CMD_srt   return; end                                   # Execute commmand "srt"
+
+$$ 1 >= if "unknown command '$1'" -ERROR; end                                   # Bad command
+"Try 'dlabpro $__SFILE__.xtp help' for usage" -echo;                            # Give a little help
+1 return;                                                                       # End program
+
+## EOF

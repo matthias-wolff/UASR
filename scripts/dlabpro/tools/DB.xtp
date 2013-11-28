@@ -1,0 +1,101 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Database management tool
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/tools
+##
+## ARGUMENTS:
+##   $1: Command or 'help'
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"$UASR_HOME/scripts/dlabpro/util/@.itp" include;
+
+## Prints help on usage
+##
+## @param sCmd string
+##          Command to display help for (general help if empty).
+function -usage(sCmd)
+{
+  "\n\n   SYNOPSIS:"                                                      -MSG;
+    "\n     Database management tool"                                     -MSG;
+  "\n\n   USAGE:"                                                         -MSG;
+    "\n     dlabpro $__SFILE__.xtp <command> <cfgfile> [options]"         -MSG;
+  "\n\n   ARGUMENTS:"                                                     -MSG;
+    "\n     command   Database specific"                                  -MSG;
+    "\n     cfgfile   UASR configuration file"                            -MSG;
+  "\n\n   OPTIONS:"                                                       -MSG;
+    "\n     -c              use colors for terminal output"               -MSG;
+    "\n     -v<n>           verbose level"                                -MSG;
+    "\n     -P<key>=<value> override config. key-value-pairs"             -MSG;
+    "\n"                                                                  -MSG;
+  "\n\nType '$__SFILE__.xtp help <cfgfile>' for a list of management"     -MSG; 
+    "\ncommands for a specific database\n"                                -MSG;
+  0 return;
+}
+
+## Displays data base specific help. Database include scripts that supply
+## commands for the <code>DB.xtp</code> tool should override this function.
+function -CMD_DB_help()
+{
+  var sDB; "db" "?" "S" -CFG_get_ex sDB =;
+  "\n\n   The database '$[sDB]' does not supply management tools."        -MSG; 
+}
+
+
+## == MAIN PROGRAM ==                                                           # =====================================
+
+"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
+"\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
+"\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
+"\n// dLabPro VID     : " -version +                                      -MSG; # Protocol
+"\n// UASR VID        : " -UASR_version +                                 -MSG; # Protocol
+-UASR_help                        if "" -usage; 0 return; end                   # Print help
+( "$1" "help" == ) ( $$ 1 == ) && if "" -usage; 0 return; end                   # Print help
+"$1" var sCmd;                                                                  # Get command
+$$ 2 < if                                                                       # Less than 2 args. >> 
+  "Too few arguments" -ERROR;                                                   #   Error
+  "\nType '$__SFILE__.xtp help' for usage\n" -echo;                             #   Give a little help
+  1 return;                                                                     #   Terminate with error code
+end                                                                             # <<
+
+## Initialize session                                                           # -------------------------------------
+"\n// Configuration   : $2"                                               -MSG; # Protocol
+"$2" TRUE -CFG_init;                                                            # Configure session
+"../util/uasr_session.itp" include;                                             # Include UASR session startup script
+
+## Database specific help
+"$1" "help" == if
+  "\n\n// HELP" -MSG;
+  -CMD_DB_help;
+  "\n\n// $__SFILE__.xtp completed.\n"                                    -MSG;
+  0 return;
+end  
+
+## Execute commands                                                             # -------------------------------------
+/noerror -CMD_DB_$[sCmd] ?error if                                              # Call command handler, failed >>
+  "Unknown command '$[sCmd]'"                                           -ERROR; #   Error message
+  "\nType '$__SFILE__.xtp help' for usage\n"                              -MSG; #   Give a little help
+  1 return;                                                                     #   Terminate with error code
+end                                                                             # <<
+0 return;                                                                       # Return "ok"
+
+## EOF

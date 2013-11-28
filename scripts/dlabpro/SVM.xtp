@@ -1,0 +1,643 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Support vector machine classifier
+##
+## AUTHOR  : Steffen Werner, Matthias Wolff
+## PACKAGE : uasr/scripts/dlabpro
+##
+## ARGUMENTS:
+##   $1: Command or 'help'
+##   $2: Setup file or, if 1st arg. is 'help', command
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"util/@.itp"   include;                                                         # UASR utility functions
+"train/am.itp" include;                                                         # For -XXM_assess_hist
+
+## Prints help on usage
+function -usage(sCmd)
+{
+  "\n"                                                                    -MSG;
+  sCmd "trn" == if
+      "\n   trn: SVM training"                                            -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp <cfgfile> [options]"                 -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+    "\n\n   REMARKS:"                                                     -MSG;
+      "\n     Special <key>s for $__SFILE__:"                             -MSG;
+      "\n       svm.sig: TRUE  - use signal data as vectors"              -MSG;
+      "\n                FALSE - use primary feature vectors (default)"   -MSG;
+      "\n       sensor : Name of sensor whose signals are to be processed"-MSG;
+      "\n                only. Append '...' to process from start sensor."-MSG;
+      "\n                (does typically not apply to speech recognition)"-MSG;
+      "\n       svm.sv:  TRUE - use supervector (default)"                -MSG;
+      "\n                FALSE - no supervector only for svm.sig = FALSE" -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp ../../config/test.cfg"                       -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+    "\n   SYNOPSIS:"                                                      -MSG;
+    "\n     SVM: Support vector machine classifier"                       -MSG;
+  "\n\n   USAGE:"                                                         -MSG;
+    "\n     dlabpro $__SFILE__.xtp <command> [arguments] [options]"       -MSG;
+  "\n\n   COMMANDS:"                                                      -MSG;
+    "\n     trn - Training"                                               -MSG;
+    "\n     fpar - find Parameter"                                        -MSG;
+  "\n\n  Type 'dlabpro $__SFILE__.xtp help <command>' for help on a "     -MSG;
+         "specific command."                                              -MSG;
+    "\n"                                                                  -MSG;
+  0 return;
+}
+
+## Gets the sample listing of a data set.
+## <h4>Remarks</h4>
+## <ul>
+##   <li>When shuffeling is enabled (parameter <code>bShf</code>), the function will come up with differently ordered
+##     file lists each time it is called. Hence training and recognition are <em>not</em> reproducible. To be fixed!
+##     </li>
+## </ul>
+##
+## @param sDts string
+##          Data set name ("train", "test" or "dev") 
+## @param bShf boolean
+##          <code>TRUE</code> to shuffle data set (for incremental training)
+## @param idF data
+##          Will be filled with the sample listing ("file" list)
+function -SVM_load_dataset(sDts,bShf,idF)
+{
+  file iF
+  idF -reset;
+  "\n   Loading data set '$[sDts]' ..."                                   -MSG; # Protocol
+  ( "flist.sep" "\t " "S" -CFG_get_ex ) iF set sep;                             # Set file list separator(s)  
+	( sDts "" -CFG_get_flist ) "ascii" idF iF /strings -import;                   # Load file list
+	bShf if idF idF.nrec idF -SET_rss; end                                        # Shuffle
+	"\n   done ($[idF.nrec] entries)"                                       -MSG; # Protocol
+}
+
+## Compiles a data set for SVM training or classification.
+##
+## @param idF data
+##          Turn list
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings (typical case for speech recognition)
+## @param sSfa string
+##          Secondary feature analysis, empty if not specified
+## @param bSig bool
+##          <code>TRUE</code> to use signal data as vectors, <code>FALSE</code> to use primary feature vectors
+## @param bSv bool
+##          <code>TRUE</code> use supervector, <code>FALSE</code> no supervector, every feature vector is taken 
+##          (makes sense when bSig=FALSE)
+## @param idLtb data
+##          Label table
+## @param idDts data
+##          The compiled data set where each item of the data set is handled as
+##          <ul>
+##            <li>bSig=<code>TRUE</code>:<br/>
+##              one vector containing the signal data <em>or</em></li>
+##            <li>bSig=<code>FALSE</code>:<br/>
+##              one supervector made by concatenating the feature vectors</li>
+##            <li>bSv=<code>FALSE</code>:<br>
+##              each feature vector ist taken </li>             
+##          </ul>
+##         followed by a numeric label for each item (or feature vector) of the data set.
+## @global &lt;uasr.dir.model&gt;          R
+## @global &lt;uasr.dir.sig&gt;            R
+## @global &lt;uasr.fea.ext&gt;            R
+## @global &lt;uasr.flist.&lt;sDts&gt;&gt; R
+## @return <code>TRUE</code> if successful, <code>FALSE</code> otherwise
+function -SVM_cpl_dataset(idF,sSns,sSfa,bSig,bSv,idLtb,idDts)
+{
+  file iF;                                                                      # File list
+  data idFea;                                                                   # Current feature vector sequence
+  data idAux;                                                                   # Auxilary data instance
+  data idAux2;                                                                  # Second 
+  var  sLab;                                                                    # Current symbolic label
+  var  sDirModel;                                                               # Model dir
+  var  nE;                                                                      # Error counter
+  var  nMsf;                                                                    # Most significant feature of PCA
+  object iFI;                                                                   # Feature info object
+  
+  
+  
+   "\n   Compiling data set ($[idF.nrec] samples)"                        -MSG; # Protocol
+  ## secondary feature analysis
+  sSfa "" != if                                                                 # Secondary feature analysis if wanted >>                                          #  Call secondary feature analysis
+       "model" "" -CFG_get_path sDirModel =;                                    # Get model dir
+       "sfa.dim" 8 -CFG_get nMsf -vset;                                         # Get number of MSF
+       "$[sDirModel]/feainfo."
+          sSns if "$[sSns].object" else "object" end + iFI -FEA_info;           # Load feature info file  
+  end                                                                           # <<
+ 
+  bSig bSv || if                                                                # Signal mode or supervector mode>>
+    ## Check file list                                                          # -------------------------------------
+    idF.dim 1 <= if                                                             #   File list doesn't contain labels >>
+      "File list does not contain labels." -ERROR;                              #     Baaaaad!
+      FALSE return;                                                             #     Can't do anything -> get out
+    end                                                                         #   <<
+  end                                                                           # <<
+  
+  ## Initialize                                                                 # -------------------------------------
+  idDts -reset;                                                                 # Clear destination instance
+  idF iF -set flist_data;                                                       # Set file list
+
+  ## Loop over files                                                            # -------------------------------------
+  0 1 -PBAR;                                                                    # Begin progress bar
+  label L_FILE; iF -next if                                                     # Loop over files >>
+    ## Screen protocol                                                          #   - - - - - - - - - - - - - - - - - -
+    "\n     $[iF.nfile ++]/$[iF.len] - ${iF.sfile}: "                    -MSG2; #   Protocol
+    :(iF.nfile+1)/iF.len: 1 -PBAR;                                              #   Display progress
+
+    ## Compile data set                                                         #   - - - - - - - - - - - - - - - - - -
+    bSig bSv  || if                                                             #   Signal mode or supervector mode >>
+      ( 0 1 iF.recfile -fetch ) sLab =;                                         #     Get label from file list
+    end                                                                         #   <<
+    bSig if                                                                     #   Signal mode >>
+      iF sSns idFea -SIG_get not if                                             #     Load signal data, if failed >>
+        " (load failed, skipping")                                       -MSG2; #       Protocol
+        nE ++=; goto L_FILE;                                                    #       Count errors, skip turn
+      end                                                                       #     <<
+      idFea ' idFea =;                                               "." -MSG2; #     Make signal a vector
+    else                                                                        #   << Feature mode >>
+			iF sSns "A" idFea -FEA_get not if                                         #       Get feature vectors
+        " (load failed, skipping)"                                       -MSG2; #       Protocol
+        nE ++=; goto L_FILE;                                                    #       Skip it
+      end                                                                       #     <<
+      ## secondary feature analysis
+      sSfa "" != if                                                             #   Secondary feature analysis if wanted >>
+           idFea iFI nMsf idFea NULL -FEA_sfa;                          "." -MSG2; #     Call secondary feature analysis
+      end                                                                       #   <<
+      bSv if                                                                    #     Supervector mode >>
+        .__UTL_nVlevel 1 > if                                                   #       On verbose level 2 and up >>
+          :idFea[0,idFea.dim-1]: sLab == not if                                 #           Fea./file list label mismatch >>
+            "Feature and file list labels mismatch!"                1 -WARNING; #             Warning
+          end                                                                   #           <<
+        end                                                                     #       << 
+        idFea idFea.dim -- 1 idFea -delete;                                     #       Remove labels
+        idFea 1 :idFea.dim*idFea.nrec: idFea -reshape;               "." -MSG2; #       Create one supervector    
+      else                                                                      #     << no supervector >>
+        idFea idLtb :idFea.dim-1: 0 idAux -gen_index;                           #       Lookup label index for every vector ...
+        idFea idFea.dim -- 1 idFea -delete;                                     #       Delete Labels (to be replaced with index)
+      end                                                                       #     <<  
+    end                                                                         #   <<     
+    bSig bSv  || if                                                             #   Signal mode or supervector mode>>                                                                    
+      { { "$[sLab]" } } idLtb 0 0 idAux -gen_index;                             #     Lookup label index ...
+    end
+    idAux -type short idAux -tconvert;                                          #   ... and convert to short
+    idAux idFea -join;                                                          #   Join label 
+    idFea idDts -cat;                                             ". ok" -MSG2; #   Concatenate to training set
+    ## End of file loop                                                         #   - - - - - - - - - - - - - - - - - -
+    goto L_FILE;                                                                #   End of file loop
+  end                                                                           # <<
+  "\n  "                                                                 -MSG2; # Protocol
+  "done" -MSG; nE 0 > if " ($[nE] turns skipped)" -MSG end; "\n"          -MSG; # Protocol
+  ( nE idF.nrec < ) return;                                                     # Ok
+}
+
+## SVM -classify returns a result table with arbitrary arrangement of components
+## (classes); this functions get's 'em right.
+##
+## <h4>Remarks</h4>
+## <ul>
+##   <li><code>svm</code> should return a correctly ordered result!</li>
+## </ul>
+function -SVM_sort_res(idRes)
+{
+  data idRes2;
+  data idAux;
+  var  nC1;
+  var  nC2;
+  var  nXC;
+
+  "\n   Correcting component order of classification result ..."         -MSG2; # Protocol
+
+  ## Correct component names                                                    # -------------------------------------
+  0 nC1 =; idRes.dim nXC =; label L_C1; nC1 nXC < if                            # Loop over components in idRes >>
+    ( nC1 idRes -get_cname ) nC2 /noerror -vset ?error not if                   #   Get comp name as integer, ok >>
+      nC1 "$[nC2]" idRes -set_cname;                                            #     Set corrected component name
+	  end                                                                         #   <<
+	  nC1 ++=; goto L_C1;                                                         #   End of component loop
+  end                                                                           # <<
+
+  ## Order components by ascending class index                                  # -------------------------------------
+	0 nC1 =; idRes.dim nXC =; label L_C2; nC1 nXC < if                            # Loop over components in idRes >>
+	  ( "$[nC1]" idRes -find_comp ) nC2 =;                                        #   Find class named nC1
+    nC2 0 >= if                                                                 #   Got it >>
+      "\n   - Comp. $[nC2] -> $[nC1]"                                    -MSG2; #     Protocol
+	    idRes nC2 1 idAux -select; idAux idRes2 -join;                            #     Copy res. of class nC1 to idRes2
+      idRes nC2 1 idRes -delete;                                                #     Delete result of class nC1
+	  end                                                                         #   <<
+	  nC1 ++=; goto L_C2;                                                         #   End of component loop
+	end                                                                           # <<
+  idRes idRes2 -join;                                                           # Join remaning comps. (labels, ...)
+  "\n   done."                                                           -MSG2; # Protocol
+
+	idRes2 idRes -copy;                                                           # Copy result to idRes
+}
+
+## Needed for evaluation if no supervector or signal mode ist used. Correctness is 
+## calculated over each vector of all datafiles
+##  
+## <h4>Remarks</h4>
+## The assigned label of every vector ist compared with reference in the data
+## <ul>
+##   <li>logfile written or continued
+##   <li>confusionmatrix is written or continued if am.eval.assess="cmx"
+## </ul>
+## @param sFilePref var
+##          Fileprefix for log and confusionmatrix
+## @param idF data
+##          Current filelist(not used here but in overwriting function - needed to make a decision for hole file)
+## @param idLtb data
+##          Label table
+## @param idDts data
+##          Training or evaluation data set with reference label (last component)
+## @param idResLab data
+##          The labeval result object with assigned labels (last component)
+## @return Overall Correctness of assigned labels
+function -SVM_labeval_log(sFilePref,idF,idLtb,idDts,idResLab)
+{
+  data idCmx;                                                                   # Label confusion matrix
+  data idCnf;                                                                   # Recognition confidence
+  data idLab;                                                                   # Labels
+  data idAux;                                                                   # Auxilary data instance
+  data idAux2;                                                                  # Auxilary data instance #2
+  var  sDirLog;   ( "log"   "S" -CFG_get_path )                    sDirLog   =; # Get log directory
+  var  sLogFile;  "$[sDirLog]/$[sFilePref]_labeval$[sSxt].dn3"     sLogFile  =; # Log file name
+  var  sCmxFile;  "$[sDirLog]/$[sFilePref]_labeval-cmx$[sSxt].dn3" sCmxFile  =; # Confusion matrix file name
+  var  sAssess;   ( "am.eval.assess" "" "S" -CFG_get_ex )          sAssess   =; # Get evalmode
+  var  bCmx;      ( sAssess "cmx"  "search" -VAR_strop ) 0 >=      bCmx      =; # Compute class confusion matrix?
+  var  nCor;      -1                                               nCor      =; # Label correctness  
+  var  sLog;                                                                    # String buffer
+  var  sCmx;                                                                    # String buffer
+  var  i;                                                                       # Loop counter
+  "\n   Compiling log ..."                                                -MSG; # Protocol
+
+  ## Initialize confusion matrix                                                # -------------------------------------
+  sCmxFile idCmx /noerror -restore ?error if                                    # Load prev. conf. matrix; failed >>
+    -type double idLtb.nrec idLtb.nrec idCmx -array;                            #   Create an empty one
+    idLtb 0 idCmx -set_cnames;                                                  #   Name recognized label components
+    :idLtb[0]: idCmx -join; idCmx.dim -- "REF" idCmx -set_cname;                #   Append reference label component
+    "Writing" sCmx =;                                                           #   Prepare protocol
+  else                                                                          # << Load ok >>
+    "Continuing" sCmx =;                                                        #   Prepare protocol
+  end                                                                           # <<
+
+  ## Calculate correctness and confusion                                        # -------------------------------------
+  :idResLab[idResLab.dim-1]: idAux =;                                           # Get Recognition Label (Number)
+  :idDts[idDts.dim-1]: idAux2 =;                                                # Get Reference Label (Number)
+  label L_CMX; i idResLab.nrec < if                                             #   Loop over results >>
+    :idCmx[idAux2[i,0],idAux[i,0]]+=1;                                          #     Count class confusions
+    i ++=; goto L_CMX;                                                          #     Next result
+  end                                                                           #   <<
+  :idAux2.==idAux: NULL 0 "sum" idAux2 /rec -aggregate;                         #   Count correct recognitions
+  :nCor=idAux2[0,0]/idResLab.nrec;                                              #   Compute label recognition rate
+    
+  idAux 0 idLtb 0 1 idLab -lookup; 0 "RES" idLab -set_cname;                    #   Get recognized labels
+  idDts :idDts.dim-1: idLtb 0 1 idAux -lookup;                                  #   Get reference labels
+  idAux idLab -join; 1 "REF" idLab -set_cname;                                  #   Join reference labels
+  " done"                                                                 -MSG; # Protocol
+
+  ## Continue log                                                               # -------------------------------------
+  :idResLab.dim-1: 1 idResLab -mark;                                            # mark Pref component 
+  idResLab -type short idAux /mark -tconvert; idResLab -unmark;                 # convert Pref to short (with int problems when saving)
+  idCnf idAux -join; idLab idAux -join;                                         # Compile log - TODO: add filename of vector 
+  idAux2 -reset; sLogFile idAux2 /noerror -restore ?error if                    # Load previous log file; failed >>
+    "Writing" sLog =;                                                           #   Prepare protocol
+    idAux idAux2 -copy;                                                         #   Copy new log
+  else                                                                          # << load ok >>
+    "Continuing" sLog =;                                                        #   Prepare protocol
+    idAux idAux2 -cat;                                                          #   Append new log
+  end                                                                           # <<
+  "\n   $[sLog] $[sLogFile] ... "                                         -MSG; # Protocol
+  sLogFile idAux2 /noerror /zip -save ?error if "failed" else "ok" end    -MSG; # Write log file
+
+  ## Continue confusion matrix                                                  # -------------------------------------
+  bCmx if      
+    "\n   $[sCmx] $[sCmxFile] ... "                                       -MSG; #   Protocol
+    sCmxFile idCmx /noerror /zip -save ?error if "failed" else "ok" end   -MSG; #   Write confusion matrix file                                           
+  end
+  
+  nCor return;
+}
+
+function -CMD_trn()
+{
+  ## Local variables                                                            # -------------------------------------
+  svm  iSVM;                                                                    # Support vector machine (training)
+  data idLtb;                                                                   # Label table
+  data idSns;                                                                   # Sensor table
+  data idDts;                                                                   # Training or evaluation data set
+  data idRes;                                                                   # Result of SVM classification
+  data idResP;                                                                  # Result of SVM classification (partn.)
+  data idF;                                                                     # Sample list
+  data idFp;                                                                    # Current partition of sample list
+  data idAux;                                                                   # Auxiliary data instance
+  var  sSxt;                                                                    # Sensor file extension
+  var  bSig;                                                                    # Signal mode
+  var  bSv;                                                                     # Supervector mode
+  var  bEc;                                                                     # Equal classes mode
+  var  bTrain;     TRUE                                               bTrain =; # Do Training
+  var  bStat;      TRUE                                                bStat =; # Do feature statistics
+  var  nN;                                                                      # Current sensor index
+  var  sDirModel;                                                               # Model directory
+  var  sDirLog;                                                                 # Log directory
+  var  sBuf;                                                                    # String buffer
+  var  sSfa;       ( "sfa" "" "S" -CFG_get_ex )                         sSfa =; # Secondary feature analysis
+  var  nPsz;                                                                    # Partition size
+  var  nP;                                                                      # Current partition
+  var  nXP;                                                                     # Number of partitions
+  var  nCor;                                                                    # Label correctness
+  object  iFI;                                                                  # Feature information object
+  
+  "svm.sig" FALSE "S" -CFG_get_ex bSig -bset;                                   # Get signal mode
+  "\n// Processing      : " bSig if "Signals" else "Features" end + -MSG;       # Protocol
+  bSv if " using supervector" else " no supervector" end   -MSG;                # Protocol
+  -LAB_get_tab idLtb =;                                                         # Load label table
+  -SNS_get_tab idSns =;                                                         # Get sensor table
+  :idSns[0,0]: if "\n// No. of sensors  : $[idSns.nrec]" -MSG; end              # Protocol
+  bSig if "sig" else "fea" end "" -CFG_get_path;                                # Tell signal or feature directory
+  "model" "" -CFG_get_path sDirModel =;                                         # Get model directory
+  "log"   "" -CFG_get_path sDirLog   =;                                         # Get log directory
+
+   ## - Handle uasr.skip (= -Pskip=...)                                         # - - - - - - - - - - - - - - - - - - -
+  "skip" "#" "S" -CFG_get_ex sBuf =; sBuf "#" == not if                         # Have key "(uasr.)skip" >>
+    sBuf "T" "search" -VAR_strop 0 >= if FALSE bTrain =; end                    #   Skip SVM training
+    sBuf "S" "search" -VAR_strop 0 >= if FALSE bStat =; end                     #   Skip feature statistics
+  end      
+
+  idLtb.nrec 1 == if                                                            # Label table has only one entry >>
+    "One class problems not supported by libsvm" -ERROR;                        #   No go
+    -1 return;                                                                  #   Return error code
+  end                                                                           # <<
+
+  ## Loop over sensors                                                          # -------------------------------------
+  label L_SNS;                                                                  # Loop over sensors
+
+    "\n"                                                                  -MSG; #   Protocol
+    :idSns[nN,0]: if "\n   Sensor ${idSns[nN,0]}" -MSG; end                     #   Protocol
+    :idSns[nN,0]: if ".${idSns[nN,0]}" else "" end sSxt =;                      #   Get sensor file extension
+    iSVM  -reset;                                                               #   Reset the SVM
+    idRes -reset;                                                               #   Reset the evaluation result
+    bTrain if                                                                   #   Do Training >>
+
+      bStat if                                                                  #   Do Statistics
+      ## secondary feature analysis  
+        sSfa "" != if                                                           #     Only if configured >>
+          iFI -destroy; object iFI;                                             #      (Re-)create feature info object
+          NULL iFI -FEA_info;                                                   #       Create feature info object
+          idLtb iFI :idSns[nN,0]: -FEA_analyze;                                 #       Gather feature information
+        end                                                                     #     <<
+      else                                                                      #     else >>
+        "\n\n// Skipping statistics "                                     -MSG; #       Protocol
+      end                                                                       #   <<
+
+	    ## Initialize SVM training                                                #     - - - - - - - - - - - - - - - - - -
+	    "\n// SVM training"                                                 -MSG; #     Protocol
+	    ( "svm.kernel" 0        -CFG_get    ) iSVM -set param_knl_type;           #     Set SVM kernel type
+	    ( "svm.grad"   0.0  "S" -CFG_get_ex ) iSVM -set param_knl_gradient;       #     Set SVM kernel gradient (libsvm: gamma)
+	    ( "svm.C"      1000     -CFG_get    ) iSVM -set param_C;                  #     Set SVM parameter C
+	    ( "svm.eps"    0.01 "S" -CFG_get_ex ) iSVM -set param_epsilon             #     Set SVM Parameter Epsilon (stopping criterium)
+	    ( "svm.incr"   0    "S" -CFG_get_ex ) nPsz -vset;                         #     Get partition size
+	    ( "svm.sv"     TRUE "S" -CFG_get_ex ) bSv  -bset;                         #     Set supervector mode
+	    ( "svm.ec"    FALSE "S" -CFG_get_ex ) bEc  -bset;                         #     Set equal classes mode
+	
+	    ## (Incremental) SVM training                                             #     - - - - - - - - - - - - - - - - - -
+	    "train" ( nPsz 0 > ) idF -SVM_load_dataset;                               #     Get training data set
+	    nPsz 0 <= if idF.nrec nPsz =; end                                         #     No partitioning
+	    0 nP =; :ent(idF.nrec/nPsz+1-1/idF.nrec): nXP =; label L_TRNP; nP nXP < if#     Loop over training partitions >>
+	      idF :nP*nPsz: nPsz idFp /rec -select;                                   #       Select training partition
+	      "\n" -MSG; nXP 1 > if "\n   Partition $[nP ++]/$[nXP]" -MSG; end        #       Protocol    
+	      idFp :idSns[nN,0]: sSfa bSig bSv idLtb idDts -SVM_cpl_dataset;          #       Create training data set (partn.)
+        bEc if;                                                                 #       In equal classes mode >>
+          idDts :idDts.dim-1: idDts -sortup;                                    #         Sort vectors by class
+          idDts :idDts.dim-1: idAux -compress;                                  #         Get number of vectors per class
+          :idAux[0,2]: :idAux[1,2]: > if;                                       #         Detect the more frequent class >>
+            idDts :idAux[1,2]: :idAux[0,2]-idAux[1,2]: idDts /rec -delete;      #           Delete orphan vectors
+          else;                                                                 #         << other class >>
+            idDts :idAux[0,2]: :idAux[1,2]-idAux[0,2]: idDts /rec -delete;      #           Delete orphan vectors
+          end;                                                                  #         <<
+        end;                                                                    #       <<
+	      nXP 1 == if                                                             #       Only one training partition >>
+	        "\n   SVM training ..."                                         -MSG; #         Protocol
+	         idDts iSVM /probabilities -train;                                    #         Train the SVM at once
+	      else                                                                    #       << Several training partitions >>
+	        "\n   Incremental SVM training ..."                             -MSG; #         Protocol
+	        idDts iSVM /probabilities /incremental -train;                        #         Train the SVM incrementally
+	      end                                                                     #       <<
+	      " done"                                                           -MSG; #       Protocol
+	      nP ++=; goto L_TRNP;                                                    #       End of partitions loop
+	    end                                                                       #     <<
+	    .__UTL_nVlevel 1 > if iSVM -status; end                                   #     Display status
+	    "${sDirModel}/model${idSns[nN,0]}.svm" iSVM /zip -save 				  	        #     Save SVM (could get problem with big models)
+	    # "${sDirModel}/${idSns[nN,0]}.svm" iSVM -SVM_save;                       #     Save SVM big models ####PROBLEM####
+	    "\n"                                                                -MSG; #     Protocol
+    
+    ## Skip Training 
+    else                                                                        #   << No Training >> 
+      "\n\n// Skipping SVM Training "                                     -MSG; #     Protocol
+      "\n   Load ${sDirModel}/model${idSns[nN,0]}.svm \n"                 -MSG; #     Protocol
+      "${sDirModel}/model${idSns[nN,0]}.svm" iSVM -restore ?error if            #     Load previous modelfile; failed >>
+        "\n   Could not load model."                                      -MSG; #       Protocol
+        1 return;                                                               #       End Program
+        end                                                                     #     <<
+    end                                                                         #  <<
+
+    ## SVM evaluation                                                           #   - - - - - - - - - - - - - - - - - -
+    "\n// SVM evaluation"                                                 -MSG; #   Protocol
+    ( "svm.incr" 0 "S" -CFG_get_ex ) nPsz -vset;                                #   ??? Get partition size ???
+    "test" FALSE idF -SVM_load_dataset;                                         #   Get evaluation data set
+    nPsz 0 <= if idF.nrec nPsz =; end                                           #   No partitioning
+    0 nP =; :ent(idF.nrec/nPsz+1-1/idF.nrec): nXP =; label L_EVLP; nP nXP < if  #   Loop over training partitions >>
+      idF :nP*nPsz: nPsz idFp /rec -select;                                     #     Select training partition
+      "\n" -MSG; nXP 1 > if "\n   Partition $[nP ++]/$[nXP]" -MSG; end          #     Protocol
+      idFp :idSns[nN,0]: sSfa bSig bSv idLtb idDts -SVM_cpl_dataset;            #     Create test data set (partn.)
+      "\n   SVM evaluation ..."                                           -MSG; #     Protocol
+      idDts idResP iSVM /probabilities -classify;                               #     Classify test set (partition)
+      idResP -SVM_sort_res;                                                     #     HACK: Order result components
+      idResP idRes -cat;                                                        #     Append to result
+      nP ++=; goto L_EVLP;                                                      #     End of partitions loop
+    end                                                                         #   <<
+    .__UTL_nVlevel 1 > if iSVM -status; end                                     #   Show status of SVM (verbose lvl. 2)
+    
+    ## Aftermath                                                                #   - - - - - - - - - - - - - - - - - -
+    idLtb 0 idRes -set_cnames;                                                  # Name components after classes
+    bSig bSv || if                                                              # Signal mode or supervector mode (one vector per file) >>
+      idRes :idRes.dim-1: 1 idRes -delete;                                      #   Remove recognized class labels
+      :idRes = -.ln(max(idRes,exp(-500)));                                      #   Convert to log semirig
+      "svm-" sSxt idLtb idF idRes -XXM_assess_log nCor =;                       #   Create/continue log file
+      "svm-" sSxt idLtb idF idRes -XXM_assess_hist;                             #   Create/continue assmnt. histrograms
+    else                                                                        # <<no signal or supervector mode >>
+      "svm-" idF idLtb idDts idRes -SVM_labeval_log nCor =;                     #   Create/continue log file 
+    end      
+    "\n\n   Evaluation result:"                                           -MSG; #   Protocol
+    "\n   - Label corr.    : ${ent(nCor*1000+0.5)/10} %"                  -MSG; #   Protocol (label correctness)
+
+    ## End of sensor loop                                                       #   - - - - - - - - - - - - - - - - - -
+    nN ++=; nN idSns.nrec < if goto L_SNS; end                                  #   End of loop
+
+  0 return;                                                                     # Pass ok
+}
+
+#Trys different C and grad(gamma) on n-fold crossfold to find best 
+function -CMD_fpar()
+{
+  #Local variable
+  svm  iSVM;                                                                    # Support vector machine (training)
+  object iFI;                                                                   # Secondary feature analysis
+  data idDts;                                                                   # Dataset (all.flst)
+  data idLtb;                                                                   # Label table
+  data idF;                                                                     # Sample list
+  data idRes;                                                                   # Results
+  data idAux;                                                                   # Auxiliary data instance
+  var  nLog2cb;    ( "svm.log2cb"  -5    "S" -CFG_get_ex )       nLog2cb -vset; # Beginning of param C=2^log2cstart
+  var  nLog2ce;    ( "svm.log2ce"  15    "S" -CFG_get_ex )       nLog2ce -vset; # End of param C=2^log2cend
+  var  nCs;        ( "svm.log2cs"  2     "S" -CFG_get_ex )           nCs -vset; # Step of param C
+  var  nLog2gb;    ( "svm.log2gb"  -15   "S" -CFG_get_ex )       nLog2gb -vset; # Beginning of param grad=2^log2gradstart
+  var  nLog2ge;    ( "svm.log2ge"  3     "S" -CFG_get_ex )       nLog2ge -vset; # End of param grad=2^log2gradend
+  var  nGs;        ( "svm.log2gs"  2     "S" -CFG_get_ex )           nGs -vset; # Step of param grad
+  var  nFold;      ( "svm.nfold"   10    "S" -CFG_get_ex )         nFold -vset; # Number of crossvalidiations                                 
+  var  nKernel;    ( "svm.kernel"  0         -CFG_get    )       nKernel -vset; # Used libsvm kernel     
+  var  nEps;       ( "svm.eps"     0.01  "S" -CFG_get_ex )          nEps -vset; # SVM Parameter Epsilon (stopping criterium)                  
+  var  bSig;       ( "svm.sig"     FALSE "S" -CFG_get_ex )          bSig -bset; # Signal mode                                                 
+  var  bSv;        ( "svm.sv"      TRUE  "S" -CFG_get_ex )           bSv -bset; # Supervector mode
+  var  sDirLog;    ( "log"         ""        -CFG_get_path )         sDirLog =; # Get log directory     
+  var  sLogFile;   "$[sDirLog]/findparam.dn3"                       sLogFile =; # Log file name
+  var  bStat;      TRUE                                                bStat =; # Do feature statistics
+  var  sBuf;                                                                    # String buffer
+  var  sSfa;       ( "sfa"          ""    "S" -CFG_get_ex )             sSfa =; # Secondary feature analysis
+  var  sLog;                                                                    # String for Logfileprotocol       
+  var  nAcc;                                                                    # Accurancy of actual crossfold
+  var  nBestAcc;                                                                # Best overall accurancy
+  var  ci;                                                                      # Loop counter C
+  var  nBestC;                                                                  # Best overall C
+  var  gi;                                                                      # Loop counter gradient (gamma)
+  var  nBestGrad;                                                               # Best overall gradient
+
+  ## - Handle uasr.skip (= -Pskip=...)                                          # - - - - - - - - - - - - - - - - - - -
+  "skip" "#" "S" -CFG_get_ex sBuf =; sBuf "#" == not if                         # Have key "(uasr.)skip" >>
+    sBuf "S" "search" -VAR_strop 0 >= if FALSE bStat =; end                     #   Skip feature statistics
+  end      
+
+  bStat if                                                                      #   Do Statistics
+    ## secondary feature analysis  
+    sSfa "" != if                                                               #     Only if configured >>
+      NULL iFI -FEA_info;                                                       #       Create feature info object
+      idLtb iFI NULL -FEA_analyze;                                              #       Gather feature information
+    end                                                                         #     <<
+  else                                                                          #     else >>
+    "\n\n// Skipping statistics "                                         -MSG; #       Protocol
+  end               
+
+          
+  -LAB_get_tab idLtb =;                                                         # Load label table
+  "all" FALSE idF -SVM_load_dataset;                                            # Get complete data set (no shuffeling)
+  idF "" sSfa bSig bSv idLtb idDts -SVM_cpl_dataset;                            # Create training data set (partn.)
+  -type double 3 idRes -addncomps; 1 idRes -allocate;                           # Initialize auxiliary data instance
+  0 "logTwoC" idRes -set_cname;                                                 # name idRes component 0 with log2c
+  1 "logTwoG" idRes -set_cname;                                                 # name idRes component 1 with log2g
+  2 "acc"   idRes -set_cname;                                                   # name idRes component 2 with acc  
+     
+  "\n// SVM find Parameters"                                              -MSG; # Protocol
+  0 nBestAcc =;                                                                 # Set best Accurancy to zero
+  nLog2cb ci =;                                                                 # Set loop counter of C to beginning
+  label L_C; ci nLog2ce <= if                                                   # Loop over C >>
+    nLog2gb gi =;                                                               #   Set loop counter of gamma to beginning
+    label L_G; gi nLog2ge <= if                                                 #   Loop over Gamma >>
+      iSVM  -reset;                                                             #     Reset SVM instance
+      nKernel iSVM -set param_knl_type;                                         #     Set SVM kernel type  
+      nEps    iSVM -set param_epsilon;                                          #     Set SVM epsilon
+      :2^ci:  iSVM -set param_C;               :idRes[0,0]=ci:;                 #     Set C to current value and add to result
+      :2^gi:  iSVM -set param_knl_gradient;    :idRes[0,1]=gi:;                 #     Set gamma to current value and add to result    
+      
+      ##Do Training
+      "\n   log2c = $[ci]\t log2g = $[gi]\t"                              -MSG; #     Protocol current parameter
+      nFold idDts iSVM -crossvalidate nAcc =;  :idRes[0,2]=nAcc:;               #     Call libsvm with nFold crossvalidation and add to result 
+      
+      # Write Protocolfile
+      "\n// Write Logfile"                                               -MSG2;
+      sLogFile idAux /noerror -restore ?error if                                # Load previous log file; failed >>
+        "Writing" sLog =;                                                       #   Prepare protocol
+         idRes idAux -copy;                                                     #   Copy new log
+      else                                                                      # << load ok >>
+        "Continuing" sLog =;                                                    #   Prepare protocol
+        idRes idAux -cat;                                                       #   Append new log
+      end                                                                       # <<
+      "\n   $[sLog] $[sLogFile] ... "                                    -MSG2; # Protocol
+      sLogFile idAux /noerror /zip -save ?error if "failed" else "ok" end -MSG2; # Write log file 
+      
+      #Memorize best acc ever                                                                          
+      nAcc nBestAcc > if                                                        #     Accurancy better than ever >>
+        nAcc nBestAcc =; ci nBestC =; gi nBestGrad =;                           #       Memorize values 
+      end                                                                       #     <<
+      "acc = $[nAcc] "                                                    -MSG; #     Protocol current accurancy
+      :gi+nGs: gi =;                                                            #     Increment gamma
+    goto L_G;                                                                   #     Another turn with gamma
+    end                                                                         #   <<
+    :ci+nCs: ci =;                                                              #   Increment C
+  goto L_C;                                                                     #   Another turn with C
+  end                                                                           # <<
+
+  :2^nBestC:    nBestC =; :2^nBestGrad: nBestGrad =;                            # calulate C and grad 
+
+  "\n// Found best SVM Parameters"                                        -MSG; # Protocol
+  "\n   best Acc  = $[nBestAcc]"                                          -MSG; # Give best Accurancy
+  "\n   best C    = $[nBestC]"                                            -MSG; # Give best C
+  "\n   best Grad = $[nBestGrad]"                                         -MSG; # Give best Grad
+
+  # Write Protocolfile
+  "\n  Written $[sLogFile] ... "                                          -MSG; # Protocol
+  "\n done\n"                                                             -MSG; # That's it
+}
+
+## == MAIN PROGRAM ==                                                           # =====================================
+
+"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
+"\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
+"\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
+"\n// dLabPro VID     : " -version +                                      -MSG; # Protocol
+"\n// UASR VID        : " -UASR_version +                                 -MSG; # Protocol
+( "$1" "help" == ) -UASR_help || if "$2" -usage; 0 return; end                  # Print help
+$$ 2 < if "Type '$__SFILE__.xtp help' for usage\n" -echo; 1 return; end         # No arguments, no service
+"$1" var sCmd;                                                                  # Get command
+sCmd "trn" ==                                                                   # | SVM training
+sCmd "fpar" == ||                                                               # | ?
+not ( $$ 2 < ) || if                                                            # Bad command or less than 2 args. >> 
+  $$ 2 < if "Too few arguments" else "unknown command '$1'"  end -ERROR;        #   Error
+  "\nType '$__SFILE__.xtp help' for usage\n" -echo;                             #   Give a little help
+  1 return;                                                                     #   Terminate with error code
+end                                                                             # <<
+
+## Initialize session                                                           # -------------------------------------
+"\n// Configuration   : $2"                                               -MSG; # Protocol
+"$2" TRUE -CFG_init;                                                            # Configure session
+"util/uasr_session.itp" include;                                                # Include UASR session startup script
+
+## Execute commands                                                             # -------------------------------------
+var nRes;
+-CMD_$[sCmd] nRes =;                                                            # Call command handler function
+"\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors)."             -MSG; # Protocol
+nRes return;
+
+## EOF

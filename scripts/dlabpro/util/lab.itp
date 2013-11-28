@@ -1,0 +1,698 @@
+## Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: Labels
+##
+## AUTHOR : Matthias Eichner
+## PACKAGE: uasr/scripts/dlabpro
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Global instances
+data __LAB_idLmap;                                                              # Label mapping table
+var  __LAB_sSilLab; "" __LAB_sSilLab =;                                         # Silence label
+
+## Separates symbolic and numeric components
+##
+## @cgen:index
+## @param idSrc data
+##          Source data
+## @param idLab data
+##          Data instance to be filled with the label components (may be
+##          <code>NULL</code> or identical with <code>idSrc</code>)
+## @param idDst data
+##          Destination instance to be filled with the numeric components (may
+##          be identical with <code>idSrc</code>)
+## @return nothing
+function -LAB_strip(idSrc,idLab,idDst)
+{
+  data idD;                                                                     # Numeric data buffer
+  data idL;                                                                     # Label data buffer
+  var  nC;                                                                      # Component counter
+  
+  idLab if idLab -reset; end                                                    # Reset label object
+  nC idSrc.dim < while                                                          # Loop over components >>
+    nC idSrc -get_comp_type 256 <= if                                           #   Component is symbolic >>
+      :idSrc[nC]: idL -join;                                                    #     Copy to labels
+    else                                                                        #   << Component is numeric >>
+      :idSrc[nC]: idD -join;                                                    #     Copy to data
+    end                                                                         #   <<
+    nC ++=;                                                                     #   Next component
+  end                                                                           # <<
+  idLab if idL idLab -copy; end                                                 # Copy labels to destination
+  idSrc.cofs  idD -set cofs;
+  idSrc.cinc  idD -set cinc;
+  idSrc.cunit idD -set cunit;
+  idD idDst -copy;                                                              # Copy data to destination
+}
+
+## Shrinks the data type of symbolic components to the minimal possible length.
+##
+## @cgen:index
+## @param nIc number
+##          Zero-based index of (symbolic) component to shrink, -1 to shrink
+##          all symbolic components
+## @param idData data
+##          Data instance to process
+## @return nothing
+function -LAB_shrink(nIc,idData)
+{
+  idData not if leave; end                                                      # No data, no service
+  nIc idData.dim >= if leave; end                                               # Bad component index, no service
+  
+  data idLen;                                                                   # Create an auxilary data instance
+  idData "" "len" idLen -strop; idLen NULL 0 "max" idLen /rec -aggregate;       # Get the maximal label length
+  :idLen=idLen+1;                                                               # Compute minimal component lengths
+
+  ( nIc 0 < ) var bAll;                                                         # Shrink all symbolic components?
+  bAll if 0 nIc =; end; label L_C; nIc idData.dim < if                          # Loop over components >>
+    ( nIc idData -get_comp_type ) 256 <= if                                     #   Current component is symbolic >>
+      nIc 1 idData -mark;                                                       #     Mark current component
+      idData :idLen[0,nIc]: idData /force /mark -tconvert;                      #     Shrink label component
+      idData -unmark;                                                           #     Umark
+    end                                                                         #   <<
+    bAll if nIc ++=; goto L_C; end                                              #   If processing all: next component
+  end                                                                           # <<
+}
+
+## Creates an acceptor for a label sequence.
+##
+## @cgen:index
+## @param idLab data
+##          The label sequence
+## @param idLtab data
+##          The label table (symbols expected in component 0)
+## @param nUnk number
+##          Index of unkown labels (index of garbage or OOV label, or -1)
+## @param itLab fst
+##          Filled with the label acceptor
+## @return If <code>nUnk</code> is non-negative, the function returns
+##         <code>TRUE</code><code>TRUE</code>. Otherwise it returns
+##         <code>FALSE</code> if <code>idLab</code> contains any invalid labels
+##         (i.e. labels not found in <code>idLtab</code>).
+function -LAB_acceptor(idLab,idLtab,nUnk,itLab)
+{
+  data idAux;                                                                   # Auxiliary data instance
+  data idAux2;                                                                  # Auxiliary data instance #2
+  var  sOpt;  "" sOpt =; .__UTL_nVlevel 2 <= if "/noerror" sOpt =; end          # /noerror option for -gen_index 
+  itLab -reset;                                                                 # Reset destination instance
+  idLab idLtab 0 0 idAux $[sOpt] /label -gen_index { $[nUnk] };                 # Convert to symbol indexes
+  :idAux.==nUnk: NULL 0 "sum" idAux2 /rec -aggregate; :idAux2[0,0]>0: if        # Missing labels >>
+    "${idAux2[0,0]} unknown label(s). Re-run with option -v3!" 2 -WARNING;      #   Warning
+  end                                                                           # <<
+  idAux 0 -1 -1 0 itLab -addseq;                                                # Make a chain
+  itLab.td  ( "~RC" itLab.td -find_comp ) 1 itLab.td -delete;                   # Remove reference counter
+  idLtab itLab.is -copy; idLtab itLab.os -copy;                                 # Copy symbol tables 
+  itLab /lsr -wsr_convert;                                                      # Convert weights to log semiring
+  :itLab.td["~TIS"]: itLab.td -join;                                            # Add output symbols
+  itLab.td.dim -- "~TOS" itLab.td -set_cname;                                   # ...
+  :idAux.==-1: NULL 0 "sum" idAux2 /rec -aggregate; :idAux2[0,0]==0: return;    # Return TRUE if no eps-labels
+}
+
+## Returns the database-2-UASR label map. The map is a data instance containing
+## two columns: (0) the database dependent label and (1) the UASR label mapped to the database dependent label.
+## <p>The function proceeds as follows:</p>
+## <ol>
+##   <li>Try to load the ASCII file named "labmap.txt" located in the <a href="cfg.itp.html#index:datadirs">info
+##     directory</a> or specified by the <a href="cfg.itp.html#index:cfgk">configuration key
+##     <code>&lt;uasr.lab.map&gt;</code></a>. If either of these files exists, return a map containing its
+##     contents.</li>
+##   <li>Call <a href="#clp_-LAB_get_tab" class="code">-LAB_get_tab</a> and a data instance containing two identical
+##     components mapping the UASR labels to themselves.</li>
+## </ol>
+##
+## @cgen:index
+## @global &lt;uasr.lab.map&gt; R
+## @return The label map (<code>data</code> instance)
+function -LAB_get_map()
+{
+  .__LAB_idLmap -is_empty if                                                    # Phoneme map empty >>
+    var sDirInfo; "info" "S" -CFG_get_path sDirInfo =;                          #   Get info directory
+    var sFile;    "lab.map" "${sDirInfo}/labmap.txt" "S" -CFG_get_ex sFile =;   #   Get label map file name
+    sFile stdfile -exists if                                                    #   Label map exists >>
+      "lab"  255 .__LAB_idLmap -addcomp;                                        #     Add data base label component
+      "labn" 255 .__LAB_idLmap -addcomp;                                        #     Add UASR label component
+      sFile "ascii" .__LAB_idLmap stdfile -import;                              #     Load label mapping table
+    else                                                                        #   << Label map does not exist >>
+      -LAB_get_tab .__LAB_idLmap =;                                             #     Load label table
+      .__LAB_idLmap 0 1 .__LAB_idLmap -select;                                  #     Keep only label component
+      .__LAB_idLmap .__LAB_idLmap -join;                                        #     Duplicate label component
+    end                                                                         #   >>
+    .__LAB_idLmap -is_empty if "Could not load label map." -ERROR; end          #   No label map? --> error
+    -1 .__LAB_idLmap -LAB_shrink;                                               #   Shrink label components
+  end                                                                           # <<
+  .__LAB_idLmap return;                                                         # Return label map
+}
+
+## Returns the database specific UASR label table.
+##
+## @cgen:index
+## @global &lt;uasr.am.classes&gt; R
+## @global &lt;uasr.fea.labidx&gt; R
+## @return The label table (<code>data</code> instance)
+function -LAB_get_tab()
+{ 
+  data idHMM;                                                                   # HMM list
+  data idAux;                                                                   # Auxilary data instance
+  var  sDirInfo; "info" "S" -CFG_get_path sDirInfo =;                           # Info directory
+  var  sHmm;     "am.classes" "${sDirInfo}/classes.txt" "S" -CFG_get_ex sHmm =; # HMM definition file
+  "\n   - Model def.file: $[sHmm]"                                    3 -MSGX;  # Protocol
+  "Lab"  255        idHMM -addcomp;                                             # - Model label
+  "~XL"  type short idHMM -addcomp;                                             # - Number of HMM layers
+  "v/uv" type short idHMM -addcomp;                                             # - Voiced/unvoiced/stationary
+  "aLab" 255        idHMM -addcomp;                                  "." -MSG2; # - Abstract model label
+  sHmm "ascii" idHMM stdfile /noerror -import;                       "." -MSG2; # Load HMM list
+  idHMM -is_empty if "Could not load label table $[sHmm]." -ERROR; end          # No label map? --> error
+  -1 idHMM -LAB_shrink;                                                         # Shrink label components
+  :idHMM[0]: "[" "search" idAux -strop;                                         # Check for "["
+  idAux NULL 0 "max" idAux /rec -aggregate;                                     # |
+  :idAux[0,0]: 0 >= if "There is a \"[\" in the label table."                   # Write warning
+    " May be missinterpreted as label index." + 1 -WARNING; end                 # |
+  idHMM return;
+}
+
+## Abstract method for signal label import. The function must be overwritten
+## depending on the database, for example:
+## <pre class="code">&nbsp;
+##  /disarm <a href="#clp_-LAB_import_dummy"><code class="link">-LAB_import_dummy</code></a> /disarm -LAB_import =;
+## </pre>
+## <p>The result instance <code>idLab</code> must be filled with an RLE-compressed
+## label stream and have the following format:</p>
+## <table class="indent">
+##   <tr><th colspan="2">Component</th><th>Description</th></tr>
+##   <tr><th>No.</th><th>Type</th><th> </th></tr>
+##   <tr><td>0</td><td><code>string</code></td><td>Label name</td></tr>
+##   <tr><td>1</td><td><code>long</code></td><td>Label position (samples)</td></tr>
+##   <tr><td>2</td><td><code>long</code></td><td>Label length (samples)</td></tr>
+## </table>
+## <p>The result instance may also have only one string component and one record.
+## In this case, the only label <code>idLab[0,0]</code> is used for the entire
+## signal.</p>
+## <h4>See also</h4>
+## <p>
+##    <a href="sig.itp.html#clp_-SIG_label"><code class="link">-SIG_label</code></a>
+## </p>
+##
+## @cgen:index
+## @param sDir string
+##          Path to label files
+## @param sTid string
+##          Turn identifier. See <code>-SIG_import</code> for the format
+##          of this identifier
+## @param idLab data
+##          Data instance to be filled with RLE-compressed label stream
+function -LAB_import(sDir,sTid,idLab) 
+{
+  idLab -reset;                                                                 # Reset destination instance
+  "Abstract function -LAB_import not configured." -ERROR;                       # Error message
+  FALSE return;                                                                 # Return 
+}
+
+## Abstract method for signal label export. The function must be overwritten
+## depending on the database, for example:
+## <pre class="code">&nbsp;
+##  /disarm <a href="#clp_-LAB_export_esps"><code class="link">-LAB_import_esps</code></a> /disarm -LAB_export =;
+## </pre>
+##
+## @cgen:index
+## @param sDir string
+##          Path to label files
+## @param sTid string
+##          Turn identifier. See <code>-SIG_import</code> for the format
+##          of this identifier
+## @param idLab data
+##          Data instance to be filled with RLE-compressed label stream
+function -LAB_export(sDir,sTid,idLab) 
+{
+  "Abstract function -LAB_export not configured." -ERROR;                       # Error message
+  FALSE return;                                                                 # Return 
+}
+
+## Under construction; do not use.
+##
+## @param sDir string
+##          Path to label files
+## @param sTid string
+##          Turn identifier. See <code>-SIG_import</code> for the format
+##          of this identifier
+## @param idLab data
+##          Data instance containing the label stream
+function -LAB_export_esps(sDir,sTid,idLab)
+{
+  data idTS;
+  
+  idLab idTS -LAB_sc2ts FALSE == if FALSE return; end
+  "$[sDir]/$[sTid].lab" "esps_lab" idTS stdfile -export;
+}
+
+## Label import from ASCII file. The file is expected to contain exactly one label entry per line. One entry
+## has to consist of three white space separated fields: 1. the label name, 2. the label offset (in samples),
+## and 3. the label length (in samples). Label files <em>must</em> have the extension ".lab".
+## <p>This function may overwrite <a href="#clp_-LAB_import"><code class="link">-LAB_import</code></a>:</p>
+## <pre class="code">&nbsp;
+##  /disarm -LAB_import_ascii /disarm <a href="#clp_-LAB_import"><code class="link">-LAB_import</code></a> =;
+## </pre>
+## <h4>Structure of Result</h4>
+## <table class="indent">
+##   <tr><th colspan="2">Component</th><th>Description</th></tr>
+##   <tr><th>No.</th><th>Name</th><th> </th></tr>
+##   <tr><td>0</td><td><code>&lt;sLid&gt;</code></td><td>Label name</td></tr>
+##   <tr><td>1</td><td><code>POS</code></td><td>Label position (samples)</td></tr>
+##   <tr><td>2</td><td><code>CNT</code></td><td>Label length (samples)</td></tr>
+## </table>
+##
+## @cgen:index
+## @param sDir string
+##          Path to label files
+## @param sTid string
+##          IZFP_RS measurement identifier. See <code>-SIG_import</code> for the format
+##          of this identifier
+## @param idLab data
+##          Data instance to be filled with labels
+function -LAB_import_ascii(sDir,sTid,idLab)
+{
+  idLab -reset;
+  "LAB" 255        idLab -addcomp;
+  "OFS" -type long idLab -addcomp;
+  "LEN" -type long idLab -addcomp;
+  "$[sDir]/$[sTid].lab" "ascii" idLab stdfile -import ?error if
+    FALSE return;
+  end
+  0 idLab -LAB_shrink;
+  TRUE return;
+}
+
+## Label import from ESPS label file. This function may overwrite <a
+## href="#clp_-LAB_import"><code class="link">-LAB_import</code></a>:
+## <pre class="code">&nbsp;
+##  /disarm -LAB_import_esps /disarm <a href="#clp_-LAB_import"><code class="link">-LAB_import</code></a> =;
+## </pre>
+## <h4>Structure of Result</h4>
+## <table class="indent">
+##   <tr><th colspan="2">Component</th><th>Description</th></tr>
+##   <tr><th>No.</th><th>Name</th><th> </th></tr>
+##   <tr><td>0</td><td><code>&lt;sLid&gt;</code></td><td>Label name</td></tr>
+##   <tr><td>1</td><td><code>POS</code></td><td>Label position (samples)</td></tr>
+##   <tr><td>2</td><td><code>CNT</code></td><td>Label length (samples)</td></tr>
+## </table>
+##
+## @cgen:index
+## @param sDir string
+##          Path to label files
+## @param sTid string
+##          Turn identifier. See <code>-SIG_import</code> for the format
+##          of this identifier
+## @param idSC data
+##          Data instance to be filled with labels
+function -LAB_import_esps(sDir,sTid,idSC)
+{
+  var  sExt;       "lab.ext"              "lab"      -CFG_get    sExt       =;  # Get file extension
+  data idTS;
+  ## Load ESPS label file
+  "${sDir}/${sTid}.${sExt}" "esps_lab" idTS stdfile /noerror -import ?error if  # Import ESPS label file, failed
+    FALSE return;
+  end
+  idTS 0 3 idTS -select;                                                        # Discard supernumerary labels
+
+  ## Convert label description from timestamp to sample/count
+  idTS idSC -LAB_ts2sc return;
+}
+
+## Creates a dummy label channel. This function may overwrite <a
+## href="#clp_-LAB_import"><code class="link">-LAB_import</code></a>:
+## <pre class="code">&nbsp;
+##  /disarm -LAB_import_dummy /disarm <a href="#clp_-LAB_import"><code class="link">-LAB_import</code></a> =;
+## </pre>
+##
+## @cgen:index
+## @param sDir string
+##          Not used, may be <code>NULL</code>.
+## @param sTid string
+##          Not used, may be <code>NULL</code>.
+## @param idLab data
+##          Data instance to be filled with labels
+function -LAB_import_dummy(sDir,sTid,idLab)
+{
+  idLab -reset;                                                                 # Reset label instance
+  "lab" 8 idLab -addcomp;                                                       # Add label component
+  1       idLab -allocate;                                                      # Allocate one record
+  "+" 0 0 idLab -sstore;                                                        # Store dummy label
+  TRUE return;                                                                  # Return
+}
+
+## Creates a "no" label channel. This function may overwrite <a
+## href="#clp_-LAB_import"><code class="link">-LAB_import</code></a>:
+## <pre class="code">&nbsp;
+##  /disarm -LAB_import_nothing /disarm <a href="#clp_-LAB_import"><code class="link">-LAB_import</code></a> =;
+## </pre>
+## <h4>Remarks</h4>
+## <ul>
+##   <li>This is planned to become the default behavior of <a  class="code"
+##     href="#clp_-LAB_import">-LAB_import</a></li>
+## </ul>
+##
+## @cgen:index
+## @param sDir string
+##          Not used, may be <code>NULL</code>.
+## @param sTid string
+##          Not used, may be <code>NULL</code>.
+## @param idLab data
+##          Will be reset
+function -LAB_import_nothing(sDir,sTid,idLab)
+{
+  idLab -reset;
+  TRUE return;
+}
+
+## Creates a label channel with exactly one label looked up from an extra
+## component of the complete file list. See <a
+## href="cfg.itp.html#clp_-CFG_get_flist"><code
+## class="link">-CFG_get_flist</code></a> (<code>sKey</code>="all") for details.
+## This function may overwrite <a href="#clp_-LAB_import"><code
+## class="link">-LAB_import</code></a>:
+## <pre class="code">&nbsp;
+##  /disarm -LAB_import_flist /disarm <a href="#clp_-LAB_import"><code class="link">-LAB_import</code></a> =;
+## </pre>
+## <h4>Remarks</h4>
+## <ul>
+##   <li>To save computation time, the function stores the complete file list
+##     in a global data instance <code>.__LAB_idFall</code> upon the first call
+##     in the UASR session. If the session modifies the file list later, you
+##     must destroy <code>.__LAB_idFall</code> to use the new list!</li>
+## </ul>
+##
+## @cgen:index
+## @param sDir string
+##          Not used, may be <code>NULL</code>.
+## @param sTid string
+##          Turn identifier. See <code>-SIG_import</code> for the format
+##          of this identifier
+## @param idLab data
+##          Data instance to be filled with labels
+function -LAB_import_flist(sDir,sTid,idLab)
+{
+  data idIdx;                                                                   # Index
+
+  ".__LAB_idFall" "data" ?instance not if                                       # No global file list instance >>
+    data .__LAB_idFall;                                                         #   Create one
+    "file" 255 .__LAB_idFall -addcomp;                                          #   Initialize
+    "lab"  48  .__LAB_idFall -addcomp;                                          #    ...
+    "all" "S" -CFG_get_flist "ascii" .__LAB_idFall stdfile -import;             #    Load complete file list
+  end                                                                           # <<
+
+  idLab -reset;                                                                 # Reset label instance
+  "lab" 8 idLab -addcomp;                                                       # Add label component
+  1       idLab -allocate;                                                      # Allocate one record
+  { { ${sTid} } } .__LAB_idFall 0 0 idIdx -gen_index;                           # Find turn ID
+  :idIdx[0,0]: 0 < if FALSE return; end                                         # Not found -> forget it!
+  :.__LAB_idFall[idIdx[0,0],1]: 0 0 idLab -sstore;                              # Store label
+  TRUE return;                                                                  # Return
+}
+
+## Convert label description from timestamp to sample/count
+##
+## @cgen:index
+## @param idTS data
+##          Label sequence in timestamp format
+## @param idSC data
+##          Data instance to be filled with labels in sample/count format
+function -LAB_ts2sc(idTS,idSC)
+{
+  data idLmap;                                                                  # Label mapping table
+  data idAux1;
+  data idAux2;
+  data idAux3;
+  data idAux4;
+  var  nSampR;  "sig.srate"     ""    -CFG_get nSampR  =;
+
+  ## Load session persistent data to determine silence label
+  -LAB_get_map idLmap =;                                                        # Get phoneme mapping table
+  "" "$[.__LAB_sSilLab]" "cmp" -VAR_strop 0 == if                               # Get silence label >>
+    var nSil; "uasr.am.sil" "sil" -CFG_get nSil =;                              #   Get index of silence model 
+    -type short 1 1 idAux1 -array { $[nSil] };                                  #   Build lookup data instance
+    idAux1 0 -LAB_get_tab 0 1 idAux1 -lookup;                                   #   Lookup silence symbol in HMM definition
+    idAux1 idLmap 0 1 idAux1 -gen_index;                                        #   Get index of silence mapping in label mapping table
+    idAux1 0 idLmap 0 1 idAux1 -lookup;                                         #   Lookup original label in mapping table
+    0 0 idAux1 -fetch .__LAB_sSilLab =;                                         #   Save label in session persistent variable
+  end                                                                           # <<
+
+  idTS idAux4 -copy;
+  :idAux4[0,idAux4.dim-1]==.__LAB_sSilLab: not if
+    idAux4.nrec ++ idAux4 -reallocate;
+    idAux4 0 1 idAux1 -select;
+    idAux4 idAux4.dim -- 1 idAux2 -select;
+    idAux2 1 idAux2 /rec -shift;
+    .__LAB_sSilLab 0 0 idAux2 -sstore;
+    idAux1 nSampR "mult" idAux1 -scalop;
+    idAux1 -type long idAux1 -tconvert;
+    idAux1 1 idAux3 /rec -shift;
+    :idAux1=idAux1-idAux3:
+    0 idAux1.nrec -- 0 idAux1 -dstore;
+  else
+    idAux4 0 1 idAux3 -select;
+    idAux3 nSampR "mult" idAux3 -scalop;
+    idAux3 -type long idAux3 -tconvert;
+    idAux3 ' { 1 -1 } NULL fir ' -1 idAux1 /rec -shift;
+    idAux4 idAux4.dim -- 1 idAux2 -select;
+  end
+  
+  ## Build result table
+  idAux2 0 1 idSC -select;
+  idAux3 idSC -join;
+  idAux1 idSC -join;
+  0 "lab"   idSC -set_cname;
+  1 "start" idSC -set_cname;
+  2 "count" idSC -set_cname;
+
+  ## Verify label
+  idAux1 NULL 0 "min" idAux3 /rec -aggregate;
+  idAux1 NULL 0 "max" idAux2 /rec -aggregate;
+  :idAux3[0,0]<0; if 
+      "Label length < 0. Discard this file!" -ERROR;                            # Error
+    idSC -reset;
+    FALSE return;
+  end;
+  :idAux2[0,0]>100000; if 
+    "Label length > 100000." -ERROR;                                            # Error
+    idSC -reset;
+    FALSE return;
+  end
+
+  TRUE return;
+}
+
+## Convert label description from sample/count to timestamp
+##
+## @cgen:index
+## @param idSC data
+##          Data instance in sample/count format
+## @param idTS data
+##          Label sequence to be filled with labels in timestamp format
+function -LAB_sc2ts(idSC,idTS)
+{
+  data idLmap;                                                                  # Label mapping table
+  data idAux1;
+  data idAux2;
+  data idAux3;
+  data idAux4;
+
+  idSC 0 idAux4 -compress;
+  idAux4 0 1 idAux1 -select;
+  0 idAux1 -LAB_shrink;
+  idAux4 1 1 idAux2 -select;
+  idAux2 -type double idAux2 -tconvert;
+  :(idAux2*idAux2.rinc/1000): idTS =;
+
+  ## Build result table
+  0 "time" idTS -set_cname;
+  "colo" -type long idAux3 -addcomp;
+  idTS.nrec idAux3 -allocate;
+  121 0 idAux3 -fill;
+  idAux3 idTS -join;
+  idAux1 idTS -join;
+  2 "lab0" idTS -set_cname;
+  0 idTS -set rinc;
+  
+  TRUE return;
+}
+
+## @cgen:index
+function -LAB_map(idLab,idLabMapped)
+{
+  idLab -is_empty if idLab idLabMapped -copy; leave; end                        # No labels, (alomost) no service!
+
+  ## Local instances                                                            # -------------------------------------
+  data idLmap;                                                                  # Label mapping table
+  data idAux1;                                                                  # Auxilary data instance
+  data idAux2;                                                                  # Auxilary data instance
+
+  ## Initialize                                                                 # -------------------------------------
+  -LAB_get_map idLmap =;                                                        # Load phoneme mapping table
+  ## Map labels                                                                 # -------------------------------------
+  idLab idLmap 0 0 idAux1 -gen_index;                                           # Find label in mapping table
+  idAux1 0 idLmap 1 1 idAux1 -lookup { "#" };                                   # Map labels
+  idLab 1 idLab.dim -- idAux2 -select;                                          # Update label component
+  idAux1 idLabMapped =;                                                         # Copy label to output instance
+  idAux2 idLabMapped -join;                                                     # Join start end length of labels
+}
+
+## Creates a (phoneme) labelling transducer from a set of acoustic models (AMs).
+## Composing an inverted decoding result with the resulting transducer converts
+## the Gaussian indices of to model (e.g. phoneme) indices. The result is a
+## per-frame AM label sequence.
+##
+## @cgen:index
+## @param itAM fst
+##          The acoustic model
+## @param itGP fst
+##          Filled with the labelling transducer (may be identical with
+##          <code>itAM</code>)
+function -LAB_get_fst(itAM,itGP)
+{
+  data idAux;                                                                   # Auxilary data instance
+  itAM itGP -copy;                                                              # Copy AM transducer
+  itGP -unweight; itGP.NC_TD_LSR -type double itGP.td -addcomp;                 # Clear weights
+  itGP.ud itGP.IC_UD_XT 1 idAux -select;                                        # Copy number-of-transitions comp.
+  itGP.NC_TD_TOS -1 idAux -rindex;                                              # Append record (=unit) index
+  idAux 1 -1 0 idAux -expand;                                                   # Expand
+  :itGP.td[itGP.NC_TD_TOS]=max(-1,idAux-(itGP.td[itGP.NC_TD_TIS].<0)*1000000);  # Set TOS for non-eps. TIS
+  :itGP.td[itGP.IC_TD_INI].==0: itGP.td -join;                                  # Find model beginn
+  itGP.td.dim -- "~MOB" itGP.td -set_cname;                                     # Set component name
+  itGP itGP -union;                                                             # Union
+  itGP 0 itGP -close;                                                           # Kleene closure
+  itGP 0 itGP -epsremove;                                                       # Remove epsilon transitions
+}
+
+## Convertes into data object (e.g. imported from into file import filter) to
+## label data object;.
+##
+## @cgen:index
+## @param idInto data
+##          The into data instance.
+## @param idLab data
+##          The resulting label data instance.
+function -LAB_from_into(idInto,idLab)
+{
+  var nRinc;     "pfa.crate"              0     -CFG_get      nRinc     =;      # Analysis window shift in samples
+  var nSrate;    "sig.srate"          16000     -CFG_get      nSrate    =;      # Signal sampling rate
+
+  idInto 0 idLab -compress;
+  idLab 1 idInto 0 2 idLab -lookup;
+  1 1 idLab -mark;
+  idLab -type long idLab /mark -tconvert;
+  idLab -unmark;
+  :idLab[1]=($[nSrate]*idLab[1]/1000+nRinc/2)/nRinc:;                           #   Calculate modulo and add remainder
+  0 "lab" idLab -set_cname;
+  1 "count" idLab -set_cname;
+}
+
+## Imports the transliteration of one turn. The result contains one
+## symbolic component filled with lexicon entries. This default implementation
+## imports a ASCII file containing exactly one lexicon entry per line from the
+## file named "<code>&lt;sDir&gt;</code>/<code>&lt;sTid&gt;</code>.txt".
+##
+## @cgen:index
+## @param sDir string
+##          Path to transliteration files
+## @param sTid string
+##          Turn identifier. See <code>-SIG_import</code> for the format
+##          of this identifier
+## @param idTrl data
+##          Data instance to be filled with transliteration
+## @return <code>TRUE</code> if the transliteration was successfully imported
+##         and <code>FALSE</code> otherwise.
+function -TRL_import(sDir,sTid,idTrl)
+{
+  ".__TRL_imp_sExt" "var" ?instance not if
+    var .__TRL_imp_sExt;
+   ( "trl.ext" "trl.txt" "S" -CFG_get_ex ) .__TRL_imp_sExt -sset;
+  end
+
+  var sF; "$[sDir]/$[sTid].$[.__TRL_imp_sExt]" sF =;
+  idTrl -reset;
+  "ORTH" 255 idTrl -addcomp;
+  "\n     - loading: $[sF] ..."                                        3 -MSGX; 
+  sF "ascii" idTrl stdfile /strings /noerror -import ?error if
+    " FAILED"                                                          3 -MSGX;
+    FALSE return;
+  end
+  0 idTrl -LAB_shrink;
+  " ok\n     "                                                         3 -MSGX;
+  TRUE return;
+}
+
+## Returns the database specific sensor ID table. The function proceeds as
+## follows:
+## <ol>
+##   <li>Check the <a href="cfg.itp.html#index:cfgf">configuration</a> for a key named <code>uasr.sensor</code>. If
+##     found, return a list containing one entry with the value of that key.</li>
+##   <li>Try to load the ASCII file named "sensors.txt" located in the <a href="cfg.itp.html#index:datadirs">info
+##     directory</a> or specified by the <a href="cfg.itp.html#index:cfgk">configuration key
+##     <code>&lt;uasr.am.sensors&gt;</code></a>. If either of these files exists, return a list containing its
+##     contents.</li>
+##   <li>Return a list containing one empty entry indicating that there is only one sensor (which is typically the case
+##     for speech processing).</li>
+## </ol>
+##
+## @cgen:index
+## @global &lt;uasr.sensor&gt;      R
+## @global &lt;uasr.am. sensors&gt; R
+## @return The sensor table (<code>data</code> instance)
+function -SNS_get_tab()
+{
+  data idSns;                                                                   # Sensor list
+  var  sSns;                                                                    # String buffer
+  "sensor" "#" "S" -CFG_get_ex sSns =; sSns "#" == not if                       # Have key "(uasr.)sensor" >>
+    sSns "..." "search" -VAR_strop 0 < if                                       #   Value does not contain "..." >>
+      { { "$[sSns]" } } idSns =;                                                #     This be the only one!
+      "\n   - Use sensor    : ${idSns[0,0]} ONLY"                        -MSG2; #     Protocol
+      idSns return;                                                             #     Return sensor list
+    end                                                                         #   <<
+    ( sSns "?...?" "replace" -VAR_strop ) sSns =;                               #   Get start sensor name
+  else                                                                          # << don't have key "(uasr.)sensor" >>
+    "" sSns =;                                                                  #   Clear sensor name
+  end                                                                           # <<
+
+  ## Load (an trim) sensor list                                                 # -------------------------------------
+  data idAux;                                                                   # Auxilary data instance
+  var sDirInfo; "info" "S" -CFG_get_path sDirInfo =;                            # Info directory
+  var sSlf; "am.sensors" "${sDirInfo}/sensors.txt" "S" -CFG_get_ex sSlf =;      # Sensor list file
+  "\n   - Sensor list   : $[sSlf]"                                       -MSG2; # Protocol
+  "ID" 255 idSns -addcomp;                                                      # Create sensor name component
+  sSlf "ascii" idSns stdfile /noerror -import;                       "." -MSG2; # Load sensor list
+  idSns -is_empty if { { "" } } idSns =; end                                    # Normalize sensor list
+  { { "$[sSns]" } } idSns 0 0 idAux /noerror -gen_index;                        # Find sensor to start with
+  idSns 0 :idAux[0,0]: idSns /rec -delete;                                      # Trim sensor list
+  idSns return;                                                                 # Return sensor list
+}
+
+## Safely converts a sensor name to a file extension. If <code>sSns</code> is
+## already a file extension, the function will just return it.
+##
+## @cgen:index
+## @param sSns string
+##          Sensor name
+## @return File extension (string)
+function -SNS_get_ext(sSns)
+{
+  sSns not if "" return; end                                                    # Sensor name empty -> no extension
+  ( sSns "1" "left" -VAR_strop ) "." == if sSns return; end                     # Sensor name is already a file extnsn.
+  ".$[sSns]" return                                                             # Make extension out of sensor name
+}
+
+## EOF

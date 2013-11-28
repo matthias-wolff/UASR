@@ -1,0 +1,1425 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Synthesis functions: HMM synthesis
+##
+## AUTHOR : Rainer Köhler
+## PACKAGE: uasr/scripts/dlabpro/synth
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Compute neglog likelihood sum of generated features
+## @cgen:index
+function -FEA_comp_nll(idFea,idGss,iFI,itHMM)
+{
+  data idNld;
+  data idMsc;
+  data idAux;
+  data idAux2;
+
+  idFea iFI ( "sfa.dim" 0 -CFG_get ) idMsc NULL -FEA_sfa;
+  idMsc NULL idNld itHMM.gm /neglog -density;
+  -type long 1 idMsc.nrec idAux -array; 0 1 idAux -fill;
+  idAux 0 idGss 0 idNld idAux2 -lookup_2;
+  idAux2 NULL 0 "sum" idNld /rec -aggregate;
+  :idNld[0,0]: return;
+}  
+
+## HMM vocoding. Computes the optimal HMM path(s) by aligning the labelled
+## feature vector sequence <code>idSrc</code> on the respective HMMs and
+## resynthesizes the feature vector sequence from that paths
+##
+## @cgen:index
+## @param idSrc data
+##          Primary feature vector sequence to be HMM-vocoded
+## @param iFI object
+##          Feature information object (see function <code>-FEA_info</code>)
+## @param itHMM hmm
+##          Hidden Markov Model to vocode with
+## @param idGss data
+##          will be filled with the Gaussian index sequence used to synthesize
+##          <code>idFea</code>, may be <code>NULL</code>
+## @param idFea data
+##          will be filled with the vocoded primary feature vector sequence,
+##          may be <code>NULL</code>
+function -HMM_vocode(idSrc,iFI,itHMM,idGss,idFea)
+{
+  fst  itRN;
+  fst  itDC;
+  fst  itGP;                                                                    # Gaussians->phonemes transducer
+  fst  itLX;                                                                    # Lexical transducer
+  data idMsc;
+  data idLsc;
+  data idLab;
+  data idMap;
+  data idAux;
+  data idNld;
+  data idLex;
+  var  nLab;
+  var  nDim;    "pfa.dim" 0         -CFG_get    nDim    =;                      # Get primary feature dimension 
+  var  bSmooth; "smooth"  FALSE "S" -CFG_get_ex bSmooth =;                      # Smoothing features?
+
+  :idSrc[idSrc.dim-1]: idLab =;                                                 # Get labels
+
+  .__CFG_bFce TRUE == if                                                        # Forced recognition? >>
+    NULL idLex -LX_init; 1 idLex -allocate;                                     #   Create lexicon entry
+    idLab 0 idAux -compress; idAux NULL "rcat" idAux -strop;                    #   Concatenate labels into one phoneme string
+    0 0 idAux -sfetch 0 "PHON" idLex -find_comp idLex -sstore;                  #   Copy phoneme string to lexicon
+    0 0 idAux -sfetch 0 "ORTH" idLex -find_comp idLex -sstore;                  #   Set name
+    itHMM itGP -LAB_get_fst;                                                    #   Create phoneme labeling transducer
+    itHMM.ud idLex itLX -LX_compile;                                 "." -MSG2; #   Compile lexical transducer
+    itLX -1 itLX -minimize;                                          "." -MSG2; #   Minimize lexical transducer
+    itHMM itRN /index -union; itRN 0 itRN -close;                               #   Create phoneme labelling network
+    itRN itLX 0 0 itRN -compose;                                                #   Forced recognition
+  else                                                                          # Else >>
+    itHMM itRN /index -union; itRN 0 itRN -close;                               #   Create phoneme labelling network
+  end                                                                           # <<
+
+  idSrc iFI ( "sfa.dim" 0 -CFG_get ) idMsc NULL -FEA_sfa;                       # Do secondary feature analysis
+  idMsc NULL idNld itHMM.gm /neglog -density;                                   # Compute neg. log. densities
+  itRN 0 idNld itDC /epsremove -sdp;                                            # Align
+  idGss if :itDC.td["~TIS"]: idGss =; end                                       # Copy Gaussian sequence
+  idFea if                                                                      # Synthesizing features >>
+    :itDC.td["~TOS"]: 0 itHMM.ud 0 1 idAux -lookup; idAux itDC.td -join;        # *** just for debuggin' *** 
+    :itDC.td["~TIS"]: 0 itHMM.gm.mean 0 itHMM.gm.mean.dim idMsc -lookup;        # Get mean vectors of MSCs from HMM
+    :itDC.td["~TIS"]: 0 itHMM.lsmean  0 itHMM.lsmean.dim  idLsc -lookup;        # Get mean vectors of LSCs from HMM 
+    bSmooth TRUE == if
+      idGss itHMM iFI idMsc -Smooth_fea;
+      idMsc idMsc .__FEA_iSfa -delta;
+      idMsc NULL nDim iFI idFea -FEA_isfa;                                      # Inverse secondary feature analysis
+    else
+      idMsc idLsc nDim iFI idFea -FEA_isfa;                                     # Inverse secondary feature analysis
+    end
+    .__CFG_bFce TRUE == if                                                      # Forced recognition? >>
+      0 itDC -invert; itDC itGP 0 0 itDC -compose;                              # Compute phonemes (per frame)
+      itDC 0 1 -1 itDC -best_n;                                                 # HACK: sometimes labels not unique!
+      :itDC.td[itDC.NC_TD_TOS]: 0 itHMM.ud 0 1 idLab -lookup;                   # | Replace index with phoneme string
+      0 "lab" idLab -set_cname;                                                 # Rename phoneme component
+    end
+    idLab idFea -join;                                                          # Label synthesized features
+  end                                                                           # <<
+}
+
+## HMM feature vector synthesis. The function creates an appropriate sequence
+## of primary feature vectors for a given label sequence.
+## 
+## @cgen:index
+## @param idLab data
+##          the label sequence
+## @param nIcLab number
+##          zero based index of component in <code>idLab</code> containing the
+##          label names; these label names must correspond with the unit names
+##          in <code>itHMM</code>
+## @param nIcLen number
+##          zero base index of component in <code>idLab</code> specifying the
+##          number of feature vectors to be synthesized for each label
+## @param iFI object
+##          Feature information object (see function <code>-FEA_info</code>)
+## @param itHMM hmm
+##          Hidden Markov Model to synthesize from
+## @param idGss data
+##          will be filled with the Gaussian index sequence used to synthesize
+##          <code>idFea</code>, may be <code>NULL</code>
+## @param idFea data
+##          will be filled with the synthesized primary feature vector sequence
+function -HMM_feasyn(idLab,nIcLab,nIcLen,iFI,itHMM,idGss,idFea)
+{
+  ## Local variables                                                            # -------------------------------------
+  data idHmmId;                                                                 # HMM index sequence for label sequence
+  data idTis;                                                                   # Gaussian sequence
+  data idMsc;                                                                   # Most signif. feature vector comps.
+  data idLsc;                                                                   # Least signif. feature vector comps.
+  data idAux;                                                                   # An auxilary data instance
+  var  nL;                                                                      # Current label                                                                      # <<
+  var  nDim;    "pfa.dim" 0         -CFG_get    nDim    =;                      # Get primary feature dimension 
+  var  bSmooth; "smooth" FALSE "S" -CFG_get_ex bSmooth =;                       # Smoothing features?
+  
+  ## State "selection"                                                          # -------------------------------------
+  idLab itHMM.ud nIcLab 0 idHmmId -gen_index;                                   # Get HMM index for label
+  label L_L; nL idLab.nrec < if                                                 # Loop over labels >>
+    :idLab[nL,nIcLen]<0: if                                                     #   Invalid label name >>
+       "Invalid label '${idLab[nL,nIcLab]}'. Skipping."             1 -WARNING; #     Print a warning
+       nL ++=; goto L_L;                                                        #     Skip label
+    end                                                                         #   <<
+    :idMsc=ones(1,idLab[nL,nIcLen]);                                            #   Create dummy feature instance
+    idMsc itHMM :idHmmId[nL,0]: idAux -HMM_iniusq;                              #   Distribute equally
+    idAux idAux.nrec -- 1 idAux /rec -delete;                                   #   Delete last record (exit transition)
+    idAux idTis -cat;                                                           #   Append to state sequence
+    nL ++=; goto L_L;                                                           #   End of loop
+  end                                                                           # <<
+  
+  ## Feature vector synthesis                                                   # -------------------------------------
+  bSmooth TRUE == if
+    idTis itHMM idMsc -Smooth_fea;
+    iFI.idDlt  .__FEA_iSfa -set delta_table;                                    # Set delta table
+    iFI.idDltW .__FEA_iSfa -set delta_weights;                                  # Set delta weighting vector
+    idMsc idMsc .__FEA_iSfa -delta;
+    idMsc NULL nDim iFI idFea -FEA_isfa;                                        # Inverse secondary feature analysis
+    :idLab["lab"]: idFea -join;
+  else    
+    idTis 1 itHMM.gm.mean 0 itHMM.gm.mean.dim idMsc -lookup;                    # Get mean vectors of MSCs from HMM
+    idTis 1 itHMM.lsmean  0 itHMM.lsmean.dim  idLsc -lookup;                    # Get mean vectors of LSCs from HMM 
+    idMsc idLsc nDim iFI idFea -FEA_isfa;                                       # Inverse secondary feature analysis
+    idLab nIcLab -1 nIcLen idAux -expand; idAux idFea -join;                    # Label synthesized features
+  end
+  idGss if idTis idGss =; end                                                   # Copy Gaussian sequence
+}
+
+## function builds weight matrix W
+##
+## @param L var
+##          range of deltas
+## @param s var
+##          shift when borders are touched
+## @param Delta_Blk data
+##          complete weight matrix at frame t
+function -Build_Delta_Blk(L,s,Delta_Blk) 
+{
+  #locals
+  0 var i;                                                                      # counter for Delta_Blk
+  var  nDim;    "pfa.dim" 0         -CFG_get    nDim    =;                      # Get primary feature dimension 
+  data delta_0;                                                                 # block of original features
+  data delta_1;                                                                 # block od Deltas
+  data delta_2;                                                                 # block of Delta-Deltas
+  data E;                                                                       # identity matrix (MxM)
+  data N;                                                                       # zero matrix (MxM)
+
+  :E = unit(nDim,nDim):;                                                        # identity matrix with dim of fea=M
+  :N = zeros(nDim,nDim):;                                                       # zero matrix with dim of fea=M
+  
+  Delta_Blk 0 1 Delta_Blk /block -delete;                                       #delete old Delta_Blk                                                                
+  label weight;
+      i :4*L+1: < if
+        i :2*L-s: == if                                                         # original weight block 
+            E delta_0 -cat;                                                     # append E
+        N delta_1 -cat;
+        :-2*E: delta_2 -cat;                                                    # delta-delta
+            i ++=;                                                              # increment i
+            goto weight;
+        end      
+      i :L-s: == if                                                             # delta weight block 
+             :-E: delta_1 -cat;
+        N delta_0 -cat;
+        N delta_2 -cat;
+            i ++=;
+            goto weight;
+        end
+        i :3*L-s: == if
+            E delta_1 -cat;
+        N delta_0 -cat;
+        N delta_2 -cat;
+            i ++=;
+            goto weight;
+        end
+      s 0 <= if                                                                 # delta-delta weight block
+        i :-s: == if
+            E delta_2 -cat;
+            N delta_1 -cat;
+            N delta_0 -cat;
+              i ++=;
+              goto weight;
+          end
+        end
+        i :4*L-s: == if
+            E delta_2 -cat;
+        N delta_1 -cat;
+        N delta_0 -cat;
+            i ++=;
+            goto weight;
+        end
+        N delta_0 -cat;                                                         # no special case - append N
+        N delta_1 -cat;                                                         # append N
+        N delta_2 -cat;                                                         # append N
+        i ++=;                                                                  # increment i
+        goto weight;
+    end
+  delta_0 Delta_Blk -join;
+  delta_1 Delta_Blk -join;
+  delta_2 Delta_Blk -join;
+}
+
+## function selects features and append them
+##
+## @param C data
+##            optimal feature sequence (nS+1)-elements
+## @param nStart number
+##            element of C to start with
+## @param nEnd number
+##            last element to fetch
+## @param M number
+##            dimension of feature vector
+## @param idFea data
+##            sequence of selected features
+function -Add_fea(C,nStart,nEnd,M,idFea)
+{
+  0 var i;                                                                      # counter
+  data C_c;
+
+  nStart i =; i nEnd < while
+    C :i*M: M C_c -select;
+    "lab" 4 C_c -addcomp;                                                       # write same format as dLabPro
+    C_c idFea -cat;
+    i ++=;
+  end
+}
+
+## function deletes components if DeltaTable demands it
+##
+## @param w_t_trans data
+##            block of weight matrix W (3*nDim x nDim*nT)
+function -Decrease_Deltas(w_t_trans,idDlt)
+{
+  data idDeltaTable;
+  var  nDim;    "pfa.dim" 0         -CFG_get    nDim    =;                      # Get primary feature dimension 
+  nDim var i;
+
+  idDlt idDeltaTable =;
+  label row_2;
+  i 0 > if
+    :idDeltaTable[1,i]: 0 == if
+      w_t_trans :2*nDim+i: 1 w_t_trans -delete;
+    end
+    i --=;
+    goto row_2;
+  end
+  nDim i =;
+  label row_1;
+  i 0 > if
+    :idDeltaTable[0,i]: 0 == if
+      w_t_trans :nDim+i: 1 w_t_trans -delete;
+    end
+    i --=;
+    goto row_1;
+  end
+}
+
+## function smoothes features for a given sequence of gaussians
+##
+## @param idTis data
+##          Gaussian sequence
+## @param iFI object
+##          Feature information object (see function <code>-FEA_info</code>)
+## @param itHMM hmm
+##          Hidden Markov Model to synthesize from
+## @param idFea data
+##          Smoothed features to return
+function -Smooth_fea(idTis,iFI,itHMM,idFea)
+{
+  data idMu;                                                                    # mu vector    (means)
+  data idU_inv;                                                                 # inverse Covariance matrix
+  data w_t_trans;                                                               # build transposed of matrix w_t
+  data W;
+  data W_T_U;                                                                   # transposed of W
+  data V;
+  data Delta_Blk;                                                               # zero block (3MxMT)
+  0 var L;                                                                      # range of deltas
+                                                                                # should be defined in default.cfg
+  0 var c;                                                                      # counter for coeffs
+  0 var g;                                                                      # counter for gaussians
+  0 var s;                                                                      # shift at borders
+  0 var nAct;                                                                   # actual element to synthesize
+  16 var nS;                                                                    # number of incorporated gaussians
+  24 var nT;                                                                    # Timeframe to synthesize -1
+  0 var nJmp;                                                                   # jump to next timeframe to syn.
+  0 var nAux;
+  0 var nU_inv;                                                                 # size of U_inv per frame
+  var  nDim;    "pfa.dim" 0         -CFG_get    nDim    =;                      # Get primary feature dimension 
+  data idMu_g;                                                                  # means at g-th gaussian/state
+  data idU_inv_g;                                                               # inv Cov at g-th gaussian/state
+  data idMu_base;                                                               # all extracted mu
+  data idU_inv_base;                                                            # all extracted U_inv
+  data R;                                                                       # W'U^(-1)W
+  data r;                                                                       # W'U^(-1)mu
+  data P;                                                                       # R^(-1)
+  data C;                                                                       # optimal feature sequence @ c
+
+  :0.5*(iFI.idDltW.dim - 1): L =;                                               # determine L
+  :nJmp=nT-nS+1;
+  idFea -reset;
+  idMu_base idU_inv_base itHMM.gm -extract;                                     # restore mu and inv_Cov of transitions
+  "sfa.dim" 0 -CFG_get nU_inv =;                                                # multiplicand for size of U_inv depending on delta computation
+
+  # build W
+  label gauss_1;
+  g :nT+1: < if                                                                 # for all gaussians
+    :w_t_trans = zeros(3*nDim,nDim*(nT+1));                                     # in case of deleted elements it has to be build again
+    g :2*L-1: > if
+      g :nT-2*L: <= if    # !(nT+1)-1=nT!
+        :s=0;
+            L s Delta_Blk -Build_Delta_Blk;
+            Delta_Blk 0 :(4*L+1)*nDim: :(g-2*L)*nDim: w_t_trans /rec -xstore;
+            w_t_trans iFI.idDlt -Decrease_Deltas;                               # delete comp. if not all deltas are used
+            w_t_trans W -join;
+        end
+      end
+    g :2*L: < if
+      :s=2*L-g;
+      L s Delta_Blk -Build_Delta_Blk;
+      Delta_Blk 0 :(4*L+1)*nDim: 0 w_t_trans /rec -xstore;
+      w_t_trans iFI.idDlt -Decrease_Deltas;
+      w_t_trans W -join;
+    end
+    g :nT-2*L: > if
+      :s=-(g-(nT-2*L));
+      L s Delta_Blk -Build_Delta_Blk;
+      Delta_Blk 0 :(4*L+1)*nDim: :((nT+1)-(4*L+1))*nDim: w_t_trans /rec -xstore;
+      w_t_trans iFI.idDlt -Decrease_Deltas;
+      w_t_trans W -join;
+    end
+  g ++=;
+  goto gauss_1;
+  end
+
+  # calculate optimal coefficients
+  :idU_inv = zeros(nU_inv*(nT+1),nU_inv*(nT+1));
+  :V=zeros(nT+1,nT+1);
+  label coeff;                                                                  # actual coefficient to determine
+  c :idTis.nrec-0.5*nT: < if                                                    # Sequence must have at least (4L+1) Elements!
+    c :0.5*nT: < if
+      c ++=;
+      goto coeff;
+    end
+    "\n c = " c + " / " + :idTis.nrec-0.5*nT-1: + -echo;
+    idU_inv -clear;
+    idMu -reset;
+    :g=0;
+    label gauss_2;
+      g :nT+1: < if
+      # build mu and U^(-1)
+      idTis.dim 1 > if
+        idTis 1 1 idTis -select;
+      end
+      :c-0.5*nT+g: 0 idTis -fetch nAct =;                                       # get actual element to synthesize
+      idMu_base nAct 1 idMu_g /rec -select;                                     # (3Mx1) vector from idMu@g->0...62
+      idU_inv_base nAct 1 idU_inv_g /block -select;                             # (3Mx3M) matrix from idU_inv @ g
+      idMu_g idMu -join;
+      V -clear;
+      :V[g,g]=1;
+      :idU_inv=idU_inv+V.*.idU_inv_g;                                           # Kronecker multiplication for diagonal structure of U_inv
+    g ++=;
+    goto gauss_2;
+    end
+
+    # calculate R, r and C
+    :W': idU_inv W_T_U "musp" matrix -op;
+    W_T_U W R "musp" matrix -op;
+    W_T_U idMu r "musp" matrix -op;
+    R P NULL matrix -invert;
+    P r C "musp" matrix -op;
+
+    # special cases at start and end
+    c :idTis.nrec-0.5*nT-1: == if
+      nAux 0 != if
+        C :0.5*nS+(nJmp-(c-nAux)): :nT+1: nDim idFea -Add_fea;
+      else
+        C :0.5*nS: :nT+1: nDim idFea -Add_fea;                                  # take c and all following coeffs
+      end
+    else
+      c :0.5*nT: == if
+        C 0 :nT-0.5*nS+1: nDim idFea -Add_fea;                                  # take all coefficients until c
+      else
+        C :0.5*nS: :nT-0.5*nS+1: nDim idFea -Add_fea;                           # take only vector at c
+      end
+    end
+
+    # conditional jump
+    :c+nJmp: :idTis.nrec-0.5*nT-1: > if
+      c :idTis.nrec-0.5*nT-1: == if                                             # abort
+        c ++=;
+        goto coeff;
+      else
+        :nAux=c;
+        :c=idTis.nrec-0.5*nT-1;
+        goto coeff;
+      end
+    else
+      :c=c+nJmp;
+    end
+    goto coeff;
+  end
+}
+
+## HMM feature vector synthesis. The function creates an appropriate sequence
+## of primary feature vectors for a given label sequence.
+##
+## @param idLab data
+##          the label sequence
+## @param nIcLab number
+##          zero based index of component in <code>idLab</code> containing the
+##          label names; these label names must correspond with the unit names
+##          in <code>itHMM</code>
+## @param nIcLen number
+##          zero base index of component in <code>idLab</code> specifying the
+##          number of feature vectors to be synthesized for each label
+## @param iFI object
+##          Feature information object (see function <code>-FEA_info</code>)
+## @param itHMM hmm
+##          Hidden Markov Model to synthesize from
+## @param idGss data
+##          will be filled with the Gaussian index sequence used to synthesize
+##          <code>idFea</code>, may be <code>NULL</code>
+## @param idLyrMap
+##          Map of gaussians per layer
+## @param idFea data
+##          will be filled with the synthesized primary feature vector sequence
+function -HMM_feasyn2(idLab,nIcLab,nIcLen,iFI,itHMM,idGss,idLyrMap,idFea)
+{
+  ## Local variables                                                            # -------------------------------------
+  #data idHmmId;                                                                # HMM index sequence for label sequence
+  data idLss;                                                                   # Layer sequence
+  data idMsc;                                                                   # Most signif. feature vector comps.
+  data idLsc;                                                                   # Least signif. feature vector comps.
+  data idAux;                                                                   # An auxilary data instance
+  var  nAlpha;  1 nAlpha =;                                                     # weighting factor for transitions
+  var  nDim;    "pfa.dim" 0        -CFG_get    nDim    =;                       # Get primary feature dimension 
+  var  sAmId;   "am.model" "0_0"   -CFG_get    sAmId   =;                       # Acoustic model ID
+  var  bSmooth; "smooth" FALSE "S" -CFG_get_ex bSmooth =;                       # Smoothing features?
+
+  ## State "selection"
+  idLss -reset;
+  idLyrMap itHMM -HMM_layer_map;                                                # generate map with layers and their "substates"
+  itHMM idLab idLss -Get_iniLSeq;                                               # get initial layer sequence
+  itHMM idLss nAlpha sAmId idGss -Get_iniGSeq;                                  # get initial state sequence
+  ## Feature vector synthesis                                                   # -------------------------------------
+  bSmooth TRUE == if
+    iFI idLss idGss itHMM nAlpha idMsc -Smooth_fea2;
+    iFI.idDlt  .__FEA_iSfa -set delta_table;                                    # Set delta table
+    iFI.idDltW .__FEA_iSfa -set delta_weights;                                  # Set delta weighting vector
+    idMsc idMsc .__FEA_iSfa -delta;
+    idMsc NULL nDim iFI idFea -FEA_isfa;                                        # Inverse secondary feature analysis
+    idLab nIcLab -1 nIcLen idAux -expand; idAux idFea -join;                    # Label synthesized features
+  else
+    idGss 0 itHMM.gm.mean 0 itHMM.gm.mean.dim idMsc -lookup;                    # Get mean vectors of MSCs from HMM
+    idGss 0 itHMM.lsmean  0 itHMM.lsmean.dim  idLsc -lookup;                    # Get mean vectors of LSCs from HMM
+    idMsc idLsc nDim iFI idFea -FEA_isfa;                                       # Inverse secondary feature analysis
+    idLab nIcLab -1 nIcLen idAux -expand; idAux idFea -join;                    # Label synthesized features
+  end
+}
+
+## EXPERIMENTAL; creates a Gaussian/per-layer statistics index map for HMM synthesis. The function creates
+## <ul>
+##   <li>a map assigning each HMM state and each HMM transition the index of their per-layer statistics (component
+##     "~PLS" of state and transition lists) and</li>
+##   <li>a map assigning each per-layer statistics the set of Gaussians for which this statistics accounts
+##     (<code>idLyrMap</code>).</li>
+## </ul>
+##
+## @param idLyrMap data
+##          Will be filled with a Gaussian/per-layer statistics index map, may be <code>NULL</code>.
+## @param itHMM hmm
+##          HMM instance, the function will overwrite the contents of the components named "~PLS" in the state
+##          <em>and</em> transition tables. If no such components exist, they will be created
+function -HMM_layer_map(idLyrMap,itHMM)
+{
+  data idAux;                                                                   # Auxilary data instance
+  var  nU;                                                                      # Current HMM unit
+  var  nS;                                                                      # Current state
+  var  nT;                                                                      # Current transition
+  var  nFS;                                                                     # First state of current unit
+  var  nXS;                                                                     # Number of states of current unit
+  var  nFT;                                                                     # First transition of current unit
+  var  nXT;                                                                     # Number of transitions of current unit
+  var  nTer;                                                                    # Terminal state of current transition
+  var  nXXL;                                                                    # Aggregates global layer index
+  var  nIcSdPls;                                                                # Per-layer stats. index comp.of states
+  var  nIcTdPls;                                                                # Per-layer stats. index comp.of trans.
+
+  ## Find or add per-layer stats. index component "~PLS" to states and trans.   # -------------------------------------
+  ( "~PLS" itHMM.sd -find_comp ) nIcSdPls =;                                    # Find per-layer stats. index at states
+  nIcSdPls 0 < if                                                               # Not present >>
+    "~PLS" ( -type long ) itHMM.sd -addcomp;                                    # Create one
+    ( itHMM.sd.dim -- ) nIcSdPls =;                                             # Remember component index
+  end                                                                           # <<
+  ( "~PLS" itHMM.td -find_comp ) nIcTdPls =;                                    # Find per-layer stats. index at trans.
+  nIcTdPls 0 < if                                                               # Not present >>
+    "~PLS" ( -type long ) itHMM.td -addcomp;                                    # Create one
+    ( itHMM.td.dim -- ) nIcTdPls =;                                             # Remember component index
+  end                                                                           # <<
+
+  ## Fill per-layer stats. indexes                                              # -------------------------------------
+  label L_U; nU itHMM.ud.nrec < if                                              # Loop over units >>
+    :nFS = itHMM.ud[nU,"~FS"];                                                  #   Get first global state index
+    :nXS = itHMM.ud[nU,"~XS"];                                                  #   Get number of states
+    :nFT = itHMM.ud[nU,"~FT"];                                                  #   Get first global transition index
+    :nXT = itHMM.ud[nU,"~XT"];                                                  #   Get number of transitions
+
+    ## - Create per-layer stats. index at states                                #   - - - - - - - - - - - - - - - - - -
+    :nS=nFS: label L_S; :nS<nFS+nXS: if                                         #   Loop over states of unit >>
+      :itHMM.sd[nS,"~LYR"]<0: if                                                # Layer index negative >>
+        :itHMM.sd[nS,nIcSdPls]=-1;                                              # Per-layer stats. index -> -1
+      else                                                                      #     << layer index non-negative >>
+        :itHMM.sd[nS,nIcSdPls]=itHMM.sd[nS,"~LYR"]+nXXL;                        # Compute per-layer stats. index
+      end                                                                       #     <<
+      nS ++=; goto L_S;                                                         # Next state, please
+    end                                                                         #   <<
+
+    ## - Create per-layer stats. index at transitions                           #   - - - - - - - - - - - - - - - - - -
+    :nT=nFT: label L_T; :nT<nFT+nXT: if                                         #   Loop over transitions of unit >>
+      :nTer=itHMM.td[nT,"~TER"];                                                #     Get terminal state index
+      :itHMM.td[nT,nIcTdPls]=itHMM.sd[nFS+nTer,"~PLS"];                         # Copy per-layer stats. index
+      nT ++=; goto L_T;                                                         # Next transition, please
+    end                                                                         #   <<
+
+    :nXXL+=itHMM.ud[nU,"~XL"];                                                  # Aggregate global layer counter
+    nU ++=; goto L_U;                                                           #  Next unit, please
+  end                                                                           # <<
+
+  ## Create Gaussian/layer map                                                  # -------------------------------------
+  idLyrMap not if leave; end                                                    # No map? Ok ...
+  :itHMM.gm.mean.nrec%nXXL: 0 != if                                             # HMM seems to be pruned >>
+    "Cannot make Gaussian/layer map (HMM pruned?)" -ERROR;                      #   No go!
+    leave;                                                                      #   Return
+  end                                                                           # <<
+  :itHMM.td["~TIS"]: idAux =;                                                   # Get Gaussian indices from transitions
+  :itHMM.td["~PLS"]: idAux -join;                                               # Get per-layer stats. ind. from trans.
+  ( 1 itHMM.gm.mean.nrec zeros ) idLyrMap =; 0 1 idLyrMap -fill;                # Make a Gaussian index table ...
+  idLyrMap idAux 0 0 idLyrMap -gen_index;                                       # ... and find Gaussians at transitions
+  idLyrMap 0 idAux 0 2 idLyrMap -lookup;                                        # Get first transition per Gaussian
+  idLyrMap 1 idLyrMap -sortup;                                                  # Sort by per-layer stats. indices
+#  idLyrMap 1 2 idLyrMap -select;                                                # Throw away Gaussian indices
+#  idLyrMap 2 nXXL idLyrMap -reshape;                                            # Reshape map
+}
+
+## function determines the initial gaussian sequence maximizing
+## log c_g - 1/2 log |U_g| (c is the transition weight of one possible gaussian)
+function -Get_iniGSeq(itHMM,idLss,nAlpha,sAmId,idGss)
+{
+  data idMu;                                                                    # auxiliary needed by -extract (gmm)
+  data idU_inv;                                                                 # base of all inverse Cov.-matrices
+  data idU_inv_g;                                                               # Cov.-matrix for one gaussian
+  data idU_g;
+  data idDet;
+  data idAux;                                                                   # auxiliary to cat number of gaussian
+  data idTranD;                                                                 # transition data
+  data idSelfT;
+  0 var nMax;                                                                   # gaussian number with max. prob.
+  0 var l;                                                                      # counter for layer sequence
+  0 var g;                                                                      # counter for gaussians
+  0 var nProb;
+  0 var nProbTot;                                                               # total probability of observation
+  0 var nMaxProb;
+  0 var nAct;
+  0 var nTranProb;
+  -1 var nPreLyr;                                                               # previous layer
+  var sSplit;                                                                   # number of splits per layer
+  var nDimSFA;
+
+  idGss -reset;
+  "sfa.dim" 0 -CFG_get nDimSFA =;
+  ( sAmId 1 "left" -VAR_strop ) sSplit =;                                       # determine number of splits
+  idMu idU_inv itHMM.gm -extract;                                               # restore mu and inv_Cov of transitions
+  itHMM.td idTranD =;
+  idTranD.nrec l =;
+  label select;
+  l 0 > if
+    :idTranD[l,"~PLS"]: -1 == if
+      idTranD l 1 idTranD /rec -delete;
+    end
+    :idTranD[l,"~TER"]: :idTranD[l,"~INI"]: == if
+      idTranD l 1 idAux /rec -select;
+      idAux idSelfT -cat;
+      idTranD l 1 idTranD /rec -delete;
+    end
+    l --=;
+    goto select;
+  end
+  idTranD ( "~TIS" idTranD -find_comp ) idTranD -sortup;
+  idSelfT ( "~TIS" idSelfT -find_comp ) idSelfT -sortup;
+  :idAux=zeros(1,1);
+
+  0 l =;
+  label lyr;                                                                    # for all layers
+  l idLss.nrec < if
+    :-100000: nMaxProb =;
+    0 nTranProb =;
+      0 g =;
+      label gauss;                                                              # search best gaussian
+      g :2^sSplit: < if
+        :nAct=idLss[l,0]*(2^sSplit)+g;
+        idU_inv nAct 1 idU_inv_g /block -select;
+        idU_inv_g idU_g NULL matrix -invert;
+        :det(idU_g): idDet =;
+        :idDet[0,0]: 0 == if
+          g ++=;
+          goto gauss;
+        end
+        ( :-idTranD[nAct,"~LSR"]: :-1000: < ) ( :-idSelfT[nAct,"~LSR"]: :-1000: < ) || if
+          g ++=;
+          goto gauss;
+        end
+        l 0 == if
+          :nTranProb = -idTranD[nAct,"~LSR"];
+        else
+          :idLss[l,0]: nPreLyr == if
+            :nTranProb = -idSelfT[nAct,"~LSR"];
+          else
+            :nTranProb = -idTranD[nAct,"~LSR"];
+          end
+        end
+        :nProb=nAlpha*nTranProb-0.5*ln(idDet[0,0])-nDimSFA/2*ln(2*PI);         # -1/2*log|U_q|+log c_q
+        nProb nMaxProb > if
+          g nMax =;
+          nProb nMaxProb =;
+        end
+        g ++=;
+        goto gauss;
+      end
+      :idAux[0,0]=nMax+idLss[l,0]*(2^sSplit);
+      idAux idGss -cat;
+      :idLss[l,0]: nPreLyr =;
+      :nProbTot+=nMaxProb;
+    l ++=;
+    goto lyr;
+  end
+"Initial_Gaussian_Sequence" "ascii" idGss stdfile -export;
+"\n minimum average neglog: " :-(nProbTot/idLss.nrec): + -echo;
+}
+
+## function determines the initial layer sequence using duration densities and dynamic programming
+## and stores it in idGss
+function -Get_iniLSeq(itHMM,idLab,idLss)
+{
+  data idMeanHmm;                                                               # means of densities
+  data idVarHmm;                                                                # variances of densities
+  data idMeanPhon;                                                              # means of phonem
+  data idVarPhon;                                                               # variance of phonem
+  data idDen;                                                                   # calculated densities
+  data idPhonDur;                                                               # duration of phonems
+  data idPhonLab;                                                               # actual label of phonem
+  data idHmmLab;                                                                # labels of HMM
+  data idIndex;                                                                 # unit numbers of HMM for phonems
+  data idBestDur;                                                               # best durations per layer of phonem
+  data idSeqLen;                                                                # length of idLss
+  data idAux; { 0 } idAux =;
+  hmm itPhonem;                                                                 # unit of HMM for label
+  fst DPGraph;                                                                  # Graph for dynamic programming
+  0 var nK;                                                                     # number of possible layers
+  0 var i;
+  0 var j;
+  0 var d;
+  0 var nT;                                                                     # length of phonem
+
+  idLss -reset;
+  :idLab["count"]: idPhonDur =;
+  :idLab["lab"]: idPhonLab =;
+  :itHMM.ud["~NAM"]: idHmmLab =;
+  idMeanHmm itHMM.pls -mean;                                                    # get means of statistic
+  idVarHmm itHMM.pls -var;                                                      # get variances of statistic
+  idPhonLab idHmmLab 0 0 idIndex -gen_index;                                    # find unit number of phonems
+  idPhonDur NULL 0 "sum" idSeqLen /rec -aggregate;                              # calculate length of observation
+
+  0 i =;
+  label lab;                                                                    # get initial layer seq. for phonems
+  i idLab.nrec < if
+    itPhonem -reset;
+    itHMM NULL :idIndex[i,0]: itPhonem -copy_ui;                                # copy unit of HMM
+    :idPhonDur[i,0]: 0 == if
+      :itPhonem.sd["~PLS"]: 0 idAux -sortup;
+      idAux 0 idAux -compress;
+      idAux 0 idMeanHmm 0 1 idAux -lookup;
+      idAux NULL 0 "sum" idAux /rec -aggregate;
+      :idPhonDur[i,0]=ent(idAux[0,0]+0.5);
+    end
+    itHMM.sd.dim nK =;
+    :idPhonDur[i,0]: nT =;
+    idMeanHmm :idIndex[i,0]: nK idMeanPhon /block -select;                      # get means and variances
+    idVarHmm :idIndex[i,0]: nK idVarPhon /block -select;
+    idDen -reset;
+    type double :nT-nK+1: idDen -addncomps;                                     # allocate space for idDen
+    nK idDen -allocate;
+    0 j =;                                                                      # calculate densities -ln(p(d))
+    label den1;
+    j nK < if                                                                   # "layer"
+      0 d =;
+      label den2;
+      d :nT-nK+1: < if                                                          # max. duration of one "state"
+          :idDen[j,d] = -ln(1/sqrt(2*PI*idVarPhon[j,0])*exp(-0.5*sqr(d-idMeanPhon[j,0])/idVarPhon[j,0]));
+        d ++=;
+        goto den2;
+      end
+      j ++=;
+      goto den1;
+    end
+    :idPhonDur[i,0]: 3 < if
+      :idPhonDur[i,0]: 1 == if
+        :idAux[0,0]=idIndex[i,0]*nK+1;                                          # take the middle
+        idAux idLss -cat;
+      end
+      :idPhonDur[i,0]: 2 == if
+        :idAux[0,0]=idIndex[i,0]*nK;                                            # first and ...
+        idAux idLss -cat;
+        :idAux[0,0]=idIndex[i,0]*nK+2;                                          # ... last
+        idAux idLss -cat;
+      end
+    else
+      DPGraph -reset;                                                           # build graph for DP
+      :idPhonLab[i,0]: DPGraph /fsa /tsr -addunit;
+      0 :1+(nT-2)*2: DPGraph -addstates;                                        # add states without (!) final one
+      0 1 DPGraph /final -addstates;                                            # final state
+      :nT-2: j =;                                                               # set transitions
+      label trans1;
+      j 0 > if
+        0 d =;
+        label trans2;
+        d j < if
+          j :nT-2: == if
+            0 0 :d+1: DPGraph -addtrans { ${d+1} ${idDen[0,d]} };
+            0 :(nT-2)*2-d: :(nT-2)*2+1: DPGraph -addtrans { ${d+1} ${idDen[2,d]} };
+          end
+          0 :nT-1-j: :nT-1-j+nT-2+d: DPGraph -addtrans { ${d+1} ${idDen[1,d]} };
+          d ++=;
+          goto trans2;
+        end
+        j --=;
+        goto trans1;
+      end
+      DPGraph 0 1 0 DPGraph -best_n;                                            # find best way
+      :DPGraph.td["~TIS"]: idBestDur =;                                         # store durations
+      0 d =;                                                                    # fill layer sequence idLss
+      label fill1;
+      d idBestDur.nrec < if
+        0 j =;
+        label fill2;
+        j :idBestDur[d,0]: < if
+          :idAux[0,0]=idIndex[i,0]*nK+d;
+          idAux idLss -cat;
+          j ++=;
+          goto fill2;
+        end
+        d ++=;
+        goto fill1;
+      end
+    end
+    i ++=;
+    goto lab;
+  end
+  :idLab["count"]=idPhonDur;
+}
+
+## function selects states per layer for optimal state sequence and calculates optimal coefficients
+function -Smooth_fea2(iFI,idLss,idGss,itHMM,nAlpha,idFea)
+{
+  data idC;
+  data idC_static;
+  data idP;
+  data idP_static;
+  data idEps;
+  data idEps_static;
+  data idU_inv_base;
+  data idU_inv_static;
+  data idU_inv_g;
+  data idU_inv_g2;
+  data idU_inv_g_hat;
+  data idU_g;
+  data idU_g_hat;
+  data idU_g_static;
+  data idMu_g;
+  data idMu_g2;
+  data idMu_g_hat;
+  data idMu_g_static;
+  data idMu_base;
+  data idMu_static;
+  data idPi;
+  data idNu;
+  data idV;
+  data idW;
+  data idw_t;
+  data idDetU;                                                                  # |U|
+  data idTranD;                                                                 # transition data
+  data idSelfT;                                                                 # self transitions
+  data idAux;
+  data idMaxG;                                                                  # best gaussian (prob,layer,gauss.)
+  var  nDimSFA;                                                                 # dimension of secondary feature analysis
+  var  nDim;    "pfa.dim"   0        -CFG_get    nDim    =;                     # Get primary feature dimension 
+  var  sAmId;   "am.model" "0_0"     -CFG_get    sAmId   =;                     # Acoustic model ID
+  var  bChange; "change"   TRUE  "S" -CFG_get_ex bChange =;                     # Change states?
+  var  sSplit;                                                                  # number of splits
+  var  nAct;
+  var  nAct2;
+  var  nAct3;
+  var  nT;                                                                      # Timeframe to synthesize
+  var  nS;                                                                      # number of incorporated gaussians
+  0 var nJmp;                                                                   # jump to next timeframe to syn.
+  0 var nAux;
+  0 var w;                                                                      # counter of windows
+  0 var g;                                                                      # counter for gaussians per window
+  0 var l;                                                                      # counter for layers per window
+  0 var c;                                                                      # simple counter
+  0 var i;                                                                      # simple counter
+  0 var nTranProb;                                                              # Transition probabilities of window w
+  0 var nLogDetU;                                                               # logarithmic det(U)
+  0 var nLogP;                                                                  # logarithmic Probability of state seq.
+  -1 var nCal;
+  0 var nK;
+  0 var nW;                                                                     # counter for analysis windows
+  0 var nP;                                                                     # average Probability
+
+  :150*nSrate/nRinc/1000: nS =;                                                 # Determine nS and nT
+  :mod(nS,2): 1 == if nS ++=; end
+  nS 8 + nT =;
+
+  idFea -reset;
+  "sfa.dim" 0 -CFG_get nDimSFA =;
+  ( sAmId 1 "left" -VAR_strop ) sSplit =;                                       # determine number of splits
+  idMu_base idU_inv_base itHMM.gm -extract;                                     # restore mu and inv_Cov of all transitions
+  :idV=zeros(nT+1,nT+1);
+
+  idW iFI -Build_W;
+
+  :nJmp=nT-nS+1;
+  itHMM.sd.dim nK =;
+
+  # determine all state transition probabilities (selftr. instead of duration)
+  itHMM.td idTranD =;
+  idTranD.nrec l =;
+  label select;
+  l 0 > if
+    :idTranD[l,"~PLS"]: -1 == if
+      idTranD l 1 idTranD /rec -delete;
+    end
+    :idTranD[l,"~TER"]: :idTranD[l,"~INI"]: == if
+      idTranD l 1 idAux /rec -select;
+      idAux idSelfT -cat;
+      idTranD l 1 idTranD /rec -delete;
+    end
+    l --=;
+    goto select;
+  end
+  idTranD ( "~TIS" idTranD -find_comp ) idTranD -sortup;
+  idSelfT ( "~TIS" idSelfT -find_comp ) idSelfT -sortup;
+
+  # loop over all windows
+  label window;
+  w :idGss.nrec-0.5*nT: < if                                                    # Sequence must have at least (4L+1) Elements!
+    w :0.5*nT: < if
+      w ++=;
+      goto window;
+    end
+    "\n w = " w + " / " + :idGss.nrec-0.5*nT-1: + -echo;
+    idP -clear;
+    idC -reset;
+    idMu_static -reset;
+    idU_inv_static -reset;
+
+    # build static C, static Epsilon static P, static Mu and static U_inv
+    :idEps_static=zeros(1,1);
+    :idP_static=zeros(nDim*(nT+1),nDim*(nT+1));                                 # diag(U_static_1,...,U_static_T)
+    idC_static -reset;
+    0 g =;
+    label gauss_1;
+      g :nT+1: < if
+      :w-0.5*nT+g: 0 idGss -fetch nAct =;                                       # get actual element to synthesize
+      idMu_base nAct 1 idMu_g /rec -select;                                     # select means of gaussian
+      idMu_g 0 nDim idMu_g_static -select;                                      # select static means
+      idMu_g_static idC_static -join;                                           # append to static features
+      :zeros(nDimSFA-nDim,1): idMu_g_static -join;
+      idMu_g_static idMu_static -cat;
+      idU_inv_base nAct 1 idU_inv_g /block -select;                             # select inverse Cov. of gaussians
+      idU_inv_g idU_g_static NULL matrix -invert;                               # invert to get Cov.
+      idU_g_static 0 0 nDim nDim idU_g_static matrix -submat;                   # select static Cov.-matrices
+      idV -clear;
+      :idV[g,g]=1;
+      :idP_static=idP_static+idV.*.idU_g_static;                                # Kronecker multiplication for diagonal structure
+      idU_g_static idU_g_static NULL matrix -invert:
+      0 c =;
+      label fill_1;                                                             # fill U_q^(-1) up to nDim x nDimSFA
+      c :nDimSFA-nDim: < if
+        :zeros(nDim,1): idU_g_static -cat;
+        c ++=;
+        goto fill_1;
+      end
+      0 c =;
+      label fill_2;                                                             # fill U_q^(-1) up to nDimSFAxnDimSFA
+      c :nDimSFA-nDim: < if
+        :zeros(1,nDimSFA): idU_g_static -join;
+        c ++=;
+        goto fill_2;
+      end
+      idU_g_static idU_inv_static -cat;
+      g ++=;
+      goto gauss_1;
+    end
+    idC_static idC =;
+    idP_static idP =;
+    idEps_static idEps =;
+    :idU_inv_static.nblock=nT+1;
+
+
+    # calculate C,P and Eps for initial gaussian sequence
+    0 l =;
+    label ini;
+    l :nT+1: < if                                                               # use algorithm T times
+      idW :l*nDimSFA: 0 nDimSFA :(nT+1)*nDim: idw_t matrix -submat;             # select w_t'
+      :idw_t=idw_t';                                                            # determine w_t
+      idU_inv_static l 1 idU_inv_g /block -select;                              # U_q^(-1)
+      idMu_static l 1 idMu_g /rec -select;                                      # mu_q
+      :w-0.5*nT+l: 0 idGss -fetch nAct =;
+      idU_inv_base nAct 1 idU_inv_g_hat /block -select;                         # U_g_hat^(-1)
+      idMu_base nAct 1 idMu_g_hat /rec -select;                                 # mu_g_hat
+      # calculate
+        1 idw_t idC idP idEps idU_inv_g idU_inv_g_hat idMu_g idMu_g_hat -Iterate;
+      idC idC_static =;                                                         # store values
+      idP idP_static =;
+      idEps idEps_static =;
+      l ++=;
+      goto ini;
+    end
+
+    # compute log. trans. probability and log(det(U)) of initial gaussian sequence in window w
+    0 c =;
+    0 nLogDetU =;
+    0 nTranProb =;
+    label detU_0;
+    c :nT+1: < if
+      :w-0.5*nT+c: 0 idGss -fetch nAct2 =;                                      # actual gaussian
+      idU_inv_base nAct2 1 idU_inv_g /block -select;
+      idU_inv_g idU_g NULL matrix -invert;
+      :idDetU = det(idU_g);
+      c 0 == if
+        :nLogDetU = ln(idDetU[0,0]);
+      else
+        :nLogDetU += ln(idDetU[0,0]):                                           # det(U)=prod(det(U_g))
+      end
+      c 0 == if
+        :idGss[w-0.5*nT+c-1,0]: nAct2 == if
+          :nTranProb = -idSelfT[nAct2,"~LSR"];
+        else
+          :nTranProb = -idTranD[nAct2,"~LSR"];
+        end
+      else
+        :idGss[w-0.5*nT+c-1,0]: nAct2 == if
+          :nTranProb += -idSelfT[nAct2,"~LSR"];
+        else
+          :nTranProb += -idTranD[nAct2,"~LSR"];
+        end
+      end
+      c ++=;
+      goto detU_0;
+    end
+    :idMaxG=zeros(1,5);                                                         # memory for best
+    :-idEps[0,0]/2-nLogDetU/2+nAlpha*nTranProb-nDimSFA/2*(nT+1)*ln(2*PI): nLogP =;
+    :idMaxG[4,0]=nLogP;
+    :idMaxG[0,0]=nLogP;
+    :idMaxG[2,0]=-1;
+
+bChange TRUE == if
+
+#"\n initial Probability: " nLogP + "|" + :-idEps[0,0]/2: + -echo;
+
+     # Iteration over all layers and gaussians of window w
+    :idAux=-1*ones(1,nT+1);
+    0 l =;
+    label layer;
+    l :nT+1: < if
+      ( :w-0.5*nT+l: nCal > ) ( :idAux[l,0]: :-1: == ) && if
+        idW :l*nDimSFA: 0 nDimSFA :(nT+1)*nDim: idw_t matrix -submat;           # select w_t'
+        :idw_t=idw_t';                                                          # determine w_t
+        :w-0.5*nT+l: 0 idGss -fetch nAct3 =;
+        idU_inv_base nAct3 1 idU_inv_g2 /block -select;                         # the old one to replace
+        idMu_base nAct3 1 idMu_g2 /rec -select;                                 # the old one to replace
+        :idLss[w-0.5*nT+l,0]: nAct =;                                           # get actual layer
+        # choose gaussian
+        0 g =;
+        label gauss_3;
+        g :2^sSplit: < if
+
+#g 0 == if
+#  "\n trying valid gaussians of layer " l + "/" + nT + " : " + -echo;
+#end
+
+            idMu_base :nAct*2^sSplit+g: 1 idMu_g_hat /rec -select;              # mu_g_hat -> the one to replace with
+            idU_inv_base :nAct*2^sSplit+g: 1 idU_inv_g_hat /block -select;      # U_g_hat -> the one to replace with
+            idU_inv_g_hat idU_g_hat NULL matrix -invert;
+            :idDetU = det(idU_g_hat);
+            :idDetU[0,0]: 0 == if                                               # don't use faulty gaussians
+              g ++=;
+              goto gauss_3;
+            end
+            ( :-idTranD[nAct*2^sSplit+g,"~LSR"]: :-100: < ) ( :-idSelfT[nAct*2^sSplit+g,"~LSR"]: :-100: < ) || if
+              g ++=;
+              goto gauss_3;
+            end
+            :idGss[w-0.5*nT+l,0]=nAct*2^sSplit+g;                               # replace gaussian in idGss
+
+#" " :nAct*2^sSplit+g: + " " + -echo;
+"." -echo;
+"Modified_Gaussian_Sequence" "ascii" idGss stdfile -export;
+
+            # compute log. trans. probability and log(det(U)) of gaussian sequence in window w
+            0 c =;
+            0 nLogDetU =;
+            0 nTranProb =;
+            label detU;
+            c :nT+1: < if
+              :w-0.5*nT+c: 0 idGss -fetch nAct2 =;                             # actual gaussian
+              idU_inv_base nAct2 1 idU_inv_g /block -select;
+              idU_inv_g idU_g NULL matrix -invert;
+              :idDetU = det(idU_g);
+              c 0 == if
+                :nLogDetU = ln(idDetU[0,0]);
+              else
+                :nLogDetU += ln(idDetU[0,0]):                                   # det(U)=prod(det(U_g))
+              end
+              c 0 == if
+                :idGss[w-0.5*nT+c-1,0]: nAct2 == if
+                  :nTranProb = -idSelfT[nAct2,"~LSR"];
+                else
+                  :nTranProb = -idTranD[nAct2,"~LSR"];
+                end
+              else
+                :idGss[w-0.5*nT+c-1,0]: nAct2 == if
+                  :nTranProb += -idSelfT[nAct2,"~LSR"];
+                else
+                  :nTranProb += -idTranD[nAct2,"~LSR"];
+                end
+              end
+              c ++=;
+              goto detU;
+            end
+
+            # calculate logP(Q), alpha is set to zero
+            0 idw_t idC idP idEps idU_inv_g2 idU_inv_g_hat idMu_g2 idMu_g_hat -Iterate;         # replace
+            :-idEps[0,0]/2-nLogDetU/2+nAlpha*nTranProb-nDimSFA/2*(nT+1)*ln(2*PI): nLogP =;    # calculate Probability
+
+#" " nLogP + "|" + :-idEps[0,0]/2: + -echo;
+
+              # evaluate state
+              nLogP :idMaxG[0,0]: > if
+                :idMaxG[0,0]=nLogP;                                             # store prob.
+                :idMaxG[1,0]=nAct;                                              # store layer
+                :idMaxG[2,0]=g;                                                 # store gaussian
+                :idMaxG[3,0]=l;                                                 # store number of frame of window
+              end
+            idC_static idC =;                                                   # restore default
+            idP_static idP =;
+            idEps_static idEps =;
+            :idGss[w-0.5*nT+l,0]=nAct3;
+
+"Modified_Gaussian_Sequence" "ascii" idGss stdfile -export;
+
+          g ++=;
+          goto gauss_3;
+        end
+        end
+      l ++=;
+      goto layer;
+    end
+
+    # Replace with best gaussian
+    :idMaxG[0,0]: :idMaxG[4,0]: > if
+
+"\n probability increased " :idMaxG[0,0]: + " -> change in layer " + :idMaxG[3,0]: + -echo;
+
+      :idMaxG[4,0]=idMaxG[0,0];                                                 # maximum of this iteration
+      :idGss[w-0.5*nT+idMaxG[3,0],0]=idMaxG[1,0]*2^sSplit+idMaxG[2,0];
+
+"Modified_Gaussian_Sequence" "ascii" idGss stdfile -export;
+
+      idW :idMaxG[3,0]*nDimSFA: 0 nDimSFA :(nT+1)*nDim: idw_t matrix -submat; # select w_t'
+      :idw_t=idw_t';                                                            # determine w_t
+      idMu_base :idMaxG[1,0]*2^sSplit+idMaxG[2,0]: 1 idMu_g_hat /rec -select;   # Mu_g_hat
+      idU_inv_base :idMaxG[1,0]*2^sSplit+idMaxG[2,0]: 1 idU_inv_g_hat /block -select; # U_inv_g_hat
+      :w-0.5*nT+idMaxG[3,0]: 0 idGss -fetch nAct3 =;
+      idU_inv_base nAct3 1 idU_inv_g2 /block -select;                           # the old one to replace
+      idMu_base nAct3 1 idMu_g2 /rec -select;                                   # the old one to replace
+      1 idw_t idC idP idEps idU_inv_g2 idU_inv_g_hat idMu_g2 idMu_g_hat -Iterate; # replace
+      idC idC_static =;                                                         # store as default
+      idP idP_static =;                                                         # ... _static used to avoid new variables
+      idEps idEps_static =;
+      :idAux[idMaxG[3,0],0]=idMaxG[3,0];
+      0 l =;
+      goto layer;
+    end
+
+    :nCal=w-0.5*nT+l-1;                                                         # remember last calculated
+
+end
+
+    nW ++=;
+    :nP+=idMaxG[0,0]/(nT+1);
+
+    # add features
+    w :idGss.nrec-0.5*nT-1: == if                                               # special cases at start and end
+      nAux 0 != if
+        idC :0.5*nS+(nJmp-(w-nAux)): :nT+1: nDim idFea -Add_fea;
+      else
+        idC :0.5*nS: :nT+1: nDim idFea -Add_fea;                                # take w and all following coeffs
+      end
+    else
+      w :0.5*nT: == if
+        idC 0 :nT-0.5*nS+1: nDim idFea -Add_fea;                                # take all coefficients until w
+      else
+        idC :0.5*nS: :nT-0.5*nS+1: nDim idFea -Add_fea;                         # take only vector at w
+      end
+    end
+
+    # decide jump length
+    :w+nJmp: :idGss.nrec-0.5*nT-1: > if                                         # conditional jump
+      w :idGss.nrec-0.5*nT-1: == if                                             # abort
+        w ++=;
+        goto window;
+      else
+        :nAux=w;
+        :w=idGss.nrec-0.5*nT-1;
+        goto window;
+      end
+    else
+      :w=w+nJmp;
+    end
+    goto window;
+  end
+
+"\n average neglog: " :-nP/nW: + -echo;
+
+}
+
+## function builds block w_t^T of weight matrix W
+##
+## @param idDlt1W data
+##            weights for deltas
+## @param idDlt2W data
+##            weights for delta-deltas
+## @param t var
+##            number of frame
+function -Build_w_t_T(iFI,idDlt1W,idDlt2W,t,idw_t_T)
+{
+  0 var i;
+  0 var j;
+  var  nDim;    "pfa.dim" 0         -CFG_get    nDim    =;                      # Get primary feature dimension 
+  var  nL;                                                                      # context length for delta calculation
+  data idZeroS;                                                                 # stripe of length T with zeros
+  data idDelta;                                                                 # feature weights
+  data idDltT;                                                                  # Delta Table
+
+  :0.5*(iFI.idDltW.dim - 1): nL =;                                              # determine context length nL
+
+  idw_t_T -reset;
+  iFI.idDlt idDltT =;
+
+  :t*nDim: t =;
+  t i =;
+  :zeros(1,nDim*(nT+1)): idZeroS =;
+  label L0;
+  i :nDim+t: < if
+    idZeroS idDelta =;
+    :idDelta[i,0]=1;
+    idDelta idw_t_T -join;
+    i ++=;
+    goto L0;
+  end
+
+  t i =;
+  label L1;
+  i :nDim+t: < if
+    :idDltT[0,i-t]: 0 != if
+      idZeroS idDelta =;
+      :-nL: j =;
+      label L11;
+      j nL <= if
+        :idDelta[i+j*nDim,0]=idDlt1W[j+nL,0];
+      j ++=;
+      goto L11;
+      end
+      idDelta idw_t_T -join;
+    end
+    i ++=;
+    goto L1;
+  end
+
+  t i =;
+  label L2;
+  i :nDim+t: < if
+    :idDltT[1,i-t]: 0 != if
+      idZeroS idDelta =;
+      :-2*nL: j =;
+      label L22;
+      j :2*nL: <= if
+        :idDelta[i+j*nDim,0]=idDlt2W[j+2*nL,0];
+      j ++=;
+      goto L22;
+      end
+      idDelta idw_t_T -join;
+    end
+    i ++=;
+    goto L2;
+  end
+}
+
+## function builds weight matrix W
+function -Build_W(W,iFI)
+{
+  0 var t;                                                                      # counter for frames
+  0 var i;
+  0 var j;
+  var  nL;                                                                      # context length for delta calculation
+  data idw_t_T;                                                                 # build transposed of matrix w_t
+  data idDlt1W;
+  data idDlt2W;
+
+  :0.5*(iFI.idDltW.dim - 1): nL =;                                              # determine context length nL
+
+  W -reset;
+  # calculate Delta-Delta-Features (Delta-Features given)
+  ( iFI.idDltW ' )  idDlt1W =;
+  :zeros(1,4*nL+1): idDlt2W =;
+  :-2*nL: i =;
+  label delta0;
+  :-nL: j =;
+  i 0 <= if
+    label delta1;
+    j :nL+i: <= if
+      :idDlt2W[i+2*nL,0]+=idDlt1W[j+nL,0]*idDlt1W[i-j+nL,0];
+    j ++=;
+    goto delta1;
+    end
+  i ++=;
+  goto delta0;
+  end
+  ( i 0 > ) ( i :2*nL: <= ) && if
+    label delta2;
+    j :nL-i: <= if
+      :idDlt2W[i+2*nL,0]+=idDlt1W[i+j+nL,0]*idDlt1W[-j+nL,0];
+    j ++=;
+    goto delta2;
+    end
+  i ++=;
+  goto delta0;
+  end
+
+  # build W
+  0 t =;
+  label gauss;
+  t :nT+1: < if                                                                 # for all frames t
+    iFI idDlt1W idDlt2W t idw_t_T -Build_w_t_T;
+    idw_t_T W -join;
+  t ++=;
+  goto gauss;
+  end
+}
+
+## function changes states ("substates") per layer ("state") to increase probability of observation
+function -Iterate(nP,idw_t,idC,idP,idEps,idU,idU_hat,idMu,idMu_hat)
+{
+  data idPi;
+  data idNu;
+  data idK;
+  data idC_hat;
+  data idP_hat;
+  data idEps_hat;
+  data idAux;
+  data idAux2;
+  var nDimSFA;
+  
+  "sfa.dim" 0 -CFG_get nDimSFA =;                 # get Dimension of dyn. and stat. fea.
+   
+  idP idw_t musp idPi =;                      # Pi=P*w_t  (T.1) 
+    
+  ( idw_t ' ) idPi musp idNu =;                   # Nu=w_t'*Pi (T.2)
+   
+  ( idU_hat idU - ) idAux =;                    # determine k (T.3)
+  idAux idNu musp idAux =;
+  ( :unit(nDimSFA): idAux + ) idAux =;
+  idAux idAux NULL matrix -invert;
+  idPi idAux musp idK =;
+  
+  ( idw_t ' ) idC musp idAux =;                   # determine c_hat (T.4)
+  ( idMu idAux - ) idAux =;
+  idU idAux musp idC_hat =;
+  ( idw_t ' ) idC musp idAux =;
+  ( idMu_hat idAux - ) idAux =;
+  idU_hat idAux musp idAux =;
+  ( idAux idC_hat - ) idC_hat =;
+  idK idC_hat musp idC_hat =; 
+  ( idC idC_hat + ) idC_hat =;
+   
+  ( idw_t ' ) idC musp idAux =;                   # determine eps_hat (T.5)
+  ( idAux idMu - ) idAux =;
+  ( idw_t ' ) idC_hat musp idAux2 =;  
+  ( idAux2 idMu - ) idAux2 =;
+  ( idAux2 ' ) idU musp idAux2 =;
+  idAux2 idAux musp idEps_hat =;
+  ( idw_t ' ) idC musp idAux =; 
+  ( idAux idMu_hat - ) idAux =;
+  ( idw_t ' ) idC_hat musp idAux2 =;
+  ( idAux2 idMu_hat - ) idAux2 =;
+  ( idAux2 ' ) idU_hat musp idAux2 =;
+  idAux2 idAux musp idAux2 =;
+  ( idAux2 idEps_hat - ) idEps_hat =;
+  ( idEps idEps_hat + ) idEps_hat =;
+   
+  nP 1 == if                            # determine P_hat (T.6)
+    ( idU_hat idU - ) idAux =;                      
+    idK idAux musp idAux =;
+    idAux ( idPi ' ) musp idAux =;
+    ( idP idAux - ) idP_hat =;
+    idP_hat idP =;
+  end
+  idEps_hat idEps =;
+  idC_hat idC =;
+}
+
+function -HMM_get_fea(sfile,itHMM,idFea,idGss)
+{
+  data idAux1;
+  data idAux2;
+  data idInto;
+  data idLab;
+  data idF0;
+  data idInt;
+  data idMsc;
+  data idLsc;
+  data idLss;
+  var  nRinc;     "pfa.crate"              0     -CFG_get      nRinc     =;     # Analysis window shift in samples
+  var  nWlen      "pfa.wlen"             160     -CFG_get      nWlen     =;     # Analysis window length
+  var  nSrate;    "sig.srate"          16000     -CFG_get      nSrate    =;     # Signal sampling rate
+  var  nBaseF0;   "syn.baseF0"           100     -CFG_get      nBaseF0   =;     # Base f0
+  
+  "$[sDirInto]/$[iF.sfile].into" "into" idInto stdfile -import;                 # Load into data
+  idInto -is_empty if FALSE return; end                                         # No into, no service!
+  idInto idLab -LAB_from_into;                                                  # Convert into to lab
+
+  idLss -reset;
+  itHMM idLab idLss -Get_iniLSeq;                                               # Get initial layer sequence
+  itHMM idLss 1 sAmId idGss -Get_iniGSeq;                                       # Get initial state sequence
+  idGss 0 itHMM.gm.mean 0 itHMM.gm.mean.dim idMsc -lookup;                      # Get mean vectors of MSCs from HMM
+  idGss 0 itHMM.lsmean  0 itHMM.lsmean.dim  idLsc -lookup;                      # Get mean vectors of LSCs from HMM
+  idMsc idLsc idMsc.nrec idLsc.nrec + iFI idFea -FEA_isfa;                      # Inverse secondary feature analysis
+
+  idInto idFea.nrec idF0 -INTO_get_f0;                                          # Generate f0 contour
+  idF0 0 idAux1 -compress;                                                      # Get phonemes
+  idAux1 itHMM.ud 0 0 idAux2 -gen_index;                                        # Get phoneme indices
+  0 1 idAux2 -xfetch idLab -join;                                               # Append to labels
+  idAux2 0 itHMM.ud 6 1 idAux2 -lookup;                                         # Get V/UV from HMM
+  :idAux2=idAux2.*2-1:;                                                         # V: 1, UV: -1
+  idAux2 idAux1 -join;                                                          # 
+  idAux1 3 1 2 idAux1 -expand;                                                  # Expand to number of f0 sampling points
+  :idF0=idF0["~F0"].*idAux1/nBaseF0:;                                           # Normalize and f0>0:V, f0<0:UV
+  idF0 idFea -join;                                                             # Append f0 contour to fea
+
+  idInto idFea.nrec idInt -INTO_get_int;                                        # Generate intensity contour
+  :idInt["~INT"]: idFea -join;                                                  # Append intensity contour to fea
+  idLab 2 -1 1 idAux1 -expand; idAux1 idFea -join;                              # Label synthesized features
+
+  1000 nRinc * nSrate / idFea -set rinc;
+  1000 nWlen * nSrate / idFea -set rwid;
+  
+  TRUE return;
+}
+
+## EOF

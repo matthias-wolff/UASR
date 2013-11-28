@@ -1,0 +1,1158 @@
+## Unified Approach to Speech Synthesis and Recognition
+## - Verbmobil data base functions
+##
+## AUTHOR : Hussein Hussein
+## UPDATE : 
+##          $Revision: 		 $
+## PACKAGE: 
+## RCS-ID : 
+##
+
+
+
+#	| F0 contour (Hz)
+#	|
+#	|																																		    *
+#	|                                                 *    *              *    *													       *
+#	|                                            *              *    *															      *
+#	|                                  *    *																				     *
+#	|                                                                               *    *								    *
+#	|
+#	 ----*----*----*----*----*----*-----------------------------------------------------------*----*----*----*----*----*-------------------------- time
+#        0    1    2    3    4    5    6    7    8    9    10  11   12    13   14   15   16   17   18   19   20   21   22   23   24   25   26   27
+
+# ================================================================================================================================
+# F0 parameters for sentence mood:																								 #
+# ================================																								 #
+# 1. F0min																								 						 #
+# 2. F0max																								 						 #
+# 3. F0mean																								 						 #
+# 4. F0range																								   					 #
+# 5. F0on																								   					 	 #
+# 6. F0off																								   					 	 #
+# ================================================================================================================================
+
+
+
+## <p>Annotate sentence mood to the sentence.</p>
+## @param idSmoothedF0 data
+##          Data instance of smoothed F0 Contour (input)
+## @param idOrtho data
+##          Data instance of orthographic words without extra words (d or T) [Using (-Delete_Extra_Ortho_Word_LAB_WORD) if there is extra word] (input)
+## @param idLabWord data
+##          Data instance of word labels, extracted with (-LAB_WORD_extract_vm) (input)
+## @param nSampelRate
+##			Sample rate of speech signal (input)
+## @param nSampelRateF0
+##			Sample rate of F0 contour (input)
+## @param idLab data
+##          Data instance of annotated sentence mood  (output)
+#function -Sentence_Mood_Annotation(idSmoothedF0,idPauseDetect,idOrtho,idLabWord,idLabelWordNoPause,nSampelRate,nSampelRateF0,idLab)
+function -Sentence_Mood_RisingF0_Annotation(idSmoothedF0,idOrtho,idLabWord,nSR,nSRateF0,idLab)
+{
+	var nMinLengVoicedSegment;														# Threshold of minimal length of voiced segment
+	var nMinLengPause;																# Threshold of minimal length of pause
+	var nMinF0range;  																# Threshold of minimal F0 range
+	var nMinF0stdev;  																# Threshold of minimal F0 standard deviation
+	var nMinLengRisingF0;															# Threshold of minimal length of rising F0 subcontour
+	var nMinDiffF0offF0localMin;													# Threshold of minimal difference between F0off and nearest F0localMin
+
+	data idAux;																		# Auxiliary data instance
+	data idLabWordEndTime;															# Data object of Word-Label with End-Time of words
+	data idF0VoicedIndex;															# Index of voiced segment (Start and End of voiced segment)
+	data idT1VoicedArray;															# Array for onset time of voiced segment
+	data idT2VoicedArray;															# Array for offset time of voiced segment
+	data idNumF0VoicedSegment; 														# Array for the number of F0 values in a voiced segment
+	data idNumF0Pause; 																# Array for the number of F0 values in a pause
+
+  	var nRecOrtho; 														  			# Get the number of records (number of orthographic words)
+  	var nRecLabWord; 																# Get the number of records (number of word labels with pauses)
+	var nAux;																		# Auxiliary variable
+	var sSentenceMood;																# Variable of sentence mood
+	var sPause;	        															# A word is a pause
+	var nSrateRatio;  																# Sample Rate Ratio = nSrate / nSrateF0 (e.g. 16000 / 100)
+	var T1;																			# Onset time of voiced segment
+	var T2;																			# Offset time of voiced segment   
+	var nNumF0VoicedSegment;														# Number of F0 values in a voiced segment
+	var nNumF0Pause;																# Number of F0 values in a pause
+	var i;
+	var ii;
+	var j;
+	var jj;
+
+  	## Initialize                                                                 	# -------------------------------------	
+	0.5 nMinLengVoicedSegment =;													# Threshold of minimal length of voiced segment (second)
+	0.1 nMinLengPause =;															# Threshold of minimal length of pause (second)
+	20 nMinF0range =;																# Threshold of minimal F0 range
+	5 nMinF0stdev =;																# Threshold of minimal F0 standard deviation
+	0.1 nMinLengRisingF0 =;															# Threshold of minimal length of rising F0 subcontour (second)
+	35 nMinDiffF0offF0localMin =;													# Threshold of minimal difference between F0off and nearest F0localMin
+
+  	idOrtho.nrec  nRecOrtho =;          											# Get the number of records
+  	idLabWord.nrec  nRecLabWord =;          										# Get the number of records
+
+	nSR nSRateF0 / nSrateRatio =;													# Sample Rate Ratio = nSrate / nSrateF0
+	# Sampling rate of F0 = 100 Hz = 10 ms = 160 sample (nSrate = 16 kHz)
+
+	0 T1 =;																			# Onset time of voiced segment
+	0 T2 =;																			# Offset time of voiced segment   
+	0 nNumF0VoicedSegment =;														# Number of F0 values in voiced segment
+	0 nNumF0Pause =;																# Number of F0 values in a pause
+	0 i =;
+	0 ii =;
+	0 j =;
+	0 jj =;
+	"<?>" sSentenceMood =;
+	"<p:>" sPause =;
+
+
+  	## Reset data                                                                 	# -------------------------------------
+	idAux -reset;
+	idLabWordEndTime -reset;
+	idF0VoicedIndex -reset;
+	idT1VoicedArray -reset;
+	idT2VoicedArray -reset;
+	idNumF0VoicedSegment -reset;
+	idNumF0Pause -reset;
+	
+  	## Define a data object structure                                              	# -------------------------------------	
+	"Word" 25 idLab -addcomp;														# Output data object
+
+	"EndTime" type double idLabWordEndTime -addcomp;
+
+	"BegIndV" type double idF0VoicedIndex -addcomp;
+	"EndIndV" type double idF0VoicedIndex -addcomp;
+
+	"T1Voice" type double idT1VoicedArray -addcomp;	
+	"T2Voice" type double idT2VoicedArray -addcomp;	
+
+	"NumVoic" type double idNumF0VoicedSegment -addcomp;
+	"NumPaus" type double idNumF0Pause -addcomp;
+
+
+	## Calculate the End-Time of Word-Label   										# -------------------------------------
+	0 i =; 																			# Init a loop counter i	
+	label L1;                                             							# Define a jump label named L1
+	i nRecLabWord < if                                            	 				# If loop counter < (number of records)
+		:idLabWord[i,1]: :idLabWord[i,2]: + nAux =; 								# End time = Start time + Length
+		i 1 + idLabWordEndTime -reallocate;										    # Reallocates a new record of memory keeping the contents
+		:idLabWordEndTime[i,0]=nAux;												# Assign end time
+		i ++=;                                              						# Increment loop counter i
+  		goto L1;                                            						# Jump to label L1
+	end                                                 							# End of conditional branch
+
+	idLabWordEndTime nSR / idLabWordEndTime =;										# Convert End time from Sample to Second
+
+
+	## Set the first two values and the last two new value of F0 contour to zero (0)# -------------------------------------
+	:idSmoothedF0[0,0] = 0;															# The first value of F0 = 0
+	:idSmoothedF0[1,0] = 0;															# The second value of F0 = 0
+
+	idSmoothedF0.nrec 2 + idSmoothedF0 -reallocate;									# Reallocates a new two records of memory keeping the contents
+	:idSmoothedF0[idSmoothedF0.nrec,0] = 0;											# The first new value (0) at the end of F0 contour
+	:idSmoothedF0[idSmoothedF0.nrec+1,0] = 0;										# The second new value (0) at the end of F0 contour
+
+
+	## Search for a voiced segments in smoothed F0 contour     						# -------------------------------------
+	0 i =; 																			# Init a loop counter i
+	0 j =;
+	0 jj =;
+
+	label L2;                                             							# Define a jump label named L2
+	i idSmoothedF0.nrec < if                                            	 		# If loop counter < (number of records)
+		:idSmoothedF0[i,0]: 0 != if													# Voiced segment >>
+
+			i 1 + T1 =;																# Onset time (the first F0 value is after 160 sample)
+
+			j 1 + idT1VoicedArray -reallocate;										# Reallocates a new record of memory keeping the contents
+			:idT1VoicedArray[j,0]=T1;												# Onset time of voiced segment
+
+			j 1 + idF0VoicedIndex -reallocate;										# Reallocates a new record of memory keeping the contents
+			:idF0VoicedIndex[j,0]=i;												# Start index of voiced segment
+
+			i ++=;                                              					# Increment loop counter i
+
+			0 nNumF0VoicedSegment =;												# Number of F0 values in voiced segment
+			label L3;                                             					# Define a jump label named L3
+			i idSmoothedF0.nrec < if                                            	# If loop counter < (number of records)
+				:idSmoothedF0[i,0]: 0 != if											# F0 value is in Voiced segment >>
+					nNumF0VoicedSegment ++=;										# Increment a counter for F0 values in voiced segment
+				else
+				:idSmoothedF0[i,0]: 0 == if											# Unvoiced segment (End of voiced and beginn of unvoiced segment) >>
+					jj ++=;															# Increment a counter of pauses (unvoiced segment)
+					1 nNumF0Pause =;												# Init a counter for F0 values in pause
+					goto L4; # Exit from loop                       				# Jump to label L4
+				end																# <<
+				end																# <<
+
+				i ++=;                                              				# Increment loop counter i
+  				goto L3;                                            				# Jump to label L3
+			end                                                 					# End of conditional branch
+
+			label L4;                                             					# Define a jump label named L4
+
+			i T2 =;																	# Offset time
+
+			j 1 + idT2VoicedArray -reallocate;										# Reallocates a new record of memory keeping the contents
+			:idT2VoicedArray[j,0]=T2;												# Offset time of voiced segment
+
+			:idF0VoicedIndex[j,1]=i-1;												# End index of voiced segment
+
+			j 1 + idNumF0VoicedSegment -reallocate;									# Reallocates a new record of memory keeping the contents
+			:idNumF0VoicedSegment[j,0]=nNumF0VoicedSegment;
+
+			j ++=;                                              					# Increment a counter j
+
+		else
+		:idSmoothedF0[i,0]: 0 == if													# Unvoiced segment >>
+			nNumF0Pause ++=;														# Init a counter for F0 values in pause
+
+			jj 1 + idNumF0Pause -reallocate;										# Reallocates a new record of memory keeping the contents
+			:idNumF0Pause[jj,0]=nNumF0Pause;
+		end																		# <<
+		end																		# <<
+
+		i ++=;                                              						# Increment loop counter i
+  		goto L2;                                            						# Jump to label L2
+	end                                                 							# End of conditional branch
+
+#01 break;
+
+	## Delete the first record in idNumF0Pause (pause at the beginning of signal)  	# -------------------------------------
+	idNumF0Pause.nrec 0 > if														# data object is not empty >>
+		idNumF0Pause 0 1 idNumF0Pause /rec -delete;									# Delete the first record
+	end																			# <<
+
+	idNumF0Pause.nrec  idF0VoicedIndex.nrec != if									# Proof of correctness
+		1000 break;
+	end
+
+#02 break;
+
+
+	## Convert data object from number of F0 values to second  						# -------------------------------------
+	# nSrate = 16000 Hz
+	# nSRateF0 = 100 Hz = 10 ms = 160 sample
+	# nSrateRatio = nSrate / nSRateF0;
+
+	data idLengVoicedSegment;														# Data object for length of voiced segment
+	data idLengPause;																# Data object for length of pause (unvoiced segment)
+
+  	## Reset data
+	idLengVoicedSegment -reset;
+	idLengPause -reset;
+
+	## Define a data object structure	
+	"LenVoic" type double idLengVoicedSegment -addcomp;
+	"LenPaus" type double idLengPause -addcomp;
+	
+	## Allocate memory for (n) record
+	idNumF0VoicedSegment.nrec idLengVoicedSegment -allocate;
+	idNumF0Pause.nrec idLengPause -allocate;
+
+	## Calculate the length of segments and calculate time in second
+	idNumF0VoicedSegment nSrateRatio * nSR / idLengVoicedSegment =;
+
+	idNumF0Pause nSrateRatio * nSR / idLengPause =;	
+
+	idT1VoicedArray nSrateRatio * nSR / idT1VoicedArray =;
+	idT2VoicedArray nSrateRatio * nSR / idT2VoicedArray =;
+
+#03 break;
+
+	## Delete the very small voiced segments   										# -------------------------------------
+	0 i =; 																			# Init a loop counter i	
+	label L5;                                             							# Define a jump label named L5
+	i idLengVoicedSegment.nrec < if                                            	 	# If loop counter < (number of records)
+		:idLengVoicedSegment[i,0]: nMinLengVoicedSegment < if
+			idF0VoicedIndex i 1 idF0VoicedIndex /rec -delete;
+			idLengVoicedSegment i 1 idLengVoicedSegment /rec -delete;
+			idLengPause i 1 idLengPause /rec -delete;
+			idT1VoicedArray i 1 idT1VoicedArray /rec -delete;
+			idT2VoicedArray i 1 idT2VoicedArray /rec -delete;			
+		end
+		i ++=;                                              						# Increment loop counter i
+  		goto L5;                                            						# Jump to label L5
+	end                                                 							# End of conditional branch
+
+
+#05 break;
+
+
+	## Calculate F0 parameters for every voiced segment   							# -------------------------------------
+	# ================================
+	# F0 parameters for sentence mood:
+	# ================================
+	# 1. F0min
+	# 2. F0max
+	# 3. F0mean
+	# 4. F0range
+	# 5. F0on
+	# 6. F0off
+
+	data idF0parameter;																# Data object of F0 parameter
+	data idMin;                                                              		# Min value
+	data idMax;                                                              		# Max value
+	data idMean;                                                             		# Mean value
+	data idSdev;                                                             		# Standard deviation
+
+  	## Reset data
+	idF0parameter -reset;
+	idMin -reset;
+	idMax -reset;
+	idMean -reset;
+	idSdev -reset;
+
+	## Define a data object structure	
+	type double 7 idF0parameter -addncomps;											# Adds multiple components for F0 parameters
+	0 "F0min" idF0parameter -set_cname;												# Set component name of F0min
+	1 "F0max" idF0parameter -set_cname;												# Set component name of F0max
+	2 "F0mean" idF0parameter -set_cname;											# Set component name of F0mean
+	3 "F0range" idF0parameter -set_cname;											# Set component name of F0range
+	4 "F0stdev" idF0parameter -set_cname;											# Set component name of F0stdev
+	5 "F0on" idF0parameter -set_cname;												# Set component name of F0on
+	6 "F0off" idF0parameter -set_cname;												# Set component name of F0off
+
+	idLengVoicedSegment.nrec idF0parameter -allocate;								# Allocate memory for (n) record
+
+	## Define and initialize the parameter of F0
+	var nF0min;																		# F0 Minimum
+	var nF0max;																		# F0 Maximum
+	var nF0mean;																	# F0 Mean
+	var nF0range;																	# F0 Range
+	var nF0stdev;																	# F0 Standard deviation
+	var nF0on;																		# F0 Onset
+	var nF0off;																		# F0 Offset
+	0 nF0min =;
+	0 nF0max =;
+	0 nF0mean =;
+	0 nF0range =;
+	0 nF0stdev =;
+	0 nF0on =;
+	0 nF0off =;
+
+	var nIndexT1;
+	var nIndexT2;
+	var nNumVoicedF0;	
+	0 nIndexT1 =;
+	0 nIndexT2 =;
+	0 nNumVoicedF0 =;
+
+	0 i =; 																			# Init a loop counter i	
+	label L7;                                             							# Define a jump label named L7
+	i idLengVoicedSegment.nrec < if                                            	 	# If loop counter < (number of records)
+		:idF0VoicedIndex[i,0]: nIndexT1 =;
+		:idF0VoicedIndex[i,1]: nIndexT2 =;
+		
+		nIndexT2 nIndexT1 - 1 + nNumVoicedF0 =;
+		idAux -reset;
+		idSmoothedF0 nIndexT1 nNumVoicedF0 idAux /rec -select;
+
+		idMin -reset;
+		idMax -reset;
+		idMean -reset;
+		idSdev -reset;		
+
+    	idAux NULL 0 "min"  idMin  /rec -aggregate;             					# Get min
+	   	idAux NULL 0 "max"  idMax  /rec -aggregate;             					# Get max
+  		idAux NULL 0 "mean" idMean /rec -aggregate;             					# Get mean
+    	idAux NULL 0 "sdev" idSdev /rec -aggregate;             					# Get standard deviation
+
+		:idMin[0,0]: nF0min =;
+		:idMax[0,0]: nF0max =;
+		:idMean[0,0]: nF0mean =;
+		nF0max nF0min - nF0range =;
+		:idSdev[0,0]: nF0stdev =;
+ 		:idSmoothedF0[nIndexT1,0]: nF0on =;
+ 		:idSmoothedF0[nIndexT2,0]: nF0off =;
+
+		:idF0parameter[i,0]=nF0min;
+		:idF0parameter[i,1]=nF0max;
+		:idF0parameter[i,2]=nF0mean;
+		:idF0parameter[i,3]=nF0range;
+		:idF0parameter[i,4]=nF0stdev;
+		:idF0parameter[i,5]=nF0on;
+		:idF0parameter[i,6]=nF0off;
+
+		i ++=;                                              						# Increment loop counter i
+  		goto L7;                                            						# Jump to label L7
+	end                                                 							# End of conditional branch
+#idF0VoicedIndex /list -print;
+#06 break;
+
+
+	## Delete the voiced segments if F0 parameters are small     					# -------------------------------------
+	0 i =; 																			# Init a loop counter i	
+	label L8;                                             							# Define a jump label named L8
+	i idLengVoicedSegment.nrec < if                                            	 	# If loop counter < (number of records)
+
+		:idF0parameter[i,0]: nF0min =;
+		:idF0parameter[i,1]: nF0max =;
+		:idF0parameter[i,2]: nF0mean =;
+		:idF0parameter[i,3]: nF0range =;
+		:idF0parameter[i,4]: nF0stdev =;		
+		:idF0parameter[i,5]: nF0on =;
+		:idF0parameter[i,6]: nF0off =;
+
+		nF0on nF0off > if
+#111 break;		
+			idF0VoicedIndex i 1 idF0VoicedIndex /rec -delete;
+			idLengVoicedSegment i 1 idLengVoicedSegment /rec -delete;
+			idLengPause i 1 idLengPause /rec -delete;
+			idT1VoicedArray i 1 idT1VoicedArray /rec -delete;
+			idT2VoicedArray i 1 idT2VoicedArray /rec -delete;
+			idF0parameter i 1 idF0parameter /rec -delete;
+			goto L9; # Exit from loop                       						# Jump to label L9			
+		else
+		nF0off nF0mean < if	 # nF0on nF0mean > nF0off nF0mean < || if
+#222 break;
+			idF0VoicedIndex i 1 idF0VoicedIndex /rec -delete;
+			idLengVoicedSegment i 1 idLengVoicedSegment /rec -delete;
+			idLengPause i 1 idLengPause /rec -delete;
+			idT1VoicedArray i 1 idT1VoicedArray /rec -delete;
+			idT2VoicedArray i 1 idT2VoicedArray /rec -delete;
+			idF0parameter i 1 idF0parameter /rec -delete;
+			goto L9; # Exit from loop                       						# Jump to label L9
+		else
+		nF0range nMinF0range < if	
+#333 braek;		
+			idF0VoicedIndex i 1 idF0VoicedIndex /rec -delete;
+			idLengVoicedSegment i 1 idLengVoicedSegment /rec -delete;
+			idLengPause i 1 idLengPause /rec -delete;
+			idT1VoicedArray i 1 idT1VoicedArray /rec -delete;
+			idT2VoicedArray i 1 idT2VoicedArray /rec -delete;
+			idF0parameter i 1 idF0parameter /rec -delete;
+			goto L9; # Exit from loop                       						# Jump to label L9
+		end
+		end
+		end
+
+		label L9;                                             						# Define a jump label named L9
+
+		i ++=;                                              						# Increment loop counter i
+  		goto L8;                                            						# Jump to label L8
+	end                                                 							# End of conditional branch
+#idF0VoicedIndex /list -print;
+#07 break;
+
+
+	## Search after rising F0 subcontour    										# -------------------------------------
+	data idQuestionEndTime;															# Data object for end time of question
+	idQuestionEndTime -reset;														# Reset data
+	"EndQueT" type double idQuestionEndTime -addcomp;								# Define a data object structure
+
+	var nNumRisingF0;																# Number of F0 values when F0 subcontour at the end is rising
+	var nLengRisingF0;																# Length of rising subcontour F0 at the end
+	var nIndexLocalMin;																# Index of nearest local minimum before the end of F0 subcontour
+	var nIndexEndQuestion;															# Index of F0 value at the end of question
+	var nEndTimeQuestion;															# End time of question in second
+	var nDiffF0offF0localMin;
+	0 nNumRisingF0 =;
+	0 nLengRisingF0 =;
+	0 nIndexLocalMin =;
+	0 nIndexEndQuestion =;
+	0 nEndTimeQuestion =;
+	0 nDiffF0offF0localMin =;
+	
+	0 jj =;
+	0 i =; 																			# Init a loop counter i	
+	label L10;                                             							# Define a jump label named L10
+	i idLengVoicedSegment.nrec < if                                            	 	# If loop counter < (number of records)
+		:idF0VoicedIndex[i,0]: nIndexT1 =;
+		:idF0VoicedIndex[i,1]: nIndexT2 =;
+
+		:idF0parameter[i,0]: nF0min =;
+		:idF0parameter[i,1]: nF0max =;
+		:idF0parameter[i,2]: nF0mean =;
+		:idF0parameter[i,3]: nF0range =;
+		:idF0parameter[i,4]: nF0stdev =;		
+		:idF0parameter[i,5]: nF0on =;
+		:idF0parameter[i,6]: nF0off =;
+
+		0 nNumRisingF0 =;															# Init the number of number of F0 values with (0)
+		0 nIndexLocalMin =;															# Init the index of nearest local minimum
+		
+		nIndexT2 ii =; 																# Init a loop counter ii	
+		label L11;                                             						# Define a jump label named L11
+		ii nIndexT1 > if                                            	 			# If loop counter > IndexT1
+			#:idSmoothedF0[ii,0]: 2 + nAux =;										# Add 2 Hz to the next F0 value to correct the decreasing contour at the end
+			#:idSmoothedF0[ii-1,0]: nAux <= if
+			:idSmoothedF0[ii-1,0]: :idSmoothedF0[ii,0]: <= if			
+				nNumRisingF0 ++=;													# Increase the number of F0 values of rising F0 subcontour
+			else
+				ii nIndexLocalMin =;
+				goto L12; # Exit from loop                       					# Jump to label L12
+			end
+
+			ii --=;                                              					# Decrement loop counter ii
+  			goto L11;                                            					# Jump to label L11
+		end                                                 						# End of conditional branch
+
+		label L12;                                             						# Define a jump label named L12
+
+		nNumRisingF0 nSrateRatio * nSR / nLengRisingF0 =;							# Convert from number of F0 values to second
+		nF0off :idSmoothedF0[nIndexLocalMin,0]: - nDiffF0offF0localMin =;			# Difference between F0off and F0 of nearest local minimum
+
+		nLengRisingF0 nMinLengRisingF0 >  nDiffF0offF0localMin nMinDiffF0offF0localMin > && if # Length of rising F0 contour at the end is greater than threshold >>
+			nIndexT2 nIndexEndQuestion =;											# Index of F0 value at the end of question
+			nIndexEndQuestion 1 + nSrateRatio * nSR / nEndTimeQuestion =;			# End time of question in second
+
+			jj 1 + idQuestionEndTime -reallocate;									# Reallocates a new record of memory keeping the contents
+			:idQuestionEndTime[jj,0]=nEndTimeQuestion;			
+			jj ++=;																	# Increment a counter jj
+		end																		# <<
+
+		i ++=;                                              						# Increment loop counter i
+  		goto L10;                                            						# Jump to label L10
+	end                                                 							# End of conditional branch
+#idQuestionEndTime /list -print;
+#idLabWordEndTime /list -print;
+#08 break;
+
+	
+	## Find the index of Question													# -------------------------------------
+	data idQuestEndTimeDiffArray;													# Difference between end time of question and End-time of words
+	data idQuestionIndex;															# Index of question (index of word)
+
+	## Reset data
+	idQuestEndTimeDiffArray -reset;
+	idQuestionIndex -reset;
+
+	## Define a data object structure
+	"TimDiff" type double idQuestEndTimeDiffArray -addcomp;
+	"QuesInd" type long idQuestionIndex -addcomp;
+
+
+	var nTimeDiff;
+	var nQuestionPosition;
+	var r;
+	0 nTimeDiff =;
+	0 nQuestionPosition =;
+	0 r =;
+
+	idQuestionEndTime.nrec 0 == if                                            	 	# If there is no questions >>
+		idOrtho.nrec 1 == if														# If sentence consist of one word >>
+			idOrtho 0 1 idLab -select;												# Copy Orthographic word into output
+			leave;																	# Exit from this function		
+		else																		# Else if sentence consist of more than one word
+			idOrtho 0 idOrtho.nrec 1 - idLab -select;								# Copy Orthographic words into output
+			leave;																	# Exit from this function
+		end																		# <<
+	else
+	idQuestionEndTime.nrec 0 > if													# There is at least one question >>
+		0 j =; 																		# Init a loop counter j
+		label L13;                                             						# Define a jump label named L13
+		j idQuestionEndTime.nrec < if                                            	# If loop counter < number of records
+			:idQuestionEndTime[j,0]: nEndTimeQuestion =;							# End time of question
+
+			## Difference between end time of question and End-Time of word			#   - - - - - - - - - - - - - - - - - -
+			idQuestEndTimeDiffArray -reset;											# Reset data object
+			"TimDiff" type double idQuestEndTimeDiffArray -addcomp;					# Difference between end time of question and End-Time of word
+
+			0 jj =; 																# Init a loop counter jj
+			label L14;                                             					# Define a jump label named L14
+			jj idLabWordEndTime.nrec < if                                       	# If loop counter < number of records
+				nEndTimeQuestion :idLabWordEndTime[jj,0]: - nTimeDiff =;			# Difference between end time of question and End-Time of word
+				jj 1 + idQuestEndTimeDiffArray -reallocate;							# Reallocates a new record of memory keeping the contents
+				:idQuestEndTimeDiffArray[jj,0]=nTimeDiff;							# Copy the value to data object
+				jj ++=;                                              				# Increment loop counter jj
+  				goto L14;                                            				# Jump to label L14
+			end                                                 					# End of conditional branch
+
+			## Find the index of word, whereas a question finish					#   - - - - - - - - - - - - - - - - - -
+			0 nQuestionPosition =;													# Init a variable with 0
+			
+			0 jj =; 																# Init a loop counter jj
+			label L15;                                             					# Define a jump label named L15
+			jj idQuestEndTimeDiffArray.nrec < if                                    # If loop counter < number of records
+				:idQuestEndTimeDiffArray[jj,0]: 0 <= if								# Find the first negative value or zero
+					jj nQuestionPosition =;											# Index of word
+					goto L16; # Exit from loop                       				# Jump to label L16
+				end			
+				jj ++=;                                              				# Increment loop counter jj
+  				goto L15;                                            				# Jump to label L15
+			end                                                 					# End of conditional branch
+
+			label L16;                                             					# Define a jump label named L16
+
+			nQuestionPosition 0 != if
+				r 1 + idQuestionIndex -reallocate;									# Reallocates a new record of memory keeping the contents
+				:idQuestionIndex[r,0]=nQuestionPosition;							# End index of question
+
+				r ++=;																# Increment loop counter r
+			end
+
+			j ++=;                                              					# Increment loop counter j
+  			goto L13;                                            					# Jump to label L13
+		end                                                 						# End of conditional branch
+	end                                                 							# End of conditional branch <<
+	end                                                 							# End of conditional branch <<
+#idQuestionIndex /list -print;
+#09 break;
+
+
+	## Find the index of Question, if it is located in a pause or near a pause		# -------------------------------------
+	data idQuestionIndexNew;														# New index of question after alignment to the near pause
+	idQuestionIndexNew -reset;
+	"QuesInd" type long idQuestionIndexNew -addcomp;
+	
+	var nQuestionCount;																# Number of questions
+	var nQuestionWordIndex;															# Position of question as word index
+	var nWordIndex1;																# Word, whereas a question finishes
+	var nWordIndex2;																# Word after the end of a question
+	var nWordIndex3;																# Word before the end of a question
+
+	var sWord1;																		# Word, whereas a question finishes
+	var sWord2;																		# Word after the end of a question
+	var sWord3;																		# Word before the end of a question
+
+	0 nQuestionCount =;
+	0 nQuestionWordIndex =;
+	0 nWordIndex1 =;
+	0 nWordIndex2 =;
+	0 nWordIndex3 =;
+
+	idQuestionIndex.nrec nQuestionCount =;											# Number of questions
+
+	var rr;
+	0 rr =;
+	0 ii =;
+
+	nQuestionCount 0 > if															# There are at least one question
+		0 ii =; 																	# Init a loop counter ii
+		label L18;                                             						# Define a jump label named L18
+		ii idQuestionIndex.nrec < if                                   				# If loop counter < number of records
+			:idQuestionIndex[ii,0]: nQuestionWordIndex =;							# Position of question (word index)
+
+			# Question don't locate in the last word of sentence (within sentence)	#   - - - - - - - - - - - - - - - - - -
+			nQuestionWordIndex idLabWord.nrec 1 - < if
+				:idQuestionIndex[ii,0]: nWordIndex1 =;								# Index of word, whereas a question finishes
+				:idLabWord[nWordIndex1,0]: sWord1 =;
+				nWordIndex1 1 + nWordIndex2 =;										# Word after the end of a question
+				:idLabWord[nWordIndex2,0]: sWord2 =;
+				nWordIndex1 1 - nWordIndex3 =;										# Word before the end of a question
+				:idLabWord[nWordIndex3,0]: sWord3 =;
+				
+				sWord1 sPause == if													# Question locates in a pause
+					rr 1 + idQuestionIndexNew -reallocate;							# Reallocates a new record of memory keeping the contents
+					:idQuestionIndexNew[rr,0]=nWordIndex1;
+
+					goto L19; # Exit from loop                       				# Jump to label L19
+				else
+				sWord2 sPause == if													# Question is in a pause
+					rr 1 + idQuestionIndexNew -reallocate;							# Reallocates a new record of memory keeping the contents
+					:idQuestionIndexNew[rr,0]=nWordIndex2;
+
+					goto L19; # Exit from loop                       				# Jump to label L19
+				else
+				sWord3 sPause == if													# Question is in a pause
+					rr 1 + idQuestionIndexNew -reallocate;							# Reallocates a new record of memory keeping the contents
+					:idQuestionIndexNew[rr,0]=nWordIndex3;
+
+					goto L19; # Exit from loop                       				# Jump to label L19
+				else
+				sWord1 sPause != sWord2 sPause != sWord3 sPause != && && if			# There is no pause
+					rr 1 + idQuestionIndexNew -reallocate;							# Reallocates a new record of memory keeping the contents				
+					:idQuestionIndexNew[rr,0]=nWordIndex1;							# Question finishes with the end of a currect word
+
+					goto L19; # Exit from loop                       				# Jump to label L19
+				end
+				end
+				end
+				end
+			# Question is in the last word of sentence								#   - - - - - - - - - - - - - - - - - -
+			else
+			nQuestionWordIndex idLabWord.nrec 1 - == if
+				rr 1 + idQuestionIndexNew -reallocate;								# Reallocates a new record of memory keeping the contents
+				:idQuestionIndexNew[rr,0]=idLabWord.nrec-1;							# Question locates at the end of sentence
+
+				goto L19; # Exit from loop                       					# Jump to label L19			
+			end
+			end
+			
+			label L19;                                             					# Define a jump label named L19
+
+			rr ++=;                                              					# Increment loop counter rr
+			ii ++=;                                              					# Increment loop counter ii
+  			goto L18;                                            					# Jump to label L18
+		end                                                 						# End of conditional branch	
+	end
+#idLabWord /list -print;
+#idQuestionIndexNew /list -print;
+#10 break;
+
+
+	## Alignment of question after the previous word, if question locates in pause	# -------------------------------------	
+	data idQuestionIndexNew1;
+	idQuestionIndexNew1 -reset;
+	"QuesInd" type long idQuestionIndexNew1 -addcomp;
+
+	var rrrr;
+	var nQuestionLocation;															# Location of question
+	var sAuxWord;
+
+	0 rrrr =;
+	0 nQuestionLocation =;
+
+	idQuestionIndexNew.nrec 0 > if													# There are at least one question
+		0 i =; 																		# Init a loop counter i
+		label L20;                                             						# Define a jump label named L20
+		i idQuestionIndexNew.nrec < if                                   			# If loop counter < (number of records)
+			:idQuestionIndexNew[i,0]: nQuestionLocation =;							# Location of question
+			:idLabWord[nQuestionLocation,0]: sAuxWord =;							# Read the word at location of question
+			sAuxWord sPause == if													# Question is in a pause
+				rrrr 1 + idQuestionIndexNew1 -reallocate;							# Reallocates a new record of memory keeping the contents
+				:idQuestionIndexNew1[rrrr,0]=nQuestionLocation-1;					# Put question after the previous word
+
+				rrrr ++=;                                              				# Increment loop counter rrrr
+			else																	# Question is not in a pause
+				rrrr 1 + idQuestionIndexNew1 -reallocate;							# Reallocates a new record of memory keeping the contents
+				:idQuestionIndexNew1[rrrr,0]=idQuestionIndexNew[i,0];				# Question locate after the current word
+
+				rrrr ++=;                                              				# Increment loop counter rrrr
+			end
+
+			i ++=;                                              					# Increment loop counter i
+  			goto L20;                                            					# Jump to label L20
+		end                                                 						# End of conditional branch
+	end																			# End of conditional branch
+
+#idQuestionIndexNew1 /list -print;
+#11 break;
+
+
+	## Adjustment the orthographic data object by adding new records				# -------------------------------------
+	## In order to equal the length of idOrtho and idLabWord						# -------------------------------------
+	var sEmptyWord;
+	"EmptyWord" sEmptyWord =;
+	
+	data idOrthographicNew;
+	idOrthographicNew -reset;
+	"ORTHO" 25 idOrthographicNew -addcomp;	
+	
+	idOrtho 0 idOrtho.nrec 1 - idOrthographicNew -select;	
+
+	idOrtho.nrec jj =; 																# Init a loop counter jj
+	label L21;                                             							# Define a jump label named L21
+	jj idLabWord.nrec < if                                   						# If loop counter < (number of records)
+		jj 1 + idOrthographicNew -reallocate;										# Reallocates a new record of memory keeping the contents
+		:idOrthographicNew[jj,0]=sEmptyWord;
+		jj ++=;                                              						# Increment loop counter jj
+  		goto L21;                                            						# Jump to label L21
+	end                                                 							# End of conditional branch
+
+	idQuestionIndexNew1.nrec nQuestionCount =;										# New number of questions
+
+#12 break;
+
+		
+	## Search after the index of question in orthographic sentence					# -------------------------------------
+	data idQuestionOrthoIndex;
+	idQuestionOrthoIndex -reset;
+	"QuesInd" type long idQuestionOrthoIndex -addcomp;	
+
+	0 nQuestionWordIndex =;
+
+	var sWordOrtho;																	# Word of orthographic data
+	var sQuestionWordLabel;															# Word of Label data
+
+	var iii;
+	0 ii =;
+	0 iii =;
+
+	nQuestionCount 0 > if															# There are at least one question
+		0 i =; 																		# Init a loop counter i
+		label L22;                                             						# Define a jump label named L22
+		i idQuestionIndexNew1.nrec < if                                   			# If loop counter < (number of records)
+			:idQuestionIndexNew1[i,0]: nQuestionWordIndex =;
+
+			nQuestionWordIndex ii =; 												# Init a loop counter ii
+			label L23;                                             					# Define a jump label named L23
+			ii 0 >= if                                   							# If loop counter >= 0
+
+				:idLabWord[nQuestionWordIndex,0]: sQuestionWordLabel =;
+				:idOrthographicNew[ii,0]: sWordOrtho =;				
+
+				sQuestionWordLabel sWordOrtho == if									# Words are equal
+					iii 1 + idQuestionOrthoIndex -reallocate;						# Reallocates a new record of memory keeping the contents
+					:idQuestionOrthoIndex[iii,0]=ii;
+
+					iii ++=;
+					goto L24; # Exit from loop                             			# Jump to label L24
+
+				end
+
+				ii --=;                                              				# Decrement loop counter ii
+  				goto L23;                                            				# Jump to label L23
+			end                                                 					# End of conditional branch	
+
+			label L24;                                             					# Define a jump label named L24
+
+			i ++=;                                              					# Increment loop counter i
+  			goto L22;                                            					# Jump to label L22
+		end                                                 						# End of conditional branch	
+	end
+
+	var nQuestionCountFinal;														# Final number of questions
+	idQuestionOrthoIndex.nrec nQuestionCountFinal =;
+
+#idOrtho /list -print;
+#idQuestionOrthoIndex /list -print;
+#13 break;
+
+
+	## Annotate questions to the sentence (orthographic words)						# -------------------------------------
+	## Question = <?>
+	var k;
+
+	0 i =;
+	0 j =;	
+	0 k =;	
+
+    nQuestionCountFinal 0 != if														# There are questions
+		label L26;                                             						# Define a jump label named L26
+		i idOrtho.nrec  < if                                   						# If loop counter < number of records
+			:idOrtho[i,0]: sWordOrtho =;											# Read the orthographic word
+			## Question-Index is smaller than Word-Index
+			j idQuestionOrthoIndex.nrec < if                                        # If loop counter < number of records
+				## Question
+				:idQuestionOrthoIndex[j,0]: i == if									# There is an question in this word
+
+					# Copy the Orthographic Word
+					k 1 + idLab -reallocate;										# Reallocates a new record of memory keeping the contens
+					:idLab[k,0] = sWordOrtho;										# Copy the word to the output data object
+					k ++=;															# Increment the counter k for annotated words
+					# Copy the sentence mood
+					k 1 + idLab -reallocate;										# Reallocates a new record of memory keeping the contens
+					:idLab[k,0] = sSentenceMood;									# Copy sentence mood (<?>) to the output data object
+					k ++=;															# Increment the counter k for annotated words
+
+					j ++=; 															# Increment the question Index j 
+
+				## No question in this word
+				else
+				:idQuestionOrthoIndex[j,0]: i != if									# There is no question
+					# Copy the Orthographic Word
+					k 1 + idLab -reallocate;										# Reallocates a new record of memory keeping the contens
+					:idLab[k,0] = sWordOrtho;										# Copy the word to the output data object
+					k ++=;															# Increment the counter k for annotated words
+				end
+				end
+			## Question-Index is greater than Word-Index
+			else
+			j idQuestionOrthoIndex.nrec >= if
+				# Copy the Orthographic Word
+				k 1 + idLab -reallocate;										  	# Reallocates a new record of memory keeping the contens
+				:idLab[k,0] = sWordOrtho;											# Copy the word to the output data object
+				k ++=; 																# Increment the counter k for annotated words
+			end	
+			end
+
+			i ++=;                                              					# Increment loop counter i
+  			goto L26;                                            					# Jump to label L26
+		end                                                 						# End of conditional branch
+	else
+	nQuestionCountFinal 0 == if														# No questions in the sentence
+		idOrtho.nrec 1 == if														# Sentence consist of one word
+			idOrtho 0 1 idLab -select;												# Copy Orthographic word into output
+		else																		# Sentence consist of more than one word
+			idOrtho 0 idOrtho.nrec 1 - idLab -select;								# Copy Orthographic words into output
+		end
+
+	end
+	end
+
+#idLab /list -print;
+#100 break;
+}
+
+
+
+
+
+## <p>Convert an automatic prosodic annotated sentence to a BAS Partitur Format.</p>
+## @param idProsAnnoSent data
+##          Data instance of an automatic prosodic annotated sentence  (input)
+## @param idLab data
+##          Data instance of a BAS Partitur Format  (output)
+function -Convert_QueAnnoSent2Partitur(idProsAnnoSent,idLab)
+{
+	var sTierDefinit;	        													# Definition of tier (Spur)
+	var i;																			# Loop counter
+
+  	## Initialize                                                                 	# -------------------------------------
+	"QUE:" sTierDefinit =;															# Definition of tier (Spur)
+	0 i =;
+	
+  	## Reset data                                                                 	# -------------------------------------
+	idLab -reset;
+	
+  	## Define a data object structure                                              	# -------------------------------------	
+	"Tier" 5 idLab -addcomp;														# Output data object (Tier (Spur))
+	"WordNum" type long idLab -addcomp;												# Output data object (number of word (begin with 0))
+	"Word" 50 idLab -addcomp;														# Output data object (word)
+	idProsAnnoSent.dim idLab -allocate;												# Allocates (n) records
+
+  	## Copy the informations to the output data object                              # -------------------------------------	
+	0 i =; 																			# Init a loop counter i
+	label L1;                                             							# Define a jump label named L1
+	i idProsAnnoSent.dim < if                                   					# If loop counter < (number of records)
+		:idLab[i,0] = sTierDefinit;													# Copy the tier (Spur)
+		:idLab[i,1] = i;															# copy the number of word
+		:idLab[i,2] = idProsAnnoSent[0,i];											# Copy the word
+
+		i ++=;                                              						# Increment loop counter i
+  		goto L1;                                            						# Jump to label L1
+	end                                                 							# End of conditional branch
+
+#100 break;
+
+}
+
+
+
+
+## <p>Evaluation of sentence mood.</p>
+## @param idProsoTest data
+##          Data instance of automatic prosodic annotated sentence (Test) (input)
+## @param idProsoRef data
+##          Data instance of manual prosodic annotated sentence (Reference) (input)
+## @param idLab data
+##          Data instance for the result of evaluation  (output)
+function -Sentence_Mood_Evaluation(idProsoTest,idProsoRef,idLab)
+{
+	data idAux;																		# Auxiliary data instance
+
+	var sSentenceMood;																# String of sentence mood
+
+	var sPause;	        															# A word is a pause
+	var sAuxWord;
+
+	var nMinorRef;																	# Number of annotation symbols in reference file
+	var nMinorTest;																	# Number of annotation symbols in test file
+	var nMinorCorr;																	# Number of corrected symbols
+	var nMinorDel;																	# Number of deleted symbols
+	var nMinorIns;																	# Number of inserted symbols
+
+	var nNumWordsSentTest;															# Number of words in Test sentence
+	var nNumWordsSentRef;															# Number of words in Reference sentence
+
+	var i;
+	var j;
+
+
+  	## Initialize                                                                 	# -------------------------------------
+	"<?>" sSentenceMood =;															# Init a sentence mood variable
+
+	"<p:>" sPause =;
+	
+	0 nMinorRef =;																	# Number of annotation symbols in reference file
+	0 nMinorTest =;																	# Number of annotation symbols in test file
+	0 nMinorCorr =;																	# Number of corrected symbols
+	0 nMinorDel =;																	# Number of deleted symbols
+	0 nMinorIns =;																	# Number of inserted symbols
+
+	idProsoTest.dim nNumWordsSentTest =;											# Number of words in Test sentence
+	idProsoRef.dim nNumWordsSentRef =;												# Number of words in Reference sentence
+	
+  	## Reset data                                                                 	# -------------------------------------
+	idAux -reset;
+	idLab -reset;
+	
+  	## Define a data object structure                                              	# -------------------------------------	
+	"Report" 50 idLab -addcomp;														# Output data object
+	"FeaNum" type long idLab -addcomp;												# Output data object
+	5 idLab -allocate;																# Allocates (n) records
+
+	## Init a data object structure                                              	# -------------------------------------	
+	"Number of symbols in reference file:" sAuxWord =;
+	:idLab[0,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[0,1] = 0;																# Init a number with 0
+	
+	"Number of symbols in test file:" sAuxWord =;
+	:idLab[1,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[1,1] = 0;																# Init a number with 0
+
+	"Correct symbols:" sAuxWord =;
+	:idLab[2,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[2,1] = 0;																# Init a number with 0
+
+	"Deleted symbols:" sAuxWord =;
+	:idLab[3,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[3,1] = 0;																# Init a number with 0
+
+	"Inserted symbols:" sAuxWord =;
+	:idLab[4,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[4,1] = 0;																# Init a number with 0
+
+
+  	## Calculate the number of prosodic symbols in Test file                        # -------------------------------------	
+	## Symbols in Test file															#   - - - - - - - - - - - - - - - - - -
+	0 i =; 																			# Init a loop counter i
+	label L1;                                             							# Define a jump label named L1
+	i nNumWordsSentTest < if                                   						# If loop counter < (number of records)
+		:idProsoTest[0,i]: sSentenceMood == if										# A word is a sentence mood symbol >>
+			nMinorTest ++=;															# Increment the number of symbols in Test file
+		end																		# <<
+		i ++=;                                              						# Increment loop counter i
+  		goto L1;                                            						# Jump to label L1
+	end                                                 							# End of conditional branch
+
+
+  	## Calculate the number of prosodic symbols in Reference file                   # -------------------------------------
+	## Symbols in Reference file												#   - - - - - - - - - - - - - - - - - -
+	0 i =; 																			# Init a loop counter i
+	label L3;                                             							# Define a jump label named L3
+	i nNumWordsSentRef < if                                   						# If loop counter < (number of records)
+		:idProsoRef[0,i]: sSentenceMood == if										# A word is a sentence mood symbol >>
+			nMinorRef ++=;															# Increment the number of symbols in Reference file
+		end																		# <<
+		i ++=;                                              						# Increment loop counter i
+  		goto L3;                                            						# Jump to label L3
+	end                                                 							# End of conditional branch
+
+
+#00 break;
+
+  	## Add two word to the end of both sentences (to stay in sentence domain) 		# -------------------------------------
+	var sEmptyWord;
+	"EmptyWord" sEmptyWord =;
+	
+	25 1 idAux -addncomps;															# Add component of type (char) to data object
+	1 idAux -allocate;																# Allocates (n) records of memory
+	:idAux[0,0] = sEmptyWord;
+
+	idAux idProsoRef -join; 														# Append component to idProsoRef
+	idAux idProsoRef -join; 														# Append component to idProsoRef
+	idAux idProsoTest -join; 														# Append component to idProsoTest
+	idAux idProsoTest -join; 														# Append component to idProsoTest
+
+#01 break;
+
+	nNumWordsSentTest ++=;
+	nNumWordsSentRef ++=;	
+
+
+	################################
+	##### Example(ROVER Fis97) #####
+	################################
+	#####  a   b   c   d   -   ##### Reference sentence
+	#####  -   b   z   d   e   ##### Test sentence
+	#####  C1  C2  C3  C4  C5  ##### The Number of Character
+	################################
+	##### Correct: 		C2, C4 #####
+	##### Substitution: C3	   #####
+	##### Deletion:		C1     #####
+	##### Insertion:	C5     #####
+	################################
+
+  	## Evaluation of symbols (Correct, Deletion)                					# -------------------------------------
+	var sWordRef;																	# A word in a reference file
+	var sWordPreviousRef;															# Previous word in Reference sentence
+	var sWordNextRef;																# Next word in Reference sentence
+	var sWordTest;																	# A word in a test file	
+	var sWordPreviousTest;															# Previous word in Test sentence
+	var sWordNextTest;																# Next word in Test sentence
+
+	# Loop for every word in the reference file										#   - - - - - - - - - - - - - - - - - -
+	1 i =; 																			# Init a loop counter i
+	label L5;                                             							# Define a jump label named L5
+	i nNumWordsSentRef < if                                   						# If loop counter < (number of records)
+		:idProsoRef[0,i]: sWordRef =;												# Read one word in the Reference sentence
+		:idProsoRef[0,i-1]: sWordPreviousRef =;										# Previous word in Reference sentence
+		:idProsoRef[0,i+1]: sWordNextRef =;											# Next word in Reference sentence
+
+		sWordRef sSentenceMood == if												# The word in Reference sentence is a sentence mood symbol >> 
+			# Loop for every word in the test file									#   - - - - - - - - - - - - - - - - - -
+			1 j =; 																	# Init a loop counter j
+			label L6;                                             					# Define a jump label named L6
+			j nNumWordsSentTest < if                                   				# If loop counter < (number of records)
+				:idProsoTest[0,j]: sWordTest =;										# Read one word in the Test sentence
+				:idProsoTest[0,j-1]: sWordPreviousTest =;							# Previous word in Test sentence
+				:idProsoTest[0,j+1]: sWordNextTest =;								# Next word in Test sentence
+
+				sWordTest sSentenceMood == sWordPreviousRef sWordPreviousTest == sWordNextRef sWordNextTest == && && if
+					nMinorCorr ++=;													# Increment the Correct
+					goto L7;                                            			# Jump to label L7 (Exit from loop)
+				else
+				#sWordPreviousRef sWordTest == sWordNextRef sWordNextTest == && if
+				sWordPreviousRef sWordPreviousTest == sWordNextRef sWordTest == && if
+					nMinorDel ++=;													# Increment the Deletion
+					goto L7;                                            			# Jump to label L7 (Exit from loop)
+				end
+				end
+
+				j ++=;                                              				# Increment loop counter j
+  				goto L6;                                            				# Jump to label L6
+			end                                                 					# End of conditional branch
+		end																		# <<
+		label L7;                                             						# Define a jump label named L7
+		i ++=;                                              						# Increment loop counter i
+  		goto L5;                                            						# Jump to label L5
+	end                                                 							# End of conditional branch
+
+
+  	## Evaluation of symbols (Insertion)                							# -------------------------------------
+	# Loop for every word in the test file											#   - - - - - - - - - - - - - - - - - -
+	1 i =; 																			# Init a loop counter i
+	label L8;                                             							# Define a jump label named L8
+	i nNumWordsSentTest < if                                   						# If loop counter < (number of records)
+		:idProsoTest[0,i]: sWordTest =;												# Read one word in the Test sentence
+		:idProsoTest[0,i-1]: sWordPreviousTest =;									# Previous word in Test sentence
+		:idProsoTest[0,i+1]: sWordNextTest =;										# Next word in Test sentence
+
+		sWordTest sSentenceMood == if												# The word in Test sentence is a sentence mood symbol >>
+			# Loop for every word in the reference file								#   - - - - - - - - - - - - - - - - - -
+			1 j =; 																	# Init a loop counter j
+			label L9;                                             					# Define a jump label named L9
+			j nNumWordsSentRef < if                                   				# If loop counter < (number of records)
+				:idProsoRef[0,j]: sWordRef =;										# Read one word in the Reference sentence
+				:idProsoRef[0,j-1]: sWordPreviousRef =;								# Previous word in Reference sentence
+				:idProsoRef[0,j+1]: sWordNextRef =;									# Next word in Reference sentence
+				#sWordPreviousTest sWordRef == sWordNextTest sWordNextRef == && if
+				sWordPreviousTest sWordPreviousRef == sWordNextTest sWordRef == && if
+					nMinorIns ++=;													# Increment the Insertion
+					goto L10;                                            			# Jump to label L10 (Exit from loop)
+				end
+
+				j ++=;                                              				# Increment loop counter j
+  				goto L9;                                            				# Jump to label L9
+			end                                                 					# End of conditional branch
+		end																		# <<
+		label L10;                                             						# Define a jump label named L10
+		i ++=;                                              						# Increment loop counter i
+  		goto L8;                                            						# Jump to label L8
+	end                                                 							# End of conditional branch
+
+
+	## Test if the values are correct                  								# -------------------------------------	
+	nMinorCorr nMinorDel + i =;
+	i nMinorRef != if
+		4747 break;
+	end	
+
+
+	nMinorCorr nMinorIns + i =;
+	i nMinorTest != if
+		4949 break;
+	end	
+
+
+
+	## Save the values in output data object                  						# -------------------------------------
+	:idLab[0,1] = nMinorRef;
+	:idLab[1,1] = nMinorTest;
+	:idLab[2,1] = nMinorCorr;
+	:idLab[3,1] = nMinorDel;
+	:idLab[4,1] = nMinorIns;
+	
+	
+#100 break;
+
+}
+
+
+
+
+
+## EOF

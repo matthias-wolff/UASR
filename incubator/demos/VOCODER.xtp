@@ -1,0 +1,146 @@
+#!dlabpro
+## Unified Approach to Speech Synthesis and Recognition
+## - Signal resynthesis executable script
+##
+## AUTHOR : Matthias Eichner
+## UPDATE : $Date: 2007/03/02 08:49:50 $
+##          $Revision: 1.1 $
+## PACKAGE: uasr/scripts/dlabpro
+## RCS-ID : $Id: VOCODER.xtp,v 1.1 2007/03/02 08:49:50 eichner Exp $
+##
+
+## ARGUMENTS:
+##   $1: Setup file
+
+## Common includes
+"../util/@.itp" include;                                                        # Include UASR utility functions
+
+## == MAIN PROGRAM ==                                                           # =====================================
+
+# Configure session                                                             # -------------------------------------
+var  sWDir;                                                                     # Working directory
+var  sConfigDir;                                                                # Directory of config files
+var  sConfig;                                                                   # Configuration file
+this :sfl[0,0]: "" "splitp" -VAR_strop sWDir =;                                 # Get path of current script
+
+## Variables                                                                    # -------------------------------------
+PMproc iPM;
+object iFI;                                                                     # Feature info object
+data idSig;                                                                     # Signal data
+data idSyn;                                                                     # Synthesized signal
+data idFea;                                                                     # Feature data
+data idMsc;                                                                     # Most significant feature components 
+data idLsc;                                                                     # Least significant feature components 
+data idCtrl;                                                                    # Pitch or Into data
+data idLab;                                                                     # Label data
+data idAux;
+data idListCfg;
+var  sListCfg;
+var  sType;
+var  sFile;
+var  sSPath;
+var  sPPath;
+var  sPfa;
+var  nMsc;
+var  nDim;
+var  nCrate;
+var  nWlen;
+var  bPM;
+var  bInto;
+var  i; 0 i =;
+
+( $$ 0 == ) ( "$1" "-P" "search" -VAR_strop 0 == ) || if                        # if: no .cfg-file given  >> 
+  sWDir "/VOCODER" + sConfigDir =;                                              #    set config dir.                                    
+  "VOCODER" "*.cfg" TRUE idListCfg -SH_find;                                    #    find all .cfg-files 
+  idListCfg 0 idListCfg -sortup;                                                #    sort up cfg list  
+else                                                                            # else
+  sWDir sConfigDir =;                                                           #    set config dir. to working dir.           
+  { { "$1" } } idListCfg =;                                                     #    add .cfg file 
+end                                                                             # end
+
+label L_C; idListCfg.nrec i > if
+  i 0 idListCfg -fetch sConfig =;
+  "\n" sConfig + -MSG;
+
+  ( "$[sConfigDir]/" sConfig + ) TRUE -CFG_init;
+  "pfa" "CP" -CFG_get sPfa =;
+  "sfa.dim" 24 -CFG_get nMsc =;                                                 # Number of significant feature comps.
+  "pfa.dim" 51 -CFG_get nDim =;                                                 # Dimension of primary feature vector
+  "pfa.crate" 160 -CFG_get nCrate =;                                            # Get frame rate (in samples)
+  "pfa.wlen" 400 -CFG_get nWlen =;                                              # Get frame length (in samples)
+  "turn" "foo1" "S" -CFG_get_ex sFile =;                                        # File name 
+  "spath" "${sWDir}/VOCODER/" "S" -CFG_get_ex sSPath =;                         # Signal file path 
+  "ppath" "${sWDir}/VOCODER/" "S" -CFG_get_ex sPPath =;                         # Pitch mark files path
+
+  sPfa -FEA_pfa_init;
+
+  sSPath sFile idSig -SIG_import_wav;    "." -MSG2;                             # Load signal data
+  idCtrl -reset;
+  idSig.rinc idCtrl -set rinc;
+   
+  "fea.pm" FALSE -CFG_get bPM =;
+
+  "syn.into" FALSE "S" -CFG_get_ex bInto =;
+  
+  bInto if
+    "$[sPPath]/$[sFile].into" "into" idCtrl stdfile /noerror -import;
+    ?error if -quit end
+    sPPath sFile idLab -LAB_import_esps;
+    ?error if -quit end
+  else
+    "$[sPPath]/$[sFile].pm" "pm" idCtrl stdfile /noerror -import;
+    ?error if
+      idSig idCtrl iPM /hybrid -analyze;
+      sWDir "/VOCODER/${sFile}.pm" + "pm" idCtrl stdfile -export;
+    else
+      idCtrl -type short idCtrl -tconvert;
+    end
+  end
+
+  bPM if 
+    idSig idCtrl idFea -FEA_pfa;                                     "." -MSG2; # Primary feature analysis
+  else
+    idSig NULL idFea -FEA_pfa;                                       "." -MSG2; # Primary feature analysis
+  end
+  
+  idLab.dim 0 > if
+    :idLab[1]=ent((idLab[1]-nWlen/2)/nCrate);
+    :idLab[1].*=(idLab[1].>=0);
+    idLab.dim 1 > if
+      :idLab[1]: idAux =; idAux -1 idAux /rec -shift;
+      :idLab[2]=idAux-idLab[1];
+      :idLab[idLab.nrec-1,2]=idFea.nrec-idLab[idLab.nrec-1,1];
+    end
+    idLab TRUE idFea -SIG_label;                                     "." -MSG2; #     Label features
+  end
+
+#  idCtrl idCtrl "syn.compress" 1.0 "S" -CFG_get_ex .__FEA_iPfa -compress_pitch;
+#  idCtrl idCtrl idFea idFea "syn.speechrate" 1.0 "S" -CFG_get_ex .__FEA_iPfa -adjust_speech_rate;
+
+  idFea idCtrl idSyn -FEA_ipfa;                         "." -MSG2;              # Inverse primary feature analysis
+
+  sPfa "MEL" == if
+    sPfa "_" + .__FEA_iPfa.mf_type + "_" + nDim + sType =;
+  else
+    .__FEA_iPfa /noerror -get type sType =;
+    sType "MelFilter" == if
+      sPfa "_" + sType + "_" + .__FEA_iPfa.mf_type  + "_" + nDim + sType =;
+    else
+      .__FEA_iPfa /noerror -get warptype ?error if
+        sPfa "_" + sType + "_" + nDim + sType =;
+      else
+        sPfa "_" + sType + "_" + .__FEA_iPfa.warptype + "_" + nDim + sType =;
+      end
+    end
+  end
+  
+  sWDir "/VOCODER/${sFile}_${sType}_syn.dn3" + idSyn -save;
+  sWDir "/VOCODER/${sFile}_${sType}_syn" idSyn -SIG_export_wav;                 # Export as WAVE
+
+  1 i + i =;
+  goto L_C;
+end
+"\n" -MSG;
+quit
+
+## EOF

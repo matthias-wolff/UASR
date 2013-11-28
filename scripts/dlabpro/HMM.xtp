@@ -1,0 +1,1187 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Hidden Markov model classifier and synthesizer
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro
+##
+## ARGUMENTS:
+##   $1: Command or 'help'
+##   $2: Setup file or, if 1st arg. is 'help', command
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"util/cfg.itp"  include;                                                        # Include configuration utilities
+"util/os.itp"   include;                                                        # Include OS utilities
+"util/uasr.itp" include;                                                        # Include UASR utilities
+"util/var.itp"  include;                                                        # Include variables' utilities
+
+## Prints help on usage
+##
+## @param sCmd string
+##          Command to display help for (general help if empty).
+function -usage(sCmd)
+{
+  "\n"                                                                    -MSG;
+  sCmd "ana" == if
+      "\n   ana: HMM analysis"                                            -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp ana <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp ana ../../config/vm/VM.cfg -Pexp=VMV"        -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+    sCmd "adp" == if
+      "\n   adp: HMM adaptation"                                          -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp adp <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp adp ../../config/vm/VM.cfg -Pexp=VMV"        -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "lab" == if
+      "\n   lab: Phoneme labeling"                                        -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp lab <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp lab ../../config/vm/VM.cfg -Pam.model=0_4"   -MSG;
+    "\n\n   REMARKS:"                                                     -MSG;
+      "\n   - Labels database's test set using HMMs defined by <am.model>"-MSG;
+      "\n   - Writes ESPS label files to log directory"                   -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "syn" == if
+      "\n   syn: HMM synthesis and vocoding"                              -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp <cfgfile> [options]"                 -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+      "\n     -f              forced recognition (used by HMM-vocoder)"   -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+    "\n\n   REMARKS:"                                                     -MSG;
+      "\n     Special <key>s for $__SFILE__:"                             -MSG;
+      "\n       fea : type(s) of feature vector files to generate"        -MSG;
+      "\n             V - vocoded"                                        -MSG;
+      "\n             H - HMM-vocoded"                                    -MSG;
+      "\n             R - HMM-Re-synthesized"                             -MSG;
+      "\n                 RT - HMM-Re-synthesized and smoothed ala Tokuda"-MSG;
+      "\n             S - HMM-synthesized"                                -MSG;
+      "\n             D - HMM diphone synthesized"                        -MSG;
+      "\n       file: - reserved -"                                       -MSG;
+      "\n             (DreSS control file to be synthesized)"             -MSG;
+      "\n       sig : type(s) of signal files to generate"                -MSG;
+      "\n             O - original unprocessed signal"                    -MSG;
+      "\n             V - vocoded"                                        -MSG;
+      "\n             H - HMM-vocoded"                                    -MSG;
+      "\n             R - HMM-Re-synthesized"                             -MSG;
+      "\n                 RT - HMM-Re-synthesized and smoothed ala Tokuda"-MSG;
+      "\n             S - HMM-synthesized"                                -MSG;
+      "\n       turn: turn to synthese; if omitted all turns of the"      -MSG;
+      "\n             databases' test set will be synthesized"            -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp syn ../../config/vm/VM.cfg -Pturn=foo"       -MSG;
+      "\n     $__SFILE__.xtp syn ../../config/vm/VM.cfg -Pam.model=0_4"   -MSG;
+      "\n     $__SFILE__.xtp syn ../../config/vm/VM.cfg -Pam.model=0_4"   -MSG;
+      " -Psig=HRTS -Pfea=HRTS"                                            -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "evl" == if
+      "\n   evl: HMM evaluation"                                          -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp evl <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp evl ../../config/vm/VM.cfg -Pam.model=0_4"   -MSG;
+    "\n\n   REMARKS:"                                                     -MSG;
+      "\n     Special <key>s for $__SFILE__.xtp evl:"                     -MSG;
+      "\n       am.model : Name of the HMM to use"                        -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "trn" == if
+      "\n   trn: HMM training"                                            -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp trn <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+    "\n\n   REMARKS:"                                                     -MSG;
+      "\n     Special <key>s for $__SFILE__.xtp trn:"                     -MSG;
+      "\n       skip  : Combination of the following letters"             -MSG;
+      "\n                 S - skip feature statistics"                    -MSG;
+      "\n                 I - skip HMM intitialization"                   -MSG;
+      "\n                 U - skip iterative HMM update"                  -MSG;
+      "\n                 E - skip HMM evaluation"                        -MSG;
+      "\n                 T - skip model folder tidy up"                  -MSG;
+      "\n       start : Split and iteration number to start form, two"    -MSG;
+      "\n               intergers separated by an underscore,"            -MSG;
+      "\n               NO white spaces!"                                 -MSG;
+      "\n       sensor: Name of sensor whose signals are to be processed" -MSG;
+      "\n               only. Append '...' to process from start sensor." -MSG;
+      "\n               (does typically not apply to speech recognition)" -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp trn ../../config/vm/VMV.cfg -Pskip=SI"       -MSG;
+      "\n     $__SFILE__.xtp trn info/default.cfg -Psensor=A1C1..."       -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+    "\n   SYNOPSIS:"                                                      -MSG;
+    "\n     HMM: Hidden Markov model classifier and synthesizer"          -MSG;
+  "\n\n   USAGE:"                                                         -MSG;
+    "\n     dlabpro $__SFILE__.xtp <command> <cfgfile> [options]"         -MSG;
+  "\n\n   COMMANDS:"                                                      -MSG;
+    "\n     ana - Model analysis (EXPERIMENTAL)"                          -MSG;
+    "\n     adp - Model adaptation MAP"			                              -MSG;
+    "\n     cut - HMM cut diphones and generate HMM diphone inventory"    -MSG;
+    "\n     cnv - Calculate feature/speaker conversion matrix"            -MSG;
+    "\n     lab - Phoneme labeling"                                       -MSG;
+    "\n     syn - Synthesis"                                              -MSG;
+    "\n     evl - Evaluation"                                             -MSG;
+    "\n     trn - Training"                                               -MSG;
+  "\n\n  Type 'dlabpro $__SFILE__.xtp help <command>' for help on a "     -MSG;
+         "specific command."                                              -MSG;
+    "\n"                                                                  -MSG;
+  0 return;
+}
+
+## HMM analysis
+function -CMD_ana()
+{
+  -HMM_perHmmEval;                                                              # Do per HMM evaluation
+  -HMM_sampleSizeSpectrum;                                                      # Compute sample size spectrum
+  0 return;
+}
+
+## Result function to <code>-HMM_process</code> for labeling with HMMs.
+##
+## <h4>See also</h4>
+## <ul>
+##   <li><a href="train/am.itp.html#clp_-HMM_process" class="linklist"><code>-HMM_process</code></a></li>
+## </ul>
+## 
+## @param itHMM hmm
+##          HMM instance being labeled with
+## @param sSns string
+##          Ignored
+## @param nSpl number
+##          Ignored
+## @param nIte number
+##          Ignored
+## @param sHint string
+##          Hint, see documentation of function <a class="code"
+##          href="train/am.itp.html#clp_-HMM_process">-HMM_process</a> 
+## @param iF file
+##          The turn (file) being labeled
+## @param itRes fst
+##          The recognition result of the turn (file) being labeled
+## @param iL object
+##          Container for log objects
+## @return If <code>sHint</code> is "L", the function returns 1. If <code>sHint</code> is "I", the function return
+##         "Labeling". In all other cases it returns 0.
+## @global &lt;uasr.out&gt;     R
+## @global &lt;uasr.type&gt;    R
+## @global &lt;uasr.dir.out&gt; R
+function -HMM_label_fnc(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)
+{
+  sHint "I" == if "Labeling" return; end                                        # Identification
+  sHint "F" == if                                                               # Initialization >>
+    var iL.sDirOut; ( "out"  "S"       -CFG_get_path )       iL.sDirOut -sset;  # Output directory
+    var iL.bLab;    ( "out"  "lab" "," -CFG_get_item ) 0 >=  iL.bLab    -bset;  #   Output label files
+    var iL.bFea;    ( "out"  "fea" "," -CFG_get_item ) 0 >=  iL.bFea    -bset;  #   Output labeled feature vector files
+    var iL.bPhn;    ( "type" "phn" "," -CFG_get_item ) 0 >=  iL.bPhn    -bset;  #   Create phoneme labels
+    var iL.bGss;    ( "type" "gss" "," -CFG_get_item ) 0 >=  iL.bGss    -bset;  #   Create Gaussian labels
+    ( iL.bLab not ) ( iL.bFea not ) && if TRUE iL.bLab =; end                   #   Do at least label files
+    ( iL.bPhn not ) ( iL.bGss not ) && if TRUE iL.bPhn =; end                   #   Create at least phoneme labels
+    0 return;                                                                   #   That's it
+  end                                                                           # <<
+  sHint "L" == if 1 return; end                                                 # Clean-up (nothing to be done)
+  
+  data idP;                                                                     # Phonetic label sequence
+  data idG;                                                                     # Gaussian sequence
+  :idP=itRes.td["~PHN"]; :idP.==-1: idP -dmark; idP 0 0 idP /mark -delete;      # Get decoded labels
+  :idG=itRes.td["~TIS"]; :idG.==-1: idG -dmark; idG 0 0 idG /mark -delete;      # Get decoded Gaussians
+  idP 0 itHMM.os 0 1 idP -lookup { "#" };          itRes.td.rinc idP -set rinc; # Lookup phoneme label symbols
+  idG 255 idG /force -tconvert; 0 idG -LAB_shrink; itRes.td.rinc idG -set rinc; # Convert Gaussian indexes to strings
+  iL.bFea if                                                                    # Create labeled fea. vector files >>
+    data idFea; iF NULL "A" idFea -FEA_get;                                     #   Get feature vectors
+    iL.bPhn if 0 "PHN" idP -set_cname; idP idFea -join; end                     #   Label with phoneme sequence
+    iL.bGss if 0 "GSS" idG -set_cname; idG idFea -join; end                     #   Label with Gaussian sequence
+    .__CFG_bNwr not if                                                          #   No write protection >>
+      "$[iL.sDirOut]/$[iF.sfile].dn3" idFea /zip -save;                         #     Write feature vector file
+    end                                                                         #   <<
+  end                                                                           # <<
+  ( iL.bLab ) ( .__CFG_bNwr not ) && if                                         # Create label files >>
+    iL.bPhn if                                                                  #   Creating phoneme label files >>
+      iL.sDirOut iF.sfile idP -LAB_export;                                      #     Export label file
+    else iL.bGss if                                                             #   << Creating Gaussian label files >>
+      iL.sDirOut iF.sfile idG -LAB_export;                                      #     Export label file
+    end end                                                                     #   << <<
+  end                                                                           # <<
+  0 return;                                                                     # All done
+}
+
+## HMM labeling
+function -CMD_lab()
+{
+  "\n\n// HMM LABELING"                                                   -MSG; # Protocol
+
+  ## Local variables                                                            # --------------------------------------
+  hmm    itHMM;                                                                 # The HMM set
+  var    sDirOut; ( "out"   ""   -CFG_get_path   ) sDirOut -sset;               # Output directory
+  var    sDirMod; ( "model" ""   -CFG_get_path   ) sDirMod -sset;               # Model directory
+  var    sAmId;   ( "am.model"   ""  -CFG_get    ) sAmId   -sset;               # The HMM indentifier
+  var    sFrom;   ( "from" "T"   "S" -CFG_get_ex ) sFrom   -sset;               # Information labeling bases upon
+  var    sOut;    ( "out"  "lab" "S" -CFG_get_ex ) sOut    -sset;               # Output files
+  var    sTyp;    ( "type" "phn" "S" -CFG_get_ex ) sTyp    -sset;               # Label type(s)
+  object iFI;     "${sDirMod}/feainfo.object" iFI -FEA_info;                    # Feature information object
+
+  ## Go labeling                                                                # -------------------------------------
+  "\n   - Model ID      : $[sAmId]"                                       -MSG; # Protocol
+  "\n   - Label from    : "                                               -MSG; # Protocol 
+  ( sFrom "T" != ) ( sFrom "L" != ) && ( sFrom "F" != ) && if "0" sFrom =; end  # Normalize sFrom
+  sFrom "T" == if "Transliteration"            -MSG; end                        # Protocol
+  sFrom "L" == if "Labels"                     -MSG; end                        # Protocol
+  sFrom "F" == if "Labels, enforce boundaries" -MSG; end                        # Protocol
+  sFrom "0" == if "Scratch"                    -MSG; end                        # Protocol
+  "\n   - Output files  : $[sOut]"                                        -MSG; # Protocol
+  "\n   - Label type(s) : $[sTyp]"                                        -MSG; # Protocol
+  .__CFG_bNwr if "\n   - Write protect : " "ON" -COLOR_yellow + -MSG; end       # Protocol
+  "$[sDirMod]/$[sAmId].hmm" iFI.nDim itHMM -HMM_load not if                     # Try loading the HMM set, failed >>
+    "FATAL: Cannot load HMMs" -ERROR;                                           #   No go!
+    goto L_EXCEPTION;                                                           #   Get out
+  end                                                                           # << HMM set ok >>
+  ( itHMM -AM_check not ) ( itHMM.gm NULL == ) || if                            # HMMs invalid >>
+    "FATAL: HMMs invalid" -ERROR;                                               #   No go!
+    goto L_EXCEPTION;                                                           #   Get out
+  end                                                                           # << HMM set ok >>
+  "\n"                                                                    -MSG; # Protocol
+  itHMM NULL -1 -1 "test" "-HMM_label_fnc" "$[sFrom]V" -HMM_process;            # Do HMM processing
+
+  ## Aftermath                                                                  # -------------------------------------
+label L_EXCEPTION;                                                              # Exception label
+  "\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n"           -MSG; # Protocol
+  0 return;                                                                     # Ok
+} 
+
+## HMM synthesis
+function -CMD_syn()
+{
+  ## Local variables                                                            # -------------------------------------
+  PMproc  iPM                                                                   # PMproc instance
+  hmm     itHMM;                                                                # HMM instance
+  object  iFI;                                                                  # Feature info object
+  file    iF;                                                                   # File list
+  data    idCfgCnv;                                                             # .__CFG_idCfg for the conversion config
+  data    idCfg;                                                                # .__CFG_idCfg copy
+  data    idControl;                                                            # Control data for synthesis
+  data    idLab;                                                                # Label sequence to synthesize
+  data    idF0;                                                                 # F0 contour
+  data    idPhn;                                                                # Phonemes
+  data    idFea;                                                                # Feature data
+  data    idFeaDiph;                                                            # Feature data of diphone
+  data    idFeaCnv;                                                             # Converted synthesis features
+  data    idGss;                                                                # Gaussian sequence used for synthesis
+  data    idInv;                                                                # Diphone inventory
+  data    idSyn;                                                                # Synthesized signal
+  data    idVUV;                                                                # v/uv information (diphon synthesis)
+  data    idMsc;                                                                # Sec. feat. anal.
+  data    idLsc;                                                                # Sec. feat. anal.
+  data    idAux;                                                                # Auxillary data instance
+  data    idLyrMap;                                                             # map of HMM-layers and their states
+  data    idCnvMat;                                                             # Feature per phoneme conversion matrix;
+  data    idInt;                                                                # Intensitiy
+  var     sBuf;                                                                 # A string buffer
+  var     sPho1;                                                                # Phoneme string (diphon synthesis)
+  var     sPho2;                                                                # Phoneme string (diphon synthesis)
+  var     sDiph;                                                                # Diphon name (diphon synthesis)
+  var     sFnInv;                                                               # Inventory name
+  var     nAnll;                                                                # Average neglog. likelihood
+  var     nDimFea;                                                              # Synthesis feature dimension
+  var     i;
+  var     j;
+
+  ## Initialize                                                                 # -------------------------------------
+  "\n\n// HMM SYNTHESIS"                                                  -MSG; # Protocol
+  "\n// Model           : " ( "am.model" "0_0" -CFG_get ) +               -MSG; # Display HMM name
+
+  ## - Get some settings from config                                            # - - - - - - - - - - - - - - - - - - -
+  var sAmId;     "am.model"           "0_0"     -CFG_get      sAmId      =;     # Acoustic model ID
+  var sDirLog;   "log"                  "F"     -CFG_get_path sDirLog    =;     # Synthesized files output path
+  var sDirSyn;   "syn"                  "F"     -CFG_get_path sDirSyn    =;     # Synthesized files output path
+  var sDirModel; "model"                 ""     -CFG_get_path sDirModel  =;     # Model path
+  var sDirFea;   "fea"                   ""     -CFG_get_path sDirFea    =;     # Feature files path
+  var sDirInto;  "into"                  ""     -CFG_get_path sDirInto   =;     # Into files path
+  var sDirLab;   "lab"                   ""     -CFG_get_path sDirLab    =;     # Label files path
+  var sDirPm;    "pm"                    ""     -CFG_get_path sDirPm     =;     # Pitch mark files path
+  var sDirGrm;   "grm"                   ""     -CFG_get_path sDirGrm   =;      # Grammar files path
+  var sDirTrans; "trans"                 ""     -CFG_get_path sDirTrans =;      # Transcription files path
+  var sExtFea;   "fea.ext"               ""     -CFG_get      sExtFea    =;     # Feature files extension
+  var sExp;      "exp"                  "." ""  -CFG_get_ex   sExp       =;     # Experiment name
+  var sSig;      "sig"                  "S" "S" -CFG_get_ex   sSig       =;     # Which signal files to generate?
+  var sFea;      "fea"                   "" "S" -CFG_get_ex   sFea       =;     # Which feature vector files to gen.?
+  var sSrcSpk;   "syn.sourcespeaker"   sExp ""  -CFG_get_ex   sSrcSpk    =;     # Get source speaker
+  var sCnvMat;   "cnv.mat"               "" "S" -CFG_get_ex   sCnvMat    =;     # Conversion matrix
+  var sCnvCfg;   "cnv.cfg"               "" "S" -CFG_get_ex   sCnvCfg    =;     # Config file for feature conversion
+  var sFnRes     "syn.file"              "" "S" -CFG_get_ex   sFnRes     =;     # Output file name
+  var bCnv       "cnv"                FALSE "S" -CFG_get_ex   bCnv       =;     # Do conversion?
+  var bFixp;     "fea.fixpoint"       FALSE     -CFG_get      bFixp      =;     # Data are in 16bit fixpoint format
+  var bSmooth;   "smooth"             FALSE "S" -CFG_get_ex   bSmooth    =;     # Smoothing features?
+  var bChange;   "change"              TRUE "S" -CFG_get_ex   bChange    =;     # Change states?
+  var bForceInto "force.into"         FALSE "S" -CFG_get_ex   bForceInto =;     # Force using into instead of pitch marks
+  var nRinc;     "pfa.crate"              0     -CFG_get      nRinc      =;     # Analysis window shift in samples
+  var nDim;      "pfa.dim"               30     -CFG_get      nDim       =;     # Primary feature vector dimension
+  var nSrate;    "sig.srate"          16000     -CFG_get      nSrate     =;     # Signal sampling rate
+
+  ## - Load model data                                                          # - - - - - - - - - - - - - - - - - - -
+  "$[sDirModel]/feainfo.object" iFI -FEA_info;                                  # Load feature info file
+  "$[sDirModel]/$[sAmId].hmm" itHMM -restore ?error if 1 return; end            # Load HMM
+
+  iFI.idDlt NULL 0 "sum" idAux -aggregate;                                      # Calculate dimension of synthesis feature vectors
+  idAux NULL 0 "sum" idAux /rec -aggregate;                                     # |
+  iFI.nDim 0 0 idAux -fetch - nDimFea =;                                        # |
+
+  ## - Initialize file list                                                     # - - - - - - - - - - - - - - - - - - -
+  ( "turn" "" "S" -CFG_get_ex ) sBuf =; sBuf if                                 # Silently get value of uasr.turn
+    { { "$[sBuf]" } } iF.flist_data =;                                          #   Create a file list
+    ## TODO: { { "$[sBuf]" } } iF -setup;                                       #   *** SETUP FILE LIST FROM DATA ***
+  else                                                                          # << uasr.file not specified >>
+    ( "flist.sep" "\t " "S" -CFG_get_ex ) iF set sep;                           #   Set file list separator(s)  
+    ( "test" "" -CFG_get_flist ) iF -set flist;                                 #   Load test set
+  end                                                                           # <<
+
+  ( "$[sSig]$[sFea]" "D" "search" -VAR_strop ) 0 >= if                          # Diphone synthesis? >>
+    "$[sDirModel]/$[sSrcSpk]/inventory.$[sAmId].xml" sFnInv =;                  #   Get inventory name
+    "\n// Using inventory $[sFnInv]."                         -COLOR_blue -MSG; #   Protokoll
+  end                                                                           # <<
+
+  bCnv TRUE == if                                                               # Conversion forced? >>
+    .__CFG_idCfg idCfg =;                                                       #   Copy old config
+    sCnvCfg TRUE -CFG_init;                                                     #   Init conversion config
+    "\n// Using conversion config $[sCnvCfg]."                -COLOR_blue -MSG; #   Protcoll
+    .__CFG_idCfg idCfgCnv =;                                                    #   Copy new config
+    idCfg .__CFG_idCfg =;                                                       #   Restore old config
+    sCnvMat "" == if                                                            #   File name of conversion matrix not given? >>
+      "$[sDirModel]/$[sSrcSpk]/cnv.mat.$[sAmId]"                                #     Set it
+        bFixp TRUE == if ".16bit" else ".64bit" end + ".xml" + sCnvMat =;       #     |
+      "\n// Using conversion matrix $[sCnvMat]."              -COLOR_blue -MSG; #     Protokoll
+    end                                                                         #   <<
+  end                                                                           # <<
+
+  bFixp TRUE == ( "$[sSig]$[sFea]" "D" "search" -VAR_strop ) 0 >= && if         # Should quantize >>
+    "\n// Simulating fixpoint"                               -COLOR_blue -MSG2; #   Protocoll
+  end                                                                           # <<
+    
+  ## HMM synthesis loop                                                         # -------------------------------------
+  "\n\n   Synthesizing $[iF.flist_data.nrec] turns"                       -MSG; # Protocol
+  0 1 -PBAR;                                                                    # Begin progress bar
+  label L_FILE; iF -next if                                                     # Loop over files >>
+    "\n     $[iF.nfile 1 +]/$[iF.flist_data.nrec] - $[iF.sfile]: "       -MSG2; #   Protocol
+    :(iF.nfile+1)/iF.flist_data.nrec: 1 -PBAR;                                  #   Display progress
+
+    ## Save original signal                                                     #   - - - - - - - - - - - - - - - - - -
+    ( sSig "O" "search" -VAR_strop ) 0 >= if                                    #   Saving signal selected >>
+      "\n     - Saving original signal ."                                -MSG2; #     Protocol
+      iF "" idSyn -SIG_get;                                          "." -MSG2; #     Get signal
+      "$[sDirSyn]/$[iF.sfile].O.sig.dn3" idSyn -save;                "." -MSG2; #     Save it
+      idAux -reset;                                                             #       reset auxiliary
+      :idSyn*32768: -type short idAux -tconvert;                                #       convert samples to short values
+      "$[sDirSyn]/$[iF.sfile].O.sig.wav" "wav" idAux stdfile -export;"." -MSG2; #     Save it as ms wave file
+                                                                   " ok" -MSG2; #     Protocol
+    end                                                                         #   <<  
+  
+    ## Vocoding                                                                 #   - - - - - - - - - - - - - - - - - -
+    ( "$[sSig]$[sFea]" "V" "search" -VAR_strop ) 0 >= if                        #   Vocoding selected >>
+      " Vocoding: "                                                      -MSG2; #     Protocol
+
+      ## - Load pitch marks 
+      bForceInto FALSE == if
+        sDirPm  iF.sfile FALSE idControl -PM_import;                            #     Load pitch marks
+      end
+      bForceInto TRUE == idControl -is_empty || if
+        "$[sDirInto]/$[iF.sfile].into" "into" idControl stdfile -import;
+        idControl -is_empty if "No pitch mark data" 1 -WARNING;goto L_H_END;end #     No pitch marks, no service!
+        idControl "unit" idControl -find_comp 1 idAux /comp -select;
+        idAux idAux -LAB_map;
+        idAux idControl -copy_labels;
+      end
+
+      ## - Acoustic synthesis                                                   #     . . . . . . . . . . . . . . . . .
+      iF "" "A" idFea -FEA_get;                                      "." -MSG2; #     Get feature vector sequence
+      -1 idFea -LAB_shrink;                                          "." -MSG2; #     Shrink labels (TODO: remove!)
+      bForceInto TRUE == if
+        :idFea["lab"]: itHMM.ud 0 0 idVUV -gen_index;
+        idVUV 0 itHMM.ud "v/uv" itHMM.ud -find_comp 1 idVUV -lookup;
+        idVUV idFea -join;
+      end
+      idFea idControl idSyn -FEA_ipfa;                               "." -MSG2; #     Inverse primary feature analysis
+      bForceInto TRUE == if idFea "v/uv" idFea -find_comp 1 idFea -delete; end
+
+      idFea iFI itHMM idGss NULL -HMM_vocode;                        "." -MSG2; #     Compute best Gaussian sequence
+
+      ## - Aftermath                                                            #     . . . . . . . . . . . . . . . . .
+      idSyn -is_empty if goto L_V_END; end
+      "$[sDirSyn]/$[iF.sfile].V" sBuf =;                                        #     Tinker output file name
+      "pfa.synoptions" "" "S" -CFG_get_ex "/syn_enhancement"                    #     |
+        "search" -VAR_strop 0 >= if "$[sBuf].enh" sBuf =; end                   #     |
+      ( sSig "V" "search" -VAR_strop ) 0 >= if                                  #     Save synth. signal selected >> 
+        "$[sBuf].sig.dn3" idSyn -save;                                          #       Save it
+        idAux -reset;                                                           #       reset auxiliary
+        :idSyn*32768: -type short idAux -tconvert;                              #       convert samples to short values
+        "$[sBuf].sig.wav" "wav" idAux stdfile -export;                          #       Save it as ms wave file
+      end                                                            "." -MSG2; #     <<
+      ( sFea "V" "search" -VAR_strop ) 0 >= if                                  #     Save synth. features selected >> 
+        "$[sBuf].fea.dn3" idFea -save;                                          #       Save 'em
+      end                                                            "." -MSG2; #     <<
+      ( ( idFea idGss iFI itHMM -FEA_comp_nll ) idFea.nrec / ) nAnll =;         #     Compute average neglog.likelihood
+      " ok (avg.NLL: $[nAnll])"                                          -MSG2; #     Protocol
+      label L_V_END;
+    end                                                                         #   <<
+
+    ## HMM vocoding                                                             #   - - - - - - - - - - - - - - - - - -
+    ( "$[sSig]$[sFea]" "H" "search" -VAR_strop ) 0 >= if                        #   HMM vocoding selected >>
+      " HMM vocoding: "                                                  -MSG2; #     Protocol
+
+      bForceInto FALSE == if                                                    #     Not using of into file control? >>
+        sDirPm  iF.sfile FALSE idControl -PM_import;                            #       Load pitch marks
+      end                                                                       #     <<
+      bForceInto TRUE == idControl -is_empty || if                              #   Use of into control or missing pitch marks >>
+        "$[sDirInto]/$[iF.sfile].into" "into" idControl stdfile -import;        #     Import into control 
+        idControl -is_empty if                                                  #     No pitch marks or into, no service! >>
+          "No pitch mark or into data" 1 -WARNING;goto L_H_END;                 #       Protocoll
+        end                                                                     #     <<
+        idControl "unit" idControl -find_comp 1 idAux /comp -select;            #     Convert labels
+        idAux idAux -LAB_map;                                                   #     |
+        idAux idControl -copy_labels;                                           #     |
+      end                                                                       #   <<
+
+      ## - Feature and acoustic synthesis                                       #     . . . . . . . . . . . . . . . . .
+      iF "" "A" idFea -FEA_get;                                                 #     Get feature vector sequence
+      -1 idFea -LAB_shrink;                                          "." -MSG2; #     Shrink labels (TODO: remove!)
+      idFea iFI itHMM idGss idFea -HMM_vocode;                       "." -MSG2; #     HMM vocoding
+      bForceInto TRUE == if                                                     #     Forced into control >>
+        :idFea["lab"]: itHMM.ud 0 0 idVUV -gen_index;                           #       Append v/uv track
+        idVUV 0 itHMM.ud "v/uv" itHMM.ud -find_comp 1 idVUV -lookup;            #       |
+        idVUV idFea -join;                                                      #       |
+      end                                                                       #     <<
+      1000 nRinc * nSrate / idFea    -set rinc;                                 #     Set rate
+      idFea idControl idSyn -FEA_ipfa;                               "." -MSG2; #     Inverse primary feature analysis
+
+      bForceInto TRUE == if idFea "v/uv" idFea -find_comp 1 idFea -delete; end  #     Delete v/uv track
+      
+      ## - Aftermath                                                            #     . . . . . . . . . . . . . . . . .
+      idSyn -is_empty if goto L_H_END; end;                                     #     Something gone wrong
+      idAux -reset;
+      :idSyn*32768: -type short idAux -tconvert;
+
+      "$[sDirSyn]/$[iF.sfile].H.$[sAmId]" sBuf =;                               #     Tinker output file name
+      bSmooth TRUE == if "$[sBuf].smooth" sBuf =; end                           #     |
+      "pfa.synoptions" "" "S" -CFG_get_ex "/syn_enhancement"                    #     |
+        "search" -VAR_strop 0 >= if "$[sBuf].enh" sBuf =; end                   #     |
+
+      ( sSig "H" "search" -VAR_strop ) 0 >= if                                  #     Save synth. signal selected >>
+          "$[sBuf].sig.dn3" idSyn -save;
+          "$[sBuf].sig.wav" "wav" idAux stdfile -export;
+      end                                                            "." -MSG2; #     <<
+      ( sFea "H" "search" -VAR_strop ) 0 >= if                                  #     Save synth. features selected >> 
+          "$[sBuf].fea.dn3" idFea -save;
+      end                                                            "." -MSG2; #     <<
+      ( ( idFea idGss iFI itHMM -FEA_comp_nll ) idFea.nrec / ) nAnll =;         #     Compute average neglog.likelihood
+      " ok (avg.NLL: $[nAnll])"                                          -MSG2; #     Protocol
+      label L_H_END;
+    end                                                                         #   <<
+
+    ## HMM re-synthesis                                                         #   - - - - - - - - - - - - - - - - - -
+    ( "$[sSig]$[sFea]" "R" "search" -VAR_strop ) 0 >= if                        #   HMM synthesis selected >>
+      "\n     - HMM re-synthesis "                                       -MSG2; #     Protocol
+
+      sDirLab iF.sfile idLab -LAB_import;                                       #     Load signal labels
+      sDirPm  iF.sfile TRUE idControl -PM_import;                               #     Load pitch marks
+      idControl  -is_empty if "No pitch mark data" 1 -WARNING; goto L_R_END;end #     No pitch marks, no service!
+      idLab -is_empty if "No label data"           1 -WARNING; goto L_R_END;end #     No labels, no service!
+
+      ## Convert signal to feature vector labels                                #   - - - - - - - - - - - - - - - - - -
+      idLab 2 1 idLab -delete;                                                  #   Remove start index component
+      :idLab[1]=(idLab[1]+nRinc/2)/nRinc:;                           "." -MSG2; #   Calculate modulo and add remainder
+      idLab 1 idLab.nrec idAux /rec -select;
+      idAux idLab idLab "diff" matrix -op; 
+      idLab 0 idLab.nrec 1 - idLab /rec -select;
+      1 "count" idLab -set_cname;
+
+      ## - Feature and acoustic synthesis                                       #     . . . . . . . . . . . . . . . . .
+      ( "$[sSig]$[sFea]" "T" "search" -VAR_strop ) 0 >= if                      #   Tokudas algorithm selected >>
+        "\n     - HMM re-synthesis according to Tokuda"                  -MSG2; #     Protocol
+        idLab 0 1 iFI itHMM idGss idLyrMap idFea -HMM_feasyn2;       "." -MSG2; #     Get feature vector seq. from HMMs
+      else
+        idLab 0 1 iFI itHMM idGss idFea -HMM_feasyn;                 "." -MSG2; #     Get feature vector seq. from HMMs
+      end  
+
+      idFea idControl idSyn -FEA_ipfa;                               "." -MSG2; #     Inverse primary feature analysis
+
+      ## - Aftermath                                                            #     . . . . . . . . . . . . . . . . .
+      idAux -reset;
+      :idSyn*32768: -type short idAux -tconvert;
+      ( sSig "T" "search" -VAR_strop ) 0 >= if                                  #     Save synth. signal selected >>
+        bSmooth TRUE == if
+          bChange TRUE == if
+            "$[sDirSyn]/$[iF.sfile].T.$[sAmId].smooth_mod.sig.dn3" idSyn -save;
+            "$[sDirSyn]/$[iF.sfile].T.$[sAmId].smooth_mod.sig.wav" "wav" idAux stdfile -export;
+          else
+            "$[sDirSyn]/$[iF.sfile].T.$[sAmId].smooth_ini.sig.dn3" idSyn -save;
+            "$[sDirSyn]/$[iF.sfile].T.$[sAmId].smooth_ini.sig.wav" "wav" idAux stdfile -export;
+          end  
+        else 
+          "$[sDirSyn]/$[iF.sfile].T.$[sAmId].sig.dn3" idSyn -save;              #       Save it
+          "$[sDirSyn]/$[iF.sfile].T.$[sAmId].sig.wav" "wav" idAux stdfile -export;
+        end  
+      else
+        ( sSig "R" "search" -VAR_strop ) 0 >= if                                #     Save synth. signal selected >>
+          bSmooth TRUE == if
+            "$[sDirSyn]/$[iF.sfile].R.$[sAmId].smooth.sig.dn3" idSyn -save;
+            "$[sDirSyn]/$[iF.sfile].R.$[sAmId].smooth.sig.wav" "wav" idAux stdfile -export;
+          else 
+            "$[sDirSyn]/$[iF.sfile].R.$[sAmId].sig.dn3" idSyn -save;            #       Save it
+            "$[sDirSyn]/$[iF.sfile].R.$[sAmId].sig.wav" "wav" idAux stdfile -export;
+          end  
+        end                                                          "." -MSG2; #     <<
+        ( sFea "T" "search" -VAR_strop ) 0 >= if                                #     Save synth. features selected >>
+          bSmooth TRUE == if
+            bChange TRUE == if
+              "$[sDirSyn]/$[iF.sfile].$[sFea].$[sAmId].smooth_mod.fea.dn3" idFea -save;
+            else
+              "$[sDirSyn]/$[iF.sfile].$[sFea].$[sAmId].smooth_ini.fea.dn3" idFea -save;
+            end  
+          else
+            "$[sDirSyn]/$[iF.sfile].$[sFea].$[sAmId].fea.dn3" idFea -save;      #       Save 'em
+          end  
+        else                                                         "." -MSG2; #     <<
+          ( sFea "S" "search" -VAR_strop ) 0 >= if                              #     Save synth. features selected >>
+            bSmooth TRUE == if 
+              "$[sDirSyn]/$[iF.sfile].$[sFea].$[sAmId].smooth.fea.dn3" idFea -save;
+            else
+              "$[sDirSyn]/$[iF.sfile].$[sFea].$[sAmId].fea.dn3" idFea -save;    #       Save 'em
+            end  
+          end                                                        "." -MSG2; #     <<
+        end  
+      end  
+      ( ( idFea idGss iFI itHMM -FEA_comp_nll ) idFea.nrec / ) nAnll =;         #     Compute average neglog.likelihood
+      " ok (avg.NLL: $[nAnll])"                                          -MSG2; #     Protocol
+      label L_R_END;
+    end                                                                         #   <<
+
+    ## HMM synthesis                                                            #   - - - - - - - - - - - - - - - - - -
+    ( "$[sSig]$[sFea]" "S" "search" -VAR_strop ) 0 >= if                        #   HMM synthesis selected >>
+      "\n     - HMM synthesis "                                          -MSG2; #     Protocol
+      
+      idLab -reset; idFea -reset; idControl -reset;                             #   Be sure to have clean objects
+      "$[sDirInto]/$[iF.sfile].into" "into" idControl stdfile -import;          #   Load into data
+      idControl -is_empty if "No into data "   1 -WARNING; goto L_S_END; end    #   No into, no service!
+      idControl idLab -LAB_from_into;
+
+      sCnvMat "" == if
+        idLab 0 1 iFI itHMM idGss idLyrMap idFea -HMM_feasyn2;       "." -MSG2; #     Get feature vector seq. from HMMs
+        idFea idControl idSyn -FEA_ipfa;                             "." -MSG2; #     Inverse primary feature analysis
+      else
+        sCnvMat idCnvMat -restore;
+        "$[sDirInto]/$[iF.sfile].into" itHMM idFea idGss -HMM_get_fea_I;        #     Get HMM feature sequence from into
+        idFea "~F0" idFea -find_comp 1 idF0 -select;                            #     Get per state f0-contour
+        idF0 idControl :(idFea.nrec*idFea.rinc*nSrate/1000): nSrate iPM -f02pm; #     Get pitch marks
+
+        0 idFea.dim -- idFea -xfetch ' idCnvMat * ' idFea =;                    #     Convert origin features
+        idLab 0 -1 1 idLab -expand; idLab idFea -join;                          #     Append labels
+        1000 nRinc * nSrate / idFea -set rinc;                                  #     Setrate
+
+        "LCQ"       -FEA_pfa_init;
+        "Uels" .__FEA_iPfa -set type;
+
+        idFea idControl idSyn -FEA_ipfa;                             "." -MSG2; #     Synthesize turn using converted features
+      end  
+
+      ## - Aftermath                                                            #
+      idAux -reset;
+      :idSyn*32768: -type short idAux -tconvert;
+      "$[sDirSyn]/$[iF.sfile].S.$[sAmId].sig.dn3" idSyn -save;                  #      Save it
+      "$[sDirSyn]/$[iF.sfile].S.$[sAmId].sig.wav" "wav" idAux stdfile -export;  #      Save it as ms wave file
+      label L_S_END;
+    end  
+
+    ## HMM diphone synthesis
+    ( "$[sSig]$[sFea]" "D" "search" -VAR_strop ) 0 >= if                        #   Vocoding selected >>
+      " HMM diphon synthesis:"                                           -MSG2; #     Protocol
+
+      idFea -reset;                                                             #     Clear data instance of synthesis feature vectors
+
+      idInv -is_empty if                                                        #     Inventory loaded?
+        sFnInv idInv -restore;                                                  #     Load inventory
+      end 
+      iF.sfile idInv idControl -Into_get;                                       #     Get into
+      idControl -is_empty if "No into data "      1 -WARNING; goto L_D_END; end #     No into, no service!
+      "unit" idControl -find_comp 1 idControl -xfetch idAux =;                  #     Convert phoneme names
+      idAux idAux -LAB_map;                                                     #     |
+      idAux idControl -copy_labels;                                             #     |
+
+      idAux 0 idAux -compress;                                                  #     Generate diphone names and feature sequence 
+      0 0 idAux -sfetch sPho1 =;                                                #     | Get first phoneme of diphone
+      1 i =; label L_DIPH; i idAux.nrec < if                                    #     | Loop over all phonemes >>
+        i 0 idAux -sfetch sPho2 =;                                              #     | | Get second phoneme of diphone
+        "$[sPho1]$[sPho2]" sDiph =; " $[sDiph]"                          -MSG2; #     | | Cat phonemes to diphone
+        sDiph idInv itHMM iFI nDimFea bCnv idFeaDiph -HMM_inv_get_fea;          #     | | Get feature sequence of diphone
+        ?error not if                                                           #     | | Found it?
+          idFeaDiph idFea -cat;                                                 #     | | | Concatenate feature sequence
+        end                                                                     #     | | <<
+        sPho2 sPho1 =;                                                          #     | | Copy second phoneme of last diphone to first phoneme of next diphone
+        i ++=;                                                                  #     | |
+        goto L_DIPH;                                                            #     | |
+      end                                                                       #     | <<
+
+      bFixp TRUE == if                                                          #     Should quantize >>
+        idFea 0 nDimFea NULL 16 -FEA_quantize 0 nDimFea NULL 16 -FEA_dequantize #       Quantize
+          idFea =;                                                              #       Overwrite
+      end                                                                       #     <<
+
+      bCnv TRUE == if                                                           #     Need conversion >>
+        idCfgCnv .__CFG_idCfg =;                                                #       Replace with conversion config
+        .__FEA_iPfa -destroy;                                                   #       Destroy synthesis processor
+        idCnvMat -is_empty TRUE == if                                           #       Conversion matrix not loaded already >>
+          sCnvMat idCnvMat -restore ?error if goto L_D_END; end                 #         Get it
+          bFixp TRUE == if                                                      #         Compressed conversion matrix >>
+            idCnvMat -type double idCnvMat -tconvert;                           #           convert to double
+            :idCnvMat*idCnvMat.descr0/32768.0: idCnvMat =;                      #           scale down
+          end                                                                   #         <<
+        end                                                                     #       <<
+        idAux -reset;                                                           #       Reset auxiliary data instance
+        "~PHO" idFea -find_comp 1 idFea -xfetch idAux -join;                    #       Save label track
+        "v/uv" idFea -find_comp 1 idFea -xfetch idAux -join;                    #       Save v/uv track
+        idFea "~PHO" idFea -find_comp 1 idFea -delete;                          #       Delete label track
+        idFea "v/uv" idFea -find_comp 1 idFea -delete;                          #       Delete v/uv track
+        idFea ' idCnvMat * ' idFeaCnv =;                                        #       Convert origin features
+        NULL -type double 0 idFeaCnv -insertcomp;                               #       Insert intensity track
+        0 1 idFea -xfetch 0 1 0 idFeaCnv -xstore;                               #       Copy it from inventory
+        idAux idFeaCnv -join;                                                   #       Join label and v/uv track
+        idFeaCnv idFea =;                                                       #       Act like nothing happend
+      end                                                                       #     <<
+
+      1000 nRinc * nSrate / idFea  -set rinc;                                   #     Set rate
+      idFea idControl idSyn -FEA_ipfa;                                          #     The praiseworthy synthesis
+
+      bCnv TRUE == if .__FEA_iPfa -destroy; idCfg .__CFG_idCfg =; end           #     If converted destroy synthesis processor and restore original config
+      
+      ## - Aftermath                                                            #
+      idSyn -is_empty if goto L_D_END; end;                                     #     Something gone wrong - continue
+      "$[sDirSyn]" sBuf =;                                                      #     Tinker output file name
+      sFnRes "" == if
+        "$[sBuf]/$[iF.sfile].D.$[sAmId]" sBuf =;                                #     | file name not given >>
+        bCnv TRUE == if "$[sBuf].cnv" sBuf =; end                               #     |
+        "pfa.synoptions" "" "S" -CFG_get_ex "/syn_enhancement"                  #     |
+        "search" -VAR_strop 0 >= if "$[sBuf].enh.sig" sBuf =; end               #     |
+      else                                                                      #     |
+        "$[sBuf]/$[sFnRes]" sBuf =;                                             #     |
+      end                                                                       #     | <<
+      idAux -reset;
+      :idSyn*32768: -type short idAux -tconvert;                                #     Save synthesis
+      "$[sBuf].wav" "wav" idAux stdfile -export;                                #     |
+      label L_D_END;                                                            #     End of diphone synthesis loop
+    end                                                                         #   <<
+    goto L_FILE;                                                                #   End of file loop
+  end                                                                           # <<
+  "\n  " -MSG2; "done"                                                    -MSG; # Protocol
+  "\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n"         -MSG; # Protocol
+  0 return;
+}
+## Set evaluation mode for -CMD_trn and -CMD_evl
+function -HMM_set_eval_mode()
+{
+  file   iF;                                                                    # Auxilary file list instance #1
+  var    nEval;      0     nEval      =;                                        # HMM evaluation mode
+  var    sBuf;                                                                  # String buffer
+
+  "\n// Evaluation mode : "                                               -MSG; # Protocol
+  ( "flist.sep" "\t " "S" -CFG_get_ex ) iF set sep;                             # Set file list separator(s)  
+  "test" "S" -CFG_get_flist iF -set flist; iF -next;                            # Load test file list, get 1st record
+  iF.recfile.dim 1 > if 2 else 1 end nEval =;                                   # MAY use -HMM_assess
+  "am.eval" "auto" "S" -CFG_get_ex sBuf =;                                      # Get configured evaluation mode
+  sBuf "none" == if "None (configured)"      -MSG; 0 nEval =; end               # Do not evaluate at all
+  sBuf "eval" == if "-HMM_eval (configured)" -MSG; 1 nEval =; end               # -HMM_eval by user order!
+  sBuf "auto" == if                                                             # Auto mode >>
+    2 nEval == if "-HMM_assess" else "-HMM_eval" end " (automatic)" +     -MSG; #  Tell what we found out
+  end                                                                           # <<
+  sBuf "assess" == if                                                           # Assess mode >>
+    2 nEval == if                                                               #   Can assess >>
+      "-HMM_assess (configured)"                                          -MSG; #     Fine ...
+    else                                                                        #   << Cannot assess >>
+      "-HMM_eval (fallback; missing labels in test file list)"            -MSG; #     Tell why
+    end                                                                         #   <<
+  end                                                                           # <<
+  nEval return;
+}
+## HMM training
+function -CMD_evl()
+{
+  ## Local variables                                                            # -------------------------------------
+  hmm    itHMM;                                                                 # Acoustic model
+  object iFI;                                                                   # Feature information object
+  data   idSns;                                                                 # Sensor list
+  data   idAux;                                                                 # Auxilary data instance
+  var    nEval;      0     nEval      =;                                        # HMM evaluation mode
+  var    sN;                                                                    # Current sensor name
+  var    nN;                                                                    # Current sensor index
+  var    nXN;                                                                   # Number of sensors
+  var    sAmId;   ( "am.model"   ""  -CFG_get    ) sAmId   -sset;               # The HMM indentifier
+  var    nXXE;       0     nXXE       =;                                        # Total number of evaluations
+  var    sDirMod;                                                               # Model directory
+
+  ## Initialize                                                                 # -------------------------------------
+  "\n\n// HMM EVALUATION"                                                 -MSG; # Protocol
+  "model"  "S" -CFG_get_path sDirMod =;                                         # Silently get model directory
+  -SNS_get_tab idSns =;                                                         # Get sensor table
+  -HMM_set_eval_mode nEval =;
+
+  ## HMM sensors loop                                                           # -------------------------------------
+  :idSns[0,0]: if "\n// No. of sensors  : $[idSns.nrec]" -MSG; end              # Protocol
+  "\n"                                                                    -MSG; # Protocol
+  idSns.nrec nXN =; label L_SNS;                                                # Loop over sensors
+    ( nN 0 idSns -sfetch ) sN =;                                                #   Get curr. sensor name and file ext.
+
+    ## Load acoustic models                                                     #   -------------------------------------
+    "${sDirMod}/feainfo.object" iFI -FEA_info;                                  #   Feature information object
+    "\n   - Model ID      : $[sAmId]"                                     -MSG; #   Protocol
+    .__CFG_bNwr if "\n   - Write protect : " "ON" -COLOR_yellow + -MSG; end     #   Protocol
+    "$[sDirMod]/$[sAmId].hmm" iFI.nDim itHMM -HMM_load not if                   #   Try loading the HMM set, failed >>
+      "FATAL: Cannot load HMMs" -ERROR;                                         #     No go!
+      goto L_EXCEPTION;                                                         #     Get out
+    end                                                                         #   << HMM set ok >>
+    ( itHMM -AM_check not ) ( itHMM.gm NULL == ) || if                          #   HMMs invalid >>
+      "FATAL: HMMs invalid" -ERROR;                                             #     No go!
+      goto L_EXCEPTION;                                                         #     Get out
+    end                                                                         #   << HMM set ok >>
+
+    ## Do evaluation                                                            #   -------------------------------------
+    nEval 1 == if itHMM sN -1 -1 -HMM_eval;   nXXE ++=; end                     #   Evaluate or ...
+    nEval 2 == if itHMM sN -1 -1 -HMM_assess; nXXE ++=; end                     #   ... assess
+
+  ## End of sensor loop                                                         # - - - - - - - - - - - - - - - - - -
+  nN ++=; nN nXN < if goto L_SNS; end                                           # End of loop
+
+  "\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors)."           -MSG; # Protocol
+  "\n   - Evaluation results "                                            -MSG; # Protocol
+  .__AM_nEtdr 0 ==                                                              # |
+    if "ok\n"                                                                   # |
+    else "UNEXPECTED (mean difference=${.__AM_nEtdr/nXXE})\n"                   # |
+  end                                                                     -MSG; # Protocol
+  :(.__AM_nEtdr/nXXE)>0.005: return;                                            # Error on mean >+-0.5% of exp. results
+
+  ## Aftermath                                                                  # -------------------------------------
+label L_EXCEPTION;                                                              # Exception label
+  "\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n"           -MSG; # Protocol
+  0 return;                                                                     # Ok
+}
+## HMM training
+function -CMD_trn()
+{
+  ## Local functions                                                            # -------------------------------------
+  function -infofile(bMode)                                                     # INFO file
+  {
+    "model" "S" -CFG_get_path "/../info.txt" + var sFn;                         #   Get info file name
+
+    bMode if                                                                    #   Write info file >>
+
+      file iF;     "\n\r" iF -set sep;
+      data idInfo;                                                              #     The info file
+      data idAux;                                                               #     Auxilary data instance
+      data idAux2;                                                              #     Another auxilary data instance
+      var  sBuf;
+
+      ## Common info                                                            #     - - - - - - - - - - - - - - - - -
+      { { "$1" } } "" "splitp" idAux -strop;                                    #     Parse config. file name
+      255 1 9 idInfo -array                                                     #     Create info file
+      {                                                                         #     |
+        "HMM Training"                                                          #     |
+        "============"                                                          #     |
+        ""                                                                      #     |
+        "Config.: ${idAux[0,1]}"                                                #     |
+        "Date   : $[stdprof -date]"                                             #     |
+        "dLabPro: $[this -version]"                                             #     |
+        "UASR   : $[-UASR_version]"                                             #     |
+        "DB     : $[-DB_version]"                                               #     |
+        "Host   : $HOSTNAME"                                                    #     |
+      };
+      
+      ## Configuration                                                          #     - - - - - - - - - - - - - - - - -
+      {                                                                         #     |
+        { ""                                                                  } #     |
+        { "Configuration Details"                                             } #     |
+        { "====================="                                             } #     |
+        { ""                                                                  } #     |
+      } idInfo -cat;                                                            #     Continue info file
+      idAux -CFG_dump;                                                          #     Dump configuration
+      idAux "am.eval.ite" "search" idAux2 -strop;                               #     Mark reference results ...
+      :idAux2.>=0: idAux -dmark; idAux 0 0 idAux /mark /noerror -delete;        #     ... and delete them
+      idAux idInfo -cat;                                                        #     Append to info file
+
+      ## Database include script                                                #     - - - - - - - - - - - - - - - - -
+      {                                                                         #     |
+        { ""                                                                  } #     |
+        { "Database include script"                                           } #     |
+        { "======================="                                           } #     |
+        { ""                                                                  } #     |
+      } idInfo -cat;                                                            #     Continue info file
+      "db" "" -CFG_get ".itp" + sBuf =;                                         #     Get standard db include file
+      "db.include" sBuf "S" -CFG_get_ex sBuf =;                                 #     Get configured db include file
+      "$UASR_HOME/scripts/dlabpro/db/$[sBuf]" sBuf =;                           #     Make absolute path name
+      idAux -reset; sBuf "ascii" idAux iF /noerror /strings -import ?error if   #     Load, failed >>
+        { { "[none]" } } idAux =;                                               #       No include file
+      end                                                                       #     <<
+      idAux idInfo -cat;                                                        #     Append to info file
+
+      ## Customization script                                                   #     - - - - - - - - - - - - - - - - -
+      {                                                                         #     |
+        { ""                                                                  } #     |
+        { "Customization script"                                              } #     |
+        { "===================="                                              } #     |
+        { ""                                                                  } #     |
+      } idInfo -cat;                                                            #     Continue info file
+      "customize" "" "S" -CFG_get_ex sBuf =;                                    #     Get config'd custom include file
+      idAux -reset; sBuf "ascii" idAux iF /noerror /strings -import ?error if   #     Load (absolute path), failed >>
+        "$UASR_HOME/scripts/dlabpro/$[sBuf]" sBuf =;                            #       Guess relative path
+        sBuf "ascii" idAux iF /noerror /strings -import ?error if               #       Load (relative path), failed >>
+          { { "[none]" } } idAux =;                                             #         There ain't no ...
+        end                                                                     #       <<
+      end                                                                       #     <<
+      idAux idInfo -cat;                                                        #     Append to info file
+
+      ## Write info file                                                        #     - - - - - - - - - - - - - - - - -
+      { { "" } { "EOF" } } idInfo -cat;                                         #     Append end-of-file mark
+      "\n   - Writing info file $[sFn] ..."                               -MSG; #     Protocol
+      .__CFG_bNwr not if                                                        #     Not write protected >> 
+        sFn "ascii" idInfo stdfile -export;                                     #       Write info file
+        " done"                                                           -MSG; #       Protocol
+      else                                                                      #     << Write protected >>
+        " SKIPPED (write protection on)"                                  -MSG; #       Protocol
+      end                                                                       #     <<
+    else                                                                        #   << Deleting info file >>
+      .__CFG_bNwr not if sFn -SH_rm; end                                        #     Do it!
+    end                                                                         #   <<
+  }
+
+  ## Local variables                                                            # -------------------------------------
+  hmm    itHMM;                                                                 # Acoustic model
+  object iFI;                                                                   # Feature information object
+  data   idSns;                                                                 # Sensor list
+  data   idAux                                                                  # Auxilary data instance #1
+  var    bStat;      TRUE  bStat      =;                                        # Do feature statistics
+  var    bInit;      TRUE  bInit      =;                                        # Do HMM initialization
+  var    bIte;       TRUE  bIte       =;                                        # Do iterative HMM update
+  var    nEval;      0     nEval      =;                                        # HMM evaluation mode
+  var    bTidy;      TRUE  bTidy      =;                                        # Keep log and model folders tidy
+  var    bSplitBest; FALSE bSplitBest =;                                        # Do not use winner HMM for splits
+  var    sN;                                                                    # Current sensor name
+  var    nN;                                                                    # Current sensor index
+  var    nXN;                                                                   # Number of sensors
+  var    nS0;                                                                   # 1st Gss. split ((uasr.)start=nS0_nI0)
+  var    nSE;        -1    nSE        =;                                        # Last Gss. split ((uasr.)stop=nSE_nIE)
+  var    nS;                                                                    # Current Gaussian split
+  var    nXS;                                                                   # Number of Gaussian splits
+  var    nI0;                                                                   # 1st Gss. iter. ((uasr.)start=nS0_nI0)
+  var    nIE;        -1    nIE        =;                                        # Last Gss. iter. ((uasr.)stop=nSE_nIE)
+  var    nI;                                                                    # Current iteration
+  var    nIb;                                                                   # Best iteration
+  var    nXI;                                                                   # Number of iterations
+  var    nXXE;                                                                  # Total number of evaluations
+  var    nE;                                                                    # Current evaluation result
+  var    nEb;                                                                   # Best evaluation result of split
+  var    sBuf;                                                                  # String buffer
+  var    sDirModel;                                                             # Model directory
+
+  ## Initialize                                                                 # -------------------------------------
+  "\n\n// HMM TRAINING"                                                   -MSG; # Protocol
+  "model"  "S" -CFG_get_path sDirModel =;                                       # Silently get model directory
+  "am.train.splitbest" FALSE -CFG_get bSplitBest =;                             # Use best HMM for split
+  -SNS_get_tab idSns =;                                                         # Get sensor table
+  -HMM_set_eval_mode nEval =;
+
+  ## - Handle uasr.start (= -Pstart=...) and uasr.stop (= -Pstop=...)           # - - - - - - - - - - - - - - - - - - -
+  "start" "#" "S" -CFG_get_ex sBuf =; sBuf "#" == not if                        # Have key "(uasr.)start" >>
+    16 1 1 idAux -array { "${sBuf}" };                                          #   Get value into a string array
+    idAux "?,?_" "replace" idAux -strop;                                        #   Backward compatibility
+    idAux "_" "split" idAux -strop;                                             #   Split at commas
+    0 0 idAux -sfetch nS0 -vset;                                                #   Get first split (cast to number!)
+    0 1 idAux -sfetch nI0 -vset;                                                #   Get first itertn. (cast to number!)
+    0 bStat =; 0 bInit =;                                                       #   This automatically means -Pskip=SI
+    "\n// Start at        : split ${nS0}, iteration ${nI0}"               -MSG; #   Protocol
+  end                                                                           # <<
+  "stop" "#" "S" -CFG_get_ex sBuf =; sBuf "#" == not if                         # Have key "(uasr.)stop" >>
+    16 1 1 idAux -array { "${sBuf}" };                                          #   Get value into a string array
+    idAux "?,?_" "replace" idAux -strop;                                        #   Backward compatibility
+    idAux "_" "split" idAux -strop;                                             #   Split at commas
+    0 0 idAux -sfetch nSE -vset;                                                #   Get last split (cast to number!)
+    0 1 idAux -sfetch nIE -vset;                                                #   Get last itertn. (cast to number!)
+    "\n// Stop at         : split ${nSE}, iteration ${nIE}"               -MSG; #   Protocol
+  end                                                                           # <<
+
+  ## - Handle uasr.skip (= -Pskip=...)                                          # - - - - - - - - - - - - - - - - - - -
+  "skip" "#" "S" -CFG_get_ex sBuf =; sBuf "#" == not if                         # Have key "(uasr.)skip" >>
+    sBuf "S" "search" -VAR_strop 0 >= if FALSE bStat =; end                     #   Skip feature statistics
+    sBuf "I" "search" -VAR_strop 0 >= if FALSE bInit =; end                     #   Skip HMM initialization
+    sBuf "U" "search" -VAR_strop 0 >= if FALSE bIte  =; FALSE bTidy =; end      #   Skip iterative HMM update (skip tidying)
+    sBuf "E" "search" -VAR_strop 0 >= if 0     nEval =; FALSE bTidy =; end      #   Skip HMM evaluation (skip tidying)
+    sBuf "T" "search" -VAR_strop 0 >= if FALSE bTidy =; end                     #   Skip folder tidying
+  end                                                                           # <<
+  :!(bStat && bInit && bIte && nEval && bTidy): if                              # Anything being skipped >>
+    "\n// Skipping        : "                                             -MSG; #   Protocol
+    bStat not if "statistics " -MSG; end                                        #   Protocol (skip feature statistics)
+    bInit not if "init "       -MSG; end                                        #   Protocol (skip HMM initialization)
+    bIte  not if "update "     -MSG; end                                        #   Protocol (skip iterative update)
+    nEval not if "evaluation " -MSG; end                                        #   Protocol (skip HMM evaluation)
+    bTidy not if "tidying "    -MSG; end                                        #   Protocol (skip folder tidying)
+  end                                                                           # <<
+  .__CFG_bNwr if "\n   - Write protect : " "ON" -COLOR_yellow + -MSG; end       # Protocol
+  bIte if FALSE -infofile; end                                                  # Remove info file
+  ## - DEBUG: Testing the control flow
+  #/disarm -FEA_analyze { "\n -FEA_analyze()"                                                            -echo; }
+  #/disarm -HMM_eval    { "\n -HMM_eval(\$[sSns],\$[nSpl],\$[nIte])"                          -echo; 1. return; }
+  #/disarm -HMM_assess  { "\n -HMM_assess(\$[sSns],\$[nSpl],\$[nIte])"                        -echo; 1. return; }
+  #/disarm -HMM_init    { "\n -HMM_init()"                                                               -echo; }
+  #/disarm -HMM_update  { "\n -HMM_update(\$[sSns],\$[nSpl],\$[nIte]) -> (\$[sSns],\$[nSpl],\${nIte+1})" -echo; }
+  #/disarm -HMM_split   { "\n -HMM_split(\$[sSns],\$[nSpl],\$[nIte]) -> (\$[sSns],\${nSpl+1},0)"         -echo; }
+
+  ## HMM training loops                                                         # -------------------------------------
+  :idSns[0,0]: if "\n// No. of sensors  : $[idSns.nrec]" -MSG; end              # Protocol
+  "\n"                                                                    -MSG; # Protocol
+  idSns.nrec nXN =; label L_SNS;                                                # Loop over sensors
+
+    ## Initialize HMM training                                                  #   - - - - - - - - - - - - - - - - - -
+    ( nN 0 idSns -sfetch ) sN =;                                                #   Get curr. sensor name and file ext.
+    iFI -destroy; object iFI;                                                   #   (Re-)create feature info object
+    itHMM -reset;                                                               #   Reset HMMs
+
+    ## Create and initialize HMMs, gather feature statistics                    #   - - - - - - - - - - - - - - - - - -
+    NULL iFI -FEA_info;                                                         #   Create feature info object
+    iFI.nDim itHMM -HMM_create;                                                 #   Create HMMs
+    bStat if itHMM.ud iFI sN -FEA_analyze; end                                  #   Gather feature information
+    bInit if itHMM sN -HMM_init; else itHMM -reset; end                         #   Initialize HMM (or clear)
+
+    ## Iterative HMM training                                                   #   - - - - - - - - - - - - - - - - - -
+    nS0 nS =; nI0 nI =;                                                         #   (Re-)initialize loop counters
+    "am.train.split" 0 "S" -CFG_get_ex nXS =;                                   #   Silently get number of splits
+    :nSE>=0: if nSE nXS =; end                                                  #   Implement stop condition
+    nS 0 > nI 0 > || if; itHMM -reset; end                                      #   Restart a prev.session ->clear HMMs
+    label L_S;                                                                  #   Loop over scheduled Gssn. splits >>
+      -1 nIb =; 0. nEb =; "am.train.ite${nS}" 0 -CFG_get nXI =;                 #     Initialize iteration loop
+      :nS==nSE && nIE>=0: if nIE nXI =; end                                     #     Implement stop condition
+      label L_I;                                                                #     Loop over scheduled iterations >>
+        nEval 1 == if ( itHMM sN nS nI -HMM_eval   ) nE =; nXXE ++=; end        #       Evaluate or ...
+        nEval 2 == if ( itHMM sN nS nI -HMM_assess ) nE =; nXXE ++=; end        #       ... assess
+        nE nEb > nIb 0 < || if                                                  #       Best model of this split >>
+          bTidy if sN nS nIb -HMM_tidyup; end                                   #         Tidy up
+          nE nEb =; nI nIb =;                                                   #         Remember it
+        else                                                                    #       << Not the best model >>
+          bTidy if sN nS nI -HMM_tidyup; end                                    #         Tidy up
+        end                                                                     #       <<
+        nI nXI < if                                                             #       More iterations to go >>
+          bIte if itHMM sN nS nI -HMM_update; else itHMM -reset; end            #         HMM update
+          nI ++=; goto L_I;                                                     #         End of iteration loop
+        end                                                                     #       <<
+      nS nXS < if                                                               #     More splits to go >>
+        bSplitBest if                                                           #       Splitting best HMM of iteration
+          -1 nIb == if                                                          #         No best Model of iteration detected >>
+            nXI nIb =;                                                          #         best model number is last iteration
+            "   Skip eval: take last model $[nS]_$[nXI] as best \n"       -MSG; #         Protocol
+          end                                                                   #       <<
+          itHMM -reset;                                                         #       Reset HMM
+          nIb nI =;                                                             #       Set Iteration number to best
+        end                                                                     #     <<
+        bIte if itHMM sN nS nI -HMM_split; else itHMM -reset; end               #       HMM splitting
+        0 nI =; nS ++=; goto L_S;                                               #       End of splits loop
+      end                                                                       #     <<
+
+    ## End of sensor loop                                                       #   - - - - - - - - - - - - - - - - - -
+    nN ++=; nN nXN < if goto L_SNS; end                                         #   End of loop
+
+  "\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors)."           -MSG; # Protocol
+  bIte if TRUE -infofile; end                                                   # Write info file
+  "\n   - Evaluation results "                                            -MSG; # Protocol
+  .__AM_nEtdr 0 ==                                                              # |
+    if "ok\n"                                                                   # |
+    else "UNEXPECTED (mean difference=${.__AM_nEtdr/nXXE})\n"                   # |
+  end                                                                     -MSG; # Protocol
+  :(.__AM_nEtdr/nXXE)>0.005: return;                                            # Error on mean >+-0.5% of exp. results
+}
+
+function -CMD_adp()
+{
+## Local variables                                                            	# -------------------------------------
+  hmm    itHMM;                                                                 # Acoustic model
+  object iFI;                                                                   # Feature information object
+  data   idSns;                                                                 # Sensor list
+  var    nEval;      0     nEval      =;                                        # HMM evaluation mode
+  var    sN;                                                                    # Current sensor name
+  var    nN;                                                                    # Current sensor index
+  var    nXN;                                                                   # Number of sensors
+  var    sAmId;   ( "am.model"   ""  -CFG_get    ) sAmId   -sset;               # The HMM indentifier
+  var    nXXE;       0     nXXE       =;                                        # Total number of evaluations
+  var    sDirMod;                                                               # Model directory
+
+  ## Initialize                                                                 # -------------------------------------
+  "\n\n// HMM ADAPTATION"                                                 -MSG; # Protocol
+
+  var sDbId;    ( "uasr.db" "vm.de" -CFG_get      ) sDbId   =;                  # UASR database
+  var sDirInfo; ( "info"    ""      -CFG_get_path ) DirInfo	=;                  # UASR info files path
+  
+  #"${sDirInfo}/${iConfFile}" TRUE -CFG_init;
+
+  "model"  "S" -CFG_get_path sDirMod =;                                         # Silently get model directory
+  -SNS_get_tab idSns =;                                                         # Get sensor table
+  #-HMM_set_eval_mode nEval =;
+
+  ## HMM sensors loop                                                           # -------------------------------------
+  :idSns[0,0]: if "\n// No. of sensors  : $[idSns.nrec]" -MSG; end              # Protocol
+  "\n"                                                                    -MSG; # Protocol
+  idSns.nrec nXN =; label L_SNS;                                                # Loop over sensors
+    ( nN 0 idSns -sfetch ) sN =;                                                #   Get curr. sensor name and file ext.
+
+    ## Load acoustic models                                                     #   -------------------------------------
+    "${sDirMod}/feainfo.object" iFI -FEA_info;                                  #   Feature information object
+    "\n   - Model ID      : $[sAmId]"                                     -MSG; #   Protocol
+    .__CFG_bNwr if "\n   - Write protect : " "ON" -COLOR_yellow + -MSG; end     #   Protocol
+    "$[sDirMod]/$[sAmId].hmm" iFI.nDim itHMM -HMM_load not if                   #   Try loading the HMM set, failed >>
+      "FATAL: Cannot load HMMs" -ERROR;                                         #     No go!
+      goto L_EXCEPTION;                                                         #     Get out
+    end                                                                         #   << HMM set ok >>
+    ( itHMM -AM_check not ) ( itHMM.gm NULL == ) || if                          #   HMMs invalid >>
+      "FATAL: HMMs invalid" -ERROR;                                             #     No go!
+      goto L_EXCEPTION;                                                         #     Get out
+    end                                                                         #   << HMM set ok >>
+
+    ## Do adaptation                                                            #   -------------------------------------
+     
+    var sMd1; ( "am.eval.mode" "F" "S" -CFG_get_ex ) sMd1 -sset;                # Get adaptation mode, default is "F"
+  	:sMd1!="0" && sMd1!="F" && sMd1!="L" && sMd1!="T": if                       # Check adaptation mode, invalid >>
+    "Invalid value \"$[sMd1]\" of cfg. key am.eval.mode." 1 -WARNING;           #   Warning
+    "F" sMd1 -sset;                                                             #   Fall back to standard adaptation mode "F"
+  end                                                                           # <<
+
+  itHMM sN -1 -1 "dev" "-HMM_adapt_fnc" "$[sMd1]V" -HMM_process return;   		# Call -HMM_process
+    
+  nXXE ++=;			                											#   Adaptation ...  
+      
+  ## End of sensor loop                                                         # - - - - - - - - - - - - - - - - - -
+  nN ++=; nN nXN < if goto L_SNS; end                                           # End of loop
+
+  "\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors)."           -MSG; # Protocol
+
+  ## Aftermath                                                                  # -------------------------------------
+label L_EXCEPTION;                                                              # Exception label
+  "\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n"           -MSG; # Protocol
+  0 return;                                                                     # Ok
+
+}
+
+## == MAIN PROGRAM ==                                                           # =====================================
+
+"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
+"\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
+"\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
+"\n// dLabPro VID     : " -version +                                      -MSG; # Protocol
+"\n// UASR VID        : " -UASR_version +                                 -MSG; # Protocol
+( "$1" "help" == ) -UASR_help || if "$2" -usage; 0 return; end                  # Print help
+"$1" var sCmd;                                                                  # Get command
+sCmd "ana" ==                                                                   # | HMM analysis
+sCmd "lab" == ||                                                                # | HMM labeling
+sCmd "syn" == ||                                                                # | HMM synthesis
+sCmd "evl" == ||                                                                # | HMM evaluation
+sCmd "trn" == || 
+sCmd "adp" == ||                                                                # | HMM training
+not ( $$ 2 < ) || if                                                            # Bad command or less than 2 args. >> 
+  $$ 2 < if "Too few arguments" else "unknown command '$1'"  end   -ERROR;      #   Error
+  "\nType '$__SFILE__.xtp help' for usage\n" -echo;                             #   Give a little help
+  1 return;                                                                     #   Terminate with error code
+end                                                                             # <<
+
+## Initialize session                                                           # -------------------------------------
+"\n// Configuration   : $2"                                               -MSG; # Protocol
+"$2" TRUE -CFG_init;                                                            # Configure session
+
+"\n// Includes        : "                                                 -MSG; # Protocol
+:sCmd=="trn" || sCmd=="evl" || sCmd=="syn" || sCmd=="lab" || sCmd=="adp" : if   # Some common cases >>
+  "util/am.itp"      include;                                         "." -MSG; #   Include AM utilities
+  "util/fea.itp"     include;                                         "." -MSG; #   Include feature utilities
+  "util/fst.itp"     include;                                         "." -MSG; #   Include FST utilities
+  "util/lab.itp"     include;                                         "." -MSG; #   Include label utilities
+  "util/lm.itp"      include;                                         "." -MSG; #   Include lexicon utilities
+  "util/lx.itp"      include;                                         "." -MSG; #   Include language model utilities
+  "util/prosody.itp" include;                                         "." -MSG; #   Include prosody handling utilities
+  "util/sig.itp"     include;                                         "." -MSG; #   Include signal utilities
+  "util/spp.itp"     include;                                         "." -MSG; #   Include signal preprocessing utilities
+end                                                                             # <<
+:sCmd=="trn" || sCmd=="evl": if                                                 # HMM training >>
+  "train/am.itp"     include;                                         "." -MSG; #   Include AM training utilities
+end                                                                             # <<
+sCmd "syn" == if                                                                # Synthesis
+  "synth/am.itp"     include;                                         "." -MSG; #   Include AM synthesis utilities
+  "synth/diph.itp"   include;                                         "." -MSG; #   Include diphone synthesis utilities
+  "synth/into.itp"   include;                                         "." -MSG; #   Include into utilities
+  "util/into.itp"    include;                                         "." -MSG; #   Include INTO file utilities
+end                                                                             # <<
+sCmd "ana" == if                                                                # HMM analysis >>
+  "train/amana.itp"  include;                                       "..." -MSG; #   Include AM analysis utilities
+end                                                                             # <<
+:sCmd=="lab" || sCmd=="adp": if                                                                # HMM analysis >>
+  "train/am.itp"     include;                                         "." -MSG; #   Include AM training utilities
+end                                                                             # <<
+" done"                                                                   -MSG; # Protocol
+#"\n\n   Saving program object ..."                                       -echo;
+#"root10015" this -trace_error;
+#"d:/tmp/HMM.dlp" this /zip -save;
+#1 break;
+
+## TODO: need a pre-include or a real inline function
+# -init_session include;
+"util/uasr_session.itp" include;                                                # Include UASR session startup script
+
+## Execute commands                                                             # -------------------------------------
+-CMD_$[sCmd] return;                                                            # Call command handler function
+
+## EOF

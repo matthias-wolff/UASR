@@ -1,0 +1,111 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: Prosody
+##
+## AUTHOR : Matthias Eichner
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Imports the pitch marks.
+##
+## @cgen:index
+## @param sDir string
+##          Path to pitch mark files
+## @param sFile string
+##          Name of pitch mark file. 
+## @param bErr boolean
+##          enable/disable import error message
+## @param idPm data
+##          Data instance to be filled with pitch marks
+function -PM_import(sDir,sFile,bErr,idPm)
+{
+  bErr FALSE == if
+    "$[sDir]/$[sFile].pm" "pm" idPm stdfile /noerror -import;
+  else
+    "$[sDir]/$[sFile].pm" "pm" idPm stdfile -import;
+  end
+  idPm -type short idPm -tconvert;
+}
+
+### Convert pitch marks to F0 per feature vector
+##
+## @cgen:index
+## @param idPm data
+##          Input table containing pitch marks
+## @param nSampRate
+##          Sampling rate
+## @param nContRate
+##          Frame shift 
+## @param nFRec number
+##          Number of feature vectors
+## @param bVuv
+##          If TRUE F0 values will be negativ for voiceless
+## @param idF0 data
+##          Target instance (F0)
+## @return nothing
+function -PM2F0(idPm,nSampRate,nContRate,nFRec,bVuv,idF0)
+{
+  data idAux;                                                                   # Auxillary data instance
+  data idF0ST;                                                                  # Per sample F0 table
+  data idFRST;                                                                  # Per frame sample start index
+
+  idPm 0 1 idAux -select;                                                       # Convert from samples per period ...
+  :idF0ST=nSampRate/idAux;                                                      # ... to F0 in Herz of current period
+  idF0ST idAux -join;                                                           # Join F0 component tp pitch mark table
+  1 1 idPm -xfetch idAux -join;                                                 # Join v/uv component
+  idAux -1 -1 0 idF0ST -expand;                                                 # Expand list of periods to list of samples
+  -type long 1 nFRec idFRST -array;                                             # Prepare feature vector list
+  nContRate 0 idFRST -fill;                                                     # Every feature vector represents nContRate samples
+  -type long 1 nFRec idAux -array;                                              # Build 
+  0 1 idAux -fill;                                                              # and join
+  idAux idFRST -join;                                                           # feature vector index
+  idFRST 1 -1 0 idFRST -expand;                                                 # Expand and
+  idFRST 0 idFRST -compress;                                                    # compress yields start sample index of each frame
+  idFRST 1 idF0ST 0 2 idF0 -lookup;                                             # Lookup F0 for each frame
+  bVuv if                                                                       # If bVuv TRUE
+    :idF0=(2*(-1+idF0[1])+1).*idF0[0]:;                                         #   set F0 values negative for voiceless and cut v/uv comp
+  else                                                                          # else
+    idF0 0 1 idF0 -select;                                                      #   cut v/uv compnent
+  end                                                                           # <<
+  0 "f0" idF0 -set_cname;                                                       # set correct component name
+}
+
+## Imports the F0 features.
+##
+## @cgen:index
+## @param sDir string
+##          Path to F0 feature files
+## @param sFile string
+##          Name of F0 feature file. 
+## @param nFea
+##          Number of feature vectors
+## @param idF0 data
+##          Data instance to be filled with F0
+function -F0_import(sDir,sFile,nFea,idF0)
+{
+  sDir sFile TRUE idF0 -PM_import;
+  idF0 "sig.srate" 16000 -CFG_get "pfa.crate" 160 -CFG_get nFea FALSE idF0 -PM2F0;
+
+  #idF0 -reset;
+  #"~F0" -type float idF0 -addcomp;
+  #"$[sDir]/$[sFile].f0" "ascii" idF0 stdfile -import;
+}
+
+## EOF

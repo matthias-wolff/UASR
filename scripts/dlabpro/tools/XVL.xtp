@@ -1,0 +1,268 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Cross validation tool
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/tools
+##
+## ARGUMENTS:
+## $1: Command or 'help'
+## $2: Configuration file or command (if $1 is 'help')
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## TODO:
+## - document <uasr.xvl.test>
+##            <uasr.xvl.flist.stat>
+##            <uasr.xvl.flist.stat_t>
+
+"../util/cfg.itp"  include;                                                     # Include configuration utilities
+"../util/os.itp"   include;                                                     # Include OS utilities
+"../util/uasr.itp" include;                                                     # Include UASR utilities
+"../util/var.itp"  include;                                                     # Include variables' utilities
+"../train/am.itp"  include;                                                     # Include AM training utilities
+
+## Prints help on usage
+function -usage(sCmd)
+{
+  sCmd "hmm" == if
+    "\n\n   hmm: HMM cross validation"                                    -MSG; 
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp hmm <cfgfile>"                       -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>   UASR configuration file"                        -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+    "\n\n     'dlabpro $__SFILE__.xtp hmm myconfig.cfg'"                  -MSG;
+      "\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "svm" == if
+    "\n\n   svm: SVM cross validation"                                    -MSG; 
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp svm <cfgfile>"                       -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>   UASR configuration file"                        -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+    "\n\n     'dlabpro $__SFILE__.xtp svm myconfig.cfg'"                  -MSG;
+      "\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "ccc" == if
+    "\n\n   ccc: Correlation coefficient classifier cross validation"     -MSG; 
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp ccc <cfgfile>"                       -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>   UASR configuration file"                        -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+    "\n\n     'dlabpro $__SFILE__.xtp ccc myconfig.cfg'"                  -MSG;
+      "\n"                                                                -MSG;
+    0 return;
+  end
+  "\n\n   SYNOPSIS:"                                                      -MSG;
+    "\n     Cross validation tool"                                        -MSG;
+  "\n\n   USAGE:"                                                         -MSG;
+    "\n     dlabpro $__SFILE__.xtp <command> <cfgfile> [options]"         -MSG;
+  "\n\n   ARGUMENTS:"                                                     -MSG;
+    "\n     command   hmm - HMM cross validation"                         -MSG;
+    "\n               svm - SVM cross validation"                         -MSG;
+    "\n     cfgfile   UASR configuration file"                            -MSG;
+  "\n\n   OPTIONS:"                                                       -MSG;
+    "\n     -v<n>           verbose level"                                -MSG;
+    "\n     -P<key>=<value> override config. key-value-pairs"             -MSG;
+    "\n"                                                                  -MSG;
+  "\n\n  Type 'dlabpro $__SFILE__.xtp help <command>' for help on a "     -MSG;
+         "specific command."                                              -MSG;
+    "\n"                                                                  -MSG;
+  0 return;
+}
+
+## Cross validation
+##
+## @param sMode string
+##          "hmm", "svm", or "ccc"
+## @return 0
+function -XVL(sMode)
+{
+  "\n\n\\\\ CROSS VALIDATION"                                             -MSG; # Protocol
+    "\n\\\\ - Mode          : $[sMode]"                                   -MSG; # Protocol
+
+  data idFXvl;                                                                  # Cross validation file list  
+  data idFTst;                                                                  # Current test file list
+  data idFTrn;                                                                  # Current training file list
+  var  sFXvl;   ( "xval"                ""  -CFG_get_flist ) sFXvl   =;         # xval file list name
+  var  sFTst;   ( "xvl_$[sMode]_tst"        -SH_tmpfile    ) sFTst   =;         # Temporary test file list name
+  var  sFTrn;   ( "xvl_$[sMode]_trn"        -SH_tmpfile    ) sFTrn   =;         # Temporary training file list name
+  var  sDlp;    ( "dlabpro" "dlabpro"   "S" -CFG_get_ex    ) sDlp    =;         # dLabPro executable to call
+  var  nPart;   ( "part"    "-1"        "S" -CFG_get_ex    ) nPart   -vset;     # Current partition
+  var  sFSta;   ( "xvl.flist.stat"   "" "S" -CFG_get_ex    ) sFSta   =;         # xval common statistics file list
+  var  sFStt;   ( "xvl.flist.stat_t" "" "S" -CFG_get_ex    ) sFStt   =;         # xval common lin.trafo.stats.file list
+  var  sFTstp;                                                                  # Temporary test file list name
+  var  sFTrnp;                                                                  # Temporary training file list name
+  var  sFStap;                                                                  # xval common statistics file list
+  var  sFSttp;                                                                  # xval common lin.trafo.stats.file list
+  var  sDirFls; ( "flists"              ""  -CFG_get_path  ) sDirFls =;         # File list directory
+  var  sDirLog; ( "log"                 "S" -CFG_get_path  ) sDirLog =;         # Log directory
+  var  sDirMdl; ( "model"               "S" -CFG_get_path  ) sDirMdl =;         # Model directory
+  var  bAll;  nPart 0 < if TRUE bAll =; 0 nPart =; end                          # Doing all partitions?
+  var  sCmd;                                                                    # Current command line
+
+  ## Initialize                                                                 # -------------------------------------  
+  sFTst "?\\?/" "replace" -VAR_strop sFTst =;                                   # For Windows: get rid of backspaces
+  sFTrn "?\\?/" "replace" -VAR_strop sFTrn =;                                   # For Windows: get rid of backspaces
+  ( "flist.sep" "\t " "S" -CFG_get_ex ) stdfile set sep;                        # Set file list separator(s)
+  sFXvl "ascii" idFXvl stdfile /strings -import;                                # Import Filelist -> idFXvl
+  .__CFG_bNwr not if                                                            # Actually doing cross validation >>
+    sDirLog "/$[sMode]-*.dn3" + -SH_rm;                                         #   Delete previous log files
+  end                                                                           # <<
+  sFSta "" != if "\n   - Common stat   : $[sFSta]" -MSG; end
+  sFStt "" != if "\n   - Common stat_t : $[sFStt]" -MSG; end
+  
+  ## Do cross validation                                                        # -------------------------------------
+  label L_PART;                                                                 # Loop over partitions
+    "\n\n\\\\ _________________________________________________________"        #   |
+    "____________________________________________________________" +      -MSG; #   Protocol
+    nPart idFXvl idFTrn idFTst -XVL_partition;                                  #   Get file lists
+    :idFTrn.nrec>0 && idFTst.nrec>0: if                                         #   File lists ok >>
+      "\n\\\\ PARTITION: $[nPart]"                                        -MSG; #     Protocol
+      "\n\\\\ TRAINING : $[idFTrn.nrec] files"                            -MSG; #     Protocol
+      "\n\\\\ TEST     : $[idFTst.nrec] files"                            -MSG; #     Protocol
+      sFTst .__CFG_nJobs 1 > if "_$[nPart]" + end sFTstp =;                     #     Make test file name 
+      sFTrn .__CFG_nJobs 1 > if "_$[nPart]" + end sFTrnp =;                     #     Make training file name 
+      ( sFSta "" == if "$[sFTrnp]" else "$[sDirFls]/$[sFSta]" end ) sFStap =;   #     Make statistics file name 
+      ( sFStt "" == if "$[sFTrnp]" else "$[sDirFls]/$[sFStt]" end ) sFSttp =;   #     Make lin. trafo. statistics file name 
+      sFTstp "ascii" idFTst stdfile -export;                                    #     Write temp. test file list
+      sFTrnp "ascii" idFTrn stdfile -export;                                    #     Write temp. training file list
+      sMode "hmm" == if                                                         #     HMM mode >>
+        "$[sDlp] $UASR_HOME/scripts/dlabpro/HMM.xtp trn $2 -Pskip=T" sCmd =     #       Make HMM training call
+      else sMode "svm" == if                                                    #     << SVM mode >>
+        "$[sDlp] $UASR_HOME/scripts/dlabpro/SVM.xtp trn $2" sCmd =;             #       Make SVM training call
+      else sMode "ccc" == if                                                    #     << SVM mode >>
+        "$[sDlp] $UASR_HOME/scripts/dlabpro/CCC.xtp trn $2" sCmd =;             #       Make CCC training call
+      else sMode "rmt" == if                                                    #     << RMT mode >>
+        "$[sDlp] $UASR_HOME-data/midi/scripts/dlabpro/RMT.xtp proc $2"  sCmd =; #       Make RMT training call
+      end end end end                                                           #     <<
+      sCmd " -Pflist.stat=$[sFStap] -Pflist.train=$[sFTrnp]"  +                 #     Append temporary file list ...   
+           " -Pflist.test=$[sFTstp] -Pflist.stat_t=$[sFSttp]" + sCmd =;         #     ... to training call
+      sCmd " -Pxvl=TRUE"          + sCmd =;                                     #     Notify of running cross validtn.
+      sCmd " -v$[.__UTL_nVlevel]" + sCmd =;                                     #     Propagate verbose level
+      "\n\\\\ CALLING  : \n" sCmd +                                      -MSG2; #     Protocol;
+      "\n"                                                                -MSG; #     Protocol
+      .__CFG_bNwr not if                                                        #     Write mode >>
+        .__CFG_nJobs 1 <= bAll not || if                                        #       No parallel compution >>
+          sCmd -system;                                                         #         Call training
+        else                                                                    #       << Parallel computation >>
+          nPart .__CFG_nJobs >= if iPrc${nPart-.__CFG_nJobs} -wait end;         #         Wait for a job to end
+          process iPrc$[nPart];                                                 #         Create new job
+          sDirLog -SH_mkdir;                                                    #         Create log dir
+          sCmd " -Pdir.model=$[sDirMdl]_$[nPart]"               +       sCmd =; #         Add model dir 
+          sCmd " -Pdir.log=$[sDirLog]_$[nPart]"                 +       sCmd =; #         Add log dir
+          sCmd " >$[sDirLog]/$[sMode]-out_$[nPart].txt 2>&1"    +       sCmd =; #         Save standard output
+          sCmd iPrc$[nPart] -start;                                             #         Start job
+        end                                                                     #       <<
+      end                                                                       #     <<
+      bAll if nPart ++=; goto L_PART; end                                       #     Next part
+    end                                                                         #   <<
+  ## Clean up                                                                   # -------------------------------------
+  .__CFG_nJobs 1 <= bAll not || if;                                             # No parallel compution >>
+    sFTrn -SH_rm;                                                               #   Remove temp. training file list
+    sFTst -SH_rm;                                                               #   Remove temp. test file list
+  else;                                                                         # << Parallel computation >>
+    data idLogs;                                                                #   List of log files
+    data idLogB;                                                                #   Current base log data
+    data idLogP;                                                                #   Current partition log data
+    var nL;                                                                     #   Current log file id
+    0 var nJ; nJ nPart < while;                                                 #   Loop over partitions >>
+      nJ :nPart-.__CFG_nJobs: >= if iPrc$[nJ] -wait end;                        #     Wait for jobs end
+      "$[sFTrn]_$[nJ]" -SH_rm;                                                  #     Remove temp. training file list
+      "$[sFTst]_$[nJ]" -SH_rm;                                                  #     Remove temp. test file list
+      "$[sDirLog]_$[nJ]" "$[sMode]-*.dn3" FALSE idLogs -SH_find;                #     Find all log files
+      0 nL =; nL idLogs.nrec < while;                                           #     Loop over log files >>
+        idLogP -reset; idLogB -reset;                                           #       Reset log data
+        "$[sDirLog]_$[nJ]/${idLogs[nL,0]}" idLogP -restore;                     #       Load partitions log data
+        nJ if "$[sDirLog]/${idLogs[nL,0]}" idLogB -restore end;                 #       Load base log data
+        idLogP idLogB /noerror -cat;                                            #       Join log data
+        "$[sDirLog]/${idLogs[nL,0]}" idLogB /zip -save;                         #       Save base log data
+      nL ++=; end;                                                              #     <<
+      "$[sDirLog]_$[nJ]/*" -SH_rm;                                              #     Remove log files
+      "$[sDirMdl]_$[nJ]/*" -SH_rm;                                              #     Remove model files
+      "$[sDirLog]_$[nJ]"   -SH_rmdir;                                           #     Remove log directory
+      "$[sDirMdl]_$[nJ]"   -SH_rmdir;                                           #     Remove model directory
+    nJ ++=; end;                                                                #   <<
+  end;                                                                          # <<
+
+  "\n\n\\\\ $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n"       -MSG; # Protocol
+  0 return;                                                                     # All done
+}
+
+## HMM cross validation
+function -CMD_hmm()
+{
+  "hmm" -XVL return;
+}
+
+## SVM cross validation
+function -CMD_svm()
+{
+  "svm" -XVL return;
+}
+
+## CCC cross validation
+function -CMD_ccc()
+{
+  "ccc" -XVL return;
+}
+
+## CCC cross validation
+function -CMD_rmt()
+{
+  "rmt" -XVL return;
+}
+
+## == MAIN PROGRAM ==                                                           # =====================================
+
+"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
+"\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
+"\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
+"\n// dLabPro VID     : " -version +                                      -MSG; # Protocol
+"\n// UASR VID        : " -UASR_version +                                 -MSG; # Protocol
+-UASR_help                        if "" -usage; 0 return; end                   # Print help
+( "$1" "help" == ) ( $$ 1 == ) && if "" -usage; 0 return; end                   # Print help
+"$1" var sCmd;                                                                  # Get command
+$$ 2 < if                                                                       # Less than 2 args. >> 
+  "Too few arguments" -ERROR;                                                   #   Error
+  "\nType '$__SFILE__.xtp help' for usage\n" -echo;                             #   Give a little help
+  1 return;                                                                     #   Terminate with error code
+end                                                                             # <<
+
+## Initialize session                                                           # -------------------------------------
+"\n// Configuration   : $2"                                               -MSG; # Protocol
+"$2" TRUE -CFG_init;                                                            # Configure session
+"xvl" "TRUE" -CFG_set;                                                          # This is a cross validation
+"../util/uasr_session.itp" include;                                             # Include UASR session startup script
+
+## Execute commands                                                             # -------------------------------------
+/noerror -CMD_$[sCmd] ?error if                                                 # Call command handler, failed >>
+  "Unknown command '$[sCmd]'"                                           -ERROR; #   Error message
+  "\nType '$__SFILE__.xtp help' for usage\n"                              -MSG; #   Give a little help
+  1 return;                                                                     #   Terminate with error code
+end                                                                             # <<
+0 return;                                                                       # Return "ok"
+
+## EOF

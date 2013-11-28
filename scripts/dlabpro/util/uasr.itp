@@ -1,0 +1,545 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: UASR
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Global variables
+  1 var __UTL_nVlevel;                                                          # Verbose level
+255 var __UTL_nElevel;                                                          # Error / warning level
+  0 var __UTL_nErrors;                                                          # Session error counter
+  0 var __UTL_nWarnings;                                                        # Session warninig counter
+
+## -- EXPERIMENTAL -- Returns session property.
+##
+## @cgen:index
+## @param sKey string
+##          Property key
+## @param default
+##          Default value (string, number, Bool or instance) to return if
+##          <code>sKey</code> is not found
+## @return The string, number, Bool or instance associated with
+##         <code>sKey</code> or <code>default</code> in case of errors
+function -PRP_get(sKey,default)
+{
+  function -PRP_arg(sArg)
+  {
+    sArg "${sKey}" "search" -VAR_strop 0 == if
+      TRUE bFound =;
+      sArg "?${sKey}?" "replace" -VAR_strop sVal =;
+    end
+  }
+
+  ""    var sVal;
+  FALSE var bFound;
+  $$ 0 > if "$1"  -PRP_arg; end
+  $$ 1 > if "$2"  -PRP_arg; end
+  $$ 2 > if "$3"  -PRP_arg; end
+  $$ 3 > if "$4"  -PRP_arg; end
+  $$ 4 > if "$5"  -PRP_arg; end
+  $$ 5 > if "$6"  -PRP_arg; end
+  $$ 6 > if "$7"  -PRP_arg; end
+  $$ 7 > if "$8"  -PRP_arg; end
+  $$ 8 > if "$9"  -PRP_arg; end
+  $$ 9 > if "$10" -PRP_arg; end
+  
+  bFound if sVal return; else default return; end
+}
+
+## Colorize String by note color.
+##
+## @cgen:index
+## @param sStr string
+##          The string to colorize. 
+## @return The colorized string.
+function -COLOR_note(sStr)
+{
+  .__CFG_bCol if "[34m" sStr + "[0m" + return; end
+  sStr return;
+}
+
+## Colorize String by warn color.
+##
+## @cgen:index
+## @param sStr string
+##          The string to colorize. 
+## @return The colorized string.
+function -COLOR_warn(sStr)
+{
+  .__CFG_bCol if "[33m" sStr + "[0m" + return; end
+  sStr return;
+}
+
+## Colorize String by error color.
+##
+## @cgen:index
+## @param sStr string
+##          The string to colorize. 
+## @return The colorized string.
+function -COLOR_error(sStr)
+{
+  .__CFG_bCol if "[31m" sStr + "[0m" + return; end
+  sStr return;
+}
+
+## Colorize String by red color.
+##
+## @cgen:index
+## @param sStr string
+##          The string to colorize. 
+## @return The colorized string.
+function -COLOR_red(sStr)
+{
+  .__CFG_bCol if "[31m" sStr + "[0m" + return; end
+  sStr return;
+}
+
+## Colorize String by bright red color.
+##
+## @cgen:index
+## @param sStr string
+##          The string to colorize. 
+## @return The colorized string.
+function -COLOR_red_bright(sStr)
+{
+  .__CFG_bCol if "[1m[31m" sStr + "[0m" + return; end
+  sStr return;
+}
+
+## Colorize String by green color.
+##
+## @cgen:index
+## @param sStr string
+##          The string to colorize. 
+## @return The colorized string.
+function -COLOR_green(sStr)
+{
+  .__CFG_bCol if "[32m" sStr + "[0m" + return; end
+  sStr return;
+}
+
+## Colorize String by bright green color.
+##
+## @cgen:index
+## @param sStr string
+##          The string to colorize. 
+## @return The colorized string.
+function -COLOR_green_bright(sStr)
+{
+  .__CFG_bCol if "[1m[32m" sStr + "[0m" + return; end
+  sStr return;
+}
+
+## Colorize String by yellow color.
+##
+## @cgen:index
+## @param sStr string
+##          The string to colorize. 
+## @return The colorized string.
+function -COLOR_yellow(sStr)
+{
+  .__CFG_bCol if "[33m" sStr + "[0m" + return; end
+  sStr return;
+}
+
+## Colorize String by bright yellow color.
+##
+## @cgen:index
+## @param sStr string
+##          The string to colorize. 
+## @return The colorized string.
+function -COLOR_yellow_bright(sStr)
+{
+  .__CFG_bCol if "[1m[33m" sStr + "[0m" + return; end
+  sStr return;
+}
+
+## Colorize String by blue color.
+##
+## @cgen:index
+## @param sStr string
+##          The string to colorize. 
+## @return The colorized string.
+function -COLOR_blue(sStr)
+{
+  .__CFG_bCol if "[34m" sStr + "[0m" + return; end
+  sStr return;
+}
+
+## Colorize String by bright blue color.
+##
+## @cgen:index
+## @param sStr string
+##          The string to colorize. 
+## @return The colorized string.
+function -COLOR_blue_bright(sStr)
+{
+  .__CFG_bCol if "[1m[34m" sStr +"[0m" + return; end
+  sStr return;
+}
+
+## Adjusts the length of a string by appending leading or tailing characters.
+##
+## @cgen:index
+## @param sMsg string
+##          The string
+## @param nLen number
+##          The desired length (negative for left alignment)
+## @param sChr string
+##          The padding character
+## @return The padded string
+function -MSG_pad_ex(sMsg,nLen,sChr)
+{
+  var bLeft;                                                                    # Left/right alignment flag
+  nLen 0 < if :bLeft=1; :nLen=-nLen; else :bLeft=0; end                         # Detect left/right alignment
+  ( sMsg "" "len" -VAR_strop ) nLen < while                                     # While length of sMsg < nLen >>
+    bLeft if sMsg sChr + sMsg =; else sChr sMsg + sMsg =; end                   #   Add one space to sMsg
+  end                                                                           # <<
+  sMsg return;                                                                  # Return result;
+}
+
+## Adjusts the length of a string by appending leading or tailing spaces.
+##
+## @cgen:index
+## @param sMsg string
+##          The string
+## @param nLen number
+##          The desired length (negative for left alignment)
+## @return The padded string
+function -MSG_pad(sMsg,nLen)
+{
+  sMsg nLen " " -MSG_pad_ex return;                                             # Call -MSG_pad_ex
+}
+
+## Adjust the length of a string representing a real number by adding tailing
+## zeros.
+##
+## @cgen:index
+## @param sNum string
+##          The number string
+## @param nDec number
+##          The number of decimal places
+## @return the padded number string
+function -MSG_dpad(sNum,nDec)
+{
+  data idAux; { { "$[sNum]" } } "." "split" idAux -strop;                       # Split number string
+  "${idAux[0,0]}" "." + ( "${idAux[0,1]}" :-nDec: "0" -MSG_pad_ex ) + return;   # Append trailing "0"s
+}
+
+## UASR message. The message will only be printed if <code>nLevel</code> is
+## greater or equal the verbose level <code>.__UTL_nVlevel</code>.
+##
+## @cgen:index
+## @param sMsg string
+##          The message
+## @param nLevel number
+##          The verbose level of the message
+function -MSGX(sMsg,nLevel)
+{
+  .__UTL_nVlevel nLevel >= if sMsg -echo; end
+}
+
+## UASR message. The message will only be printed if the verbose level
+## <code>.__UTL_nVlevel</code> is greater than 0.
+##
+## @cgen:index
+## @param sMsg string
+##          The message
+function -MSG(sMsg)
+{
+  .__UTL_nVlevel 1 >= if sMsg -echo; end
+}
+
+## UASR message. The message will only be printed if the verbose level
+## <code>.__UTL_nVlevel</code> is greater than 1.
+##
+## @cgen:index
+## @param sMsg string
+##          The message
+function -MSG2(sMsg)
+{
+  .__UTL_nVlevel 2 >= if sMsg -echo; end
+}
+
+## UASR warning. The warning will only be printed if <code>nLevel</code> is
+## greater or equal the error level <code>.__UTL_nElevel</code>.
+##
+## @cgen:index
+## @param sMsg string
+##          The error message
+## @param nLevel number
+##          The error level of the message
+/inline function -WARNING(sMsg,nLevel)
+{
+  .__UTL_nElevel nLevel >= if
+    "\n$__FILE__($__LINE__): warning - " -echo;
+    sMsg -COLOR_warn -echo;
+    .__UTL_nWarnings ++=;
+  end
+}
+
+## UASR error. Error messages may be suppressed by setting the error level
+## <code>.__UTL_nVlevel</code> to -1.
+##
+## @cgen:index
+## @param sMsg string
+##          The error message
+/inline function -ERROR(sMsg)
+{
+  .__UTL_nElevel 0 >= if
+    "\n$__FILE__($__LINE__): error - " -echo;
+    sMsg -COLOR_error -echo;
+    .__UTL_nErrors ++=;
+    .__UTL_nErrors 100 >= if
+       "\n\nFATAL: More than ${.__UTL_nErrors}. Terminating program." -COLOR_error -echo;
+       quit;
+    end
+  end
+}
+
+## UASR assertion failure
+## 
+## @cgen:index
+## @param bCondition boolean
+##          If <code>FALSE</code> script will break displaying an assertion
+##          failure
+## @param sMsg string
+##          Short message describing the reason of the failure
+/inline function -ASSERT(bCondition,sMsg)
+{
+  bCondition if leave; end
+  "\n"                                               -COLOR_error -echo;
+  "\n*********** UASR ASSERTION FAILURE ***********" -COLOR_error -echo;
+  "\n Location: $__FILE__($__LINE__)"                -COLOR_error -echo;
+  "\n Reason  : $[sMsg]"                             -COLOR_error -echo;
+  "\n**********************************************" -COLOR_error -echo;
+  "ASSERTION FAILURE" break;
+}
+
+## Displays a progress bar ranging from 0 to 100 per cent.
+##
+## @cgen:index
+## @param nPrc number
+##          Current progress, 0&le;<code>nPrc</code>&le;1. If 0, the
+##          function will display the scale. If &gt;0, the function will
+##          continue the progress bar from the position displayed by the
+##          most recent call to <code>-PBAR</code>.
+## @param nLevel number
+##          Verbose level, the progress bar will only be draw on
+##          <em>exactly</em> this verbose level.
+function -PBAR(nPrc,nLevel)
+{
+  .__UTL_nVlevel nLevel != if leave; end
+  ".__PBAR_nGauge"  "var" ?instance not if  0 var .__PBAR_nGauge;  end
+  ".__PBAR_nLength" "var" ?instance not if 60 var .__PBAR_nLength; end
+  nPrc 1. > if 1 nPrc =; end
+  nPrc 0. <= if
+    "\n              ___________________________________________________________"         -echo;
+    "\n   Progress: |0%   '     '     '     '     |50%  '     '     '     '     |100%"    -echo;
+    "\n             |"                                                                    -echo;
+    0 .__PBAR_nGauge =;
+    leave;
+  end
+  var nTicks;
+  :nTicks = ent((nPrc)*.__PBAR_nLength)-.__PBAR_nGauge;
+  nTicks .__PBAR_nGauge +=;
+  label L_TICKS; nTicks 0 > if
+    "|" -echo;
+    nTicks --=; goto L_TICKS;
+  end
+}
+
+## Sorts a file list of strings containing a "C_S_I" (specialization, split,
+## iteration) identifiers ascending by split and iteration number.
+##
+## @cgen:index
+## @param idList data
+##          Data instance to be sorted (strings are expected in component 0)
+function -UTL_sort_CSI(idList)
+{
+  function -zeropad(idList,bPad)
+  {
+    var i;
+    label L; i 10 < if
+      bPad if
+        idList "#_$[i].#_0$[i]." "replace" idList -strop;
+        idList "#_$[i]_#_0$[i]_" "replace" idList -strop;
+        idList "#_$[i]/#_0$[i]/" "replace" idList -strop;
+      else
+        idList "#_0$[i].#_$[i]." "replace" idList -strop;
+        idList "#_0$[i]_#_$[i]_" "replace" idList -strop;
+        idList "#_0$[i]/#_$[i]/" "replace" idList -strop;
+      end
+      i ++=; goto L;
+    end
+  }
+  
+  idList TRUE -zeropad; 
+  idList 0 idList -sortup;
+  idList FALSE -zeropad;
+}
+
+## Sorts a file list of strings containing a "S_I" (split,iteration) 
+## identifiers ascending by split and iteration number.
+##
+## @cgen:index
+## @param idList data
+##          Data instance to be sorted (strings are expected in component 0)
+function -UTL_sort_SI(idList)
+{
+  function -zeropad(idList,bPad)
+  {    
+    var i;
+    label L; i 10 < if
+      bPad if
+        idList "#$[i].#0$[i]." "replace" idList -strop;
+        idList "#$[i]_#0$[i]_" "replace" idList -strop;
+        idList "#$[i]/#0$[i]/" "replace" idList -strop;
+      else
+        idList "#0$[i].#$[i]." "replace" idList -strop;
+        idList "#0$[i]_#$[i]_" "replace" idList -strop;
+        idList "#0$[i]/#$[i]/" "replace" idList -strop;
+      end
+      i ++=; goto L;
+    end
+  } 
+  
+  idList TRUE -zeropad;
+  idList 0 idList -sortup;
+  idList FALSE -zeropad;
+}
+
+## Returns the path of the currently executed dLabPro script (without the name
+## of the script file itself).
+## @cgen:index
+/inline function -UTL_spath()
+{
+  this :sfl[0,0]: "" "splitp" -VAR_strop "?\\?/" "replace" -VAR_strop return;
+}
+
+## Returns the SVN revision number of the current UASR working copy.
+##
+## @cgen:index
+## @return The UASR SVN revision number. The number may include a suffix
+##         character; "M" - locally modified, "?" - status of working copy
+##         unknow
+function -UASR_version()
+{
+  "$UASR_HOME" -GIT_version return;                                             #Get version number of uasr
+}
+
+## Returns the SVN revision number of current uasr database.
+## @cgen:index
+## @return The UASR-data/db SVN revision number. The number may include a suffix
+##         character; "M" - locally modified, "?" - status of working copy
+##         unknown
+function -DB_version()
+{
+  var sDb;                                                                      # Database
+  "db"  "" "S" -CFG_get_ex sDb  =;                                              # Get data base identifier
+  "$UASR_HOME-data/$[sDb]" -GIT_version return;                                 # Return version number of uasr database
+}
+
+## Returns the GIT revision identifier of given repository.
+## @cgen:index
+## @param sPath var
+##          Path to svn repository
+## @return The GIT revision identifier, or "?" if no version ID could be
+##         obtained.
+function -GIT_version(sPath)
+{
+  ## Analyze git entries                                                        # -------------------------------------
+  file iF;       "" iF -set sep;                                                # File loader  
+  data idMaster; "line" 255 idMaster -addcomp;                                  # File contents buffer
+  "$[sPath]/.git/refs/heads/master" "ascii" idMaster iF /noerror -import        # Load refs/heads/master file
+  ?error not if                                                                 # Got it >>
+    "${idMaster[0,0]}" return;                                                  #   Return the master ID
+  end                                                                           # <<
+
+  ## Dude, just dunno ...                                                       # -------------------------------------
+  "?" return;                                                                   # Cannot determine revision number
+}
+
+## Determines if the user requested help through one of the command line options
+## -h or --help.
+##
+## @cgen:index
+## @return <code>TRUE</code> if help should be displayed, <code>FALSE</code>
+## otherwise
+function -UASR_help()
+{
+  var nArg; nArg $$ <= while                                                    # Loop over command line arguments >>
+    ( nArg -argv ) "-h"     == if TRUE return; end                              #   -h     specified -> want help!
+    ( nArg -argv ) "--help" == if TRUE return; end                              #   --help specified -> want help!
+    nArg ++=;                                                                   #   Next argument
+  end                                                                           # <<
+  FALSE return;                                                                 # Don't want no help dude ...
+}
+
+## Detects silent mode (no screen protocol except errors and warnings). The
+## silent mode is toggled by the command line switch <code>-v0</code>. Programs
+## sensitive to this switch must call this function at the very start to
+## suppress all messages.
+function -UASR_silence()
+{
+  var nArg; nArg $$ <= while                                                    # Loop over command line arguments >>
+    ( nArg -argv ) "-v0" == if 0 .__UTL_nVlevel =; leave; end                   #   -v0 specified -> shut up!
+    nArg ++=;                                                                   #   Next argument
+  end                                                                           # <<
+}
+
+## Saves an object to a file regarding the global write-protect flag. The global
+## write-protect flag is stored in the variable <code>.__CFG_bNwr</code> and
+## toggled through the command line option "-n".
+##
+## @cgen:index
+## @param sFile string
+##          The relative or fully qualified name of the file to save to.
+## @param sFormat string
+##          The file format. See documentation of class <code>file</code> for a
+##          list of available formats. Can be <code>NULL</code> in which case
+##          the object will be saved in the dLabPro standard file format (zipped
+##          XML or DN3).
+## @param iObject object
+##          The object to save (cannot be <code>NULL</code>).
+## @return 0 if the object was actually saved, 1 if write-protection is active,
+##         and -1 if an error occurred while trying to write the file.
+function -SAVE(sFile,sFormat,iObject)
+{
+  "\n   Writing \"$[sFile]\" ..."                                         -MSG; # Protocol
+  var bNwr; FALSE bNwr =;                                                       # Local write-protect flag
+  ".__CFG_bNwr" "var" ?instance if .__CFG_bNwr bNwr =; end                      # Read global write-protect flag 
+  bNwr not if                                                                   # Not write-protected >>
+    sFormat not if                                                              #   No file format specified >>
+      sFile iObject /noerror /zip -save                                         #     Save object in standard format
+    else                                                                        #   << File format specified >>
+      sFile sFormat iObject stdfile /noerror -export;                           #     Export object
+    end                                                                         #   <<
+    ?error if " FAILED" -COLOR_red -MSG; -1 return; end " ok"             -MSG; #   Check for errors
+    0 return;                                                                   #   Return "ok"
+  else                                                                          # << Write protected >>
+    " SKIPPED (write protection on!)" -COLOR_yellow                       -MSG; #   Protocol
+    1 return;                                                                   #   Return "write protected"
+  end                                                                           # <<
+}
+
+## EOF

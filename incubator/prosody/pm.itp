@@ -1,0 +1,229 @@
+## Unified Approach to Speech Synthesis and Recognition
+## - Pitch mark functions
+##
+## AUTHOR : Hussein Hussein
+## UPDATE : 
+##          $Revision: 		 $
+## PACKAGE: 
+## RCS-ID : 
+##
+
+
+###############################################################################################################
+## This function converts the PM from TU Dresden format (distance between PM in samples) to time format in sec 
+## PM file is only one column [Anregung: - (voicelos or stimmlos) , + (voiced or stimmhaft)]    
+## 
+## @param idPMark data
+##          Data instance of PM (TU Dresden format)
+## @param nSampRate var
+##          Variable of Sample Rate
+## @param idPMarkTime data
+##          Data instance of PM (time format in sec)
+function -PM_Sample2Time(idPMark,nSampRate,idPMarkTime)     
+{ 
+  	0             var  i;            												# Create/init a loop counter variable named i
+  	idPMark.nrec  var  nPM;          												# Create/init a variable named nPM (Number of PM)
+  	0             var  a;            												# PM from (0) in samples
+  	0             var  b;            												# PM from (0) in time
+
+  	label L1;                                  										# Define a jump label named L1
+  	i nPM < if                                 										# If loop counter < (Number of PM)
+    	${idPMark[i,0]} a   +=;                  									# PM in sample from 0 
+    	a nSampRate / b =;                       									# PM in time from 0 (in sec)
+      	${idPMark[i,1]} 0 == if
+        	${-b}  i 0 idPMarkTime -store;       									# save PM (negative value for voicelos segments)
+      	else
+        	b  i 0 idPMarkTime -store;           									# save PM (positive value for voiced segments)
+      	end 
+    	i ++=;                                   									# Increment loop counter
+    	goto L1;                                 									# Jump to label L1
+  	end                                      										# End of conditional branch
+} 
+###############################################################################################################
+
+
+
+
+###############################################################################################################
+## This function converts the PM from time format [second] to TU Dresden format (distance between PM in samples) 
+## Output PM file consist of two columns:
+## 1. nPeriod (Number of samples between two pitch marks)
+## 2. nAnregung [0 (voicelos or stimmlos) , 1 (voiced or stimmhaft)]
+## 
+## @param idPMTime data
+##          Data instance of PM (time format in sec)
+## @param nSampRate var
+##          Variable of Sample Rate
+## @param idPM data
+##          Data instance of PM (TU Dresden format)
+function -PM_Time2Sample(idPMTime,nSampRate,idPM)     
+{
+	var i;																			# Create a loop counter variable named i
+	var nPM;																		# Create a variable named nPM (Number of PM)
+	var nAuxPM1;																	# Auxiliary variable of PM1
+	var nAuxPM2;																	# Auxiliary variable of PM2
+	var nAbsAuxPM1;																	# Absolute value of auxiliary variable of PM1
+	var nAbsAuxPM2;																	# Absolute value of auxiliary variable of PM2	
+	var nSampAbsAuxPM1;																# Absolute value of auxiliary variable of PM1 in sample
+	var nSampAbsAuxPM2;																# Absolute value of auxiliary variable of PM2 in sample	
+	var nSamplePM;																	# Create a variable for number of samples between two pitch marks
+	var nDiffSamplePM;																# Create a variable for difference between two PM
+
+
+  	## Initialize                                                                 	# -------------------------------------	
+	0 i =;
+	idPMTime.nrec nPM =;
+	0 nAuxPM1 =;
+	0 nAuxPM2 =;
+	0 nAbsAuxPM1 =;
+	0 nAbsAuxPM2 =;
+	0 nSampAbsAuxPM1 =;
+	0 nSampAbsAuxPM2 =;	
+	0 nSamplePM =;
+	0 nDiffSamplePM =;
+
+  	## Convert pitch mark from time to sample                                       # -------------------------------------	
+  	label L1;                                  										# Define a jump label named L1
+  	i nPM < if                                 										# If loop counter < (Number of PM)
+
+		0 i == if																	# Process the first pitch mark >>
+			:idPMTime[i,0]: nAuxPM2 =;												# PM in time from 0 (in sec)
+			:nAbsAuxPM2=abs(nAuxPM2);												# Absolute value
+    		nAbsAuxPM2 nSampRate * nSamplePM =;                  					# PM in sample
+		else																		# Process pitch marks from 2 to the end >>
+			:idPMTime[i-1,0]: nAuxPM1 =;											# Previous PM
+			:idPMTime[i,0]: nAuxPM2 =;												# Current PM
+			:nAbsAuxPM1=abs(nAuxPM1);												# Absolute value of Previous PM
+			:nAbsAuxPM2=abs(nAuxPM2);												# Absolute value of Current PM
+			nAbsAuxPM1 nSampRate * nSampAbsAuxPM1 =;
+			nAbsAuxPM2 nSampRate * nSampAbsAuxPM2 =;			
+ 			nSampAbsAuxPM2 nSampAbsAuxPM1 - nSamplePM =;							# PM in sample			
+			#nAbsAuxPM2 nAbsAuxPM1 - nDiffSamplePM =;								# Difference between Previous PM and Current PM
+			#nDiffSamplePM nSampRate * nSamplePM =;									# PM in sample
+		end																		# <<
+
+
+      	:idPMTime[i,0]: 0 < if
+        	nSamplePM i 0 idPM -store;       										# Save number of samples between two PM
+        	0 i 1 idPM -store;       												# Save 0 for negative value of voicelos segments
+      	else
+        	nSamplePM i 0 idPM -store;           									# Save number of samples between two PM
+        	1 i 1 idPM -store;       												# Save 1 for positive value of voiced segments
+      	end 
+      	
+    	i ++=;                                   									# Increment loop counter
+    	goto L1;                                 									# Jump to label L1
+  	end                                      										# End of conditional branch
+} 
+###############################################################################################################
+
+
+
+###############################################################################################################
+## Convert F0 to pitch marks
+##
+## @cgen:index
+## @param idF0 data
+##          Input data instance containing F0 contour (F0)
+## @param nSampRateF0
+##          Frame shift (Sampling rate for F0 contour)
+## @param nSampRate
+##          Sampling rate for speech signal
+## @param idPM data
+##          Output data instance containing pitch marks (PM)
+function -F02PM(idF0,nSampRateF0,nSampRate,idPM)
+{
+	data idAux;                                                                  	# Auxillary data instance
+	
+	var i;
+	var ii;
+	var nSrateRatio;																# Sample Rate Ratio
+	var nSumSamplePM;																# Sum of samples for every PM (begin with 0 until the current PM)
+	var nSumSampleFrame;															# Sum of samples for every frame (begin with 0 until the end of frame)
+	var nSampleUnvoiced;															# Distance between Unvoiced PM
+
+	nSampRate nSampRateF0 / nSrateRatio =;											# Sample Rate Ratio = nSrate / nSrateF0
+	0 nSumSamplePM =;
+	0 nSumSampleFrame =;
+	nSrateRatio 2 / nSampleUnvoiced =;
+
+  	## Reset data                                                                 	# -------------------------------------
+	idAux -reset;
+	
+  	## Define a data object structure                                              	# -------------------------------------	
+	"nPer" type short idPM -addcomp;												# Output data object
+	"anreg" type short idPM -addcomp;
+
+	"nSamp" type long idAux -addcomp;
+
+
+  	## Compute inverse of F0                               							# -------------------------------------				
+	0 i =; 																			# Init a loop counter i	
+	label L2;                                             							# Define a jump label named L2
+	i idF0.nrec < if                                            	 				# If loop counter < (number of records)
+		:idF0[i,0]: 0 > if															# F0 > 0 (voiced) >>
+			i 1 + idAux -reallocate;												# Reallocates a new record of memory keeping the contents
+			:idAux[i,0]=nSampRate/idF0[i,0];										# Convert F0 in Herz to a number of samples per period
+		else																		# F0 = 0 (unvoiced) >>
+			i 1 + idAux -reallocate;												# Reallocates a new record of memory keeping the contents	
+			:idAux[i,0]=0;		
+		end																		# <<
+		i ++=;                                              						# Increment loop counter i
+  		goto L2;                                            						# Jump to label L2
+	end                                                 							# End of conditional branch
+
+
+  	## Compute pitch mark (multiple PM in one frame)								# -------------------------------------	
+	0 i =; 																			# Init a loop counter i	
+	0 ii =; 																		# Init a loop counter ii
+	label L3;                                             							# Define a jump label named L3
+	i idAux.nrec < if                                            	 				# If loop counter < (number of records)
+		i 1 + nSrateRatio * nSumSampleFrame =;										# Sum of samples for every frame (begin with 0 until the end of frame)
+		:idAux[i,0]: 0 > if															# voiced >>
+			label L4;                                             					# Define a jump label named L4
+			nSumSamplePM nSumSampleFrame < if										# Process in the current frame >>
+				ii 1 + idPM -reallocate;											# Reallocates a new record of memory keeping the contents	
+				:idPM[ii,0]=idAux[i,0];												# Number of samples between two voiced periods
+				:idPM[ii,1]=1;														# Anregung = 1
+				ii ++=;                                              				# Increment loop counter ii
+				nSumSamplePM :idAux[i,0]: + nSumSamplePM =;							# Update the nSumSamplePM
+  				goto L4;                                            				# Jump to label L4
+			end																	# <<
+		else																		# unvoiced >>
+			label L5;                                             					# Define a jump label named L5
+			nSumSamplePM nSumSampleFrame < if										# Process in the current frame >>
+				ii 1 + idPM -reallocate;											# Reallocates a new record of memory keeping the contents	
+				:idPM[ii,0]=nSampleUnvoiced;										# length of PM in unvoiced segment = Sample rate ratio/2 [80 sample]
+				:idPM[ii,1]=0;														# Anregung = 0
+				ii ++=;                                              				# Increment loop counter ii
+				nSumSamplePM nSampleUnvoiced + nSumSamplePM =;						# Update the nSumSamplePM
+  				goto L5;                                            				# Jump to label L5
+			end																	# <<
+		end																		# <<
+		i ++=;                                              						# Increment loop counter i
+  		goto L3;                                            						# Jump to label L3
+	end                                                 							# End of conditional branch
+
+
+}
+
+function -PM2BIN(dPm) {
+  data dBin;
+  data dAux;
+  var i;
+  
+  0 i =;
+  
+  label N; i dPm.nrec < if
+    dAux -reset;
+    -type short 1 i 0 dPm -dfetch dAux -array;
+    i 1 dPm -dfetch 0 == if -1 else 1 end 0 0 dAux -dstore;
+    dAux dBin -cat;
+    i ++=;
+    goto N;
+  end
+  
+  dBin return;
+}
+  
+###############################################################################################################

@@ -1,0 +1,190 @@
+## Unified Approach to Speech Synthesis and Recognition
+## - Training functions: Hidden Markov model analysis
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/train
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Computes the per HMM accuracies and correctnesses from the confusion
+## matrices stored in the log directory.
+function -HMM_perHmmEval()
+{
+  hmm  itAux;
+  hmm  itHMM;
+  data idL;                                                                     # File list
+  data idCmx;                                                                   # Current confusion matrix
+  data idCor;                                                                   # Per HMM correctness
+  data idAcc;                                                                   # Per HMM accuracy
+  data idAux;                                                                   # Auxilary data instance
+  var  sLdir;                                                                   # Log directory
+  var  sMdir;                                                                   # Model directory
+  var  nIxEps;                                                                  # Rec. & comp. index of epsilon symbol
+  var  nIcNam;                                                                  # Component index of HMM name
+  var  nF;                                                                      # Current file
+  var  nM;                                                                      # Current model
+  var  N;                                                                       # "Number" of labels (model)
+  var  I;                                                                       # "Number" of insertions (model)
+  var  D;                                                                       # "Number" of deletions (model)
+  var  C;                                                                       # "Number" correctly recognized (model)
+  var  S;                                                                       # "Number" substituted (model)
+  var  A;
+
+  "\n\n// Computing per HMM correctnesses and accuracies" -MSG;                 # Protocol
+
+  ## Make file list                                                             # -------------------------------------
+  "log"   "" -CFG_get_path sLdir =;                                             # Get log directory
+  "model" "" -CFG_get_path sMdir =;                                             # Get model directory
+  sLdir "hmm_cmx-*.dn3" FALSE idL -SH_find;                                     # Find all confusion matrices
+  idL -is_empty if "No suitable source files found." -ERROR; leave; end         # No confusion matrices, no service
+  idL -UTL_sort_CSI;                                                            # Sort by spec./split/iteration
+  idL "/\\-." "split" idL -strop;                                               # Split at delimiters
+  idL idL.dim 2 - 1 idL -select;                                                # HMM ID in last but one component
+  0 "HMM" idL -set_cname;                                                       # Set name of remaining component
+
+  ## Analyze confusion matrices                                                 # -------------------------------------
+  "\n\n   Analyzing $[idL.nrec] confusion matrices ... " -MSG;                  # Protocol
+  0 1 -PBAR;                                                                    # Begin progress bar
+  0 nF =; label L_CFM; nF idL.nrec < if                                         # Loop over confusion matrices >>
+  
+    ## Read phoneme confusion matrix                                            #   - - - - - - - - - - - - - - - - - -
+    .__UTL_nVlevel 1 > if "\n     " idL [ $[nF] 0 ] + -MSG; end                 #   Protocol (verbose level 2)
+    :(nF+1)/idL.nrec: 1 -PBAR;                                                  #   Display progress bar
+    "${sLdir}/hmm_cmx-${idL[nF,0]}.dn3" idCmx -restore;                         #   Load confusion matrix
+    idCmx.nrec -- nIxEps =;                                                     #   Epsilon symbol in last record
+    idCmx.dim  -- nIcNam =;                                                     #   Model name in last component
+    nIxEps idCmx -get_cname "eps" != nIcNam idCmx -get_cname "~NAM" != || if    #   Comps.don't have the right names >>
+      "Invalid confusion matrix \"${idL[nF,0]}\"" -ERROR;                       #     Error message
+      nF ++=; goto L_CFM;                                                       #     Skip
+    end                                                                         #   <<
+
+    ## Prepare correctness and accuracy instances                               #   - - - - - - - - - - - - - - - - - -
+    nF 0 == if                                                                  #   First confusion matrix >>
+      idCmx idCor -scopy;                                                       #     Copy component structure
+      idL.nrec idCor -allocate;                                                 #     Allocate records
+      idCor idCor.dim 2 - 2 idCor -delete;                                      #     Remove last two components
+      idL idCor -join;                                                          #     Join model names
+      idCor idAcc -copy;                                                        #     Copy initialized table
+    end                                                                         #   <<
+
+    ## Compute per-phoneme correctness and accuracy                             #   - - - - - - - - - - - - - - - - - -
+    idCmx NULL 0 "sum" idAux -aggregate;                                        #   Aggregate confusion matri
+    0 nM =; label L_MDL; nM idCmx.nrec -- < if                                  #   Loop over models >>
+      :N = idAux[nM,0];      :idAux[nM,0]: 0 == if 1 N =; end                   #     Get "number" of labels
+      :I = idCmx[nIxEps,nM];                                                    #     Get "number" of insertions
+      :D = idCmx[nM,nIxEps];                                                    #     Get "number" of deletions
+      :C = idCmx[nM,nM];     :idAux[nM,0]: 0 == if 1 C =; end                   #     Get "number" of correct labels
+      :S = N-D-C;                                                               #     Get "number" of substitutions
+      :idCor[nF,nM] = (N-D-S)/N;                                                #     Compute correctness for label nM
+      :idAcc[nF,nM] = (N-D-S-I)/N;                                              #     Compute accuracy for label nM
+      .__UTL_nVlevel 4 >= if                                                    #     On verbose levels 3 and up >>
+        "\n     '${idCmx[nM,nIcNam]}'" -8 -MSG_pad                        -MSG; #       Protocol (verbose level 3)
+        " Cor=" "${ent(idCor[nF,nM]*1000)/10}" 5 -MSG_pad + "%" +         -MSG; #       Protocol (verbose level 3)
+        " Acc=" "${ent(idAcc[nF,nM]*1000)/10}" 5 -MSG_pad + "%" +         -MSG; #       Protocol (verbose level 3)
+        " (N=${N}, C=${C}, D=${D}, I=${I}, S=${S})"                       -MSG; #       Protocol (verbose level 4)
+      end                                                                       #     <<
+      nM ++=; goto L_MDL;                                                       #     End of loop
+    end                                                                         #   <<
+    nF ++=; goto L_CFM;                                                         #   End of loop
+  end                                                                           # <<
+  .__UTL_nVlevel 1 > if "\n   done" -MSG; else "done\n" -MSG; end               # Protocol
+
+  ## Save results                                                               # -------------------------------------
+  "\n   Saving results ." -MSG;                                                 # Protocol
+  "${sLdir}/phon_correctness.xml" idCor /xml -save; "." -MSG;                   # Save per model correctness
+  "${sLdir}/phon_accuracy.xml"    idAcc /xml -save; "." -MSG;                   # Save per model accuracy
+  " done\n" -MSG;                                                               # Protocol
+
+  ## List of HMMs with highest correctness                                      # -------------------------------------
+  #idCor idAcc + idAux =;
+  #"\n   Best models (Correctness + Accuracy):" -MSG;
+  idAcc idAux =;
+  "\n   Best models (Accuracy):" -MSG;
+  #idCor idAux =;
+  #"\n   Best models (Correctness):" -MSG;
+  idAux NULL 0 "imax" idAux /rec -aggregate;
+  0 C =;
+  "\n   ------------------------------------"  -MSG;
+  0 nM =; label L_MDL2; nM idAux.dim -- < if
+    "\n    ${idCmx[nM,nIcNam]}"                  -8 -MSG_pad -MSG;
+    ": ${idCor[idAux[0,nM],idAux.dim-1]}"        -9 -MSG_pad -MSG;
+    " C=${ent(idCor[idAux[0,nM],nM]*1000)/1000}" -8 -MSG_pad -MSG;
+    " A=${ent(idAcc[idAux[0,nM],nM]*1000)/1000}" -9 -MSG_pad -MSG;
+    :C=C+idCor[idAux[0,nM],nM];
+    :A=A+idAcc[idAux[0,nM],nM];
+    itAux -reset;
+    "${sMdir}/${idCor[idAux[0,nM],idAux.dim-1]}.hmm" itAux -restore;
+    itAux NULL nM itAux /noerror -copy_ui;
+    itAux itHMM /noerror -cat;
+    nM ++=; goto L_MDL2;
+  end;
+  "\n   ------------------------------------"  -MSG;
+  "\n   Max. correctness: ${ent(C/(idAux.dim-1)*1000)/10} %"   -MSG;
+  "\n   Max. accuracy   : ${ent(A/(idAux.dim-1)*1000)/10} %\n" -MSG;
+
+  1 break;
+  itHMM -1 0 0 -HMM_eval;
+}
+
+## Computes a spectrum of the per Gaussian sample sizes.
+function -HMM_sampleSizeSpectrum()
+{
+  hmm  itH;                                                                     # Current HMM
+  data idL;                                                                     # File list
+  data idF;                                                                     # Per Gaussian sample size spectrum
+  data idAux;                                                                   # Auxilary data instance
+  var  sDir;                                                                    # Model directory
+  var  sF;                                                                      # Current file name
+
+  "\n\n// Computing sample size spectrum" -MSG;                                 # Protocol
+
+  ## Make file list                                                             # -------------------------------------
+  "model" "" -CFG_get_path sDir =;                                              # Get log directory
+  sDir "*.hmm" FALSE idL -SH_find;                                              # Find all HMMs
+  idL -is_empty if "No suitable source files found." -ERROR; leave; end         # No HMMS, no service
+  idL -UTL_sort_CSI;                                                            # Sort by spec./split/iteration
+
+  ## Analyze sample sizes                                                       # -------------------------------------
+  "\n   Analyzing $[idL.nrec] HMMs " -MSG;                                      # Protocol
+  var nL; label L; nL idL.nrec < if                                             # Loop over HMMs >>
+    "${sDir}/${idL[nL,0]}" sF =;                                                #   Get current file name
+    .__UTL_nVlevel 3 >= if "\n     $[sF]" else "." end -MSG;                    #   Protocol (verbose level 2)
+    sF "_0.hmm" "search" -VAR_strop 0 < if                                      #   Not 0th itertion >>
+      sF itH -restore;                                                          #     Load HMM
+      idAux itH.pfsm -freq;                                                     #     Get sample sizes
+      1 idAux -set nblock;                                                      #     Clear block structure
+      idAux 0 idAux -sortdown;                                                  #     Sort sizes
+      idAux.nrec idF -reallocate;                                               #     Reallocate sample size spectrum
+      idAux idF -join;                                                          #     Append data
+    else                                                                        #   << 0th iteration >>
+      " (skip)" 3 -MSGX;                                                        #     Skip
+    end                                                                         #   <<
+    nL ++=; goto L;                                                             #   End of loop
+  end                                                                           # <<
+  .__UTL_nVlevel 3 >= if "\n  " -MSG; end " done" -MSG;                         # Protocol
+
+  ## Post process and save result                                               # -------------------------------------
+  "\n   Post processing and saving result ." -MSG;                              # Protocol
+  :idF=max(.log(idF),0)';                                             "." -MSG; # Log, clip and transpose
+  "log" "S" -CFG_get_path "/freq.dn3" + idF -save;                    "." -MSG; # Save sample size spectrum
+  " done" -MSG;                                                                 # Protocol
+}
+
+## EOF

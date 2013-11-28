@@ -1,0 +1,284 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Synthesis functions: HMM-coded diphone synthesis
+##
+## AUTHOR : Guntram Strecha
+## PACKAGE: uasr/scripts/dlabpro/synth
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"\n//                   Diphone synthesis extension" -MSG;
+
+"../prosody/pm.itp" include;
+
+function -UNIT_selection(dInvD,dInvB,dInvP,dInto) {
+  data dRes;
+  data dPhoSeq;
+  data dDiphs;
+  data dDiph;
+  data dDiphB;
+  data dDiphP;
+  data dInd;
+  var iPho;
+  var sPho0;
+  var sPho1;
+  var iPho0;
+  var nInd;
+  var nSB;
+  var nSP;
+  var nEB;
+  var nEP;
+  
+  dInto 0 dPhoSeq -compress;
+  "PHO_0" dInvD -find_comp 1 dInvD -mark;
+  "PHO_1" dInvD -find_comp 1 dInvD -mark;
+  dInvD -1 -1 dDiphs /mark -select;
+  dDiphs "" "ccat" dDiphs -strop;
+  
+  dPhoSeq.nrec 0 > if
+    0 0 dPhoSeq -sfetch sPho0 =;
+    1 iPho =;
+    label PHOSEQ; iPho dPhoSeq.nrec < if
+      iPho 0 dPhoSeq -sfetch sPho1 =;
+      { "$[sPho0]$[sPho1]" } dDiphs 0 0 dInd -gen_index;
+      0 0 dInd -dfetch nInd =;
+      nInd 0 < not if
+        " $[sPho0]$[sPho1]" -MSG2;
+        dInvD nInd 2 dDiph /rec -select;
+        0 "POS_SIG" dDiph -find_comp dDiph -dfetch dInvB.reclen / nSB =;
+        0 "POS_PER" dDiph -find_comp dDiph -dfetch dInvP.reclen / 2 - nSP =;
+        nInd dInvD.nrec == if
+          dInvB.nrec nEB =;
+          dInvP.nrec nEP =;
+        else
+          1 "POS_SIG" dDiph -find_comp dDiph -dfetch dInvB.reclen / nEB =;
+          1 "POS_PER" dDiph -find_comp dDiph -dfetch dInvP.reclen / 2 - nEP =;
+        end
+        dInvB nSB nEB nSB - dDiphB /rec -select;
+        dInvP nSP nEP nSP - dDiphP /rec -select;
+        dDiphP -PM2BIN dDiphB -join;
+  0 brk;
+        dDiphB dRes -cat;
+      end
+      
+      sPho1 sPho0 =;
+      iPho ++=;
+      goto PHOSEQ;
+    end
+  end
+  
+  dRes return;
+}
+
+function -SYN_hmm() {
+
+  object  iFI;                                                                  # Feature info object
+  file    iF;                                                                   # File instance
+  hmm     itHMM;                                                                # HMM instance
+  FBAproc iFBA;                                                                 # FBA instance used for smoothing features
+  CPproc  iCP;
+  FFTproc iFFT                                                                  # FFTproc instance
+  data    idVUV;
+  data    idFea;                                                                # Feature data
+  data    idFeaCnv                                                              # Converted feature data
+  data    idGss;                                                                # Gaussian sequence used for synthesis
+  data    idGssDiph;                                                            # Gaussian sequence of diphone
+  data    idMsc;                                                                # Most significant features
+  data    idLsc;                                                                # Least significatn features
+  data    idSyn;                                                                # Synthesized signal
+  data    idCnvMat;                                                             # Feature conversion matrix;
+  data    idInto;                                                               # Control file for synthesis
+  data    idAux;                                                                # Auxillary data instance
+  data    idFft                                                                 # Spectrum
+  data    idTis;
+
+  var nSrate;     "sig.srate"          16000     -CFG_get      nSrate      =;   # Signal sampling rate
+  var nDim;       "pfa.dim"               30     -CFG_get      nDim        =;   # Primary feature vector dimension
+  var nCrate;     "pfa.crate"              0     -CFG_get      nCrate      =;   # Analysis window shift in samples
+  var nBaseI0     "baseI0"               0.0 "S" -CFG_get_ex   nBaseI0     =;   # Log-value the Intensity is added.
+  var bReduced    "cnv.reduced"        FALSE     -CFG_get      bReduced    =;   # reduce to one instance of each phoneme
+  var bCompressed "save.compressed"    FALSE "S" -CFG_get_ex   bCompressed =;   # Saved coefficients have 16 bit accuracy
+  var bTokuda     "tokuda"             FALSE "S" -CFG_get_ex   bTokuda     =;   # Smoothing a la Tokuda
+  var sAmId;      "am.model"           "0_0"     -CFG_get      sAmId       =;   # Acoustic model ID
+  var sDirModel;  "model"                 ""     -CFG_get_path sDirModel   =;   # Model path
+  var sDirLog;    "log"                 "FS"     -CFG_get_path sDirLog     =;   # Log files path
+  var sDirSyn;    "syn"                 "FS"     -CFG_get_path sDirSyn     =;   # Synthesized files output path
+  var sFnInto     "file.into"             ""  "" -CFG_get_ex   sFnInto     =;   # Conversion matrix
+  var sExp        "exp"                  "."  "" -CFG_get_ex   sExp        =;   # Experiment name
+  var sSynOptions "pfa.synoptions"        ""     -CFG_get      sSynOptions =;   # synoptions
+  var sAnaOptions "pfa.anaoptions"        ""     -CFG_get      sAnaOptions =;   # anaoptions
+  var sSrcSpk     "syn.sourcespeaker"   sExp  "" -CFG_get_ex   sSrcSpk     =;   # Get source speaker
+  var sFnCnvMat;  "$[sDirModel]/$[sSrcSpk]/cnvMat_$[sAmId]_$[nCrate]" sFnCnvMat =;
+  var sSynFileTurn;
+  var sPho1;
+  var sPho2;
+  var sFnDiph;
+  var i;
+  var j;
+  var k;
+  var nDimGss;
+  
+  "\n// Model           : " sAmId +                                       -MSG; # Display HMM name
+  "\n   - Log dir       : $[sDirLog]"                                     -MSG; # Display log folder 
+  "\n   - Output dir    : $[sDirSyn]"                                     -MSG; # Display output folder 
+
+  ## Synthesis from state sequence                                              #...-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+  "$[sDirModel]/feainfo.object" iFI -FEA_info;                                  # Load feature info file
+  "$[sDirModel]/$[sAmId].hmm" itHMM -restore ?error if 1 return; end            # Load HMM
+
+  iFI.idDlt NULL 0 "sum" idAux -aggregate;
+  idAux NULL 0 "sum" idAux /rec -aggregate;
+  iFI.nDim 0 0 idAux -fetch - nDimGss =;
+
+  sFnInto "into" idInto stdfile -import;                                        # Load synthesis control
+  
+  { "$[sFnInto]" } NULL "splitp" idAux -strop;
+  0 1 idAux -sfetch "." "split" -VAR_strop "_$[sAmId]" + sSynFileTurn =;
+
+  0 1 idInto /comp -xfetch 0 idAux -compress;
+  0 0 idAux -sfetch sPho1 =;
+  1 i =;
+  label L_DIPH; i idAux.nrec < if
+    i 0 idAux -sfetch sPho2 =;
+    "$[sDirModel]/$[sSrcSpk]" "/$[sPho1]$[sPho2]"+ .__CFG_bFce if "_forced" + end ".$[sAmId].$[nCrate].gss" + sFnDiph =;
+    "\nLade $[sFnDiph]" -MSG2;
+     sFnDiph idGssDiph -restore;          # Get gauss sequence of diphone
+    ?error not if
+      idGssDiph idGss -cat;
+    end
+    sPho2 sPho1 =;
+    i ++=;
+    goto L_DIPH;
+  end
+
+  "~PHO" idGss -find_comp 1 idGss -xfetch idVUV =;
+  idVUV idVUV -LAB_map;
+  idVUV itHMM.ud 0 0 idVUV -gen_index;
+  idVUV 0 itHMM.ud "v/uv" itHMM.ud -find_comp 1 idVUV -lookup;
+  idVUV idGss -join;
+  
+  bTokuda TRUE == if 
+    0 1 idGss -xfetch idTis =;
+    idTis iFI itHMM idFea -Smooth_fea;
+    iFI.idW inv 0 nDimGss idAux /rec -select;
+    idAux 0 nDimGss idAux /comp -select;
+    idAux idFea * 0 nDimGss iFI.idX -xfetch - idFea =;
+    sSynFileTurn "_tokuda" + sSynFileTurn =;
+  else
+    idGss 0 itHMM.gm.mean 0 itHMM.gm.mean.dim idMsc -lookup;                      # Get mean vectors of MSCs from HMM
+    idGss 0 itHMM.lsmean  0 itHMM.lsmean.dim  idLsc -lookup;                      # Get mean vectors of LSCs from HMM 
+    idMsc idFea =;
+    idLsc idFea -join;
+    iFI.idW inv idFea * iFI.idX - idFea =;                            "." -MSG2;  # idFea = idFea * inv(iFI.idW) - iFI.idX
+    0 nDimGss idFea -xfetch idFea =;
+    "~INT" idGss -find_comp 1 idGss /comp -xfetch 0 1 0 idFea /comp -xstore;
+  end
+  
+  bReduced TRUE == if
+    sFnCnvMat "_reduced" + sFnCnvMat =;
+    sSynFileTurn "_reduced" + sSynFileTurn =;
+  end
+  .__CFG_bFce if
+    sFnCnvMat "_forced" + sFnCnvMat =;
+    sSynFileTurn "_forced" + sSynFileTurn =;
+  end
+
+  bCompressed TRUE == if
+    sFnCnvMat "_compressed" + sFnCnvMat =;
+    sSynFileTurn "_compressed" + sSynFileTurn =;
+  end
+  
+  sSynFileTurn "_$[nCrate]" + sSynFileTurn =;
+  
+  "\nUsing $[sFnCnvMat] for conversion." -MSG2;
+  "$[sFnCnvMat].dn3" idCnvMat -restore;
+
+  bCompressed TRUE == if
+    idCnvMat -type float idCnvMat -tconvert;
+    idCnvMat -type double idCnvMat -tconvert;
+    :ent(idFea*32768.0/15.0+0.5): idFea =;
+  end
+
+  idFea '   idCnvMat   * ' idFeaCnv   =;                  # Convert origin features
+
+  bCompressed TRUE == if
+    :idFea*15.0/32768.0: idFea =;
+    :idFeaCnv*15.0/32768.0: idFeaCnv =;
+  end
+  
+  "" -type double 0 idFeaCnv -insertcomp;
+  idFea 0 1 0 idFeaCnv /comp -xstore;
+ 
+  bCompressed TRUE == if
+    idFeaCnv iCP -decompress;
+  end
+  
+  "~PHO" idGss -find_comp 1 idGss -xfetch idFea -join;
+  "v/uv" idGss -find_comp 1 idGss -xfetch idFea -join;
+  "~PHO" idGss -find_comp 1 idGss -xfetch idFeaCnv -join;
+  "v/uv" idGss -find_comp 1 idGss -xfetch idFeaCnv -join;
+
+  1000 nCrate * nSrate / idFea    -set rinc;                                    # Set rate
+  1000 nCrate * nSrate / idFeaCnv -set rinc;                                    # Set rate
+  :idFeaCnv[0]=idFeaCnv[0]+nBaseI0:;                                            # Manipulate intensity
+
+  sSynOptions "enhancement" "search" -VAR_strop 0 >= if
+    sSynFileTurn "_enh" + sSynFileTurn =;
+  end
+
+  "CP" -FEA_pfa_init;                                                         # Init synthesis
+  idFea idInto idSyn .__FEA_iPfa $[sSynOptions] -synthesize;                  # Synthesize turn using origin features from state sequence
+  sDirSyn sSynFileTurn idSyn -SIG_export_wav;                                 # Saving synthesis signal
+
+  .__UTL_nVlevel 1 > if                                                         # Output spectrum and state sequence for debugging purpose >>
+    idSyn NULL idFft NULL iFFT /lmag -analyze;                                  #   Calc spectrum
+    idFft 0 idFft.dim 2 / idFft -select;                                        #   |
+
+    "$[sDirSyn]/" sSynFileTurn + ".gss" + idGss -save;
+    "$[sDirSyn]/" sSynFileTurn + ".fft.dn3" + idFft -save;                      #   Saving synthesis spectrum
+    "$[sDirSyn]/" sSynFileTurn + ".fea.dn3" + idFea -save;                      #   Saving synthesis features
+  end                                                                           # <<
+
+  "CP"  -FEA_pfa_init;                                                         # Init LCQ synthesis
+  idFeaCnv idInto idSyn .__FEA_iPfa $[sSynOptions] -synthesize;                 # Synthesize turn using converted features
+  
+  sSynFileTurn "_cnv" + sSynFileTurn =;                                         # Append cnv indicator to output filename
+
+  .__UTL_nVlevel 1 > if                                                         # Output spectrum  and state sequence for debugging purpose >>
+    idSyn NULL idFft NULL iFFT /lmag -analyze;                                  #   Calc spectrum
+    idFft 0 idFft.dim 2 / idFft -select;                                        #   |
+    "$[sDirSyn]/" sSynFileTurn + ".fft.dn3" + idFft -save;                      #   Saving synthesis spectrum
+    "$[sDirSyn]/" sSynFileTurn + ".fea.dn3" + idFeaCnv -save;                   #   Saving synthesis features
+  end                                                                           # <<
+
+  sDirSyn sSynFileTurn idSyn -SIG_export_wav;                                   # Saving synthesis signal
+
+  idGss 0 idAux -sortup;
+  idAux 0 idAux -compress;
+  idGss 1 idGss -sortup;
+  idGss 1 idGss -compress;
+  "\n $[idAux.nrec] gaussians used for $[idGss.nrec] phonemes." -MSG;
+  
+  "\n  " -MSG2; "done"                                                    -MSG; # Protocol
+  "\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n"         -MSG; # Protocol
+  0 return;
+}
+
+## EOF

@@ -1,0 +1,570 @@
+## Unified Approach to Speech Synthesis and Recognition
+## - Verbmobil data base functions
+##
+## AUTHOR : Hussein Hussein
+## UPDATE : 
+##          $Revision: 		 $
+## PACKAGE: 
+## RCS-ID : 
+##
+
+
+
+
+
+
+
+
+
+## <p>Imports the original text of one VerbMobil turn.</p>
+## <h4>Structure of Result</h4>
+## <table class="indent">
+##   <tr><th colspan="2">Component</th><th>Description</th></tr>
+##   <tr><th>No.</th><th>Name</th><th> </th></tr>
+##   <tr><td>0</td><td><code>&lt;sLid&gt;</code></td><td>Label name</td></tr>
+## </table>
+##
+## @param sDir string
+##          Path to label files
+## @param sTid string
+##          <code>_cdC[C]/DDDDD/FFFFFFFF_TTT_SSS[_LLL]</code> (<code>C</code>:
+##          CD index, <code>D</code>: dialoge index, <code>F</code> signal file
+##          name, <code>T</code>: turn index, <code>S</code>: speaker code,
+##          <code>L</code>: optional language code)
+## @param idLab data
+##          Data instance to be filled with original words
+function -Orig_WORD_import_vm(sDir,sTid,idLab)
+{
+  	file iF;                                                                       # File import filter
+  	data idAux1;                                                                   # Auxiliary data instance
+  	data idAux2;                                                                   # Auxiliary data instance
+  	var  sFn;                                                                      # Partiture file name
+
+  	## Load partiture file and extract word labels and convert to UASR             # -------------------------------------
+  	idLab -reset;                                                                  # Reset destination instance
+  	sTid idAux1 -VM_parse_turn_id;                                                 # Parse turn identifier
+  	"${sDir}/_cd${idAux1[0,0]}/${idAux1[0,1]}/"                                    # Create partiture file name
+    "${idAux1[0,3]}_${idAux1[0,4]}_${idAux1[0,5]}.par" + sFn =;                    # |
+  	"TR2:" iF set line_flt;                                                        # Set line filter for ascii import
+  	idAux1 -reset;                                                                 # Reset Auxiliary instance
+  	idAux2 -reset;                                                                 # Reset Auxiliary instance
+  	255 8 idAux1 -addncomps;													   # Adds (8) components to define the component structure 
+  	sFn "ascii" idAux1 iF -import;                                                 # Import partiture file
+  	0 idAux1.nrec == if leave; end                                               # Did'nt get no labels
+  	idAux1 0 2 idAux2 -delete ;													   # Delete the first two components (TR2 and word number)
+	idAux2 idLab -Delete_Empty_Components;										   # Delete the empty components (function -Delete_Empty_Components)
+  	8 1 6 idAux2 -array {"ORIG" "PUNK" "ADD1" "ADD2" "ADD3" "ADD4"}; 			   # Set component names of result (Original word, Interpunktion, extra information)	
+  	idAux2 0 idLab -set_cnames; 
+}
+
+
+
+
+
+## <p>Imports the orthographic text of one VerbMobil turn.</p>
+## <h4>Structure of Result</h4>
+## <table class="indent">
+##   <tr><th colspan="2">Component</th><th>Description</th></tr>
+##   <tr><th>No.</th><th>Name</th><th> </th></tr>
+##   <tr><td>0</td><td><code>&lt;sLid&gt;</code></td><td>Label name</td></tr>
+## </table>
+##
+## @param sDir string
+##          Path to label files
+## @param sTid string
+##          <code>_cdC[C]/DDDDD/FFFFFFFF_TTT_SSS[_LLL]</code> (<code>C</code>:
+##          CD index, <code>D</code>: dialoge index, <code>F</code> signal file
+##          name, <code>T</code>: turn index, <code>S</code>: speaker code,
+##          <code>L</code>: optional language code)
+## @param idLab data
+##          Data instance to be filled with orthographic words
+function -Ortho_WORD_import_vm(sDir,sTid,idLab)
+{
+  	file iF;                                                                      # File import filter
+  	data idAux;                                                                   # Auxiliary data instance
+  	var  sFn;                                                                     # Partiture file name
+
+
+  	## Load partiture file and extract word labels and convert to UASR            # -------------------------------------
+  	idLab -reset;                                                                 # Reset destination instance
+  	sTid idAux -VM_parse_turn_id;                                                 # Parse turn identifier
+  	"${sDir}/_cd${idAux[0,0]}/${idAux[0,1]}/"                                     # Create partiture file name
+    "${idAux[0,3]}_${idAux[0,4]}_${idAux[0,5]}.par" + sFn =;                      # |
+  	"ORT:" iF set line_flt;                                                       # Set line filter for ascii import
+  	idAux -reset;                                                                 # Reset Auxiliary instance
+  	sFn "ascii" idAux iF -import;                                                 # Import partiture file
+  	0 idAux.nrec == if leave; end                                               # Did'nt get no labels
+  	idAux 2 1 idLab -select;                                                      # Copy original word
+  	8 1 1 idAux -array { "ORTHO" }; idAux 0 idLab -set_cnames;          		  # Set component names of result
+}
+
+
+
+
+
+
+
+## <p>Delete empty Components (We define 6 components for reading original words from 
+## Partitur file (filter: TR2), and some of this components are empty).</p>
+##
+## @param idLabInit data
+##          Data instance of original words (4 components)
+## @param idLabFinal data
+##          Data instance of original words without empty components
+function -Delete_Empty_Components(idLabInit,idLabFinal)
+{
+
+	## Variables                                                                    # -------------------------------------
+	data idAux;                                                                     # Auxiliary data instance
+	var nCheckCell;      															# Variable to check if a cell is empty (No character)
+	var nCheckEmptyComp; 															# Variable to check if a component is empty 
+	var sWord;          															# Variable to read the word in every cell
+	var sNoChar;        															# Variable of no character ("")
+	var i;                                 											# Create a loop counter variable named i
+	var j;                                 											# Create a loop counter variable named j
+	var nRecNum; 																	# Number of records
+	var nCompNum; 																	# Number of component
+
+
+	#idLabInit 0 2 idLabInit -delete ;   											# Delete the first two components [(TR2) and (Number of word)]
+
+	## Initialize                                                                   # -------------------------------------
+	idLabInit.nrec  nRecNum =;          											# Get the number of records
+	idLabInit.dim  nCompNum =;          											# Get the number of components
+	"" sNoChar =;
+	0 j =; 																			# Init a loop counter j
+
+	## Reset instance
+  	idLabFinal -reset;                                                              # Reset destination instance
+  	idAux -reset;                                                              		# Reset auxiliary data instance
+
+
+	## Delete empty components
+	label L2;                                             							# Define a jump label named L2
+	j nCompNum < if  
+		1 nCheckEmptyComp =;														# Init nCheckEmptyComp (for every new component)
+		0 i =; 																		# Init a loop counter i (for every new component)
+		label L1;                                             						# Define a jump label named L1
+		i nRecNum < if                                            	 				# If loop counter < 10
+			:idLabInit[i,j]: sWord =; 
+			## Check if a cell is empty
+			sWord sNoChar == if                                    					# Cell is empty         
+				#"\nEmpty character." -echo;
+				1 nCheckCell =;
+				nCheckCell nCheckEmptyComp * nCheckEmptyComp =;
+			else	                                               					# Cell is not empty 
+				0 nCheckCell =;			
+				nCheckCell nCheckEmptyComp * nCheckEmptyComp =;									
+			end
+			i ++=;                                              					# Increment loop counter i
+  			goto L1;                                            					# Jump to label L1
+		end                                                 						# End of conditional branch
+		## Copy component if it is not empty
+		nCheckEmptyComp 0 == if
+  				"WORD" 255  idAux -addcomp; 	  									# Define one component of type string with length 255
+  				idLabInit ${j} 1 idAux -select;   									# Copy the not empty component to data auxiliary
+  				idAux idLabFinal -join; 											# Append component to idLabFinal									
+		end;
+    	j ++=;		 																# Increment loop counter j
+  		goto L2;                                            						# Jump to label L1
+	end                                                 							# End of conditional branch
+}
+
+
+
+
+
+## <p>Concatenate the words in one sentence.</p>
+##
+## @param idWords data
+##          Data instance of words
+## @param idSentence data
+##          Data instance of sentence (Concatenated words (every word in component))
+function -Concatenate_Words2Sentence(idWords,idSentence)
+{
+	## Variables                                                                    # -------------------------------------
+	var nRecNum; 																	# Get the number of records
+	var nCompNum; 																	# Get the number of components
+	var sWord;          															# Variable to read the word in every cell
+	var sWordNew;          															# Variable to read the word in every cell
+	var sSentence;																	# Variable to concatenate the words in one sentence
+	var sSpaceChar;        															# Variable of space character (" ")
+	var sNoChar;        															# Variable of no character ("")
+	var i;                                 											# Create a loop counter variable named i
+	var j;                                 											# Create a loop counter variable named j
+	var k;																			# Number of words in sentence
+	var nCompSentence;																# Number of components for Sentence (every word in one component)
+	
+	data idAux;	                                                                    # Auxiliary data instance
+
+
+	## Initialize                                                                   # -------------------------------------	
+	idWords.nrec  nRecNum =;
+	idWords.dim  nCompNum =;
+	0 i =;
+	0 j =;
+	0 k =;
+	"" sNoChar =;
+	" " sSpaceChar =;
+    "" sSentence =;                 												# Init sSentence to space character
+  	idSentence -reset;                                                              # Reset destination instance
+  	idAux -reset;                                                              		# Reset auxiliary data instance
+
+
+	nRecNum nCompNum * nCompSentence =;
+				
+	255 nCompSentence idAux -addncomps;												# Add components to auxiliary data instance
+	1 idAux -allocate;																# Allocate one record to auxiliary data instance
+				
+
+	## Concatenate words in sentence
+	label L1;                                             							# Define a jump label named L1
+	i nRecNum < if                                             						# If loop counter < nRecNum
+		0 j -vset; 																	# Init a loop counter j (for every new component)		
+		label L2;                                             						# Define a jump label named L2
+		j nCompNum < if  
+			:idWords[i,j]: sWord =;   												# With this command //"${idWords[i,j]}" sWord =;// We get an error e.g. in word (f"ur)
+			sWord sNoChar != if	
+				#sSpaceChar sWord  +=;												# Add Space Character to the end of the word
+				:idAux[0,k] = sWord;	
+				k ++=;
+				##sWord sSentence  +=;												# With this method (sSentence) there is a problem (maximal length of string is 256)
+				##sSpaceChar sSentence  +=;
+				##"\n${idOrigText[i,j]}"  -echo; 									# False with words contained (") e.g. (f"ur)
+				##"\n" :idOrigText[i,j]: + -echo; 									# OK
+				##"\n" sWord + -echo;  												# We use (+) with (-echo) to concatenate ("\n") and content of (sWord)
+			end
+  			j ++=;                                          						# Increment loop counter j   
+  			goto L2;                                            					# Jump to label L2
+		end                                                 						# End of conditional branch
+		i ++=;                                              						# Increment loop counter i
+  		goto L1;                                            						# Jump to label L1
+	end                                                 							# End of conditional branch
+
+	##{ { " " } } idSentence =;														# Init output data instance (idSentence) to space character
+	##:idSentence[0,0]=sSentence;													# Assign sSentence to output data instance
+	##"\n" sSentence + -echo;
+	##"\n\n" -echo;
+	##idSentence /list -print;
+
+	### We can use the method (-strop) to concatenate strings
+	### Aggregate strings in one component into one record (without space character)
+	##idWords 255 "rcat" idSentence -strop; 
+
+	idAux idSentence -Delete_Empty_Components;										# Delete Empty Components 
+
+	#"\n\n" -echo;
+	#idSentence -print;
+}
+
+
+
+
+
+
+## <p>Imports the phonetic signal labels of one VerbMobil turn.</p>
+## <h4>Structure of Result</h4>
+## <table class="indent">
+##   <tr><th colspan="2">Component</th><th>Description</th></tr>
+##   <tr><th>No.</th><th>Name</th><th> </th></tr>
+##   <tr><td>0</td><td><code>&lt;sLid&gt;</code></td><td>Label name</td></tr>
+##   <tr><td>0</td><td><code>POS</code></td><td>Label position (samples)</td></tr>
+##   <tr><td>0</td><td><code>CNT</code></td><td>Label length (samples)</td></tr>
+## </table>
+##
+## @param sDir string
+##          Path to label files
+## @param sTid string
+##          <code>_cdC[C]/DDDDD/FFFFFFFF_TTT_SSS[_LLL]</code> (<code>C</code>:
+##          CD index, <code>D</code>: dialoge index, <code>F</code> signal file
+##          name, <code>T</code>: turn index, <code>S</code>: speaker code,
+##          <code>L</code>: optional language code)
+## @param idLab data
+##          Data instance to be filled with labels
+function -LAB_Phoneme_import_vm(sDir,sTid,idLab)
+{
+  ## The difference between the functions (-LAB_Phoneme_import_vm) and (-LAB_import_vm) is:
+  ## (-LAB_import_vm) read three columns, but (-LAB_Phoneme_import_vm) read four columns i.e., 
+  ## [three columns as in (-LAB_import_vm) and a new column for the number of word]
+  file iF;                                                                      # File import filter
+  data idLmap;                                                                  # Label mapping table
+  data idAux1;                                                                  # Auxilary data instance
+  data idAux2;                                                                  # Auxilary data instance
+  var  sFn;                                                                     # Partiture file name
+
+  ## Initialize                                                                 # -------------------------------------
+  -LAB_get_map idLmap =;                                                        # Load phoneme mapping table
+
+  ## Load partiture file and extract Maus labels and convert to UASR            # -------------------------------------
+  idLab -reset;                                                                 # Reset destination instance
+  sTid idAux1 -VM_parse_turn_id;                                                # Parse turn identifier
+  "${sDir}/_cd${idAux1[0,0]}/${idAux1[0,1]}/"                                   # Create partiture file name
+    "${idAux1[0,3]}_${idAux1[0,4]}_${idAux1[0,5]}.par" + sFn =;                 # |
+  "MAU:" iF set line_flt;                                                       # Set line filter for ascii import
+  idAux1 -reset;                                                                # Reset auxilary instance
+  sFn "ascii" idAux1 iF -import;                                                # Import partiture file
+  0 idAux1.nrec == if leave; end                                              # Did'nt get no labels
+  idAux1 4 1 idLab -select;                                                     # Copy labels
+  :idAux1[1]: idLab -join;                                                      # Join label offsets
+  :idAux1[2]: idLab -join;                                                      # Join label lengths (may be corrupt)
+  :idAux1[3]: idAux2 -join;                                                     # Join the number of word
+  :idAux1[1]: -1 idAux1 /rec -shift; :idAux1-idLab[1]: idLab -join;             # Compute valid label lengths
+  :idLab[idLab.nrec-1,3]=idLab[idLab.nrec-1,2]+1;                               # Compute length of last label
+  idLab 2 1 idLab -delete;                                                      # Delete original label lengths
+  idAux2 idLab -join; 	                                                    	# Join the number of word
+  8 1 4 idAux1 -array { "MAU" "POS" "LEN" "No." }; idAux1 0 idLab -set_cnames;  # Set component names of result
+}
+
+
+
+
+
+## <p>Extract the word labels of one VerbMobil turn.</p>
+## <h4>Structure of Result</h4>
+## <table class="indent">
+##   <tr><th colspan="2">Component</th><th>Description</th></tr>
+##   <tr><th>No.</th><th>Name</th><th> </th></tr>
+##   <tr><td>0</td><td><code>&lt;sLid&gt;</code></td><td>Label name</td></tr>
+##   <tr><td>0</td><td><code>POS</code></td><td>Label position (samples)</td></tr>
+##   <tr><td>0</td><td><code>CNT</code></td><td>Label length (samples)</td></tr>
+## </table>
+##
+## @param sDir string
+##          Path to label files
+## @param sTid string
+##          <code>_cdC[C]/DDDDD/FFFFFFFF_TTT_SSS[_LLL]</code> (<code>C</code>:
+##          CD index, <code>D</code>: dialoge index, <code>F</code> signal file
+##          name, <code>T</code>: turn index, <code>S</code>: speaker code,
+##          <code>L</code>: optional language code)
+## @param idLab data
+##          Data instance to be filled with word labels (output)
+function -LAB_WORD_extract_vm(sDir,sTid,idLab)
+{
+  	data idLabPhoneme;                                                            # Phoneme label
+	data idWordText;															  # Word (Orthographic, Original or Kanonic)
+  	data idAux;                                                                   # Auxiliary data instance
+  	var nPhonemeNumber; 														  # Get the number of records (number of phonemes)
+  	var nPhonemeNumberNew; 														  # (Number of phoneme - 1)
+	var nAux1;
+	var nAux2;	
+  	var i;                                 									      # Create a loop counter variable named i
+	var j; 																		  # Counter for word number
+	var nWordsNumber;															  # Number of words (Orthographic, Original or Kanonic)
+	var nWordLeng; 																  # Length of word (Sum of phonemes length,which are contained in word)
+
+
+
+    ## Initialize an output data object                                           # -------------------------------------
+	"WORD" 25 idLab -addcomp;
+	"POS" type long idLab -addcomp;
+	"LEN" type long idLab -addcomp;
+	
+
+
+  	## Import Phoneme-Label  			            							  # -------------------------------------
+  	## The input data object (Phoneme labels) should be calculated by the function(-LAB_Phoneme_import_vm), because 
+  	## we can get the phoneme labels (phoneme, begin and length) and the corresponded word number. 
+  	sDir sTid idLabPhoneme -LAB_Phoneme_import_vm;
+  	
+  	idLabPhoneme.nrec  nPhonemeNumber =;          								  # Get the number of records (number of phonemes)
+	nPhonemeNumber 1 - nPhonemeNumberNew =; 
+  	
+  	## Add extra record at the end of data object (to stay in limits of loop)
+  	:idLabPhoneme[nPhonemeNumber,0] = 0;
+  	:idLabPhoneme[nPhonemeNumber,0] = 0;  	
+  	:idLabPhoneme[nPhonemeNumber,0] = 0;  	
+  	:idLabPhoneme[nPhonemeNumber,0] = 0;  	  	  	
+
+  	
+  	## Import Words (Orthographic, Original or Kanonic) 						  # -------------------------------------  	
+	## We can change one of the three types of word (Orthographic, Original or Kanonic)
+	sDir sTid  idWordText -Ortho_WORD_import_vm;								  # Import Orthographic words
+	#sDir sTid  idWordText -Orig_WORD_import_vm;								  # Import Original words
+
+	idWordText.nrec nWordsNumber =;												  # Number of words (Orthographic, Original or Kanonic)
+
+	
+		
+  	## Calculate the word label									          		  # -------------------------------------
+  	0 i =; 																		  # Init a loop counter for phoneme i
+  	0 j =; 																		  # Init a counter for words number j
+	"<p:>" nAux1 =;																  # Init a pause variable 
+	
+  	label L1;                                             						  # Define a jump label named L1
+
+  	i 0 == :idLabPhoneme[i,3]: -1 == && if                         				  # If (First phoneme = pause)
+		j 1 + idLab -reallocate;												  # Reallocates a new record of memory keeping the contens
+		:idLab[j,0] = nAux1;													  # Copy a pause "<p:>"
+		:idLab[j,1] = idLabPhoneme[i,1]; 										  # Copy the beginning of pause
+		:idLab[j,2] = idLabPhoneme[i,2]; 										  # Copy the length of pause
+		i ++=;                                              					  # Increment loop counter i
+		j ++=;                                              					  # Increment loop counter j
+  		goto L1;                                            					  # Jump to label L1
+	
+	else
+  	i nPhonemeNumberNew < :idLabPhoneme[i,3]: :idLabPhoneme[i+1,3]: == && if      # If (Phonemes belong to the same word)
+		j 1 + idLab -reallocate;												  # Reallocates a new record of memory keeping the contens
+		:idLabPhoneme[i,3]: nAux2 =; 											  # Read a word number
+		:idLab[j,0] = idWordText[nAux2,0];										  # Copy the word
+		:idLab[j,1] = idLabPhoneme[i,1]; 										  # Copy the beginning of word
+
+		# Calculate the length of word
+		:idLabPhoneme[i,2]: nWordLeng =;										  # Read the length of first phoneme in word
+
+		label L2;                                             					  # Define a jump label named L2
+		:idLabPhoneme[i,3]: :idLabPhoneme[i+1,3]: == if  						  # If (Phonemes belong to the same word)
+			nWordLeng :idLabPhoneme[i+1,2]: + nWordLeng =;						  # Sum of phonemes length
+  			i ++=;                                          					  # Increment loop counter i
+  			goto L2;                                            				  # Jump to label L2
+		end                                                 					  # End of conditional branch
+
+		:idLab[j,2] = nWordLeng;												  # Copy the word length
+	
+		i ++=;                                          					  	  # Increment loop counter i
+		j ++=;                                              					  # Increment loop counter j
+  		goto L1;                                            					  # Jump to label L1
+
+	else
+  	i nPhonemeNumberNew < :idLabPhoneme[i-1,3]: :idLabPhoneme[i,3]: != && if      # If (Phoneme belong to the different words)
+		:idLabPhoneme[i,3]: :idLabPhoneme[i+1,3]: != if      					  # If (One phoneme = one word)
+			:idLabPhoneme[i,3]: -1 == if                         				  # If (Phoneme = pause)
+				j 1 + idLab -reallocate;										  # Reallocates a new record of memory keeping the contens
+				:idLab[j,0] = nAux1;											  # Copy a pause "<p:>"
+				:idLab[j,1] = idLabPhoneme[i,1]; 								  # Copy the beginning of pause
+				:idLab[j,2] = idLabPhoneme[i,2]; 								  # Copy the length of pause
+				i ++=;                                              			  # Increment loop counter i
+				j ++=;                                              			  # Increment loop counter j
+  				goto L1;                                            			  # Jump to label L1
+			else 
+			:idLabPhoneme[i,3]: -1 != if                         				  # If (Phoneme is not a pause)
+				j 1 + idLab -reallocate;										  # Reallocates a new record of memory keeping the contens
+				:idLabPhoneme[i,3]: nAux2 =; 									  # Read a word number 
+				:idLab[j,0] = idWordText[nAux2,0];								  # Copy the word
+				:idLab[j,1] = idLabPhoneme[i,1]; 								  # Copy the beginning of word
+				:idLab[j,2] = idLabPhoneme[i,2]; 								  # Copy the length of word
+				i ++=;                                              			  # Increment loop counter i
+				j ++=;                                              			  # Increment loop counter j
+  				goto L1;                                            			  # Jump to label L1
+			end
+			end
+		end
+
+	else 
+  	i nPhonemeNumberNew == :idLabPhoneme[i,3]: -1 == && if						  # Process the last phoneme (if it is a pause)
+  		j 1 + idLab -reallocate;												  # Reallocates a new record of memory keeping the contens
+		:idLab[j,0] = nAux1;													  # Copy a pause "<p:>"
+		:idLab[j,1] = idLabPhoneme[i,1]; 										  # Copy the beginning of pause 
+		:idLab[j,2] = idLabPhoneme[i,2]; 										  # Copy the length of pause 				
+			
+  	end                                                 						  # End of conditional branch
+  	end                                                 						  # End of conditional branch
+  	end                                                 						  # End of conditional branch
+  	end                                                 						  # End of conditional branch
+}
+
+
+
+
+## <p>Delete pauses <p:> from word labels.</p>
+## @param idLabPause data
+##          Data instance of word labels with pauses [Calculated with (-LAB_WORD_extract_vm)] (input)
+## @param idLab data
+##          Data instance to be filled with word labels without pauses (output)
+function -Delete_Pauses_LAB_WORD(idLabPause,idLab)
+{
+  	var nRecNum; 														  			# Get the number of records 
+	var sWord;          															# Variable to read the word in every cell
+	var sPause;          															# Pause
+	var i;
+	var j;
+
+    ## Initialize an output data object                                           	# -------------------------------------
+	"WORD" 25 idLab -addcomp;
+	"POS" type long idLab -addcomp;
+	"LEN" type long idLab -addcomp;
+	
+	
+  	## Initialize                                                                 	# -------------------------------------
+  	idLabPause.nrec  nRecNum =;          											# Get the number of records
+	"<p:>" sPause =;																# Init a pause variable 
+
+
+  	## Delete pauses                                                               	# -------------------------------------
+	0 i =; 																			# Init a loop counter i
+	0 j =;
+	label L1;                                             							# Define a jump label named L1
+	i nRecNum < if                                            	 					# If loop counter < nRecNum
+		:idLabPause[i,0]: sWord =; 
+		sWord sPause != if    														# Check if a word is not a pause 
+			j 1 + idLab -reallocate;										  		# Reallocates a new record of memory keeping the contens
+			:idLab[j,0] = sWord;													# Copy a word
+			:idLab[j,1] = idLabPause[i,1]; 										  	# Copy the time beginning of word
+			:idLab[j,2] = idLabPause[i,2]; 										  	# Copy the length of word	
+			j ++=;
+		end
+		i ++=;                                              						# Increment loop counter i
+  		goto L1;                                            						# Jump to label L1
+	end                                                 							# End of conditional branch
+}
+
+
+
+## <p>Delete the extra word (d or T) from orthographic words.</p>
+## @param idOrthographic data
+##          Data instance of orthographic words (input)
+## @param idLabWordNoPause data
+##          Data instance of word labels without pauses [Calculated with (-LAB_WORD_extract_vm) and (-Delete_Pauses_LAB_WORD)] (input)
+## @param idLab data
+##          Data instance to be filled with orthographic word without extra words  (output)
+function -Delete_Extra_Ortho_Word_LAB_WORD(idOrthographic,idLabWordNoPause,idLab)
+{
+  	var nRecOrtho; 														  			# Get the number of records (number of orthographic words)
+  	var nRecLabWord; 																# Get the number of records (number of word labels without pauses)
+	var sWordOrtho;          														# Variable to read the orthographic word in every cell
+	var sWordLab;          															# Variable to read the word (word labels) in every cell
+	var i;
+
+	
+  	## Initialize                                                                 	# -------------------------------------
+  	idOrthographic.nrec  nRecOrtho =;          										# Get the number of records
+  	idLabWordNoPause.nrec  nRecLabWord =;          									# Get the number of records
+
+
+	## Compare the words
+	idOrthographic.nrec idLabWordNoPause.nrec ==  if								# Number of word label is equal to number of orthographic words
+		idOrthographic 0 1 idLab -select;											# Copy one component
+	else
+	idOrthographic.nrec idLabWordNoPause.nrec !=  if								# Number of word label is not equal to number of orthographic words	
+
+  	## Delete extra word                                                            # -------------------------------------
+	0 i =; 																			# Init a loop counter i
+	label L1;                                             							# Define a jump label named L1
+	i nRecLabWord < if                                            	 				# If loop counter < nRecNum
+		:idOrthographic[i,0]: sWordOrtho =; 
+		:idLabWordNoPause[i,0]: sWordLab =; 		
+		sWordOrtho sWordLab != if    												# Check if a word is not a pause 
+			idOrthographic i 1 idLab /rec -delete;
+			goto L2; # Exit from program                       						# Jump to label L2
+		end
+		i ++=;                                              						# Increment loop counter i
+  		goto L1;                                            						# Jump to label L1
+	end                                                 							# End of conditional branch
+
+	label L2;                                             							# Define a jump label named L2
+
+	end	
+	end
+}
+
+
+
+
+
+
+## Method overwrites                                                             # -------------------------------------
+#/disarm -SIG_import_vm /disarm -SIG_import =;                                   # Overwrite -SIG_import
+#/disarm -LAB_import_vm /disarm -LAB_import =;                                   # Overwrite -LAB_import
+
+
+
+## EOF

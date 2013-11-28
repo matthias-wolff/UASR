@@ -1,0 +1,216 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Code fragment: Generate per phoneme conversion matrizes
+##
+## AUTHOR : Guntram Strecha
+## PACKAGE: uasr/scripts/dlabpro/synth
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"\n//                   Diphon synthesis conversion extension" -MSG;
+
+/disarm -CMD_cnv 
+{
+  file iF;                                                                      # File list for signal analysis
+  hmm     itHMM;                                                                # HMM instance
+  object  iFI;                                                                  # Feature info object
+  FBAproc iFBA;
+  CPproc  iCP;
+  data    idAux1;
+  data    idAux2;
+  data    idPhoList;
+  data    idVUV;
+  data    idCut;                                                                # Cut list
+  data    idCutDiph;                                                            # Cutting information for current diphone
+  data    idSig;                                                                # Signal data (for WAV export)
+  data    idFea;                                                                # Feature data
+  data    idFeaDiph;
+  data    idMsc;
+  data    idLsc;
+  data    idGss;
+  data    idGssAll;
+  data    idGssDiph;
+  data    idFeaGss;
+  data    idFeaGssDiph;                                                         # Feature data
+  data    idCnvMat;
+  var bReduced;   "cnv.reduced"        FALSE     -CFG_get      bReduced    =;   # reduce to one instance of each phoneme
+  var bCompressed "save.compressed"    FALSE "S" -CFG_get_ex   bCompressed =;   # Save coefficients with 16 bit accuracy
+  var nSrate;     "sig.srate"          16000     -CFG_get      nSrate      =;   # Sampling rate
+  var nDim;       "pfa.dim"               30     -CFG_get      nDim        =;   # Primary feature vector dimension
+  var nCrate;     "pfa.crate"            160     -CFG_get      nCrate      =;   # Continuous rate
+  var sAmId;      "am.model"           "0_0"     -CFG_get      sAmId       =;   # Acoustic model ID
+  var sDirModel;  "model"                 ""     -CFG_get_path sDirModel   =;   # Model path
+  var sDirLog;    "log"                   ""     -CFG_get_path sDirLog     =;   # Log dir
+  var sDirSig;    "sig"                   ""     -CFG_get_path sDirSig     =;   # Sig dir
+  var sFnCut;     "file.cut"              ""     -CFG_get      sFnCut      =;   # Schneidliste
+  var sSynOptions;"pfa.synoptions"        ""     -CFG_get      sSynOptions =;   # synoptions
+  var sExp;       "exp"                  "." "S" -CFG_get_ex   sExp        =;   # Experiment name
+  var sSrcSpk;    "syn.sourcespeaker"   sExp "S" -CFG_get_ex   sSrcSpk     =;   # Get source speaker
+  var sFnCnvMat;  "$[sDirModel]/$[sSrcSpk]/cnvMat_$[sAmId]_$[nCrate]" sFnCnvMat =;
+  var sDiph;
+  var sFnDiph;
+  var sPho1;
+  var sPho2;
+  var nDimGss;
+  var nF;
+
+  ## - Load model data                                                          # - - - - - - - - - - - - - - - - - - -
+  "$[sDirModel]/feainfo.object" iFI -FEA_info;                                  # Load feature info file
+  "$[sDirModel]/$[sAmId].hmm" itHMM -restore ?error if 1 return; end            # Load HMM
+  
+  iFI.idDlt NULL 0 "sum" idAux1 -aggregate;idAux1 NULL 0 "sum" idAux1 /rec -aggregate;
+  iFI.nDim 0 0 idAux1 -fetch - nDimGss =;
+
+  .__CFG_bFce if
+    "$[sDirModel]/$[sSrcSpk]/diph_forced.$[sAmId].$[nCrate].list" data idDiphList -restore;
+  else
+    "$[sDirModel]/$[sSrcSpk]/diph.$[sAmId].$[nCrate].list" data idDiphList -restore;
+  end
+  
+  32 3 idCut -addncomps;
+  -type long 2 idCut -addncomps;
+  "$[sFnCut]" "ascii" idCut stdfile -import;
+
+  idCut.nrec idDiphList.nrec != if
+    "\nLength of cut list and diphon list differ.\n" -MSG;
+    quit
+  end
+
+  idFea -reset;
+  idFeaGss -reset;
+  { "." } idPhoList =;
+  
+  0 nF =; label L_FILE; nF idCut.nrec < if
+
+    nF 0 idCut -sfetch sPho1 =;
+    nF 1 idCut -sfetch sPho2 =;
+    
+    sPho1 sPho2 + sDiph =;
+    .__CFG_bFce if
+      sDiph "_forced" + sFnDiph =;
+    else
+      sDiph sFnDiph =;
+    end
+    
+    "\n     $[nF]/$[idCut.nrec] - " nF 2 idCut -sfetch + "(" + sFnDiph + "): " + -MSG2; #     Protocol
+    :nF/idCut.nrec: 1 -PBAR;
+
+    "$[sDirModel]/$[sSrcSpk]/$[sFnDiph].$[sAmId].$[nCrate].gss" sFnDiph =;
+    "$[sFnDiph]" idGssDiph -restore;
+
+    idAux1 -reset;
+    { "$[sDiph]" } idDiphList 0 0 idAux1 -gen_index;
+    idAux1.nrec 1 > if
+      "Diphone not unique.\n" -MSG;
+    end
+    idDiphList 0 0 idAux1 -fetch 1 idCutDiph /rec -select;
+    
+    0 2 idCutDiph -fetch idGssDiph.nrec != if
+      "\nNumber of frames differ in $[sFnDiph]." -MSG;
+      nF ++=;
+      goto L_FILE;
+    end
+
+    idFeaDiph -reset;
+    "~INT" idGssDiph -find_comp 0 < if
+      "$[sDirSig]" nF 2 idCut -sfetch idSig -SIG_import_wav;
+      idSig NULL idFeaDiph -FEA_pfa;
+      idFeaDiph 0 1 idCutDiph -fetch 0 2 idCutDiph -fetch idFeaDiph /rec -select;
+      "~INT" -type double 2 idGssDiph -insertcomp;
+      0 1 idFeaDiph /comp -xfetch 0 1 2 idGssDiph -xstore;
+      "$[sFnDiph]" idGssDiph -save;
+    end
+
+    idGssDiph idGssAll -cat;
+
+    idPhoList { "$[sPho1]" } 0 0 idAux1 /noerror -gen_index; :idAux1.==0: NULL 0 "sum" idAux1 /rec -aggregate;
+    idPhoList { "$[sPho2]" } 0 0 idAux2 /noerror -gen_index; :idAux2.==0: NULL 0 "sum" idAux2 /rec -aggregate;
+
+    bReduced FALSE == 0 0 idAux1 -dfetch 4 < 0 0 idAux2 -dfetch 4 < && || if
+    
+      { "$[sPho1]" } idPhoList -cat;
+      { "$[sPho2]" } idPhoList -cat;
+          
+      idGssDiph 0 itHMM.gm.mean 0 itHMM.gm.mean.dim idMsc -lookup;              # Get mean vectors of MSCs from HMM
+      idGssDiph 0 itHMM.lsmean  0 itHMM.lsmean.dim  idLsc -lookup;              # Get mean vectors of LSCs from HMM 
+      idMsc idFeaGssDiph =;
+      idLsc idFeaGssDiph -join;
+      iFI.idW inv idFeaGssDiph * iFI.idX - idFeaGssDiph =;          "." -MSG2;  # idFea = idFea * inv(iFI.idW) - iFI.idX
+      idFeaGssDiph 0 nDimGss idFeaGssDiph -select;
+      "~INT" idGssDiph -find_comp 1 idGssDiph /comp -xfetch 0 1 0 idFeaGssDiph /comp -xstore;
+
+      idFeaDiph -is_empty TRUE if
+        "$[sDirSig]" nF 2 idCut -sfetch idSig -SIG_import_wav;
+        idSig NULL idFeaDiph -FEA_pfa;
+        idFeaDiph 0 1 idCutDiph -fetch 0 2 idCutDiph -fetch idFeaDiph /rec -select;
+      end
+
+      idGssDiph.nrec idFeaDiph.nrec != if
+        "Number of frames differ in $[sDirSig] and $[sFnDiph]." -MSG;
+      end
+
+      idGssDiph idGss -cat;
+
+      idFeaGssDiph idFeaGss -cat;
+      idFeaDiph idFea -cat;
+    
+    else
+      "skipping" -MSG2;
+    end
+    nF ++=;
+    goto L_FILE;                                                                #     End of file loop
+  end
+  
+  bReduced    TRUE == if sFnCnvMat "_reduced"  + sFnCnvMat =; end
+  .__CFG_bFce TRUE == if sFnCnvMat "_forced"   + sFnCnvMat =; end
+  
+#  idGss 0 idAux1 -compress;
+#  idAux1 1 idGss 0 idGss.dim idGss -lookup;
+#  idAux1 1 idFeaGss 0 idFeaGss.dim idFeaGss -lookup;
+#  idAux1 1 idFea 0 idFea.dim idFea -lookup;
+
+  idGssAll 0 idGssAll -sortup;
+  idGssAll 0 idGssAll -compress;
+  "\nNumber of different gaussians seen in all diphones: $[idGssAll.nrec]" -MSG;
+
+  bCompressed TRUE == if
+    idFea iCP -compress;
+  end
+  
+  idFea 1 idFea.dim 1 - idFea /comp -select;  
+  idFeaGss 0 nDimGss idFeaGss -select;
+  
+  bCompressed TRUE == if
+    :ent(idFeaGss*32768.0/15.0+0.5): idFeaGss =;
+    :ent(idFea*32768.0/15.0+0.5): idFea =;
+    sFnCnvMat "_compressed" + sFnCnvMat =;
+  end
+
+  .__UTL_nVlevel 0 > if
+    "idFeaGss.$[sAmId].dn3" idFeaGss -save;
+    "idFea.$[sAmId].dn3" idFea -save;
+  end
+
+  :idFeaGss*idFeaGss': idAux1 NULL matrix /svd -invert;
+  :idAux1*idFeaGss*idFea': idCnvMat =;                                                # Calculate conversion matrix
+  "$[sFnCnvMat].dn3" idCnvMat -save;                                                  # Save conversion matrix
+}
+
+## EOF

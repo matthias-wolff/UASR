@@ -1,0 +1,1982 @@
+## Unified Approach to Speech Synthesis and Recognition
+## - Training functions: Hidden Markov models
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/train
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"amgmm.itp"             /noerror include;                                       # AM Gaussian par. reduction fnc.
+"amtopo.itp"            /noerror include;                                       # AM topology training functions
+"../util/histogram.itp" /noerror include;                                       # Histogram utilities
+"../util/ica.itp"                include;                                       # Fast-ICA utilities
+
+## Global instances
+fst  __AM_itAux;
+data __AM_idAux;
+data __AM_idAux2;
+var  __AM_nEtdr;                                                                # HMM eval: total diff. to reference
+
+## Saves an HMM instance to a zipped DN3 file. The function removes the feature
+## statistics' before saving the HMM to spare disk space. An HMM instance saved
+## by this function may be restored using dLabPro's <code>-restore</code>
+## method for recognition. For further training, however, you <em>must</em>
+## use the <a href="#clp_-HMM_load"><code class="link">-HMM_load</code></a>
+## function to restore the HMM instance.
+##
+## @cgen:index
+## @param sFile string
+##          Path name of HMM file
+## @param itHMM hmm
+##          HMM instance to save
+## @return TRUE if successful, FALSE otherwise
+function -HMM_save(sFile,itHMM)
+{
+  hmm itAux;                                                                    # Copy of input
+  "\n   Writing $[sFile] "                                                -MSG; # Protocol
+  .__CFG_bNwr if "... SKIPPED (write protection on)" -MSG; leave; end           # Write protection
+  itHMM itAux -copy;                                                  "." -MSG; # Copy input
+  itAux.pfsm -reset;                                                  "." -MSG; # Reset most significant feature stats.
+  itAux.pfsl if itAux.pfsl -reset; end                                "." -MSG; # Reset least significant fea. stats.
+  sFile itAux /zip /noerror -save ?error if                                     # Store HMM to file, error >>
+    " FAILED"                                                             -MSG; #   Protocol
+    FALSE return;                                                               #   Return FALSE
+  else                                                                          # << successful >>
+    " ok"                                                                 -MSG; #   Protocol
+    TRUE return;                                                                #   Return TRUE
+  end                                                                           # <<
+}
+
+## Restores an HMM instance stored by the <a href="#clp_-HMM_save"><code
+## class="link">-HMM_save</code></a> function.
+##
+## @cgen:index
+## @param sFile string
+##          Path name of HMM file
+## @param nDim number
+##          Total dimension of feature space (sum of most and least significant
+##          feature dimensions)
+## @param itHMM hmm
+##          HMM instance to restore
+## @return TRUE if successful, FALSE otherwise
+function -HMM_load(sFile,nDim,itHMM)
+{
+  var K;                                                                        # Number of Gaussians
+  var N;                                                                        # Dimension of primary feat. vector
+  var M;                                                                        # Dimension of secondary feat. vector
+
+  ## Restore HMM file                                                           # -------------------------------------
+  "\n   Reading $[sFile] ..."                                             -MSG; # Protocol
+  sFile itHMM /noerror -restore ?error if                                       # Restore HMM from file, error >>
+    " FAILED"                                                             -MSG; #   Protocol
+    FALSE return;                                                               #   Return FALSE
+  end                                                                           # <<
+
+  ## Re-create per frame statistics instance if necessary                       # -------------------------------------
+  itHMM.gm.mean.nrec K =;                                                       # Get number of Gaussians
+  itHMM.gm.mean.dim  N =;                                                       # Get most significant feature dim.
+  nDim N -           M =;                                                       # Get least significatn feature dim.
+  itHMM.pfsm if itHMM.pfsm.dat -is_empty if                                     # MSF stats. present but not init'ed >>
+    4 N K NULL 0 itHMM.pfsm -setup;                                   "." -MSG; #   Setup most significant feat. stats.
+  end end                                                                       # <<
+  itHMM.pfsl if itHMM.pfsl.dat -is_empty if                                     # LSF stats. present but not init'ed >>
+    4 M K NULL 0 itHMM.pfsl -setup;                                   "." -MSG; # Setup least significant feat.stats.
+  end end                                                                       # <<
+
+  ## Final check-up                                                             # -------------------------------------
+  itHMM -AM_check not itHMM.gm not || if                                        # Have no (valid) Gaussians
+    " FAILED"                                                             -MSG; #   Protocol
+    "HMM does not contain (valid) Gaussians"                            -ERROR; #   Error
+    FALSE return;                                                               #   Return FALSE
+  end                                                                           # <<
+  " ok"                                                                   -MSG; # Protocol
+  TRUE return;                                                                  # Ok
+}
+
+## EXPERIMENTAL; gather HMM layer duration statistics for HMM synthesis
+##
+## @cgen:index
+## @param itDec fst
+##          Decoded path through one(!) HMM
+## @param nU number
+##          The zero based index of the HMM <code>idDec</code> was decoded by
+## @param itHMM hmm
+##          The HMM instance 
+function -HMM_update_pls(itDec,nU,itHMM) 
+{
+  itHMM.pls not if leave; end                                                   # No per-layer stats. -> no service
+  "~LYR" itDec.sd -find_comp 0 < if leave; end                                  # No layer info -> no service
+
+  data idAux;                                                                   # Create an auxilary data instance
+  ".__HMM_update_pls_idFL" "data" ?instance not if                              # No global layer index >>
+    data .__HMM_update_pls_idFL;                                                #   Create instance
+    itHMM.ud 0 -1 5 .__HMM_update_pls_idFL -expand;                             #   Create index
+    .__HMM_update_pls_idFL 0 .__HMM_update_pls_idFL -compress;                  #   ...           
+  end                                                                           # <<
+  :itDec.sd["~LYR"]: 0 1 idAux /rec -delete;                                    # HACK: remove first and last state ...
+  idAux idAux.nrec -- 1 idAux /rec -delete;                                     # HACK: ... state of decoded path
+  idAux ( nU 1 .__HMM_update_pls_idFL -dfetch ) + idAux =;                      # Compute global layer index 
+  idAux 0 idAux -compress; idAux 1 1 idAux -delete;                             # Extract HMM layer durations
+  idAux 0 NULL itHMM.pls -update;                                               # Update statistics
+}
+
+## Gathers feature information required for the secondary feature
+## transformation.
+##
+## @cgen:index
+## @param idLtb data
+##          Label table of multiclass statistics, e.g. phoneme labels. The
+##          labels of the feature vectors must be found in this table
+## @param iFI object
+##          A pre-initialized feature information object to be filled. A proper
+##          object is made by <a href="../util/fea.html#clp_-FEA_info"><code
+##          class="link">-FEA_info</code></a> when <code>NULL</code> is
+##          committed for parameter <code>sFile</code>.
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+##          (typical case for speech recognition)
+function -FEA_analyze(idLtb,iFI,sSns)
+{
+  statistics iS;                                                                # Feature statistics
+  profile    iP;                                                                # Timer
+  file       iF;                                                                # Statistics file list
+  data       idAux;                                                             # Auxilary data instance
+  var        nMsf;                                                              # Number of most significant features
+  var        sOutFn;                                                            # Output file name
+
+  iP -begin_timer;                                                              # Start timer
+  "\n// Feature analysis I"                                               -MSG; # Protocol
+  var sSxt; sSns if ".$[sSns]" else "" end sSxt =;                              # Get sensor file extension
+  sSns if "\n   - Sensor ID     : $[sSns]" -MSG; end                            # Protocol
+  "model" "" -CFG_get_path "/feainfo$[sSxt].object" + sOutFn =;                 # Make output file name
+  "fea"   "" -CFG_get_path;                                                     # Echo feature files directory
+  ( "flist.sep" "\t " "S" -CFG_get_ex ) iF set sep;                             # Set file list separator(s)  
+  "stat"  "" -CFG_get_flist iF -set flist;                                      # Set statistics file list
+  "sfa.dim" 24 -CFG_get nMsf -vset;                                             # Get number of MSF
+
+  ## Standardization statistics                                                 # -------------------------------------
+  "sfa" "std" "," -CFG_get_item 0 >= if                                         # Doing standardization >>
+    "\n\n   Vector standardization statistics"                            -MSG; # Protocol
+    iF sSns NULL iFI iS -FEA_stat;                                              #   Gather feature pool statistics
+    idAux iS -mean; :iFI.idX = -1*idAux;                                        #   Get feature offset vector
+    idAux iS -sdev; :iFI.idW = diag(1./idAux);                                  #   Get initial feature trafo. matrix
+  end                                                                           # <<
+
+  ## Continue feature transformation matrix                                     # -------------------------------------
+  "\n// Feature analysis II"                                              -MSG; # Protocol
+  sSns if "\n   - Sensor ID     : $[sSns]" -MSG; end                            # Protocol
+  "stat_t" "" -CFG_get_flist iF -set flist;                                     # Set lin. fea. trafo. stats. file list
+  "sfa" "pca" "," -CFG_get_item 0 >= if                                         # Doing PCA
+    iF sSns idLtb nMsf iFI -FEA_pca;                                            #   Make PCA feature trafo. matrix
+  end                                                                           # <<
+  "sfa" "ica" "," -CFG_get_item 0 >= if                                         # Doing PCA
+    iF sSns nMsf iFI -FEA_ica;                                                  #   Make ICA feature trafo. matrix
+  end                                                                           # <<
+
+  ## Reduce iF.idW to number of most significant features                       # -------------------------------------
+  "sfa" "red" "," -CFG_get_item 0 >= if                                         # Doing reduction >>
+    "\n\n   Reducing linear feature trafo. matrix to ${nMsf} columns"     -MSG; #   Protocol
+    iFI.idW 0 nMsf iFI.idW -select;                                             #   Reduce transformation matrix
+  end                                                                           # <<
+
+  ## Save feature information                                                   # -------------------------------------
+  "\n\n   Writing $[sOutFn] ..."                                          -MSG; # Protocol
+  .__CFG_bNwr not if                                                            # Not write protected >>
+    sOutFn iFI /noerror -save                                                   #   Save feature information object
+    ?error if " FAILED." else " ok." end                                  -MSG; #   Protocol
+  else                                                                          # << Write protected >>
+    "SKIPPED (write protection on)"                                       -MSG; #   Protocol
+  end                                                                           # <<
+  NULL iP -end_timer; "\n   Time: ${ent(iP.time/1000+0.5)} s\n"           -MSG; # End timer
+}
+
+## Creates empty HMM's.
+##
+## @cgen:index
+## @param nDim number
+##          Total dimension of feature space (sum of most and least significant
+##          feature dimensions)
+## @param itHMM hmm
+##          HMM instance to be created
+function -HMM_create(nDim,itHMM)
+{
+  "\n// Creating HMMs ."                                                  -MSG; # Protocol
+  var nMsf; ( "sfa.dim" 24 -CFG_get ) nMsf =;                                   # Number of most significant features
+  var nStsL;                                                                    # Number of per-layer stats. components
+  ( ( ( "am.stats" "" "S" -CFG_get_ex ) "L" "search" -VAR_strop ) 0 >= ) if     # Gathering per-layer stats. >>
+    "(gathering per-layer stats.)"                                       -MSG2; #   Protcol
+    1 nStsL =;                                                                  #   1 component (duration in frames)
+  end                                                                           # <<
+  var nLsf;                                                                     # Number of least significant features
+  ( "sfa" "red" "," -CFG_get_item ) 0 < if nDim nMsf - nLsf =; end              # LSF's only if trafo. matrix not red.
+  data idHMM; -LAB_get_tab idHMM =;                                   "." -MSG; # Get HMM list from label table
+  nMsf idHMM nLsf nStsL 0 0 itHMM -setup_ex;                          "." -MSG; # Create HMM's
+  idHMM 0 1 idHMM -delete;                                                      # Delete model name component
+  idHMM itHMM.ud -join;                                               "." -MSG; # Join other components to unit descr.
+  "am.gbg" -1 "S" -CFG_get_ex var nMidG;                                        # Silently get garbage model index
+  "am.sil" -1 "S" -CFG_get_ex var nMidS;                                        # Silently get silence model index
+  " done ($[itHMM.ud.nrec] models, MSF=$[nMsf], LSF=$[nLsf])"             -MSG; # Protocol
+}
+
+## Setup Gaussians and transition probabilities from statistics and reference
+## counters
+##
+## @param itHMM hmm
+##          The HMM to set up
+## @global %lt;am.train&gt;  R
+## @global %lt;am.mapexp&gt; R
+function -HMM_setup(itHMM)
+{
+  var sOptions; "" sOptions =;                                                  # Extra options for hmm -setup_gmm
+	( "am.train" "var" "," -CFG_get_item ) 0 >= if "/var" sOptions -sset; end     # Get xtra options for hmm -setup_gmm 
+
+  .__UTL_nVlevel 1 > if itHMM.pfsm -status; end                                 # Protocol  (verbose level 2)
+  "uasr.am.mapexp" 0 -CFG_get itHMM -set mapexp;                                # set MAP-exp from config file (default: MAP off)
+  -1 itHMM /usemap -probs;                                                      # Re-estimate transition weights
+#  -1 itHMM -priors;                                                            # Re-estimate HMM unigram probs.
+  .__UTL_nVlevel 1 > if "$[sOptions] /noerror" sOptions =; end                  # On verbose level 1: no errors
+  itHMM $[sOptions] -setup_gmm;                                                 # Setup Gaussians
+  itHMM.pfsl if itHMM.lsmean itHMM.pfsl -mean; end                              # Extract mean of least sign. comps.
+  .__UTL_nVlevel 1 > if itHMM.gm -status; end                                   # Protocol
+}
+
+## EXPERIMENTAL, to be replaced by <code>statistics -join</code>.
+##
+## HACK: The function justs adds the statistics data which messes up minima and
+##       maxima!
+##
+## @param itSrc hmm
+##          Source HMM (to be merged into <code>itDst</code>)
+## @param itDst hmm
+##          Destination HMM
+function -HMM_merge_stats(itSrc,itDst)
+{
+  "'-HMM_merge_stats' deprecated. Use 'hmm -merge_stats'" 1 -WARNING;
+  itSrc itDst -merge_stats;
+}
+
+## Initializes HMM's.
+##
+## @cgen:index
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings (typical case for speech recognition)
+## @param itHMM hmm
+##          HMM instance to be initialized
+function -HMM_init(itHMM,sSns)
+{
+  "\n// Initializing $[itHMM.ud.nrec] HMMs"                               -MSG; # Protocol
+  var sSxt; sSns if ".$[sSns]" else "" end sSxt =;                              # Get sensor file extension
+  sSns if "\n   - Sensor ID     : $[sSns]" -MSG; end                            # Protocol
+  profile iP;                                                                   # Timer
+  file    iF;                                                                   # Feature file list
+  object  iFI;                                                                  # Feature information object
+  var     sDirModel;                                                            # Model directory
+
+  ## Initialize                                                                 # -------------------------------------
+  iP -begin_timer;                                                              # Start timer
+  "model" "" -CFG_get_path sDirModel =;                                         # Get model directory
+  "fea"   "" -CFG_get_path;                                                     # Echo feature files directory
+  ( "flist.sep" "\t " "S" -CFG_get_ex ) iF set sep;                             # Set file list separator(s)  
+  "train" "" -CFG_get_flist iF -set flist;                                      # Set training file list
+  "${sDirModel}/feainfo$[sSxt].object" iFI -FEA_info;                           # Get feature info object
+  "\n"                                                                    -MSG; # Protocol (verbose level 2)
+
+  ## HMM initialization                                                         # -------------------------------------
+  iF sSns iFI FALSE TRUE itHMM -HMM_ite if                                      # Initialize HMM's >> (successful)
+    itHMM -HMM_setup;                                                           #   Set 'em up
+    "${sDirModel}/0_0$[sSxt].hmm" itHMM -HMM_save;                   "\n" -MSG; #   Save models, protocol
+  end                                                                           # <<
+  NULL iP -end_timer; "   Time: ${ent(iP.time/1000+0.5)} s\n"             -MSG; # End timer
+}
+
+## Baum-Welch or Viterbi update iteration of HMMs. After completing the update
+## the function will save a copy of <code>itHMM</code> in the model folder.
+##
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance to be updated (may be empty; in this case the function
+##          will automatically restore the previous iteration from the model
+##          folder).
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+##          (typical case for speech recognition)
+## @param nSpl  number
+##          Number of state splits of HMM to be updated
+## @param nIte number
+##          Previous update iteration of HMM to be updated
+## @global __CFG_nJobs R
+## @global &lt;uasr.am.train.actb[nSpl]_[nIte]&gt;(Default:) R
+## @global &lt;uasr.am.train.acta[nSpl]_[nIte]&gt;(Default:) R
+## @global &lt;uasr.am.train.updlab[nSpl]&gt;(Default:)      R
+function -HMM_update(itHMM,sSns,nSpl,nIte)
+{
+	var bBw; ( ( "am.train" "viterbi" "," -CFG_get_item ) 0 < ) bBw =;            # Get Baum-Welch training flag (= viterbi not set)
+  "\n// HMM " bBw if "Baum-Welch" else "Viterbi" end + " update" +        -MSG; # Protocol
+  var sSxt; sSns if ".$[sSns]" else "" end sSxt =;                              # Get sensor file extension
+  sSns if "\n   - Sensor ID     : $[sSns]" -MSG; end                            # Protocol
+  "\n   - Src. model ID : $[nSpl]_$[nIte]"                                -MSG; # Protocol
+  "\n   - Dst. model ID : $[nSpl]_$[nIte ++]"                             -MSG; # Protocol
+  hmm     itHMM2;                                                               # Temporary HMM (parallel computing)
+  profile iP;                                                                   # Timer
+  file    iF;                                                                   # Feature file list
+  file    iF2;                                                                  # File list part (parallel computing)
+  object  iFI;                                                                  # Feature information object
+  var     sDirModel;                                                            # Model directory
+  var     bLab;                                                                 # Using labels
+  var     nJ;                                                                   # Job index (parallel computing)
+  var     bOk;        TRUE bOk =;                                               # Error flag
+
+  ## Initialize                                                                 # -------------------------------------
+  iP -begin_timer;                                                              # Start timer
+  ( "uasr.am.train.updlab$[nSpl]" TRUE "S" -CFG_get_ex ) bLab -bset;            # Get config for use label
+  "model"   "" -CFG_get_path sDirModel =;                                       # Get model directory
+  "fea"     "" -CFG_get_path;                                                   # Echo feature files directory
+  ( "flist.sep" "\t " "S" -CFG_get_ex ) iF set sep;                             # Set file list separator(s)  
+  "train"   "" -CFG_get_flist iF -set flist;                                    # Set training file list
+  "${sDirModel}/feainfo$[sSxt].object" iFI -FEA_info;                           # Get feature info object
+  "\n"                                                                    -MSG; # Protocol (verbose level 2)
+  itHMM -AM_check not itHMM.gm NULL == || if                                    # Committed HMMs invalid >>
+    "${sDirModel}/$[nSpl]_$[nIte]$[sSxt].hmm" var sInFn;                        #   Create file name of prev. iteration
+    sInFn iFI.nDim itHMM -HMM_load not if leave end;                            #   Restore HMM of prev. iteration
+  end                                                                           # <<
+  itHMM "uasr.am.train.actb$[nSpl]_$[nIte]" "" "S" -CFG_get_ex -HMM_Act;        # do action before update (actb)
+
+  ## HMM training iteration                                                     # -------------------------------------
+  "\n   " itHMM.gm if "Updating" else "Initializing" end +                      # Protocol
+    " $[itHMM.ud.nrec] models with $[iF.len] samples ..." +               -MSG; # |
+  .__CFG_nJobs 1 <= if                                                          # No parallel compution >>
+    ( iF sSns iFI bBw bLab itHMM -HMM_ite ) bOk =;                              #   Do it yourself...
+  else                                                                          # << Parallel computation >>
+    itHMM -reset_stats;                                                         #   Clear the old HMM stats.
+    itHMM itHMM2 -copy;                                                         #   Jobs get a copy of the HMM
+    "\n   PARALLEL COMPUTING ($[.__CFG_nJobs] jobs)"                      -MSG; #   Protocol
+    0 1 -PBAR;                                                                  #   Begin progress bar
+    -1 nJ =; ( nJ ++= ) ( nJ .__CFG_nJobs < ) while                             #   Loop over jobs >>
+      iF :1/.__CFG_nJobs: nJ iF2 -partition;                                    #     Get job's file list part
+      0 nJ == if                                                                #     First job >>
+        :60-(.__CFG_nJobs-1)*(ent(60/.__CFG_nJobs)): iF2.flist_data set descr0; #       Assign ramaining prg. bar ticks
+      else                                                                      #     << All other jobs >>
+        :ent(60/.__CFG_nJobs): iF2.flist_data set descr0;                       #       Assign share of prg. bar ticks
+      end                                                                       #     <<
+      process iPrc$[nJ];                                                        #     Create job
+      ( iF2 sSns iFI bBw bLab itHMM2 /disarm -HMM_ite )                         #     |
+        iPrc$[nJ] /global -start;                                               #     Start job
+    end                                                                         #   <<
+    -1 nJ =; ( nJ ++= ) ( nJ .__CFG_nJobs < ) while                             #   Loop over jobs >>
+      ( ( nJ iPrc$[nJ] -wait ) || bOk ) bOk =;                                  #     Wait for job to be completed
+      nJ 0 == if itHMM2 itHMM -copy; else itHMM2 itHMM -merge_stats; end        #     Merge the HMM stats
+    end                                                                         #   <<
+    "done\n"                                                              -MSG; #   Protocol
+  end                                                                           # <<
+
+  ## Aftermath                                                                  # -------------------------------------
+  bOk if                                                                        # If everything was ok >>
+    itHMM -HMM_setup;                                                           #   Re-estimate parameters
+    itHMM "uasr.am.train.acta$[nSpl]_$[nIte]" "" "S" -CFG_get_ex -HMM_Act;      #   Do action after update (acta)
+    "${sDirModel}/$[nSpl]_$[nIte ++]$[sSxt].hmm" itHMM -HMM_save;    "\n" -MSG; #   Save models, protocol
+  end                                                                           # <<
+  NULL iP -end_timer; "   Time: ${ent(iP.time/1000+0.5)} s\n"             -MSG; # End timer
+}
+
+## HMM state splitting.
+##
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance to be split
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings (typical case for speech recognition)
+## @param nSpl  number
+##          Previous number of state splits of HMM to be split
+## @param nIte number
+##          Number of update iterations of HMM to be split
+## @global &lt;uasr.am.train.act[nSpl]&gt;(Default:split) R
+function -HMM_split(itHMM,sSns,nSpl,nIte)
+{
+  "\n// HMM split"                                                        -MSG; # Protocol
+  var sSxt; sSns if ".$[sSns]" else "" end sSxt =;                              # Get sensor file extension
+  sSns if "\n   - Sensor ID     : $[sSns]" -MSG; end                            # Protocol
+  "\n   - Src. model ID : $[nSpl]_$[nIte]"                                -MSG; # Protocol
+  "\n   - Dst. model ID : $[nSpl ++]_0"                                   -MSG; # Protocol
+  profile iP;                                                                   # Timer
+  var     sDirModel; "model" "" -CFG_get_path sDirModel =;                      # Model directory
+  object  iFI;       "${sDirModel}/feainfo$[sSxt].object" iFI -FEA_info;        # Feature info object
+
+  ## Initialize                                                                 # -------------------------------------
+  iP -begin_timer;                                                              # Start timer
+  "\n"                                                                    -MSG; # Protocol (verbose level 2)
+  itHMM -AM_check not itHMM.gm NULL == || if                                    # Committed HMMs invalid >>
+    "${sDirModel}/$[nSpl]_$[nIte]$[sSxt].hmm" var sInFn;                        #   Create file name of prev. iteration
+    sInFn iFI.nDim itHMM -HMM_load not if leave end;                            #   Restore HMM of prev. iteration
+  end                                                                           # <<
+
+  ## HMM splitting                                                              # -------------------------------------
+  itHMM "uasr.am.train.act$[nSpl]" "split" "S" -CFG_get_ex -HMM_Act;            # do split-action (act)
+  "${sDirModel}/$[nSpl ++]_0$[sSxt].hmm" itHMM -HMM_save;            "\n" -MSG; # Save models, protocol
+  NULL iP -end_timer; "   Time: ${ent(iP.time/1000+0.5)} s\n"             -MSG; # End timer
+}
+
+## Evaluation with test set. After completion, the function will write and/or
+## continue log files in the log folder. 
+## <p>This standard implementation calls:</p>
+## <pre class="code">
+## &nbsp;
+## &nbsp;itHMM sSns nSpl nIte "test" "-HMM_eval_fnc" "&lt;uasr.am.eval.mode&gt;V" <a class="code" href="#clp_-HMM_process">-HMM_process</a>
+## </pre>
+## <p>Databases may overwrite this function in order to provide a custom evaluation</p>
+## <pre class="code">
+## &nbsp;
+## &nbsp;/disarm -MY_eval /disarm -HMM_eval =;
+## </pre>
+## <h4>Developers' <span class="TODO">TODO</span> list</h4>
+## <ul>
+##   <li>How to provide a custom result function to <a class="code" 
+##       href="#clp_-HMM_process">-HMM_process</a>?</li>
+## </ul>
+##
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance to be evaluated (may be empty; in this case the
+##          function will automatically restore the previous iteration from the
+##          model folder).
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+##          (typical case for speech recognition)
+## @param nSpl  number
+##          Number of state splits of HMM to be evaluated
+## @param nIte number
+##          Previous update iteration of HMM to be evaluated
+## @global &lt;uasr.am.eval.mode&gt; R
+function -HMM_eval(itHMM,sSns,nSpl,nIte)
+{
+  var sMd1; ( "am.eval.mode" "0" "S" -CFG_get_ex ) sMd1 -sset;                  # Get evaluation mode
+  :sMd1!="0" && sMd1!="F" && sMd1!="L" && sMd1!="T": if                         # Check evaluation mode, invalid >>
+    "Invalid value \"$[sMd1]\" of cfg. key am.eval.mode." 1 -WARNING;           #   Warning
+    "0" sMd1 -sset;                                                             #   Fall back to standard mode
+  end                                                                           # <<
+  itHMM sSns nSpl nIte "test" "-HMM_eval_fnc" "$[sMd1]V" -HMM_process return;   # Call -HMM_process
+}
+
+## Decodes all files in the test set through all HMMs. This yields a vector of
+## neglog likelihoods (NLLs), one for each HMM, per test file. The NLL values are normalized to the length
+## of the test file (i.e. to the number of feature vectors). All these vectors will be concatenated to a matrix whose
+## rows (components) contain the NLLs for one HMM and whose columns (records) contain the NLLs for one test file. The
+## function saves this matrix as a file named <code>hmm_assess-&ltHMM-id&gt;.dn3</code> in the log directory
+## (configured through <a href="../util/cfg.itp.html#index:cfgk" class="code">&lt;uasr.dir.log&gt;</a>). It also saves
+## one NLL histogram per HMM in files named <code>hmm_assess-&lt;HMM-id&gt;-&lt;unit-id&gt;.dn3</code>. If the
+## evaluation file list (configured through <a href="../util/cfg.itp.html#index:cfgk"
+## class="code">&lt;uasr.flist.test&gt;</a>) contains a label component, the function will classify each test file by
+## assigning it the label of the HMM giving the lowest NLL for it. By comparing the detected labels to the labels known
+## from the file list, the function computes a label recognition rate which is returned. If the evaluation file list
+## does not contain labels the function returns 1.
+##
+## <p>This function may overwrite <a href="../train/am.itp.html#clp_-HMM_eval"><code
+## class="link">-HMM_eval</code></a>:</p>
+## <pre class="code">&nbsp;
+##    /disarm -HMM_assess /disarm <a href="../train/am.itp.html#clp_-HMM_eval" class="code">-HMM_eval</a> =;
+##
+## </pre>
+##
+## <h4>Developers' Notes</h4>
+## <ul>
+##   <li>Specify by which HMMs each file is to be assessed?</li>
+## </ul>
+##
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance to be assessed
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings 
+##          (typical case for speech recognition)
+## @param nSpl number
+##          Number of state splits of HMM to be assessed
+## @param nIte number
+##          Update iteration of HMM to be assessed
+## @return The label recognition rate or 1 if no correct labels are known.
+## @global &lt;uasr.dir.fea&gt;        R
+## @global &lt;uasr.dir.model&gt;      R
+## @global &lt;uasr.fea.ext&gt;        R
+## @global &lt;uasr.flist.test&gt;     R
+## @global &lt;uasr.pfa.crate&gt;      R
+## @global &lt;uasr.sig.srate&gt;      R
+function -HMM_assess(itHMM,sSns,nSpl,nIte)
+{
+  "\n// HMM assessment"                                                   -MSG; # Protocol
+  var sPre; "hmm-$[nSpl]_$[nIte]"            sPre =;                            # Log file prefix
+  var sSxt; sSns if ".$[sSns]" else "" end sSxt =;                              # Get sensor file extension
+  sSns if "\n   - Sensor ID     : $[sSns]" -MSG; end                            # Protocol
+  "\n   - Model ID      : $[nSpl]_$[nIte]" -MSG;                                # Protocol
+  profile iP;                                                                   # Timer
+  object  iFI;                                                                  # Feature information object
+  file    iF;                                                                   # Feature file list
+  fst     itRres;                                                               # Result fst
+  data    idF;                                                                  # File list
+  data    idMsf;                                                                # Most sign. feature vector sequence
+  data    idAsc;                                                                # Assessment scores of one file
+  data    idAux;                                                                # Auxiliary data instance
+  var     sDirModel;                                                            # Model directory
+  var     nRinc;                                                                # Time incr. between two feature vects.
+  var     nTst;                                                                 # Cummulative time
+  var     nCor;                                                                 # Label correctness
+  
+  ## Initialize                                                                 # -------------------------------------
+  "model" "" -CFG_get_path sDirModel =;                                         # Get model directory
+  "fea"   "" -CFG_get_path;                                                     # Echo feature files directory
+  "log"   "" -CFG_get_path;                                                     # Echo log directory
+  ( "flist.sep" "\t " "S" -CFG_get_ex ) iF set sep;                             # Set file list separator(s)  
+  "test"  "" -CFG_get_flist iF -set flist;                                      # Set test file list
+  ( "pfa.crate" 160 -CFG_get ) ( "sig.srate" 16000 -CFG_get ) / 1000 * nRinc =; # Compute feature vector distance in ms
+  "${sDirModel}/feainfo$[sSxt].object" iFI -FEA_info;                           # Get feature info object
+  "\n"                                                                    -MSG; # Protocol (verbose level 2)
+  itHMM -AM_check not itHMM.gm not || if                                        # Committed HMMs invalid >>
+    var sInFn; "${sDirModel}/$[nSpl]_$[nIte]$[sSxt].hmm" sInFn =;               #   Create file name of prev. iteration
+    sInFn iFI.nDim itHMM -HMM_load not if leave end;                            #   Restore HMM of prev. iteration
+  end                                                                           # <<
+  itHMM -AM_check not itHMM.gm not || if                                        # Have no (valid) Gaussians
+    "HMM does not contain (valid) Gaussians"                            -ERROR; #   Error
+    "\n FAILED"                                                           -MSG; #   Protocol
+    leave;                                                                      #   Leave function
+  end                                                                           # <<
+
+  ## Assessment                                                                 # -------------------------------------
+  iP -begin_timer;                                                              # Start timer
+  :iF.flist_data[0]: idF =; 0 "FILE" idF -set_cname;                            # Get file names
+  iF.flist_data.dim 1 > if                                                      # File list contains labels >>
+    :iF.flist_data[1]: idAux =;                                                 #   Get 'em
+    idAux idAux -LAB_map;                                                       #   Map them to UASR labels
+    0 "LAB" idAux -set_cname;                                                   #   Rename label component
+    idAux idF -join;                                                            #   Join to file list
+  end                                                                           # <<
+  "\n   Assessing $[iF.len] samples by $[itHMM.ud.nrec] models ..."       -MSG; # Protocol
+  0 1 -PBAR;                                                                    # Begin progress bar
+  label L_FILE; iF -next                                                        # Loop over files
+  if                                                                            # >>
+    "\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "                   -MSG2; #   Protocol
+    :(iF.nfile+1)/iF.len: 1 -PBAR;                                              #   Display progress
+    iF sSns "A" idMsf -FEA_get not if goto L_FILE end;               "." -MSG2; #   Get primary feature vectors
+    stdprof -begin_timer;                                                       #   Start measuring time
+    idMsf iFI itHMM -1 "1A" itRres -AM_decode;                       "." -MSG2; #   Decode
+    :itRres.ud[0]   : idAux -copy;                                              #   Copy unit names from recog. result
+    :itRres.ud["GW"]: idAux -join;                                              #   Copy weights from rec. result
+    ( idAux ' ) idAsc -cat;                                                     #   Transpose and append to log
+    "" stdprof -end_timer; " (RTF ${stdprof.time/nRinc/idMsf.nrec})"     -MSG2; #   Stop measurung time, protocol
+    ( nRinc idMsf.nrec * ) nTst +=;                                             #   Accumulate total sample time
+    goto L_FILE;                                                                #   End of file loop
+  end                                                                           # <<
+  "" idAsc -set runit;                                                          # Set record axis name
+  "\n  "                                                                 -MSG2; # Protocol
+  "done\n"                                                                -MSG; # Protocol
+
+  ## Aftermath                                                                  # -------------------------------------
+  sPre sSxt itHMM.ud idF idAsc -XXM_assess_log nCor =;                          # Create/continue log file
+  sPre sSxt itHMM.ud idF idAsc -XXM_assess_hist;                                # Create/continue assmnt. histrograms
+
+  "\n   Total sample time: ${nTst/60000} min"                            -MSG2; # Protocol
+  nCor 0 >= if                                                                  # Have computed correctness >>
+    "\n\n   Evaluation result:"                                           -MSG; #   Protocol
+    "\n   - Label corr.    : ${ent(nCor*1000+0.5)/10} %"                  -MSG; #   Protocol (label correctness)
+    " ( HMM $[nSpl]_$[nIte]" ( sSns if ", $[sSns]" + end ) " )" +        - MSG; #   Protocol (HMM and sensor IDs)
+  end                                                                           # <<
+  NULL iP -end_timer; "   Time: ${ent(iP.time/1000+0.5)} s\n  "           -MSG; # End timer
+  nCor 0 >= if nCor else 1. end return;                                         # Return label correctness or 1
+}
+
+## Result function to <code>-HMM_process</code> for the evaluation of HMMs.
+##
+## <h4>See also</h4>
+## <ul>
+##   <li><a class="code" href="#clp_-HMM_process" class="linklist">-HMM_process</a></li>
+## </ul>
+## 
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance being evaluated
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings (typical case for speech recognition)
+## @param nSpl number
+##          Number of state splits of HMM to be evaluated
+## @param nIte number
+##          Update iteration of HMM to be evaluated
+## @param sHint string
+##          Hint, see documentation of function <a class="code" href="#clp_-HMM_process"
+##          class="linklist">-HMM_Process</a>
+## @param iF file
+##          The turn (file) being evaluated
+## @param itRes fst
+##          The recognition result of the turn (file) being evaluated
+## @param iL object
+##          Container for log objects
+## @return If <code>sHint</code> is "L", the function returns a real number &le;1 indicating the recognition rate over
+##         the entire test set, if possible the product of correctness and accuracy. If <code>sHint</code> is "I", the
+##         function return "Evaluation". In all other cases it returns 0.
+## @global __AM_nEtdr           RW 
+## @global &lt;uasr.am.sil&gt;  R
+## @global &lt;uasr.am.gbg&gt;  R
+## @global &lt;uasr.dir.log&gt; R
+## @global &lt;uasr.dir.trl&gt; R
+function -HMM_eval_fnc(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)
+{
+  function -MCR(sKey,idR)                                                       # Get mean, conf. int. and ref. res. >>
+  {                                                                             # >>
+    var        sR;  ( sKey "" "S" -CFG_get_ex ) sR -sset;                       #   Reference result
+    statistics iS;  2 idR.dim 1 NULL 0 iS -setup; idR -1 NULL iS -update;       #   Make a stastistic
+    data       idM; idM iS -mean;                                               #   Get means
+    data       idS; idS iS -sdev;                                               #   Get standard deviations
+    :2/sqrt(iS.dat[0,0])*idS: idM -cat;                                         #   Compute 95 % confidence intervals
+    sR if                                                                       #   Have reference result >>
+      { { "$[sR]" } } "," "split" idS -strop;                                   #     Split string
+      idS -type double idS /force -tconvert;                                    #     Get numeric values
+      :idS=idM-idS; idS 0 1 idS /rec -select;                                   #     Compute difference
+      :idS=idS.*(abs(idS).>0.001);                                              #     Clip at +-0.1 %
+      idS idM -cat;                                                             #     Cat to result
+    end                                                                         #   <<
+    idM return;                                                                 #   Return means and conf. intervals
+  }                                                                             # <<
+  function -CAL(idR,nC,nFmt,sUnit)                                              # Pretty printing of results
+  {                                                                             # >>
+    var  sRet;                                                                  #   Return string 
+    var  sVal;                                                                  #   Current value string
+    var  nDec;                                                                  #   Number decimals
+    var  nPad; sUnit "%%" == if -7 nPad =; else -6 nPad =; end                  #   Value string padding length
+    data idF; { { "$[nFmt]" } } "." "split" idF -strop;                         #   Parse number format specifier
+    idF -type double idF /force -tconvert; :idF[0,1]: nDec =;                   #   Number of decimals
+    10 idF .^ idF =;                                                            #   Get numerator and denominator
+    sUnit if " " sUnit + sUnit =; end                                           #   Prefix unit with a space
+    ( "${ent(idR[0,nC]*idF[0,0]+0.5)/idF[0,1]}" nDec -MSG_dpad ) sVal =;        #   Append tailing "0"s
+    ( ( sVal sUnit + ) nPad -MSG_pad ) sRet =;                                  #   Render value
+    idR.nrec 1 == if sRet return; end                                           #   No more information -> return
+    ( "${ent(idR[1,nC]*idF[0,0]+0.5)/idF[0,1]}" nDec -MSG_dpad ) sVal =;        #   Append tailing "0"s
+    ( ( sVal sUnit + ) nPad -MSG_pad ) sVal =; sRet " +-" + sVal + sRet =;      #   Render confidence interval   
+    idR.nrec 2 == if sRet return; end                                           #   No more information -> return
+    :idR[2,nC]!=0: if                                                           #   Difference is not zero >>
+      ( sRet " - " + ( "UNEXPECTED" -COLOR_red + " (" + ) sRet =;               #     Say "UNEXPECTED"
+      :idR[2,nC]<0: if ( sRet "-" + ) sRet =; end                               #     Force "-" for negative values
+      :idR[2,nC]>0: if ( sRet "+" + ) sRet =; end                               #     Force "+" for positive values
+      ( "${ent(abs(idR[2,nC])*idF[0,0]+0.5)/idF[0,1]}" nDec -MSG_dpad ) sVal =; #     Append tailing "0"s
+      ( ( sVal sUnit + ) nPad -MSG_pad ) sVal =; sRet sVal + ")" + sRet =;      #     Render difference value 
+      sRet return;                                                              #     All done
+    end                                                                         #   << 
+    ( sRet " - " + "OK" -COLOR_green + ) return;                                #   Say "ok"
+  }                                                                             # <<
+  function -CMX(idLtab)                                                         # Make a confusion matrix
+  {                                                                             # >>
+    data idCmx;                                                                 #   The confusion matrix
+    ( -type double ) :idLtab.nrec+1: :idLtab.nrec+1: idCmx -array;              #   Create square matrix
+    idLtab 0 idCmx -set_cnames; idCmx.dim -- "eps" idCmx -set_cname;            #   Label components
+    :idLtab[0]: idCmx -join; :idCmx[idCmx.nrec-1,idCmx.dim-1]="eps";            #   Append label component
+    idCmx.dim -- "REF" idCmx -set_cname;                                        #   Name label component
+    "recs: reference, comps: recognized" idCmx -set vrtext;                     #   Store remark
+    idCmx return;                                                               #   Return confusion matrix
+  }                                                                             # <<
+  function -LABSAVE(sFn,idLab,idTab)                                            # Save label files
+  {                                                                             # >>
+    data idOut;                                                                 #   Output label sequence
+    data idAux;                                                                 #   Auxiliary data object
+    idLab 0 idOut -compress;                                                    #   Compress label sequence
+    idOut -type double idOut -tconvert;                                         #   Convert to double
+    :idOut[1]*idOut.rinc/1000: idOut -join;                                     #   Calc. begin in sec.
+    :(idOut[2]+idOut[1])*idOut.rinc/1000: idOut -join;                          #   Calc. end in sec.
+    idOut 0 idTab 0 1 idAux -lookup; idAux idOut -join;                         #   Lookup label names
+    idOut 0 3 idOut -delete;                                                    #   Remove unused components
+    sFn "ascii" idOut stdfile -export;                                          #   Write file
+  }                                                                             # <<
+  function -WRDEXPAND(idW,idP,nRinc)                                            # Create a word label sequence
+  {                                                                             # >>
+    data idAux;                                                                 #   Auxiliary data object
+    ".itLXl" "fst" ?instance not if                                             #   Lexicon loaded ? >>
+      # lx get                                                                  #     ---------------------------------
+      fst .itLXl;                                                               #     Create lexicon transducer
+      -LAB_get_tab idAux =;                                                     #     Get phonem table
+      idAux .itLXl -LX_get;                                                     #     Load lexicon
+      # remove <PAU> + <OOV>                                                    #     ---------------------------------
+      :.itLXl.ud.nrec-2: .itLXl.ud -reallocate;                                 #     Remove <PAU> and <OOV> unit
+      :.itLXl.ud[.itLXl.ud.nrec-1,"~FS"]+.itLXl.ud[.itLXl.ud.nrec-1,"~XS"]:     #     Remove states
+        .itLXl.sd -reallocate;                                                  #     |
+      :.itLXl.ud[.itLXl.ud.nrec-1,"~FT"]+.itLXl.ud[.itLXl.ud.nrec-1,"~XT"]:     #     Remove transitions
+        .itLXl.td -reallocate;                                                  #     |
+      # minimize                                                                #     ---------------------------------
+      .itLXl -1 .itLXl -minimize;                                               #     Minimize the lexicon
+      # close                                                                   #     ---------------------------------
+      .itLXl .itLXl -union;                                                     #     Union lexicon
+      .itLXl 0 .itLXl -close;                                                   #     Close lexicon
+    end;                                                                        #   <<
+    # phonem sequence transducer                                                #   -----------------------------------
+    data idPc; idP idPc =;                                                      #   Copy phonem sequence
+    :idPc.>=0: idPc -dmark; idPc 0 0 idPc /mark -select;                        #   Remove epsilons
+    idPc.nrec var nLen;                                                         #   Save the length to nLen
+    idPc 0 idPc -compress;                                                      #   Compress phonem sequence
+    fst itP; "" itP /fst /lsr -addunit;                                         #   Create phonem sequence transducer
+    idPc 0 -1 -1 0 itP -addseq;                                                 #   Add the phonem sequence
+    :itP.td["~TIS"]: 0 1 "~TOS" itP.td -xstore;                                 #   Copy input to output symbols
+    :idPc[1]: itP.td -join;                                                     #   Join phonem begin to transition tab.
+    :idPc[1]+idPc[2]/2: itP.td -join;                                           #   Join phonem middle to transition tab.
+    itP.td idPc =;                                                              #   Copy transition tab. to idPc
+    itP.td :itP.td.dim-1: 1 itP.td -delete;                                     #   Remove phonem middle from td
+    idPc :idPc.dim-2: 1 idPc -delete;                                           #   Remove phonem begin from idPc
+    :idPc["~TER"]: 0 1 "~INI" idPc -xstore;                                     #   Convert transtions in idPc to loops
+    idPc itP.td -cat; :itP.ud[0,"~XT"]=itP.td.nrec;                             #   Add transitions in idPc to itP
+    # word sequence transducer                                                  #   -----------------------------------
+    fst itW; "" itW /fst /lsr -addunit;                                         #   Create word sequence transducer
+    idW 0 -1 -1 0 itW -addseq;                                                  #   Add the word sequence
+    :itW.td["~TIS"]: 0 1 "~TOS" itW.td -xstore;                                 #   Copy input to output symbols
+    # compose                                                                   #   -----------------------------------
+    fst itR;                                                                    #   Create composed transducer
+    0 itW -loops { -1 -1 0 }; .itLXl itW 0 0 itR /noint /noeps -compose;        #   Compose word seq. and lexicon
+    0 itP -loops { -1 -1 0 -1 }; itP itR 0 0 itR /noint /noeps -compose;        #   Compose with phonem seq.
+    # get one path                                                              #   -----------------------------------
+    itR 0 1 0 itR -best_n;                                                      #   Extract one path
+    :itR.td["~TOS"].>=0: itR.td -dmark; itR.td 0 0 idW /mark -select;           #   Remove epsilons
+    :idW["ind_"]: -1 idAux /rec -shift;                                         #   Calculate length of words
+    :idAux[idAux.nrec-1,0]=nLen;                                                #   |
+    0 "len_" idAux -set_cname;                                                  #   |
+    :idAux-idW["ind_"]: idW -join;                                              #   |
+    idW "~TOS" idW -find_comp "ind_" idW -find_comp "len_" idW -find_comp       #   Expand word sequence
+      idW -expand;                                                              #   |
+    nRinc idW -set rinc;                                                        #   Set record increment
+  }                                                                             # <<
+  function -EI(itHMM,sSns,nSpl,nIte,iF,itRes,iL)                                # Indentification (sHint="I")
+  {                                                                             # >>
+    "Evaluation" return;                                                        #   Name our mission
+  }                                                                             # <<
+  function -EF(itHMM,sSns,nSpl,nIte,iF,itRes,iL)                                # Before first turn (sHint="F")
+  {                                                                             # >>
+    ## Local instances                                                          #   - - - - - - - - - - - - - - - - - -
+    var  nMidSil; ( "am.sil" -1 -CFG_get ) nMidSil -vset;                       #   Index of silence model
+    var  nMidGbg; ( "am.gbg" -1 -CFG_get ) nMidGbg -vset;                       #   Index of garbage model
+    var  n;                                                                     #   Auxiliary variable
+
+    ## Evaluation instances                                                     #   - - - - - - - - - - - - - - - - - -
+    data iL.idLabRes;                                                           #   Phonetic per frame correctness
+    data iL.idLabCmx;                                                           #   Phonetic per frame confusion matr.
+    data iL.idPhnRes;                                                           #   Phonetic sequences' results
+    data iL.idPhnCmx;                                                           #   Phonetic sequences' confusion matr.
+    data iL.idPhnCst;                                                           #   Phonetic sequences' cost matrix
+    data iL.idWrdRes;                                                           #   Word sequences' results
+    data iL.idWrdCmx;                                                           #   Word confusion matrix
+    var  iL.nTmeSmp;   0                           iL.nTmeSmp =;                #   Accumulated sample time
+    var  iL.nTmeDec;   0                           iL.nTmeDec =;                #   Accumulated decoding time
+    var  iL.sDirTrl;   ( "trl" "S" -CFG_get_path ) iL.sDirTrl =;                #   Transliteration directory
+    var  iL.sDirLog;   ( "log" "S" -CFG_get_path ) iL.sDirLog =;                #   Log directory
+    var  iL.sDirSig;   ( "sig" "S" -CFG_get_path ) iL.sDirSig =;                #   Signal directory
+    var  iL.bEvlLab;   "am.eval.lab" FALSE "S" -CFG_get_ex iL.bEvlLab =;        #   Should evaluation labels be created
+
+    ## Create confusion matrices                                                #   - - - - - - - - - - - - - - - - - -
+    ( itHMM.ud -CMX ) iL.idLabCmx =;                                            #   Initialize frame phon. conf. matrix
+    ( itHMM.ud -CMX ) iL.idPhnCmx =;                                            #   Initialize phon. seq. conf. matrix
+
+    ## Create phoneme confusion cost matrix                                     #   - - - - - - - - - - - - - - - - - -
+    itHMM.ud.nrec unit iL.idPhnCst =;                                           #   Create unit matrix
+    iL.idPhnCst -10 .* 10 + iL.idPhnCst =;                                      #   Fill with substitution cost
+    0 nMidSil nMidGbg iL.idPhnCst -dstore;                                      #   No cost for matching silence on ... 
+    0 nMidGbg nMidSil iL.idPhnCst -dstore;                                      #   ... garbage and vice versa
+    7 iL.idPhnCst -set descr0;                                                  #   Set insertion/deletion cost
+
+    0 return;                                                                   #   Well ...
+  }                                                                             # <<
+  function -E(itHMM,sSns,nSpl,nIte,iF,itRes,iL)                                 # For all turns (sHint="")
+  {                                                                             # <<
+    data idD;                                                                   #   Decoded symbols
+    data idR;                                                                   #   Reference symbols
+    data idAux;                                                                 #   Auxiliary data instance
+    fst  itD;                                                                   #   Decoded sequence
+    fst  itR;                                                                   #   Reference sequence
+    var  nDim;                                                                  #   Dimension
+
+    ## Measure real time                                                        #   - - - - - - - - - - - - - - - - - -
+    :idD=itRes.td["~TIS"]; :idD.==-1: idD /comp -dmark; idD 0 0 idD /mark -delete;# Get decoded Gaussians
+    :itRes.td.rinc*idD.nrec/1000: iL.nTmeSmp +=;                                #   Accumulate sample time
+    itRes.ud.descr0               iL.nTmeDec +=;                                #   Accumulate decoding time
+    ".(RTF=${ent(itRes.ud.descr0/itRes.td.rinc/idD.nrec*1E6+0.5)/1000})" -MSG2; #   Protocol
+
+    ## Compare phonetic labels and sequences                                    #   - - - - - - - - - - - - - - - - - -    
+    ( "~PLB" itRes.td -find_comp ) 0 >= if                                      #   Have phonetic reference labels >>
+      :idD=itRes.td["~PHN"]; :idD.==-1: idD -dmark; idD 0 0 idD /mark -delete;  #     Get decoded phoneme labels
+      :idR=itRes.td["~PLB"]; :idR.==-1: idR -dmark; idR 0 0 idR /mark -delete;  #     Get reference phoneme labels
+      :idAux=(idD.==idR); idAux NULL 0 "sum" idAux /rec -aggregate;             #     Count correctly labelled frames
+      ".(LAB: C=${ent(idAux[0,0]*1000/idR.nrec)/1000})"                  -MSG2; #     Protocol
+      "iL.idLabRes" "data" ?instance if                                         #     Measurung frame label corr. >>
+        { { ${idAux[0,0]/idR.nrec} } } iL.idLabRes -cat;                        #       Continue log
+      end                                                                       #     <<
+      "iL.idLabCmx" "data" ?instance if                                         #     Counting frame label confusion >>
+        idR idAux =; idD idAux -join; iL.idLabCmx.nrec nDim =;                  #       Prepare compress sparse matrix 
+        idAux 0 1 -1 nDim nDim "add" idAux matrix -expand;                      #       Expand it
+        :iL.idLabCmx[iL.idLabCmx.dim-1]: idAux -join;                           #       Copy labels
+        iL.idLabCmx idAux -copy_descr;                                          #       Copy descriptions
+        iL.idLabCmx 0 0 :idAux.dim: idAux -copy_cnames;                         #       Copy component names
+        :iL.idLabCmx+=idAux;                                                    #       Aggregate confusion matrix
+      end                                                            "." -MSG2; #     <<
+      iL.bEvlLab if;                                                            #     Create evaluation labels ? >>
+        "$[iL.sDirLog]/evllab/$[iF.sfile].prec" idD itHMM.ud -LABSAVE;          #       Create phonem recognition labels
+        "$[iL.sDirLog]/evllab/$[iF.sfile].pref" idR itHMM.ud -LABSAVE;          #       Create phonem reference labels
+        "ln -fs $[iL.sDirSig]/$[iF.sfile].wav "                                 #       Create signal symlink
+          "$[iL.sDirLog]/evllab/$[iF.sfile].wav" + -system;                     #       |
+      end;                                                                      #     <<
+      idD 0 idD -compress; idD 0 1 idD -select; idD 0 -1 -1 0 itD -addseq;      #     Get decoded label sequence
+      idR 0 idR -compress; idR 0 1 idR -select; idR 0 -1 -1 0 itR -addseq;      #     Get reference label sequence
+      itR itD 0 0 iL.idPhnCst iL.idPhnCmx iL.idPhnRes -FST_lvnstn;              #     Compute Levenshtein distance
+      ".(PHN: C=${ent(iL.idPhnRes[iL.idPhnRes.nrec-1,4]*1000+0.5)/1000}" -MSG2; #     Protocol
+      ", A=${ent(iL.idPhnRes[iL.idPhnRes.nrec-1,5]*1000+0.5)/1000}"      -MSG2; #     Protocol
+      ", L=${ent(iL.idPhnRes[iL.idPhnRes.nrec-1,6]*100+0.5)/100})"       -MSG2; #     Protocol
+    end                                                                         #   <<
+
+    ## Compare word sequences                                                   #   - - - - - - - - - - - - - - - - - -
+    itRes.os -LX_is_trivial not if                                              #   Non-trivial lexicon >>
+      iL.sDirTrl iF.sfile idR -TRL_import; idR -is_empty not if                 #     Get transliteration, successf. >>
+        itR -reset; itD -reset;                                                 #       Reset sequences
+        ( "iL.idWrdCmx" "data" ?instance ) ( iL.idWrdCmx -is_empty ) &&         #       Should have a word conf. matrix
+        ( itRes.os.nrec 150 <= ) && if                                          #       ... >>
+          ( itRes.os -CMX ) iL.idWrdCmx =;                                      #         Create one
+        end                                                                     #       <<
+        idR itRes.os 0 0 idR /noerror -gen_index;                               #       Convert to numeric labels
+        :idR.==-1: idR /comp -dmark; idR 0 0 idR /mark -delete;                 #       Get reference word sequence
+        idR -is_empty not if                                                    #       Got useful reference labels >>
+          :idD=itRes.td["~TOS"];                                                #         Get decoded word sequence
+          :idD.==-1: idD /comp -dmark; idD 0 0 idD /mark -delete;               #         Remove epsilon words
+          :idD.nrec==0: if { -1 } idD =; end;                                   #         Add -1 without result
+          idD 0 -1 -1 0 itD -addseq;                                            #         Make decoded transducer
+          idR 0 -1 -1 0 itR -addseq;                                            #         Make reference transducer
+          itR itD 0 0                                                           #         Compute Levenshtein distance
+            itRes.os.nrec 150 <= if NULL else { { -1 } } end                    #         |
+            iL.idWrdCmx iL.idWrdRes -FST_lvnstn;                                #         |
+          ".(WRD"                                                        -MSG2; #         Protocol
+          ": C=${ent(iL.idWrdRes[iL.idWrdRes.nrec-1,4]*1000+0.5)/1000}"  -MSG2; #         Protocol
+          ", A=${ent(iL.idWrdRes[iL.idWrdRes.nrec-1,5]*1000+0.5)/1000}"  -MSG2; #         Protocol
+          ", L=${ent(iL.idWrdRes[iL.idWrdRes.nrec-1,6]*100+0.5)/100})"   -MSG2; #         Protocol
+          iL.bEvlLab if;                                                        #         Create evaluation labels ? >>
+            idD :itRes.td["~PHN"]: itRes.td.rinc -WRDEXPAND;                    #           Generate word recognition seq.
+            idR :itRes.td["~PLB"]: itRes.td.rinc -WRDEXPAND;                    #           Generate word reference seq.
+            "$[sDirLog]/evllab/$[iF.sfile].wrec" idD itRes.os -LABSAVE;         #           Create word recognition labels
+            "$[sDirLog]/evllab/$[iF.sfile].wref" idR itRes.os -LABSAVE;         #           Create word reference labels
+          end;                                                                  #         <<
+        end                                                                     #       <<
+      end                                                                       #     <<
+    end                                                                         #   <<
+
+    0 return;                                                                   #   ok
+  }                                                                             # <<
+  function -EL(itHMM,sSns,nSpl,nIte,iF,itRes,iL)                                # After last turn (sHint="L")
+  {                                                                             # >>
+    ## Local variables                                                          #   - - - - - - - - - - - - - - - - - -
+    data idR;                                                                   #   Result record of this evaluation
+    data idLog;                                                                 #   Log file
+    data idAux;                                                                 #   Auxiliary data instance
+    var  sDirLog; iL.sDirLog sDirLog -sset;                                     #   Log directory
+    var  sSxt;    ( sSns if ".$[sSns]" else "" end  )                  sSxt =;  #   Sensor file extension
+    var  sTms;    stdprof -date "-" + stdprof -time + " @ $HOSTNAME" + sTms =;  #   Make time stamp
+    var  nTyl;    ( -type long )                                       nTyl =;  #   Get long type code
+    var  nTyd;    ( -type double )                                     nTyd =;  #   Get double type code
+    var  sFn;                                                                   #   File name buffer
+    var  sLdi;    "LabelDisplay"                                       sLdi =;  #   Label display identifier
+    var  sOdi;    "Oscillogram"                                        sOdi =;  #   Oscillogram display identifier
+    var  nDgr;                                                                  #   Display group
+    var  bXvl;    ( "xvl" FALSE "S" -CFG_get_ex )                  bXvl -bset;  #   Cross-validation flag
+    var  bLogx;   ( "log_ex" FALSE "S" -CFG_get_ex )                  bLogx =;  #   Extended log save (per file result)
+
+    ## Common evaluation                                                        #   - - - - - - - - - - - - - - - - - -
+    "\n   Evaluation result:"                                             -MSG; #   Protocol
+    "TIME" 32   idR -addcomp; 1 idR -allocate; sTms           0 0 idR -store;   #   Add time stamp component
+    "HMM"  16   idR -addcomp; "$[nSpl]_$[nIte]$[sSxt]"        0 1 idR -store;   #   Add HMM ID component
+    "nPAR" nTyl idR -addcomp; ( itHMM -AM_get_nparams       ) 0 2 idR -store;   #   Add number-of-parameters component
+    "nGSv" nTyl idR -addcomp; ( itHMM.gm -get_n_valid_gauss ) 0 3 idR -store;   #   Add number-of-valid-Gaussians comp.
+    "xRT"  nTyd idR -addcomp;                                                   #   Add real-time-factor component
+    "\n   - Time stamp     : ${idR[0,0]}"                                 -MSG; #   Protocol
+    "\n   - Model ID       : ${idR[0,1]}"                                 -MSG; #   Protocol
+    "\n   - Parameters     : ${ent(idR[0,2]/100+0.5)/10} k"               -MSG; #   Protocol
+    "\n   - Valid Gaussians: ${idR[0,3]}/$[itHMM.gm.mean.nrec]"           -MSG; #   Protocol 
+    "\n   - Sample time    : ${ent(iL.nTmeSmp+0.5)} s"                    -MSG; #   Protocol
+    "0,$[sLdi]\n1,$[sLdi]\n2,$[sOdi]\n3,$[sOdi]\n" idR -set rtext; 4 nDgr =;    #   Make display settings
+    iL.nTmeSmp 0 > if                                                           #   Total sample time not zero >>
+      :iL.nTmeDec/iL.nTmeSmp: 0 4 idR -store;                                   #     Store real time factor
+      idR.rtext "$[nDgr],$[sOdi]\n" + idR -set rtext; nDgr ++=;                 #     Make display settings
+      "\n   - Performance    : ${ent(idR[0,4]*100+0.5)} % real time"      -MSG; #     Protocol
+    end                                                                         #   <<
+
+    ## Phonetic frame labels evaluation                                         #   - - - - - - - - - - - - - - - - - -
+    ( iL.idLabRes -is_empty not ) if                                            #   At the end >>
+      bLogx if "$[sDirLog]/hmm_frm-$[nSpl]_$[nIte].data" iL.idLabRes /zip -save end;# Save extended log
+      "\n   Frame labels     : $[iL.idLabRes.nrec]/$[iF.len] samples"     -MSG; #     Protocol
+      " (confidence level: 95 %)"                                         -MSG; #     Protocol
+      ( "" iL.idLabRes -MCR ) idAux =;                                          #     Get mean and 95 % conf. interval
+      "\n   - Correctness    : " ( idAux 0 3.1 "%" -CAL ) +               -MSG; #     Protocol
+      "FC" nTyd idR -addcomp; :idR[0,idR.dim-1]=idAux[0,0];                     #     Store frame correctness 
+
+      ## Finish frame confusion matrix and save to file                         #     - - - - - - - - - - - - - - - - -
+      iL.idLabCmx -is_empty not if                                              #     Have frame confusion matrix >>
+        ( .__UTL_nVlevel 1 > ) ( iL.idLabCmx.nrec 50 < ) && if                  #       On verbose level 2 >>
+          "\n\n Frame confusion matrix:"                                  -MSG; #         Protocol
+	        iL.idLabCmx /nz /nonstop -print; /stop;                               #         Print confusion matrix
+        end                                                                     #       <<
+        ( .__CFG_bNwr not ) ( nSpl 0 >= ) && ( nIte 0 >= ) && if                #       No write prot.and reg. eval.>>
+          "$[sDirLog]/hmm_frm-cmx-$[nSpl]_$[nIte]$[sSxt].dn3" sFn =;            #         Make conf. matrix file name
+          bXvl if                                                               #         On cross-validations >>
+            idAux -reset; sFn idAux /noerror -restore;                          #           Restore previous conf. mat.
+            idAux -is_empty not if :iL.idLabCmx=iL.idLabCmx+idAux; end          #           Add the current one
+          end                                                                   #         <<
+          sFn iL.idLabCmx /noerror -save;                                       #         Save frame confusion matrix
+        end                                                                     #       <<
+      end                                                                       #     <<
+    end                                                                         #   <<
+
+    ## Phonetic sequences evaluation                                            #   - - - - - - - - - - - - - - - - - -
+    ( iL.idPhnRes -is_empty not ) if                                            #   Have phonetic sequences results >>
+      bLogx if "$[sDirLog]/hmm_lab-$[nSpl]_$[nIte].data" iL.idPhnRes /zip -save end;# Save extended log
+
+      "\n   Label sequences  : $[iL.idPhnRes.nrec]/$[iF.len] samples"     -MSG; #     Protocol
+      " (confidence level: 95 %)"                                         -MSG; #     Protocol
+      iL.idPhnRes 0 4 iL.idPhnRes -delete;                                      #     Delete counters
+      ( "am.eval.ite$[nSpl]_$[nIte]" iL.idPhnRes -MCR ) idAux =;                #     Get means and 95 % conf. ints.
+      "\n   - Correctness    : " ( idAux 0 3.1 "%" -CAL ) +               -MSG; #     Protocol
+      "\n   - Accuracy       : " ( idAux 1 3.1 "%" -CAL ) +               -MSG; #     Protocol
+      "\n   - Lattice density: " ( idAux 2 3.3 ""   -CAL ) +              -MSG; #     Protocol
+      "LC" nTyd idR -addcomp; :idR[0,idR.dim-1]=idAux[0,0];                     #     Store label correctness 
+      "LA" nTyd idR -addcomp; :idR[0,idR.dim-1]=idAux[0,1];                     #     Store label accuracy 
+      "LL" nTyd idR -addcomp; :idR[0,idR.dim-1]=idAux[0,2];                     #     Store label lattice density
+      idR.rtext "$[nDgr],$[sOdi]\n$[nDgr],$[sOdi]\n" + idR -set rtext; nDgr ++=;#     Make display settings
+      idR.rtext "$[nDgr],$[sOdi]\n"                  + idR -set rtext; nDgr ++=;#     Make display settings
+      :nRet=idAux[0,0]*idAux[0,1];                                              #     Make function's return value
+      :.__AM_nEtdr+=abs(idAux[2,0])+abs(idAux[2,1])+abs(idAux[2,2]);            #     Aggr. diff. from expected results 
+
+      ## Finish phoneme confusion matrix and save to file                       #     - - - - - - - - - - - - - - - - -
+      iL.idPhnCmx -is_empty not if                                              #     Have phon. seq. conf. matrix >>
+        ( .__UTL_nVlevel 1 > ) ( iL.idPhnCmx.nrec 50 < ) && if                  #       On verbose level 2 >>
+          "\n\n Label confusion matrix:"                                  -MSG; #         Protocol
+	        iL.idPhnCmx /nz /nonstop -print; /stop;                               #         Print confusion matrix
+        end                                                                     #       <<
+        ( .__CFG_bNwr not ) ( nSpl 0 >= ) && ( nIte 0 >= ) && if                #       No write prot.and reg. eval.>>
+          "$[sDirLog]/hmm_lab-cmx-$[nSpl]_$[nIte]$[sSxt].dn3" sFn =;            #         Make conf. matrix file name
+          bXvl if                                                               #         On cross-validations >>
+            idAux -reset; sFn idAux /noerror -restore;                          #           Restore previous conf. mat.
+            idAux -is_empty not if :iL.idPhnCmx=iL.idPhnCmx+idAux; end          #           Add the current one
+          end                                                                   #         <<
+          sFn iL.idPhnCmx /noerror -save;                                       #         Save phoneme confusion matrix
+        end                                                                     #       <<
+      end                                                                       #     <<
+
+    end                                                                         #   <<
+
+    ## Word test evaluation                                                     #   - - - - - - - - - - - - - - - - - -
+    ( iL.idWrdRes -is_empty not ) if                                            #   Have word sequences results >>
+      bLogx if "$[sDirLog]/hmm_trl-$[nSpl]_$[nIte].data" iL.idWrdRes /zip -save end;# Save extended log
+
+      "\n   Word sequences   : $[iL.idWrdRes.nrec]/$[iF.len] samples"     -MSG; #     Protocol
+      iL.idWrdRes 0 4 iL.idWrdRes -delete;                                      #     Delete counters
+      ( "am.eval.wrd.ite$[nSpl]_$[nIte]" iL.idWrdRes -MCR ) idAux =;            #     Get means and 95 % conf. ints.
+      "\n   - Correctness    : " ( idAux 0 3.1 "%" -CAL ) +               -MSG; #     Protocol
+      "\n   - Accuracy       : " ( idAux 1 3.1 "%" -CAL ) +               -MSG; #     Protocol
+      "\n   - Lattice density: " ( idAux 2 3.3 ""   -CAL ) +              -MSG; #     Protocol
+      "TC" nTyd idR -addcomp; :idR[0,idR.dim-1]=idAux[0,0];                     #     Store transliteration correctness 
+      "TA" nTyd idR -addcomp; :idR[0,idR.dim-1]=idAux[0,1];                     #     Store transliteration accuracy 
+      "TL" nTyd idR -addcomp; :idR[0,idR.dim-1]=idAux[0,2];                     #     Store translit.lattice density
+      idR.rtext "$[nDgr],$[sOdi]\n$[nDgr],$[sOdi]\n" + idR -set rtext; nDgr ++=;#     Make display settings
+      idR.rtext "$[nDgr],$[sOdi]\n"                  + idR -set rtext; nDgr ++=;#     Make display settings
+      :.__AM_nEtdr+=abs(idAux[2,0])+abs(idAux[2,1])+abs(idAux[2,2]);            #     Aggr. diff. from expected results 
+
+      ## Finish word confusion matrix and save to file                          #     - - - - - - - - - - - - - - - - -
+      iL.idWrdCmx -is_empty not if                                              #     Have word confusion matrix >>
+        ( .__UTL_nVlevel 1 > ) ( iL.idWrdCmx.nrec 50 < ) && if                  #       On verbose level 2 >>
+          "\n\n Word confusion matrix:"                                   -MSG; #         Protocol
+	        iL.idWrdCmx /nz /nonstop -print; /stop;                               #         Print confusion matrix
+        end                                                                     #       <<
+        ( .__CFG_bNwr not ) ( nSpl 0 >= ) && ( nIte 0 >= ) && if                #       No write prot.and reg. eval.>>
+          "$[sDirLog]/hmm_trl-cmx-$[nSpl]_$[nIte]$[sSxt].dn3" sFn =;            #         Make conf. matrix file name
+          bXvl if                                                               #         On cross-validations >>
+            idAux -reset; sFn idAux /noerror -restore;                          #           Restore previous conf. mat.
+            idAux -is_empty not if :iL.idWrdCmx=iL.idWrdCmx+idAux; end          #           Add the current one
+          end                                                                   #         <<
+          sFn iL.idWrdCmx /noerror -save;                                       #         Save phoneme confusion matrix
+        end                                                                     #       <<
+      end                                                                       #     <<
+
+    end                                                                         #   <<
+
+    ## Continue evaluation log file                                             #   - - - - - - - - - - - - - - - - - -
+    ( .__CFG_bNwr not ) ( nSpl 0 >= ) && ( nIte 0 >= ) && if                    #   No write prot.and regular eval.>>
+      "$[sDirLog]/hmm_eval$[sSxt].data.xml" sFn =;                              #     Make log file name
+      idLog reset;                                                              #     Reset log instance
+      :nSpl>0 || nIte>0 || bXvl: if sFn idLog /noerror -restore; end            #     Load previous log file
+      idR idLog /noerror -cat; idR.rtext idLog -set rtext;                      #     Append current log
+      sFn idLog /noerror /xml -save;                                            #     Save new log file
+    end                                                                         #   <<
+  
+    nRet return;                                                                #   Return (correctnes*accuracy)
+  }                                                                             # <<
+
+  ( itHMM sSns nSpl nIte iF itRes iL -E$[sHint] ) return;                       # Call evaluation function
+}
+
+## Decodes a data set of signals (turns) through a recognition network using the
+## Viterbi- or forward-backward-procedure and passes the decoding results to the user defined function
+## <code>sResFnc</code>. The recognition network is built by composing the Kleene closure of all HMMs contained in
+## <code>itHMM</code> with the recognition grammar obtained through <a class="code"
+## href="../util/lm.itp.html#clp_-GRM_get">-GRM_get</a>.
+##
+## <h4>Result Function <code>sResFnc</code></h4>
+## <p>The result function is called from <code>-HMM_process</code> before, during and after processing the turn list.
+## Its signature is</p>
+## <pre class="code">
+## &nbsp;
+## &nbsp;function -HMM_process_result(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)
+## </pre>
+## <p>and its parameters are</p>
+## <table class="indent">
+##   <tr><th>Type  </th><th>Identifier</th><th>Description</th></tr>
+##   <tr><td>hmm   </td><td><code>itHMM</code></td><td>The HMM set (as described below)</td></tr>
+##   <tr><td>string</td><td><code>sSns</code> </td><td>Sensor ID (as described below)</td></tr>
+##   <tr><td>number</td><td><code>sSpl</code> </td><td>Split number (as described below)</td></tr>
+##   <tr><td>number</td><td><code>sIte</code> </td><td>Iteration number (as described below)</td></tr>
+##   <tr><td>string</td><td><code>sHint</code></td><td>
+##     One of the following:
+##     <table style="margin-top:3pt; margin-bottom:3pt">
+##       <tr><td class="hidden">"I"</td><td class="hidden">The first call. The function is expected to return a
+##         human-readable text identifying its purpose (e.g. "Evaluation" or "Training iteration").</td></tr>
+##       <tr><td class="hidden">"F"</td><td class="hidden">The second call, before the decoding of the first turn of
+##         the data set. On this call the function may prepare the container object <code>iL</code> for later use
+##         during the processing of individual decoding results, e.g. by creating and initializing <code>data</code>,
+##         <code>var</code> or other instances in the container.</td></tr>
+##       <tr><td class="hidden">""</td><td class="hidden">Called once per turn with <code>itRes</code> containing the
+##         decoding result for that turn. The function may use the data inside the container <code>iL</code>
+##         initialized in the first place.</td></tr>
+##       <tr><td class="hidden">"L"</td><td class="hidden">The last call, after the decoding of the last turn of the
+##         data set. The function is expected to return a real number (preferrably between 0 an 1) indicating the
+##         success of the HMM process. On evaluations, this return value might be the product of correctness and
+##         accuracy.</td></tr>
+##     </table>
+##     </td></tr>
+##   <tr><td>file</td><td><code>iF</code></td><td>A file list. Its current file specifies the turn being
+##     decoded.</td></tr>
+##   <tr><td>fst</td><td><code>itRes</code></td><td>The decoding result (only if <code>sHint</code>="")</td></tr>
+##   <tr><td>object</td><td><code>iL</code></td><td>Container object for the use of the evaluation function. This
+##     instance will be committed on every call to the result function except the very first one
+##     (<code>sHint</code>="I").</td></tr>
+## </table>
+## <p>Known result functions are:</p>
+## <ul>
+##   <li class="linklist"><a class="code" href="#clp_-HMM_eval_fnc">-HMM_eval_fnc</a></li>
+##   <li class="linklist"><a class="code" href="../HMM.xtp.html#clp_-HMM_label_fnc">-HMM_label_fnc</a></li>
+## </ul>
+##
+## <h4>Examples</h4>
+## <h5>1. Using <code>-HMM_process</code> in a script</h5>
+## <p>The following program performs a Viterbi-evaluation of the HMM "0_10" (split 0, iteration 10; a <a
+## href="../util/cfg.itp.html#index:cfgf">configuration file</a> is to be passed as first argument to the
+## script):</p>
+## <pre class="code">
+##  &nbsp;
+##  &nbsp;"$UASR_HOME/scripts/dlabpro/util/@.itp"   <span class="c-key">include</span>;
+##  &nbsp;"$UASR_HOME/scripts/dlabpro/train/am.itp" <span class="c-key">include</span>;
+##  &nbsp;"$1" TRUE <a class="code" href="../util/cfg.itp.html#clp_-CFG_init">-CFG_init</a>;
+##  &nbsp;"$UASR_HOME/scripts/dlabpro/util/uasr_session.itp" <span class="c-key">include</span>;
+##  &nbsp;
+##  &nbsp;hmm itHMM;
+##  &nbsp;itHMM NULL 1 10 "test" "-HMM_eval_fnc" "TV" -HMM_process; 
+## </pre>
+## <h5>2. Modifying the evaluation procedure of <a href="../HMM.xtp.html#clp_trn" class="code">HMM.xtp</a><code>
+## trn</code></h5>
+## <p>HMM training uses <code>-HMM_process</code> for the model evaluation. To implement a custom procedure
+## you need to overwrite the result function, e.g. in your database include script:</p>
+## <pre class="code">
+##  &nbsp;
+##  &nbsp;function -MY_hmm_eval_func(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)
+##  &nbsp;{
+##  &nbsp;  sHint "I" == if "My procedure" return; end
+##  &nbsp;  sHint "F" == if
+##  &nbsp;    <span class="c-cmt"># Do initialization stuff here</span>
+##  &nbsp;    0 return;
+##  &nbsp;  end
+##  &nbsp;  sHint "L" == if
+##  &nbsp;    <span class="c-cmt"># Do clean up stuff here</span>
+##  &nbsp;    1 return;
+##  &nbsp;  end
+##  &nbsp;
+##  &nbsp;  <span class="c-cmt"># Per turn evaluation stuff goes here</span>
+##  &nbsp;  0 return;
+##  &nbsp;}
+##  &nbsp;
+##  &nbsp;/disarm -MY_hmm_eval_fnc /disarm <a class="code" href="#clp_-HMM_eval_fnc">-HMM_eval_fnc</a> =; 
+## </pre>
+##
+## @cgen:index
+## @param itHMM hmm
+##          An HMM set. May be empty in which case the function tries to load the model named
+##          "&lt;<code>nSpl</code>&gt;_&lt;<code>nIte</code>&gt;" from the model directory.
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+##          (typical case for speech recognition)
+## @param nSpl number
+##          Number of state splits of HMM, may be -1
+## @param nIte number
+##          Update iteration of HMM, may be -1
+## @param sDatSet string
+##          File list identifier, see function <a class="code"
+##          href="../util/cfg.itp.html#clp_-CFG_get_flist">-CFG_get_flist</a>
+## @param sResFnc string
+##          Identifier of user defined result function, see description below
+## @param sMode string
+##          A string of two characters, the first specifies the decoding
+##          constraints, the second specifies the decoder type.
+##          <table style="margin-top:3pt">
+##            <tr><th>1st char.</th><th>Decoder constraints</th></tr>
+##            <tr><td>0</td><td>Free recognition with grammar</td></tr>
+##            <tr><td>I</td><td>-- reserved -- (for HMM initialization)</td></tr>
+##            <tr><td>F</td><td>Forced alignment on labels with enforcement of the label boundaries</td></tr>
+##            <tr><td>L</td><td>Forced alignment on labels (phoneme sequence)</td></tr>
+##            <tr><td>T</td><td>Forced alignment on transliteration (word sequence)</td></tr>
+##            <tr><th>2st char.</th><th>Decoder type</th></tr>
+##            <tr><td>V</td><td>Viterbi</td></tr>
+##            <tr><td>F</td><td>-- reserved -- (Forward-backward)</td></tr>
+##          </table>
+## @return a real number &le;1 indicating the recognition rate over the entire
+##         test set, typically the product of correctness and accuracy
+## @global &lt;uasr.dir.model&gt;  R
+## @global &lt;uasr.dir.log&gt;    R
+## @global &lt;uasr.dir.fea&gt;    R
+## @global &lt;uasr.flist.sep&gt;  R
+## @global &lt;uasr.flist.test&gt; R
+## @global &lt;uasr.pfa.crate&gt;  R
+## @global &lt;uasr.sig.srate&gt;  R
+## @global &lt;uasr.fea.labidx&gt; R
+function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
+{
+  var sMd1; sMode "1" "left" -VAR_strop                            sMd1 -sset;  # Get constraint (1st char. of sMode)
+  var sMd2; sMode "2" "left" -VAR_strop "1" "right" -VAR_strop     sMd2 -sset;  # Get decoder type (2nd char. of sMode)
+  var sMsn; ( itHMM sSns nSpl nIte "I" NULL NULL NULL $[sResFnc] ) sMsn =;      # Get mission name
+  var sMcn; "Recognition grammar (or none)"                        sMcn =;      # Make constraint clear text
+  sMd1 "F" == if "Labels and label boundaries"                     sMcn =; end  # ...
+  sMd1 "L" == if "Labels"                                          sMcn =; end  # ...
+  sMd1 "T" == if "Transliteration"                                 sMcn =; end  # ...
+  :sMd1!="I" && sMd1!="F" && sMd1!="L" && sMd1!="T": if "0" sMd1 =; end         # Normalize constraint character
+  var sMdt; "Viterbi"                                              sMdt =;      # Make decoder type clear text
+  sMd2 "F" == if "Forward-backward"                                sMdt =; end  # ...
+  :sMd2!="F": if "V" sMd2 =; end                                                # Normalize decoder type character
+  "\n// HMM process     : $[sMsn]"                                        -MSG; # Protocol
+  "\n   - Decoder type  : $[sMdt]"                                        -MSG; # Protocol
+  "\n   - Constraints   : $[sMcn]"                                        -MSG; # Protocol
+  var sSxt; sSns if ".$[sSns]" else "" end sSxt =;                              # Get sensor file extension
+  sSns if "\n   - Sensor ID     : $[sSns]" -MSG; end                            # Protocol
+  ( nSpl 0 > ) ( nIte 0 > ) && if                                               # Model ID specified >>
+     "\n   - Model ID      : $[nSpl]_$[nIte]" -MSG;                             #   Protocol
+  end                                                                           # <<
+
+  sMd1 "I" == if "Mode I* not yet implemented" -ERROR; "\n" -echo; 0 return; end# TODO: implement it!
+
+  ## Check/create session persistent variables                                  # -------------------------------------
+  ".__bLabIdx" "var" ?instance not if                                           # Is there a global __bLabIdx? No >>
+    var .__bLabIdx;                                                             #   Create one
+    ( "fea.labidx" FALSE "S" -CFG_get_ex ) .__bLabIdx =;                        #   Silently get label index switch
+  end                                                                           # <<
+
+  ## Local instances                                                            # -------------------------------------
+  profile    iP;      iP -begin_timer;                                          # Timer
+  hmm        itAM;                                                              # Gaussian-to-phoneme FST
+  hmm        itRN;                                                              # Recognition network
+  fst        itGrm;                                                             # Recognition grammar
+  fst        itG2P;                                                             # Phonetic labelling transducer
+  fst        itRes;                                                             # Recognition result
+  fst        itAux;                                                             # Auxiliary transducer
+  data       idFea;                                                             # Primary feature vector sequence
+  data       idLab;                                                             # Label sequence
+  data       idNld;                                                             # Neglog. density array
+  data       idAux;                                                             # Auxiliary data instance
+  data       idPlbi;                                                            # Reference phoneme indizes
+  var        sDirMod; ( "model"     ""        -CFG_get_path ) sDirMod -sset;    # Model directory
+  var        sDirLog; ( "log"       ""        -CFG_get_path ) sDirLog -sset;    # Log directory
+  var        sDirFea; ( "fea"       ""        -CFG_get_path ) sDirFea -sset;    # Feature files directory
+  var        sDirTrl; ( "trl"       ""        -CFG_get_path ) sDirTrl -sset;    # Transliteration directory
+  var        nCrate;  ( "pfa.crate" 160       -CFG_get      ) nCrate  -vset;    # Frame rate
+  var        nSrate;  ( "sig.srate" 16000     -CFG_get      ) nSrate  -vset;    # Sampling rate
+  var        nRinc;   ( nCrate nSrate / 1000 *              ) nRinc   -vset;    # Compute feature vector distance in ms
+  var        sDmd;    ( sMd2 "F" == if "F" else "D" end     ) sDmd    -sset;    # Algorithm of -AM_decode
+  var        nRet;                                                              # Function return value
+  var        nCnt;                                                              # Number successfully processed turns
+  var        bAux;                                                              # Auxiliary boolean buffer
+  var        sAux;                                                              # Auxiliary string buffer
+  file       iF;      ( "flist.sep" "\t " "S" -CFG_get_ex    ) iF -set sep;     # Feature file list
+                      ( sDatSet      ""       -CFG_get_flist ) iF -set flist;   # ...
+  object     iFI;     "${sDirMod}/feainfo$[sSxt].object" iFI -FEA_info;         # Feature information object
+  object     iL;                                                                # Log objects container
+
+  ## Initialize - Check/load acoustic models                                    # -------------------------------------
+  "\n"                                                                    -MSG; # Protocol (verbose level 2)
+  ( itHMM -AM_check not ) ( itHMM.gm NULL == ) || if                            # Committed HMMs invalid >>
+    ( nSpl 0 >= ) ( nIte 0 >= ) && if                                           #   Regular evaluation >>
+      "${sDirMod}/$[nSpl]_$[nIte]$[sSxt].hmm" var sInFn;                        #     Create file name of prev. ite.
+      sInFn iFI.nDim itHMM -HMM_load not if 0 return end                        #     Restore HMM of prev. iteration
+    else                                                                        #   << Irregular evaluation >>
+      "HMM instance invalid" -ERROR;                                            #     Error
+      0 return;                                                                 #     Get outa here!
+    end                                                                         #   <<
+  end                                                                           # <<
+  ( itHMM.os -is_empty ) if :itHMM.ud[0]: itHMM.os =; end                            # HACK: for older HMM files
+
+  ## Initialize - create recognition network                                    # -------------------------------------
+  "\n   Preparing HMMs ."                                                 -MSG; # Protocol
+  itHMM itAM -union; itAM 0 itAM -close;                              "." -MSG; # Make Gaussian-to-phoneme FST
+  itHMM itG2P -LAB_get_fst;                                        ". ok" -MSG; # Make phoneme labelling transducer
+  ( sMd1 "T" == ) ( sMd1 "0" == ) || if                                         # No label alignment >>
+    -GRM_get itGrm =;                                                           #   Get recognition grammar
+    "\n   Creating recognition network ..."                               -MSG; #   Protocol
+    itAM.td ( "~RC" itAM.td -find_comp ) 1 itAM.td -delete;                     #   Remove transition reference ctrs.
+    ( sMd1 "0" == ) if                                                          #   Unconstrained recognition >>
+      0 0 0 itAM -addtrans { -1 -1 0 };                                         #     Instrument for composition
+      0 itGrm /noerror -loops { -1 -1 0 };                                      #     |
+      itAM itGrm 0 0 itRN /noeps /noint -compose;                     "." -MSG; #     Compose recognition network
+      itRN 0 itRN /lazy -minimize;                                              #     Lazy minimization of rec. net.
+    end                                                             " ok" -MSG; #   <<
+  end                                                                           # <<
+
+  ## HMM process                                                                # -------------------------------------
+  itHMM sSns nSpl nIte "F" NULL NULL iL $[sResFnc];                             # Initialize result function
+  "\n\n   $[sMsn]: $[iF.len] samples, $[itHMM.ud.nrec] HMMs ..."          -MSG; # Protocol
+  0 1 -PBAR;                                                                    # Begin progress bar
+  iF -next while                                                                # Loop over files >>
+    "\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "                   -MSG2; #   Protocol
+    :(iF.nfile+1)/iF.len: 1 -PBAR;                                              #   Display progress
+
+    ## Get feature vector sequence                                              #   - - - - - - - - - - - - - - - - - -
+    iF sSns "A" idFea -FEA_get not if continue; end                  "." -MSG2; #   Get primary feature vectors
+    idFea idLab idFea -LAB_strip;                                    "." -MSG2; #   Move labels to idLab
+
+    ## Create turn recognition network (on forced aligments)                    #   - - - - - - - - - - - - - - - - - 
+    ( sMd1 "T" == ) if                                                          #   Forced alignment on word seq. >>
+      sDirTrl iF.sfile idAux -TRL_import;                            "." -MSG2; #     Import transliteration
+      ( idAux itGrm.os -1 itAux -LAB_acceptor ) bAux =;              "." -MSG2; #     Create transliteration acceptor
+      ( idAux -is_empty ) ( bAux not ) || if                                    #     No transliteration >>
+        "Cannot obtain transliteration" 2 -WARNING;           " SKIPPED" -MSG2; #       Warning
+        continue;                                                               #       Next turn
+      end                                                                       #     <<
+      itGrm itAux 0 0 itAux /noint -compose;                         "." -MSG2; #     Force recognition grammar 
+      itAM itAux 0 0 itRN /noint -compose;                           "." -MSG2; #     Make recognition network for turn
+    end                                                                         #   <<
+    idNld -reset;                                                               #   Reset neglog. density array
+    ( sMd1 "L" == ) ( sMd1 "F" == ) || if                                       #   Forced alignment on phoneme seq. >>
+      idLab -is_empty if                                                        #     No transliteration >>
+        "Cannot obtain labels." sAux =;                                         #       Make warning text
+        .__UTL_nVlevel 3 < if "$[sAux] Re-run with option -v3!" sAux =; end     #       Include extra hint
+        sAux 2 -WARNING; " SKIPPED" -MSG2;                                      #       Warning and Protocol
+        continue;                                                               #       Next turn
+      end                                                                       #     <<
+      idLab 0 idAux -compress; idAux itHMM.os -1 itAux -LAB_acceptor;"." -MSG2; #     Create label acceptor
+      itAM itAux 0 0 itRN /noint -compose;                           "." -MSG2; #     Make recognition network for turn
+      sMd1 "F" == if                                                            #     Forcing label boundaries >>
+        .__bLabIdx if                                                           #     If reference indizes >> 
+          idAux "[" "split" idAux -strop;                                       #        To get -gen_map working labels without indizes
+          idAux 1 1 idAux -delete;                                              #        Delete indizes
+        end                                                                     #     <<
+        idAux 0 1 2 idAux itHMM /nomix -gen_map;                                #       Create density computation map
+        stdprof -begin_timer;                                                   #       Start timer
+        idFea iFI ( itHMM -get_dim ) idFea NULL -FEA_sfa;                       #       Do secondary feature analysis
+        idFea idAux idNld itHMM.gm /neglog /nomix -density;                     #       Compute neg. log. densities
+        NULL stdprof -end_timer;                                                #       End timer
+      end                                                                       #     <<
+    end                                                                         #   <<
+
+    ## Decode                                                                   #   - - - - - - - - - - - - - - - - - -
+    stdprof -begin_timer;                                                       #   Start timer
+    idNld -is_empty not if                                                      #   BYO Gaussian densities >>
+      idNld iFI itRN -1 "3A$[sDmd]" itRes -AM_decode;                           #       Decode
+    else                                                                        #   << Just bring primary features >> 
+      idFea iFI itRN -1 "1A$[sDmd]" itRes -AM_decode;                           #     Decode
+    end                                                                         #   <<
+    NULL stdprof -end_timer;                                                    #   End timer
+    ( stdprof.time nRinc / idFea.nrec / ) itRes.ud -set descr0;                 #   Store real time factor
+    stdprof -reset_timer;                                                       #   Reset timer
+    idFea.rinc itRes.td -set rinc;                                   "." -MSG2; #   Store frame rate
+
+    ## Post-process decoding result                                             #   - - - - - - - - - - - - - - - - - -
+    itRes.td ( "~STK" itRes.td -find_comp ) 1 itRes.td -delete                  #   Remove search stack component
+    itRes itAux -copy; 0 itAux -invert; itAux itG2P 0 0 itAux -compose;         #   Get decoded phonemes (per frame)
+    "."                                                                  -MSG2; #   Protocol
+    itAux 0 1 -1 itAux -best_n;                                                 #   HACK: solution might not be unique
+    :itAux.td.nrec!=0: if;                                                      #   HACK: ignore if empty >>
+      :idAux =abs(itAux.td[0]-itRes.td[0])+abs(itAux.td[1]-itRes.td[1]);        #     HACK: compare structures
+      idAux NULL 0 "sum" idAux /rec -aggregate; :idAux[0,0]>0: if               #     HACK: structures mismatch >>
+        "Composition with labelling transducer not unique!" 1 -WARNING;         #     HACK:   NOT OK
+      end                                                                       #     HACK: <<
+    end                                                                         #   HACK: <<
+    :itAux.td[itAux.NC_TD_TOS]: itRes.td -join;                                 #   Join phonemes to transitions
+    itRes.td.dim -- "~PHN" itRes.td -set_cname;                      "." -MSG2; #   Rename
+    .__bLabIdx if;                                                              #   Want label indizes >>                                                
+      "" -1 itAux.td -rindex;                                                   #     Get indizes in result     
+      :itAux.td["~MOB"]: itAux.td -dmark;                                       #     Mark model beginnings
+      itAux.td 0 0 idAux /mark -select;                                         #     Get them
+      idAux.nrec ++ idAux -reallocate;                                          #     Add component
+      :idAux[idAux.nrec-1,idAux.dim-1]=itAux.td.nrec;                           #     With number of frames 
+      "~PHNI" -1 idAux -rindex;                                                 #     Add phonem indizes (model begin)
+      idAux :idAux.dim-1: :idAux.dim-2: -1 idAux -expand;                       #     Expand to get model indizes for every frame
+      :idAux+1: :itRes.td["~PHN"].>=0: .* 1 - idAux =;                          #     Epsilon transition have -1 indize
+      idAux itRes.td -join;                                                     #     Add to result
+    end;                                                                        #   <<
+    idLab.dim 0 > if                                                            #   Have reference labels >>
+      .__bLabIdx if;                                                            #     Want reference indizes >>
+        idLab 0 idPlbi -compress;                                               #       Get unique labels
+        "~PLBI" -1 idPlbi -rindex;                                              #       Add reference indize
+        idPlbi 3 1 2 idPlbi -expand;                                            #       Get indize for every frame
+      end;                                                                      #     <<
+      :itRes.td["~TIS"].>=0: NULL 0 "sum" idAux /rec -aggregate;                #     Count number of input symbols
+      :idAux[0,0]>0: if;                                                        #     Proceed only with some i.s. >>
+        idLab itHMM.ud 0 0 idLab /label -gen_index;                             #       Convert to numeric labels
+        .__bLabIdx if idPlbi idLab -join end;                                   #       Add phoneme indize
+        :itRes.td["~TIS"]: idAux =;                                             #       Create label lookup index ...
+        :idAux.>=0: idAux -dmark; 0 1 idAux /mark -fill; idAux -unmark;         #       ... for non-epsilon transitions     
+        idAux 0 idLab 0 idLab.dim idAux /noerror -lookup { -1 -1 };             #       Look 'em up
+        0 "~PLB" idAux -set_cname; idAux itRes.td -join;             "." -MSG2; #       Name and join 'em 
+      end                                                                       #     <<
+    end                                                                         #   <<
+
+    ## DEBUG: feature file labeled with decoded phonemes
+    #:idAux=itRes.td["~PHN"]; :idAux.==-1: idAux -dmark; idAux 0 0 idAux /mark -delete;
+    #idAux 0 itHMM.os 0 1 idAux -lookup; idAux idFea -join;
+    #"idFea.dn3" idFea -save;
+
+    ## Have processed decoding result evaluated                                 #   - - - - - - - - - - - - - - - - - -
+    itHMM sSns nSpl nIte "" iF itRes iL $[sResFnc];               ". ok" -MSG2; #   Call result function
+    nCnt ++=;                                                                   #   Success!
+
+  end                                                                           # <<
+  "\n   "                                                                -MSG2; # Protocol
+  "done\n"                                                                -MSG; # Protocol
+  nCnt iF.len < if                                                              # Not all turns have been processed >>
+    "${iF.len-nCnt} of $[iF.len] samples not processed." sAux =;                #   Make warning text
+    .__UTL_nVlevel 2 < if "$[sAux] Re-run with option -v2!" sAux =; end         #   Include extra hint
+    sAux 1 -WARNING;                                                            #   Warn
+  end                                                                           # <<
+  ( itHMM sSns nSpl nIte "L" NULL NULL iL $[sResFnc] ) nRet =;                  # Finish result
+  NULL iP -end_timer; "\n   Time: ${ent(iP.time/1000+0.5)} s\n"           -MSG; # End timer
+  nRet return;                                                                  # Return result
+}
+
+## Creates or continues the assessment log file and the label confusion matrix. Both files will be written into
+## the log folder. The log file name is "&lt;<code>sFilePref</code>&gt;_assess&lt;<code>sFileSuff</code>&gt;.dn3";
+## the confusion matrix file name is "&lt;<code>sFilePref</code>&gt;_assess-cmx&lt;<code>sFileSuff</code>&gt;.dn3".
+## The log file will always be written, the confusion matrix will only be writte if the configuration key
+## <code>&lt;uasr.am.eval.assess&gt;</code> contains the string "cmx".
+## <p>Present log files will be continued if and only if the configuration key <code>uasr.xvl</code> is
+## <code>TRUE</code>. Otherwise present log files will be overwritten. Please be advised that the 
+## <code>uasr.xvl</code> key is <em>not</em> intended to be used in configuration files or on the command line.</p>
+##
+## @cgen:index
+## @param sFilePref string
+##          Prefix identifying the model ("hmm-&lt;spl&gt-&lt;ite&gt" for HMMs, "svm" for SVM, etc.)
+## @param sFileSuff string
+##          Suffix identifying the sensor
+## @param idLtb data
+##          Label table (component 0 must contain the symbolic labels)
+## @param idFlst data
+##          The assessment file list with the following component structure:
+##          <table>
+##            <tr><th>Comp.</th><th>Type  </th><th>Description</th></tr>
+##            <tr><td>   0 </td><td>string</td><td>File name</td></tr>
+##            <tr><td>   1 </td><td>string</td><td>File label (optional)</td></tr>
+##          </table>
+## @param idAsc data
+##          The assessment result object (created within <code>-HMM_assess</code> and <code>-SVM_training.xtp</code>)
+##          The instance is expected to contain at least <code>idLtb.nrec</code> numeric components and exactly
+##          <code>idF.nrec</code> records. Extra components will be ignored. The cells <code>idAsc[nF,nM]</code>
+##          contains a distance value (e.g. neglog. likelihood or neglog. probability) of file <code>nF</code> from
+##          the model <code>nM</code>.
+## @return The label recognition rate or -1 if no correct labels are known.
+## @global &lt;uasr.am.eval.assess&gt; R
+## @global &lt;uasr.am.gbg&gt;         R
+## @global &lt;uasr.am.gbg.thrsh&gt;   R
+## @global &lt;uasr.dir.log&gt;        R
+## @global &lt;uasr.xvl&gt;            R
+function -XXM_assess_log(sFilePref,sFileSuff,idLtb,idFlst,idAsc)
+{
+  data idCmx;                                                                   # Label confusion matrix
+  data idCnf;                                                                   # Recognition confidence
+  data idLab;                                                                   # Labels
+  data idAux;                                                                   # Auxilary data instance
+  data idAux2;                                                                  # Auxilary data instance #2
+  var  sAssess;   ( "am.eval.assess" "cmx,hist" "S" -CFG_get_ex ) sAssess   =;  # Get assessment mode
+  var  bXvl;      ( "xvl" FALSE "S" -CFG_get_ex )                 bXvl  -bset;  # Cross validation flag
+  var  bCmx;      ( sAssess "cmx"  "search" -VAR_strop ) 0 >=     bCmx      =;  # Compute class confusion matrix?
+  var  nGbg;      ( "am.gbg" -1 "S" -CFG_get_ex )                 nGbg      =;  # Garbage model ID
+  var  nGbgThrsh; ( "am.gbg.thrsh" 10000 "S" -CFG_get_ex )        nGbgThrsh =;  # Threshold of classifying as garbage
+  var  sDirLog;   ( "log"   "S" -CFG_get_path )                   sDirLog   =;  # Get log directory
+  var  sLogFile;                                                                # Log file name
+  var  sCmxFile;                                                                # Confusion matrix file name
+  var  nCor;      -1                                              nCor      =;  # Label correctness  
+  var  sLog;                                                                    # String buffer
+  var  sCmx;                                                                    # String buffer
+  var  i;                                                                       # Loop counter
+
+  "\n   Compiling log ..."                                                -MSG; # Protocol
+  "$[sDirLog]/$[sFilePref]_assess$[sFileSuff].dn3"     sLogFile =;              # Make log file name
+  "$[sDirLog]/$[sFilePref]_assess-cmx$[sFileSuff].dn3" sCmxFile =;              # Make confusion matrix file name
+
+  ## Initialize confusion matrix                                                # -------------------------------------
+  ( sCmxFile idCmx /noerror -restore ?error ) ( bXvl not ) || if                # Not continuing confusion matrix >>
+    -type double idLtb.nrec idLtb.nrec idCmx -array;                            #   Create an empty one
+    idLtb 0 idCmx -set_cnames;                                                  #   Name recognized label components
+    :idLtb[0]: idCmx -join; idCmx.dim -- "REF" idCmx -set_cname;                #   Append reference label component
+    "Writing" sCmx =;                                                           #   Prepare protocol
+  else                                                                          # << Continuing confusion matrix >>
+    "Continuing" sCmx =;                                                        #   Prepare protocol
+  end                                                                           # <<
+
+  ## Compute confidence                                                         # -------------------------------------
+  idAsc.dim 1 > if                                                              # Assessed by more than one HMM >>
+    idAsc NULL 0 "rank" idAux  -aggregate;                                      #   Get smallest score
+    idAsc NULL 1 "rank" idAux2 -aggregate;                                      #   Get second smallest score
+    :idAux2[0]-idAux[0]: idCnf =; 0 "CONF" idCnf -set_cname;                    #   Compute difference (->confidence)
+  end                                                                           # <<
+
+  ## Assess correctness and confusion                                           # -------------------------------------
+  idFlst.dim 1 > if                                                             # File list contains labels >>
+    idAsc NULL 0 "imin" idAux  -aggregate;                                      #   Get model index of smallest score
+    idAsc NULL 0 "min"  idAux2 -aggregate;                                      #   Get smallest score
+    :idAux2 = idAux2.>nGbgThrsh;                                                #   Find too-far-off scores
+    :idAux = (1-idAux2).*idAux + idAux2.*nGbg;                                  #   Classifiy outliers as garbage
+    :idFlst[1]: idLtb 0 0 idAux2 -gen_index;                                    #   Get reference label index
+    label L_CMX; i idAsc.nrec < if                                              #   Loop over assessment results >>
+      :idCmx[idAux2[i,0],idAux[i,0]]+=1;                                        #     Count class confusions
+      i ++=; goto L_CMX;                                                        #     Next result
+    end                                                                         #   <<
+    :idAux2.==idAux: NULL 0 "sum" idAux2 /rec -aggregate;                       #   Count correct recognitions
+    :nCor=idAux2[0,0]/idAsc.nrec;                                               #   Compute label recognition rate
+    idAux 0 idLtb 0 1 idLab -lookup; 0 "RES" idLab -set_cname;                  #   Get recognized labels
+    :idFlst[1]: idLab -join;         1 "REF" idLab -set_cname;                  #   Join reference labels
+  end                                                                           # <<
+
+  " done"                                                                 -MSG; # Protocol
+
+  ## Create or continue log                                                     # -------------------------------------
+  idAsc idAux =; idCnf idAux -join; idLab idAux -join; :idFlst[0]: idAux -join; # Compile log
+  idAux2 -reset;                                                                # Reset auxiliary buffer #2 
+  ( sLogFile idAux2 /noerror -restore ?error ) ( bXvl not ) || if               # Not continuing log file >>
+    "Writing" sLog =;                                                           #   Prepare protocol
+    idAux idAux2 -copy;                                                         #   Copy new log
+  else                                                                          # << Continuing log file >>
+    "Continuing" sLog =;                                                        #   Prepare protocol
+    idAux idAux2 -cat;                                                          #   Append new log
+  end                                                                           # <<
+  "\n   $[sLog] $[sLogFile] ... "                                         -MSG; # Protocol
+  .__CFG_bNwr not if                                                            # Not write-protected >>
+    sLogFile idAux2 /noerror /zip -save ?error if "failed" else "ok" end  -MSG; #   Write log file
+  else                                                                          # << Write-protected >>
+    "SKIPPED (write protection on)"                                       -MSG; #   Protocol
+  end                                                                           # <<
+
+  ## Continue confusion matrix                                                  # -------------------------------------
+  bCmx if                                                                       # Writing confusion matrices >>
+    "\n   $[sCmx] $[sCmxFile] ... "                                       -MSG; #   Protocol
+    .__CFG_bNwr not if                                                          #   Not write-protected >>
+      sCmxFile idCmx /noerror /zip -save ?error if "failed" else "ok" end -MSG; #     Write confusion matrix file
+    else                                                                        #   << Write-protected >>
+      "SKIPPED (write protection on)"                                     -MSG; #     Protocol
+    end                                                                         #   <<
+  end                                                                           # <<
+
+  nCor return;
+}
+
+## Creates per-model NLL histograms.
+## <p>Present histogram files will be continued if and only if the configuration key <code>uasr.xvl</code> is
+## <code>TRUE</code>. Otherwise present histogram files will be overwritten. Please be advised that the 
+## <code>uasr.xvl</code> key is <em>not</em> intended to be used in configuration files or on the command line.</p>
+##
+## @cgen:index
+## @param sFilePref string
+##          Prefix identifying the model ("hmm-&lt;spl&gt-&lt;ite&gt" for HMMs, "svm" for SVM, etc.)
+## @param sFileSuff string
+##          Suffix identifying the sensor
+## @param idLtb data
+##          Label table (component 0 must contain the symbolic labels)
+## @param idFlst data
+##          The assessment file list with the following component structure:
+##          <table>
+##            <tr><th>Comp.</th><th>Type  </th><th>Description</th></tr>
+##            <tr><td>   0 </td><td>string</td><td>File name</td></tr>
+##            <tr><td>   1 </td><td>string</td><td>File label (optional)</td></tr>
+##          </table>
+##          Can be <code>NULL</code>. In this case <code>idAsc</code> must contain a symbolic component named "REF"
+##          which provies the reference labels. If <code>idFlst</code> is not <code>NULL</code> <em>and</em>
+##          <code>idAsc</code> contains a reference label component, the function will use the file list labels.  
+## @param idAsc data
+##          The assessment result object (created within <code>-HMM_assess</code> and <code>-SVM_training.xtp</code>)
+## @global &lt;uasr.am.eval.assess&gt; R
+## @global &lt;uasr.dir.log&gt;        R
+## @global &lt;uasr.xvl&gt;            R
+function -XXM_assess_hist(sFilePref,sFileSuff,idLtb,idFlst,idAsc)
+{
+  var sAssess; ( "am.eval.assess" "cmx,hist" "S" -CFG_get_ex ) sAssess =;       # Get assessment mode
+  ( sAssess "hist" "search" -VAR_strop ) 0 < if                                 # "hist" not in am.eval.assess >> 
+    ( sAssess "loghist" "search" -VAR_strop ) 0 < if                            #   "loghist" not in am.eval.assess >>
+      leave;                                                                    #     Not doing histrograms -> leave
+    end                                                                         #   <<
+  end                                                                           # <<
+
+  histogram iH;                                                                 # Neglog likelihood (NLL) histogram
+  data      idLab;                                                              # Class labels
+  data      idRmd;                                                              # Result per model
+  data      idMean;                                                             # Mean NLL value
+  data      idSdev;                                                             # Standard deviation of NLLs
+  data      idMin;                                                              # Min NLL value
+  data      idMax;                                                              # Max NLL value
+  data      idH;                                                                # Copy of NLL histogram data
+  var       nC;                                                                 # Current histgram component (=model)
+  var       nSpb;                                                               # Samples per histogram bin of width 1
+  var       sMid;                                                               # Current model ID
+  var       bXvl; ( "xvl" FALSE "S" -CFG_get_ex ) bXvl -bset;                   # Cross validation flag
+  var       sDir; ( "log" "S" -CFG_get_path     ) sDir =;                       # Get log directory
+  var       sFn;                                                                # File name  
+
+  "\n   Creating NLL histograms ..."                                      -MSG; # Protocol
+  ( "REF" idAsc -find_comp ) 0 >= if :idAsc["REF"]: idLab =; end                # Get labels from assessment result
+  idFlst if idFlst.dim 2 >= if :idFlst[1]: idLab =; end end                     # Get labels from file list
+  idLab -is_empty if "No reference labels provided." -ERROR; leave; end         # Need labels!                                                          
+  0 "REF" idLab -set_cname;                                                     # Name label component
+
+  label L_C; nC idAsc.dim < if                                                  # Loop over models (comps. in idAsc) >>
+
+    ( nC idAsc -get_cname ) sMid =; ( sMid " " "trim" -VAR_strop ) sMid =;      #   Get model ID
+		"\n   - Class $[sMid]: "                                             -MSG2; #   Protocol
+    "$[sDir]/$[sFilePref]_assess-hist_$[sMid]$[sFileSuff].dn3" sFn =;           #   Make file name
+    idAsc nC 1 idRmd -select;                                                   #   Copy single model's result
+    idLab idRmd -join;                                                          #   Join labels
+
+    idH -reset; iH -reset; -INF iH -set min; INF iH -set max;                   #   Reset histogram
+    ( sFn idH /noerror -restore ?error ) ( bXvl not ) || if                     #   Not continuing histogram >>
+      idRmd NULL 0 "mean" idMean /rec -aggregate;                               #     Get mean NLL
+      idRmd NULL 0 "sdev" idSdev /rec -aggregate;                               #     Get standard deviation of NLLs
+      idRmd NULL 0 "min"  idMin  /rec -aggregate;                               #     Get min NLL
+      idRmd NULL 0 "max"  idMax  /rec -aggregate;                               #     Get max NLL
+      ( :idSdev[0,0]: 0 == ) ( :idMin[0,0]: :idMax[0,0]: == ) || if             #     No useful histogram data >>
+        :idMin[0,0]-0.1: iH -set min;                                           #       Dummy lower boundary
+        :idMax[0,0]+0.1: iH -set max;                                           #       Dummy upper boundary
+        20 iH -set bins;                                                        #       Dummy bin number
+      else                                                                      #     << Normal histogram data >>
+        :idSdev[0,0]: 0.25 > if                                                 #       Int. bin boundaries possible >>
+          :ent(idMean[0,0] + 4*idSdev[0,0] + 0.5): iH -set max;                 #         Set histogram's minimum
+          :ent(idMean[0,0] - 4*idSdev[0,0]      ): iH -set min;                 #         Set histogram's maximum
+        else                                                                    #       << Std. dev. too small >>
+          :idMean[0,0] + 4*idSdev[0,0]+0.1: iH -set max;                        #         Set histogram's minimum
+          :idMean[0,0] - 4*idSdev[0,0]-0.1: iH -set min;                        #         Set histogram's maximum
+        end                                                                     #       <<
+        :idMax[0,0]<iH.max: if :idMax[0,0]: iH -set max; end                    #       Refine higher histogram boundary
+        :idMin[0,0]>iH.min: if :idMin[0,0]: iH -set min; end                    #       Refine lower histogram boundary
+        :(iH.max - iH.min): iH -set bins;                                       #       Set default bin width of 1
+        :nSpb = idRmd.nrec / (iH.max - iH.min);                                 #       Comp. #samples per bin of width 1
+        nSpb 40  > if : 2*(iH.max - iH.min): iH -set bins; end                  #     ... more than  40: bin width -> 0.5
+        nSpb 100 > if : 5*(iH.max - iH.min): iH -set bins; end                  #     ... more than 100: bin width -> 0.2
+        nSpb 200 > if :10*(iH.max - iH.min): iH -set bins; end                  #     ... more than 200: bin width -> 0.1
+        iH.bins 20 < if 20 iH -set bins; end                                    #     Fall back
+      end                                                                       #     <<
+      "Writing $[sFn] ..."                                               -MSG2; #     Protocol (verbose level 2)
+    else                                                                        #   << Continuing histogram >>
+      idH iH -HIST_from_data;                                                   #     Initialize previous histogram
+      "Continuing $[sFn] ..."                                            -MSG2; #     Protocol (verbose level 2)
+    end                                                                         #   <<
+
+    ## Update and save histogram                                                #   - - - - - - - - - - - - - - - - - -
+    idRmd idLtb iH -update_i;                                                   #   Update histogram
+    iH "NLx" idH -HIST_to_data;                                                 #   Get histogram as data instance
+    .__CFG_bNwr not if                                                          #   Not write-protected >>
+      idH -is_empty not if                                                      #     Got something to save >>
+        sFn idH /zip /noerror -save ?error if " FAILED" else " ok" end          #       Save it
+      else                                                                      #     << Got norhting to save >>
+        " FAILED (no histogram data)"                                           #       Leave it
+      end                                                                -MSG2; #     << This only works in UPN :))
+    else                                                                        #   << Write-protected >>
+      " SKIPPED (write protection on)"                                   -MSG2; #     Protocol
+    end                                                                         #   <<
+
+    nC ++=; ( nC idAsc -get_comp_type ) 256 > if goto L_C; end                  #   Next numeric component
+  end                                                                           # <<
+  "\n  " -MSG2; " done"                                                   -MSG; # Protocol
+}
+
+## Get file lists for a cross validation partition
+## <p>This function may be customized through overwriting.</p>
+##
+## @cgen:index
+## @param nPart number
+##          Partition index
+## @param idFXvl data
+##          Cross validation file list
+## @param idFTrn data
+##          Will be filled with the training set of the <code>nPart</code>'th partition
+## @param idFTst data
+##          Will be filled with the test set of the <code>nPart</code>'th partition
+function -XVL_partition(nPart,idFXvl,idFTrn,idFTst)
+{
+  var nXF; ( "xvl.test" 0 "S" -CFG_get_ex ) nXF =;                              # Number of files in test sets
+  var nF;  :nPart*nXF: nF =;                                                    # First file of partition
+  nXF 0 <= if "Configuration key <xvl.test> not set" 1 -WARNING; end            # Something's wrong 
+
+  idFXvl nF nXF idFTst /rec -select;                                            # Get test set
+  idFXvl nF nXF idFTrn /rec -delete;                                            # Get training (and statistics) set
+}
+
+## HMM Action function
+##
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance
+## @param sAct string
+##          <p>Comma seperated list of actions</p>
+##          <p>
+##          Possible actions for topology training: split, bn, up, uprc, hmm, mix, tprun, prun
+##          (Description see: <a href="amtopo.itp.html">amtopo.itp</a>)<br>
+##          Possible actions for Gaussian parameter reduction: vargm, ldl
+##          (Description see: <a href="amgmm.itp.html">amgmm.itp</a>)<br>
+##          Configuration keys to use this function: <code>uasr.am.train.act[0-9], uasr.am.train.acta[0-9]_[0-9], uasr.am.train.actb[0-9]_[0-9]</code>
+##          (see <a href="../util/cfg.itp.html">Configuration keys</a>)
+##          </p>
+function -HMM_Act(itHMM,sAct)
+{
+	sAct "" != if;                                                                # if action exists >>
+		data idAct; { { "${sAct}," } } "," "split" idAct -strop;                    #   split action string at commas
+		0 var nR; label lR; nR idAct.dim < if;                                      #   for all actions >>
+			## Execute specific action function                                       #     ---------------------------------
+			:idAct[0,nR]: "split" == if; itHMM -HMM_Act_split; end;
+			:idAct[0,nR]: "vargm" == if; itHMM -HMM_Act_vargm; end;
+			:idAct[0,nR]: "ldl" == if; itHMM -HMM_Act_ldl; end;
+			:idAct[0,nR]: "bn" == if; itHMM -HMM_Act_BestN; end;
+			:idAct[0,nR]: "up" == if; itHMM -HMM_Act_UsedPath; end;
+			:idAct[0,nR]: "uprc" == if; itHMM -HMM_Act_UsedPathRC; end;
+			:idAct[0,nR]: "hmm" == if; itHMM -HMM_Act_hmm; end;
+			:idAct[0,nR]: "mix" == if; itHMM -HMM_Act_mix; end;
+			:idAct[0,nR]: "tprun" == if; itHMM -HMM_Act_TPrun; end;
+			:idAct[0,nR]: "prun" == if; itHMM -HMM_Act_Prun; end;
+		nR ++=; goto lR; end;                                                       #   <<
+	end;                                                                          # <<
+}
+
+## Removes HMM and log files of one training iteration.
+##
+## @cgen:index
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings (typical case for speech recognition)
+## @param nSpl  number
+##          Previous number of state splits of HMM to be split
+## @param nIte number
+##          Number of update iterations of HMM to be split
+function -HMM_tidyup(sSns,nSpl,nIte)
+{
+  .__CFG_bNwr if leave; end                                                     # Write-protected -> forget it
+  nIte 0 < if leave; end                                                        # Not a regular pass -> forget it
+  var sSxt; sSns if ".$[sSns]" else "" end sSxt =;                              # Get sensor file extension
+  var sDirModel; "model" "S" -CFG_get_path sDirModel =;                         # Model directory
+  var sDirLog;   "log"   "S" -CFG_get_path sDirLog   =;                         # Log directory
+
+  "$[sDirModel]/$[nSpl]_$[nIte]$[sSxt].hmm" -SH_rm;                             # Remove HMM file
+  "$[sDirLog]/*$[nSpl]_$[nIte]*$[sSxt].*"   -SH_rm;                             # Remove log file(s)
+}
+
+## == BEING REPLACED BY -HMM_process ==                                         # =====================================
+
+## DEPRECATED.
+## Being replaced by <a class="code"href="#clp_-HMM_process">-HMM_process</a>.
+##
+##
+## @param iF file
+##          File list specifying a set feature files to initialize the models from
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings 
+##          (typical case for speech recognition)
+## @param iFI object
+##          Feature information object (see ...}
+## @param bBw boolean
+##          <code>TRUE</code> to do a Baum-Welch update, <code>FALSE</code> to
+##          do a Viterbi update          
+## @param bLab boolean
+##          <code>TRUE</code> to do labelwise update, <code>FALSE</code> to do
+##          the update without labels
+## @param itHMM hmm
+##          Acoustic models to be updated
+## @global &lt;sig.srate&gt;     R
+## @global &lt;pfa.crate&gt;     R
+## @global &lt;uasr.am.train&gt; R
+function -HMM_ite(iF,sSns,iFI,bBw,bLab,itHMM)
+{
+  data idMsf;                                                                   # Most sign. feature vec. seq. (turn)
+  data idLsf;                                                                   # Least sign. feature vec. seq. (turn)
+  data idNld;                                                                   # Neg. log. density array (turn)
+  data idMsfL;                                                                  # Most sign. feature vec. seq. (label)
+  data idLsfL;                                                                  # Least sign. feature vec. seq. (label)
+  data idNldL;                                                                  # Log desity array (label)
+  data idAxs;                                                                   # Acoustic model index sequence (turn)
+  data idA;                                                                     # Baum-Welch-Update: alpha values
+  data idAux;                                                                   # Auxilary data instance #1
+  data idTrl;                                                                   # The transliteration (as list)
+  fst  itAux;                                                                   # Auxilary FST instance #1
+  fst  itTrl;                                                                   # The transliteration (as FST)
+  fst  itGP;                                                                    # Gaussian->phoneme transducer
+  var  nL;                                                                      # Current label
+  var  nU;                                                                      # Current model index
+  var  nE;                                                                      # Number of defective turns (load fail)
+  var  nMsf;                                                                    # Number of most significant features
+  var  nIcTis;                                                                  # Input symbol component in itHMM.td
+  var  nIcTer;                                                                  # Terminal state compoentn in itHMM.td
+  var  nIcNld;                                                                  # Training neg-log. component in itHMM.ud
+  var  nIcNlC;                                                                  # Training neg-log. count comp. in itHMM.ud
+  var  nRinc;                                                                   # Time incr. between two feature vects.
+  var  nTst;                                                                    # Total sample time
+  var  nOfs;                                                                    # Label offset (in frames)
+  var  nLen;                                                                    # Label length (in frames)
+  var  sOsg;   "" sOsg -sset;                                                   # Extra options for hmm -setup_gmm
+
+  ## Initialize/validate                                                        # -------------------------------------
+  itHMM -AM_check not if "Acoustic model corrupt" -ERROR FALSE return end;      # Check acoustic model
+  itHMM.gm not bLab not && if "Labels requierd for init" -ERROR FALSE return end# Obmit init without labels
+  "pfa.crate" 160 -CFG_get "sig.srate" 16000 -CFG_get / 1000 * nRinc =;         # Compute feature vector distance in ms
+  itHMM -get_dim nMsf =;                                                        # Get number of most significant feats.
+  itHMM.NC_TD_TIS itHMM.td -find_comp nIcTis =;                                 # Find input symbol comp. in itHMM.td
+  itAux.IC_TD_TER nIcTer =;                                                     # Find terminal state comp. in itHMM.td
+  "~Nld" itHMM.ud -find_comp nIcNld =; nIcNld 0 < if; itHMM.ud.dim nIcNld =;    # Find neg-log. comp. in itHMM.ud or
+    "~Nld" -type double itHMM.ud -addcomp; end;                                 # | create it
+  "~NlC" itHMM.ud -find_comp nIcNlC =; nIcNlC 0 < if; itHMM.ud.dim nIcNlC =;    # Find neg-log. count comp. in itHMM.ud
+    "~NlC" -type long itHMM.ud -addcomp; end;                                   # | or create it
+  nIcNld 1 itHMM.ud -mark; 0 0 itHMM.ud /mark -fill; itHMM.ud -unmark;          # Clear neg-log. comp. in itHMM.ud
+  iF -reset;                                                                    # Rewind file list
+  itHMM.gm if itHMM -reset_stats; end                                           # Reset internal HMM statistics
+  bLab not if; itHMM itGP -LAB_get_fst; end;                                    # Create Gaussian->phoneme transducer
+	( "am.train" "var" "," -CFG_get_item ) 0 >= if "/var" sOsg -sset; end         # Get extra options for hmm -setup_gmm 
+  sOsg "/var" == if "   - GMMs          : Variances only\n" -MSG; end           # This deserves a note
+
+  ## Initialize or update HMM's                                                 # -------------------------------------
+  ( iF.flist_data.descr0 0 > ) if                                               # Running a parallel computing job >>
+    0 .__PBAR_nGauge =; iF.flist_data.descr0 .__PBAR_nLength =;                 #   Just contribute to common prg. bar
+  else                                                                          # << Running the only task >>
+    0 1 -PBAR;                                                                  #   Begin own progress bar
+  end                                                                           # <<
+  label L_FILE; iF -next if                                                     # Loop over files >>
+    "\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "                   -MSG2; #   Protocol
+    :(iF.nfile+1)/iF.len: 1 -PBAR;                                              #   Display progress
+
+    ## Load data                                                                #   -----------------------------------
+    iF sSns "A" idMsf -FEA_get not if nE ++=; goto L_FILE; end       "." -MSG2; #   Get primary feature vectors
+    stdprof -begin_timer;                                                       #   Start measuring time
+    idMsf iFI nMsf idMsf idLsf -FEA_sfa;                             "." -MSG2; #   Call secondary feature analysis
+
+    ## Get label sequence                                                       #   -----------------------------------
+    bLab if;                                                                    #   Use labels ? >>
+      idMsf idMsf.dim 1 - idAux -compress;                                      #     Compress label sequence
+      idAux itHMM.ud 0 0 idAxs /label -gen_index;                               #     Get AM index sequence for labels
+      idAux idAxs -join;                                                        #     Join label and index sequences
+    else;                                                                       #   << Generate labels >>
+      ## Make sentence model                                                    #     ---------------------------------
+      ## TODO: truely make a sentence model                                     #     ---------------------------------
+      itHMM itTrl -union; itTrl 0 itTrl -close;                                 #     Kleene closure as sentence model
+
+      ## Do forced alignment                                                    #     ---------------------------------
+      idMsf NULL idNld itHMM.gm /neglog -density;                    "." -MSG2; #     Compute neg. log. densities
+      itTrl 0 idNld itTrl /epsremove -sdp;                           "." -MSG2; #     Viterbi decoding
+      itTrl 0 itTrl -invert; itTrl itGP 0 0 itTrl -compose;                     #     Translate to phoneme indices
+      :itTrl.td["~TOS"]: idTrl =;                                               #     Extract phoneme indices
+      :idTrl.<0: idTrl -dmark; idTrl 0 0 idTrl /mark -delete;                   #     Final epsilon removal
+
+      idTrl 0 idAxs -compress;                                                  #     Compress label sequence
+      "lab" 255 1 idAxs -insertcomp;                                            #     Add label component
+    end;                                                                        #   <<
+
+    itHMM.gm if                                                                 #   Regular update >>
+			bBw if                                                                    #     Baum-Welch training >>
+ 	    	idAxs 0 2 3 idAux itHMM /nomix -gen_map;                                #       Create density computation map
+ 	      idMsf NULL  idNld itHMM.gm /neglog /nomix -density;                     #       Compute neg. log. densities
+ 			else                                                                      #     << Viterbi training >>
+ 	      idAxs 0 2 3 idAux itHMM -gen_map;                                       #       Create density computation map
+        idMsf idAux idNld itHMM.gm /neglog -density;                            #       Compute neg. log. densities
+ 			end                                                                       #     <<
+    end                                                              "." -MSG2; #   <<
+
+    0 nL =; label L_LABEL; nL idAxs.nrec < if                                   #   Loop over labels >>
+      .__UTL_nVlevel 3 >= if                                                    #     On verbose lvl. 3 (optimized!) >>
+        "\n       label ${nL+1}/$[idAxs.nrec], frame ${idAxs[nL,2]}: "          #       |
+        "'${idAxs[nL,1]}'" +                                              -MSG; #       Protocol
+      end                                                                       #     <<
+      ( nL 0 idAxs -dfetch ) nU =;                                              #     Get current AM index
+      nU 0 >= if                                                                #     Current model index valid >>
+        ( nL 3 idAxs -dfetch ) ( nU 5 itHMM.ud -dfetch ) >= if                  #     Have one frame per HMM layer >>
+          nL 2 idAxs -dfetch nOfs =;                                            #       Get label offset
+          nL 3 idAxs -dfetch nLen =;                                            #       Get label length
+          idMsf nOfs nLen idMsfL /rec -select;                                  #       Get label's MSF
+          idLsf nOfs nLen idLsfL /rec -select;                                  #       Get label's LSF
+          itHMM.gm if                                                           #       Regular update >>
+            idNld nOfs nLen idNldL /rec -select;                                #       Get label's neg. log. densities
+						bBw if                                                              #         Baum-Welch training >>
+							nU idNldL idA itHMM -bwalpha;                                     #           Get alpha values
+							idA idMsfL idLsfL nU itHMM /fast -bwupdate;                       #           Update acoustic model
+          	else                                                                #         << Viterbi training >>
+              itHMM nU idNldL itAux -sdp;                                       #           Viterbi search of best path
+              :itHMM.ud[nU,nIcNld]+=itAux.gw;                                   #           Update neg-log. comp. in itHMM.ud
+              :itHMM.ud[nU,nIcNlC]+=nLen;                                       #           Update count of neg-log. comp.
+              itHMM.pls if itAux nU itHMM -HMM_update_pls; end                  #           Gather layer durations stats.
+              itAux.td nIcTis nIcTer idMsfL idLsfL nU itHMM /fast -update;      #           Update acoustic model
+          	end                                                                 #         <<
+          else                                                                  #       << Model initialization >>
+            idMsfL itHMM nU idAux -HMM_iniusq;                                  #         Make initial update sequence
+            idAux 1 0 idMsfL idLsfL nU itHMM -update;                           #         Update acoustic model
+          end                                                                   #       <<
+        else                                                                    #       << Fewer frames than layers >>
+          " skipping label (too few frames)"                           3 -MSGX; #         Protocol (verbose level 3)
+        end                                                                     #       <<
+      else                                                                      #     << Current model index invalid >>
+        "Label '${idAxs[nL,1]}' (frame ${idAxs[nL,2]}) invalid."    1 -WARNING; #       Warning (level 1)
+      end                                                                       #     <<
+      nL ++=; goto L_LABEL;                                                     #     End of label loop
+    end                                                              "." -MSG2; #   <<
+
+    "" stdprof -end_timer;                                                      #   Stop measurung time
+    " ok (RTF $[stdprof.time nRinc / idMsf.nrec /])"                     -MSG2; #   Protocol
+    nRinc idMsf.nrec * nTst +=;                                                 #   Accumulate total sample time
+    goto L_FILE;                                                                #   End of file loop
+  end                                                                           # <<
+  ( iF.flist_data.descr0 0 == ) if "\n  " -MSG2; "done\n" -MSG; end             # Protocol
+  "\n   Total sample time: $[nTst 60000 /] min"                          -MSG2; # Protocol (verbose level 2)
+  nE if "$[nE]/$[iF.len] turns defective!" 1 -WARNING; end                      # Warn for defective turns
+
+  TRUE return;                                                                  # Ok 
+}
+
+function -HMM_adapt_fnc(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)
+{
+  
+  function -EI(itHMM,sSns,nSpl,nIte,iF,itRes,iL)                                # Indentification (sHint="I")
+  {                                                                             # >>
+    "Adaptation" return;                                                        #   Name our mission
+  }                                                                             # <<
+
+  function -EF(itHMM,sSns,nSpl,nIte,iF,itRes,iL)                                # Before first turn (sHint="F")
+  {                                                                             # >>
+    ## Local instances                                                          #   - - - - - - - - - - - - - - - - - -
+    object     iFI;     "${sDirMod}/feainfo$[sSxt].object" iFI -FEA_info;       # Feature information object
+    
+    ## Evaluation instances                                                     #   - - - - - - - - - - - - - - - - - -
+    var  iL.sDirTrl;   ( "trl" "S" -CFG_get_path ) iL.sDirTrl =;                #   Transliteration directory
+    statistics iL.iS;
+    
+    4 itHMM.gm.mean.dim itHMM.gm.mean.nrec NULL -1 iL.iS -setup;
+
+    0 return;                                                                   #   Well ...
+  }                                                                             # <<
+  function -E(itHMM,sSns,nSpl,nIte,iF,itRes,iL)                                 # For all turns (sHint="")
+  {                                                                             # <<
+
+    data       idFea;                                                           # Primary feature vector sequence
+    data       idLab;                                                           # Label sequence
+    
+    iF NULL "" idFea -FEA_get;                                                  # Get feature vectors
+    idFea iFI ( itHMM -get_dim ) idFea NULL -FEA_sfa;                          	# Do secondary feature analysis
+
+    :itRes.td["~TIS"]: idLab =;                                                 # Get labels
+    :idLab.<0: idLab -dmark;                                                    # Selects zero labels
+    idLab 0 0 idLab /mark -delete;                                              # Take out selected labels
+    idFea 0 iL.iS.dat.dim idFea -select;                                        # Reduce feature dimensionality (remove labels)
+    idLab idFea -join;                                                          # Add the labels to idFea
+
+    idFea idFea.dim -- NULL iL.iS -update;                                      # Update the statistics file
+
+    0 return;                                                                   #   ok
+  }                                                                             # <<
+  function -EL(itHMM,sSns,nSpl,nIte,iF,itRes,iL)                                # After last turn (sHint="L")
+  {                                                                             # >>
+   ## HMM adaptation                                                            # -------------------------------------
+
+  iL.iS not if FALSE return; end                                                # No adaptation statistics -> forget it
+
+  data idMa;  idMa iL.iS -mean;                                                 # Adaptation mean vectors
+  data idCa;  idCa iL.iS -cov;                                                  # Adaptation covariance matrices
+#  data idVa;  idVa iS -var;                                                    # Adaptation variance vectors
+  data idIa;  idIa iL.iS -freq;                                                 # Adaptation sample sizes
+  data idMh;                                                                    # HMM mean vectors
+  data idCh;                                                                    # HMM covariance matrices
+  data idA;                                                                     # Adaptation data (one Gaussian)
+  data idH;                                                                     # HMM data (one Gaussian)
+#  data idWc;                                                                   # Covariance weighting matrix
+  var  nC;                                                                      # Current Gaussian
+  var  nCm;                                                                     # Actually adapted mean vectors
+  var  nCc;                                                                     # Actually adapted covariance matrices
+  var  nXC;  itHMM.gm.mean.nrec                          nXC  =;                # Number of Gaussians
+  var  nXN;  itHMM.gm.mean.dim                           nXN  =;                # Gaussian dimension
+  var  nImn; "am.adapt.imean" :nXN:     "S" -CFG_get_ex nImn =;                 # Get the mean weighting adaptn. param.
+  var  nIcv; "am.adapt.icov"  :nXN*nXN: "S" -CFG_get_ex nIcv =;                 # Get the cov. weighting adaptn. param.
+  var  sAmId; ( "am.model"   ""  -CFG_get    ) sAmId   -sset;                   # The HMM indentifier 
+  var  sAmEx; ( "am.adapt.ext" "A"  -CFG_get    ) sAmEx  -sset;                 # Get the model indentifier extension
+              
+  ## Thoroughly check statistics before doing anyting                           # -------------------------------------
+  ( idMa.nrec nXC == not ) ( idCa.nblock nXC == not ) || if                     # Wrong number of classes >>
+    "Expect $[nXC] stats. classes (have $[idMa.nrec])." -ERROR;   FALSE return; #   Error message, forget it
+  end                                                                           # <<
+  ( idMa.dim nXN == not ) ( idCa.dim nXN == not ) || if                         # Wrong dimension >>
+    "Expect $[nXN] stats. dimensions (have $[idMa.dim])." -ERROR; FALSE return; #   Error message, forget it
+  end                                                                           # <<
+
+  ## Compute adapted Gaussian data                                              # -------------------------------------
+  "\n\n   Adapting $[nXC] Gaussians"                                      -MSG; # Protocol
+    "\n   - Mean vectors: weight=$[nImn]; "       -MSG; # Protocol
+    "\n   - Cov.matrices: weight=$[nIcv]; "       -MSG; # Protocol
+  0 1 -PBAR;                                                                    # Begin progress bar
+  idMh idCh itHMM.gm -extract;                                                  # Extract Gaussian data
+  idCh idCh NULL matrix /svd -invert;                                           # Compute covariance matrix
+  
+  #:idWc = (ones(nXN,nXN)-(nWcv*unit(nXN)));                                    # Compute covariance weighting matrix
+ 
+  label L_C; nC nXC < if                                                        # Loop over single Gaussians nC >>
+  
+    "\n   - $[nC]: ${idIa[nC,0]} samples ."                              -MSG2; #   Protocol
+    :(nC+1)/nXC: 1 -PBAR;                                                       #   Display progress
+
+    ## Adapt mean vectors                                                        #   - - - - - - - - - - - - - - - - - -
+    :idIa[nC,0]: 0 != if
+      ( nC 1 idMa /rec -xfetch ) idA =;                                         #     Get adaptation mean vector
+      ( nC 1 idMh /rec -xfetch ) idH =;                                         #     Get HMM mean vector
+      
+      :nImn/(idIa[nC,0]+nImn)*idH + (idIa[nC,0]/(idIa[nC,0]+nImn))*idA: 0 1 nC idMh /rec -xstore;                       #     Compute/store adapted mean vec.
+      nCm ++=; 
+      "."                                                                -MSG2; #     Protocol
+    else
+      "[skip mean]"                                                      -MSG2;
+    end
+
+   ## Adapt covariance matrix                                                   #   - - - - - - - - - - - - - - - - - -
+    :idIa[nC,0]: 0 != if
+      ( nC 1 idCa /block -xfetch ) idA =;                                       #     Get adaptation covariance matrix
+      ( nC 1 idCh /block -xfetch ) idH =;                                       #     Get HMM covariance matrix
+          
+      :nIcv/(idIa[nC,0]+nIcv)*idH + (idIa[nC,0]/(idIa[nC,0]+nIcv))*idA: 0 1 nC idCh /block -xstore;                     #     Compute/store adapted cov. matr.
+      nCc ++=; 
+      "."                                                                -MSG2; #     Protocol
+    else
+      "[skip cov]"                                                       -MSG2;
+    end
+    ". ok"                                                               -MSG2;
+    
+    nC ++=; goto L_C;                                                           #   The next one, please!
+  end                                                                         # <<
+  "\n  "                                                                 -MSG2; # Protocol (verbose level 2)
+  "done\n\n Adapted $[nCm] mean vectors and $[nCc] covariance matrices"   -MSG; # Protocol
+ 
+  ## Resetup Gaussians                                                          # -------------------------------------
+  
+	idMh idCh itHMM.gm.mmap itHMM.gm -setup;                                      # Setup adapted Gaussians 
+   
+   "\n\n Saving $[sDirMod]/$[sAmId]a.hmm"                                -MSG2; # Protocol
+      
+      "$[sDirMod]/$[sAmId]_$[sAmEx].hmm" itHMM /zip -save;                      #  Save the acoustic model
+      "$[sDirMod]/$[sAmId]_$[sAmEx].sta" iL.iS -save;                           #  Save statistics
+
+	0 return;
+}
+										
+  ( itHMM sSns nSpl nIte iF itRes iL -E$[sHint] ) return;                       # Call adaptation function
+}
+
+## EOF

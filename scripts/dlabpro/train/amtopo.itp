@@ -1,0 +1,971 @@
+## Unified Approach to Speech Synthesis and Recognition
+## - Training functions: HMM topology training
+##
+## AUTHOR : Frank Duckhorn
+## PACKAGE: uasr/scripts/dlabpro/train
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Add normalised component to data instance
+##
+## @cgen:index
+## @param sCold string
+##          Component name of component to normalize
+## @param sCnew string
+##          Component name of component to store normalized values
+## @param sCref string
+##          Component name of component with normalizing values
+## @param idAux data
+##          Data instance to modify
+function -TOPOHLP_add_norm(sCold,sCnew,sCref,idAux)
+{
+	data   idAux2;                                                                # Auxilary data instance #2
+	data   idAux3;                                                                # Auxilary data instance #3
+	idAux sCref idAux -find_comp 1 idAux2 -select;                                # Get normalizing values vector
+	idAux sCold idAux -find_comp 1 idAux3 -select;                                # Get values vector to normalize
+	idAux3 idAux2 ./ idAux2 =;                                                    # Normalize values
+	0 sCnew idAux2 -set_cname;                                                    # Rename componet to new name
+	idAux2 idAux -join;                                                           # Add component to data instance
+}
+
+## Calculation of transition weights and mean length of paths through itHMM
+##
+## @cgen:index
+## @param itHMM hmm
+##          Source HMM instance
+## @param itUsed fst
+##          Destination FST for used paths or NULL
+## @param idLenMean data
+##          Destination Buffer for mean length of paths per unit or NULL
+## @param idTrans data
+##          Destination Buffer for transition weights (~Nld+~Nldavg)
+##          and reference counters (~RC)
+## @param sWriteStat string
+##          Model name for statistic to write ("" for no statistic write)
+## @return nLenMean number
+##          Overall mean length of paths through itHMM
+## @global &lt;uasr.am.train.2trainlst&gt;  R
+function -TOPOHLP_Trans(itHMM,itUsed,idLenMean,idTrans,sWriteStat)
+{
+	## Local variables                                                            # ---------------------------------
+	data   idMsf;                                                                 # Most sign. feature vector seq.
+	data   idRres;                                                                # Array for TIS,LSR,RC of trans.tab.
+	data   idRres2;                                                               # idRres without final trans.
+	data   idStates;                                                              # States reference counter array
+	data   idAvgNld;                                                              # Average neg-log. densities array
+	data   idAux;                                                                 # Auxilary array
+	data   idAxs;                                                                 # Acoustic model index sequence
+	file   iF;                                                                    # Feature file list
+	hmm    itRN;                                                                  # Recognition network
+	fst    itRres;                                                                # Recognition result
+	fst    itTmp;
+	object iFI;                                                                   # Feature information object
+	var    sDirModel;                                                             # Model directory
+	var    sDirLog;                                                               # Log directory
+	var    nG;                                                                    # Number of valid gaussians
+	var    nT;                                                                    # Number of Transitions
+	var    nSrate;    "sig.srate" 250000 -CFG_get nSrate -vset;                   # Signal sampling rate
+	var    nCrate;    "pfa.crate"     32 -CFG_get nCrate -vset;                   # Feature frame rate
+	var    nLenSum;                                                               # Sum of path length through itHMM
+	var    nLenCount;                                                             # Count of paths through itHMM
+	data   idLenSum;                                                              # Sum of path length per unit
+	data   idLenCount;                                                            # Count of paths per unit
+	var    nL;                                                                    # Current label
+	var    nU;                                                                    # Current model index
+	var    nLen;                                                                  # Label length (in frames)
+	fsttools fsttl;                                                               # Instance of fsttools
+	
+	## Initialize                                                                 # ---------------------------------
+	"model"   "" -CFG_get_path  sDirModel =;                                      # Get model directory
+	"log"     "" -CFG_get_path  sDirLog   =;                                      # Get log directory
+	"fea"     "" -CFG_get_path  iF -set path;                                     # Set feature files directory
+  "am.train.2trainlst" "dev" "S" -CFG_get_ex var sFlistName;                    # Get name of file list
+	sFlistName "" -CFG_get_flist iF -set flist;                                   # Set test file list
+	"fea.ext" "" -CFG_get       iF -set ext;                                      # Set feature files extension
+	"${sDirModel}/feainfo.object" iFI -FEA_info;                                  # Get feature info object
+	"\n"                                                                    -MSG; # Protocol (verbose level 2)
+	0 nLenSum =;                                                                  # Initialize path length sum = 0
+	0 nLenCount =;                                                                # Initialize path count = 0
+	-type double 1 itHMM.ud.nrec idLenSum -array;                                 # Initialize path length sum = 0
+	-type long 1 itHMM.ud.nrec idLenCount -array;                                 # Initialize path count = 0
+
+	## Add transition id to transition table                                      # ---------------------------------
+	"~T_ID" itHMM.td -find_comp -1 == if;                                         # If no trans. id exists >>
+		"~T_ID" -type long itHMM.td -addcomp;                                       #   Add trans. id component
+	end;                                                                          # <<
+	itHMM.td -unmark; "~T_ID" itHMM.td -find_comp 1 itHMM.td -mark;               # Mark trans. id component
+	0 1 itHMM.td /mark -fill; itHMM.td -unmark;                                   # Reset trans. id's & unmark
+
+	itHMM.gm -get_n_valid_gauss nG =;                                             # Get number of valid gaussians
+	itHMM.td.nrec nT =;                                                           # Get number of transitions
+
+	## Create union HMM                                                           # ---------------------------------
+	itHMM itRN -union;                                                            # Create RN 1: HMM union
+	itUsed NULL != if;                                                            # If itUsed to be created >>
+		## Copy LSR to saved LSR                                                    #   -------------------------------
+		itRN.td itRN.NC_TD_LSR itRN.td -find_comp 1 idAux -select;                  #   Copy LSR to idAux
+		0 "~sLSR" idAux -set_cname;                                                 #   Rename to saved LSR
+		idAux itRN.td -join;                                                        #   Add sLSR to transition table
+	end;                                                                          # <<
+	itRN 0 itRN -close;                                                           # Create RN 2: Kleene closure
+
+  ## Remove transition id                                                       # ---------------------------------
+	itHMM.td "~T_ID" itHMM.td -find_comp 1 itHMM.td -delete;                      # Remove trans. id component
+
+	idTrans NULL != if;                                                           # If trans to create >>
+		-type long 0 0 idTrans -array;                                              #   Reset transition weight array
+	end;                                                                          # <<
+
+	## HMM develop-set processing                                                 # ---------------------------------
+	"\n   Processing $[itHMM.ud.nrec] models with $[iF.len] samples ..."    -MSG; # |
+	0 1 -PBAR;                                                                    # Begin progress bar
+	label L_FILE; iF -next                                                        # Loop over files
+	if                                                                            # >>
+		"\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "                   -MSG2; #   Protocol
+		:(iF.nfile+1)/iF.len: 1 -PBAR;                                              #   Display progress
+    iF NULL "A" idMsf -FEA_get not if goto L_FILE end;               "." -MSG2; #   Load feature file
+		idMsf.nrec nLenSum +=;                                                      #   Add path length to length sum
+		nLenCount ++=;                                                              #   Increment path counter
+
+		idMsf iFI itRN -1 "1A" itRres -AM_decode;                                   #   Decode
+		itUsed NULL != if;                                                          #   If itUSed to be created >>
+			itRres itTmp =;                                                           #     Copy recognition result
+			-1 itTmp -remove_ex_loops;                                                #     Remove loops from result
+			itTmp itUsed -cat;                                                        #     Append result to itUsed
+			itUsed itUsed -union;                                                     #     Combine units of itUsed
+			itUsed -1 5 0 itUsed -best_n;                                             #     Keep only best paths
+		end;                                                                        #   <<
+		itRres.td 2 :itRres.td.dim-2: idRres -select; idRres 1 1 idRres -delete;    #   Select TIS + LSR + RC
+		:idRres[0].==-1: idRres -dmark; idRres 0 0 idRres2 /mark -delete;		        #   Delete end
+
+		sWriteStat "" != if;                                                        #   If stat to write >>
+			idRres2 0 nG unit 0 nG idAux -lookup;                                     #     Split ones to gaussians
+			idStates idAux + idStates =;                                              #     Sum ones to RC
+
+			idRres2 1 1 idAux -select;                                                #     Select LSR
+			idAvgNld idAux + idAvgNld =;                                              #     Sum LSR
+		end;                                                                        #   <<
+
+		idTrans NULL != if;                                                         #   If trans to create >>
+			idRres itRres.NC_TD_TIS idRres -find_comp 1 idRres -delete;               #     Remove TIS component
+			idRres -unmark; itRres.NC_TD_RC idRres -find_comp 1 idRres -mark;         #     Mark RC component
+			1 0 idRres /mark -fill;	idRres -unmark;                                   #     Set RC to 1
+			idRres "~T_ID" idRres -find_comp nT idAux fsttl -sum_comp_id;             #     Aggregate idRres according T_ID
+			idAux idTrans + idTrans =;                                                #    Sum trans.-table
+		end;                                                                        #  <<
+
+		idLenMean NULL != if;                                                       #   If mean length to created >>
+			idMsf idMsf.dim 1 - idAux -compress;                                      #     Compress label sequence
+			idAux itHMM.ud 0 0 idAxs -gen_index;                                      #     Get AM index sequence for labels
+			idAux idAxs -join;                                                        #     Join label and index sequences
+			0 nL =; label L_LABEL; nL idAxs.nrec <                                    #     Loop over labels
+			if                                                                        #     >>
+				"\n       frame ${idAxs[nL,2]}: '${idAxs[nL,1]}'"              3 -MSGX; #       Protocol (verbose level 3)
+				${idAxs[nL,0]} nU =;                                                    #       Get current AM index
+				nU 0 >= if                                                              #       Current model index valid >>
+					${idAxs[nL,3]} ${itHMM.ud[nU,5]} >= if                                #         Have one fr. per HMM layer >>
+						nL 3 idAxs -dfetch nLen =;                                          #           Get label length
+						:idLenSum[nU,0]=idLenSum[nU,0]+nLen;                                #           Sum path lengths
+						:idLenCount[nU,0]=idLenCount[nU,0]+1;                               #           Count paths
+					end                                                                   #         <<
+				end                                                                     #       <<
+				nL ++=; goto L_LABEL;                                                   #       End of label loop
+			end                                                            "." -MSG2; #     <<
+		end;                                                                        #   <<
+
+		goto L_FILE;                                                                #   End of file loop
+	end                                                                           # <<
+	"\n  "                                                                 -MSG2; # Protocol
+	"done\n"                                                                -MSG; # Protocol
+
+	idLenMean NULL != if;                                                         # If path len. to write >>
+		idLenSum idLenCount ./ idLenMean =;                                         #   Calculate mean path length
+	end;                                                                          # <<
+
+	sWriteStat "" != if;                                                          # If stat to write >>
+		:1000/nSrate*nCrate: idStates -set rinc;                                    #   Set records scale
+		#"${sDirLog}/states_${sWriteStat}.dn3" idStates     -save;                  #   Save state reference counter
+		"${sDirLog}/states_${sWriteStat}.xml" idStates /xml -save;                  #   Save state reference counter
+
+		idAvgNld iF.len ./ idAvgNld =;                                              #   Norm. average neg-log. densities
+		:1000/nSrate*nCrate: idAvgNld -set rinc;                                    #   Set records scale
+		"${sDirLog}/avgnld_${sWriteStat}.xml" idAvgNld /xml -save;                  #   Save average neg-log. densities
+	end;                                                                          # <<
+
+  idTrans NULL != if;                                                           # If trans to create >>
+		## Finiliaze idTrans                                                        #   ---------------------------------
+		itRN.NC_TD_LSR idTrans -find_comp "~Nld" idTrans -set_cname;                #   Rename LSR component to Nld
+		"~Nld" "~Nldavg" itRN.NC_TD_RC idTrans -TOPOHLP_add_norm;                   #   Norm Nld with RC to Nldavg
+	end;                                                                          # <<
+
+	## Return LenMean                                                             # ---------------------------------
+	nLenSum nLenCount / return;                                                   # Return overall mean path length
+}
+
+## Calculation of Used Paths for dev-Dataset
+##
+## @cgen:index
+## @param itHMM hmm
+##          Source HMM instance
+## @param nPathNum number
+##          Number of best used paths (-1 for all used paths)
+## @param itUsed fst
+##          Destination FST instance
+## @global &lt;uasr.am.train.2trainlst&gt;  R
+function -TOPOHLP_UsedPath(itHMM,nPathNum,itUsed)
+{
+  "\n// HMM Used Paths"                                                   -MSG; # Protocol
+  file   iFlist;                                                                # Feature file list
+  object iFI;                                                                   # Feature information object
+  var    sDirModel;                                                             # Model directory
+  data idMsf;                                                                   # Most sign. feature vec. seq. (turn)
+  data idLsf;                                                                   # Least sign. feature vec. seq. (turn)
+  data idNld;                                                                   # Neg. log. density array (turn)
+  data idNldL;                                                                  # Log desity array (label)
+  data idAxs;                                                                   # Acoustic model index sequence (turn)
+  data idAux;                                                                   # Auxilary data instance
+  data idTmp;                                                                   # Temporary data instance
+  fst  itAux;                                                                   # Auxilary FST instance
+  fst  itTmp;                                                                   # Temporary FST instance
+  var  nL;                                                                      # Current label
+  var  nU;                                                                      # Current model index
+  var  nMsf;                                                                    # Number of most significant features
+  var  nRinc;                                                                   # Time incr. between two feature vects.
+  var  nTst;                                                                    # Total sample time
+  var  nOfs;                                                                    # Label offset (in frames)
+  var  nLen;                                                                    # Label length (in frames)
+  var  nCLSR;                                                                   # Component Index for LSR
+	fsttools fsttl;                                                               # Instance of fsttools
+	
+  ## Initialize                                                                 # -------------------------------------
+  "model"   "" -CFG_get_path  sDirModel =;                                      # Get model directory
+  "fea"     "" -CFG_get_path  iFlist -set path;                                 # Set feature files directory
+  "am.train.2trainlst" "dev" "S" -CFG_get_ex var sFlistName;                    # Get name of file list
+	sFlistName "" -CFG_get_flist iFlist -set flist;                               # Set training file list
+  "fea.ext" "" -CFG_get       iFlist -set ext;                                  # Set feature files extension
+  "${sDirModel}/feainfo.object" iFI -FEA_info;                                  # Get feature info object
+  "\n"                                                                    -MSG; # Protocol (verbose level 2)
+  itHMM -AM_check not itHMM.gm NULL == || if                                    # Committed HMMs invalid >>
+    "${sDirModel}/1_$[nSpl]_$[nIte].hmm" var sInFn;                             #   Create file name of prev. iteration
+    sInFn iFI.nDim itHMM -HMM_load not if leave end;                            #   Restore HMM of prev. iteration
+  end                                                                           # <<
+
+  ## Initialize/validate                                                        # -------------------------------------
+  "pfa.crate" 160 -CFG_get "sig.srate" 16000 -CFG_get / 1000 * nRinc =;         # Compute feature vector distance in ms
+  itHMM -get_dim nMsf =;                                                        # Get number of most significant feats.
+  iFlist -reset;                                                                # Rewind file list
+  0 nU =; label lU; nU itHMM.ud.nrec < if;                                      # For all units in itHMM >>
+  	nU itHMM.IC_UD_NAME itHMM.ud -fetch itUsed -addunit;                        #   create an empty unit in itUsed
+	nU ++=; goto lU; end;                                                         # <<
+  itHMM.NC_TD_LSR itHMM.td -find_comp nCLSR =;                                  # Get Component Index of LSR
+
+  ## Initialize or update HMM's                                                 # -------------------------------------
+  "\n   "  "Processing"  +                                                      # Protocol
+    " $[itHMM.ud.nrec] models with $[iFlist.len] samples ..." +           -MSG; # |
+  0 1 -PBAR;                                                                    # Begin progress bar
+  label L_FILE; iFlist -next                                                    # Loop over files
+  if                                                                            # >>
+    "\n     $[iFlist.nfile 1 +]/$[iFlist.len] - $[iFlist.sfile]: "       -MSG2; #   Protocol
+    :(iFlist.nfile+1)/iFlist.len: 1 -PBAR;                                      #   Display progress
+    iFlist NULL "A" idMsf -FEA_get not if goto L_FILE end;           "." -MSG2; #   Load feature file
+    stdprof -begin_timer;                                                       #   Start measuring time
+    idMsf iFI nMsf idMsf idLsf -FEA_sfa;                             "." -MSG2; #   Call secondary feature analysis
+    idMsf idMsf.dim 1 - idAux -compress;                                        #   Compress label sequence
+    idAux itHMM.ud 0 0 idAxs -gen_index;                                        #   Get AM index sequence for labels
+    idAux idAxs -join;                                                          #   Join label and index sequences
+    itHMM.gm if                                                                 #   Regular update >>
+		  idAxs 0 2 3 idAux itHMM -gen_map;                                         #     Create density computation map
+      idMsf idAux idNld itHMM.gm /neglog -density;                              #     Compute neg. log. densities
+    end                                                              "." -MSG2; #   <<
+    0 nL =; label L_LABEL; nL idAxs.nrec <                                      #   Loop over labels
+    if                                                                          #   >>
+      "\n       frame ${idAxs[nL,2]}: '${idAxs[nL,1]}'"                3 -MSGX; #     Protocol (verbose level 3)
+      ${idAxs[nL,0]} nU =;                                                      #     Get current AM index
+      nU 0 >= if                                                                #     Current model index valid >>
+        ${idAxs[nL,3]} ${itHMM.ud[nU,5]} >= if                                  #     Have one frame per HMM layer >>
+          nL 2 idAxs -dfetch nOfs =;                                            #       Get label offset
+          nL 3 idAxs -dfetch nLen =;                                            #       Get label length
+          idNld nOfs nLen idNldL /rec -select;                                  #       Get label's neg. log. densities
+          itHMM nU idNldL itAux -sdp;                                           #       Viterbi search of best path
+
+					nPathNum 0 <= if; -1 itAux fsttl -remove_ex_loops; end;               #       Without path number compress
+
+				  :itAux.td[nCLSR]./=itAux.td.nrec;                                     #       Normalise path weight to len
+
+					## Get unit to change                                                 #       -------------------------------
+				  itUsed NULL nU itTmp -copy_ui;                                        #       Get unit to change
+
+				  ## Combine unit to change with new path                               #       -------------------------------
+				  itTmp.sd.nrec 0 > if;                                                 #       if unit is not empty >>
+				    itAux itTmp -cat; itTmp itTmp -union;                               #         combine unit with new path
+				  else;                                                                 #       << if unit is empty >>
+				  	itAux itTmp =;                                                      #         use new path as unit
+				  end;                                                                  #       <<
+
+				  ## Use only best paths of unit                                        #       -------------------------------
+				  nPathNum 0 > if; itTmp 0 nPathNum 0 itTmp -best_n; end;               #       Keep only best paths
+
+		  		## Store unit back to itUsed                                          #       -------------------------------
+					-type long 1 itUsed.ud.nrec idTmp -array; 0 1 idTmp -fill;            #       Create unit list
+					:idTmp[nU,0]=itUsed.ud.nrec;                                          #       Set changed unit id in list
+					itTmp itUsed -cat;                                                    #       Add changed unit to itUsed
+					itUsed idTmp 0 itUsed -copy_ui;                                       #       Resort itUsed according list
+
+        else                                                                    #       << Fewer frames than layers >>
+          " skipping label (too few frames)"                           3 -MSGX; #         Protocol (verbose level 3)
+        end                                                                     #       <<
+      else                                                                      #     << Current model index invalid >>
+        "Label '${idAxs[nL,1]}' (frame ${idAxs[nL,2]}) invalid."    1 -WARNING; #       Warning (level 1)
+      end                                                                       #     <<
+      nL ++=; goto L_LABEL;                                                     #     End of label loop
+    end                                                              "." -MSG2; #   <<
+
+    "" stdprof -end_timer;                                                      #   Stop measurung time
+    " ok (RTF $[stdprof.time nRinc / idMsf.nrec /])"                     -MSG2; #   Protocol
+    nRinc idMsf.nrec * nTst +=;                                                 #   Accumulate total sample time
+#iFlist.nfile 20 < if;
+    goto L_FILE;                                                                #   End of file loop
+#end;
+  end                                                                           # <<
+  "\n  "                                                                 -MSG2; # Protocol (verbose level 2)
+  "done\n"                                                                -MSG; # Protocol
+  "\n   Total sample time: $[nTst 60000 /] min"                          -MSG2; # Protocol (verbose level 2)
+
+  ## Aftermath                                                                  # -------------------------------------
+  TRUE return;                                                                  # Ok 
+}
+
+## Calculation of Used Paths Reference Counter for dev-Dataset
+##
+## @cgen:index
+## @param nTransNum number
+##          Aimed number of transitions with ref. counter zero
+##          <0 -> use this multiple of states in each unit
+##          =0 -> maximal number of transitions
+## @param itHMM hmm
+##          Source HMM instance (reference counters are updated)
+## @global &lt;uasr.am.train.2trainlst&gt;  R
+function -TOPOHLP_UsedPathRC(nTransNum,itHMM)
+{
+  "\n// HMM Used Paths RC"                                                -MSG; # Protocol
+  file   iFlist;                                                                # Feature file list
+  object iFI;                                                                   # Feature information object
+  var    sDirModel;                                                             # Model directory
+  data idMsf;                                                                   # Most sign. feature vec. seq. (turn)
+  data idLsf;                                                                   # Least sign. feature vec. seq. (turn)
+  data idNld;                                                                   # Neg. log. density array (turn)
+  data idNldL;                                                                  # Log desity array (label)
+  data idAxs;                                                                   # Acoustic model index sequence (turn)
+  data idAux;                                                                   # Auxilary data instance #1
+	data idTmp;                                                                   # Temporary data instance #1
+	data idTmp2;                                                                  # Temporary data instance #2
+	data idUnitRC;                                                                # Unit reference counter
+	data idTransRC;                                                               # Transition reference counter
+	data idPathWeights;                                                           # Path weights
+#	data idUnitPathCount;                                                         # Number of best paths per unit
+	data idUnitTransCount;                                                        # Aimed number of trans. per unit
+	data idRC;                                                                    # Final reference counters
+  fst  itAux;                                                                   # Auxilary FST instance #1
+  var  nL;                                                                      # Current label
+  var  nU;                                                                      # Current model index
+	var  nT;                                                                      # Current transition index
+  var  nMsf;                                                                    # Number of most significant features
+  var  nIcTis;                                                                  # Input symbol component in itHMM.td
+  var  nRinc;                                                                   # Time incr. between two feature vects.
+  var  nTst;                                                                    # Total sample time
+  var  nOfs;                                                                    # Label offset (in frames)
+  var  nLen;                                                                    # Label length (in frames)
+	var  nNewRecs;                                                                # Number of records to allocate
+	var  nCTID;                                                                   # Component index for trans. id
+	var  nCLSR;                                                                   # Component index for LSR
+	fsttools fsttl;                                                               # Instance of fsttools
+
+  ## Initialize                                                                 # -------------------------------------
+  "model"   "" -CFG_get_path  sDirModel =;                                      # Get model directory
+  "fea"     "" -CFG_get_path  iFlist -set path;                                 # Set feature files directory
+  "am.train.2trainlst" "dev" "S" -CFG_get_ex var sFlistName;                    # Get name of file list
+	sFlistName "" -CFG_get_flist iFlist -set flist;                               # Set training file list
+  "fea.ext" "" -CFG_get       iFlist -set ext;                                  # Set feature files extension
+  "${sDirModel}/feainfo.object" iFI -FEA_info;                                  # Get feature info object
+  "\n"                                                                    -MSG; # Protocol (verbose level 2)
+  itHMM -AM_check not itHMM.gm NULL == || if                                    # Committed HMMs invalid >>
+    "${sDirModel}/1_$[nSpl]_$[nIte].hmm" var sInFn;                             #   Create file name of prev. iteration
+    sInFn iFI.nDim itHMM -HMM_load not if leave end;                            #   Restore HMM of prev. iteration
+  end                                                                           # <<
+	-type long 1 itHMM.ud.nrec idUnitRC -array; 0 0 idUnitRC -fill;               # Initialize unit reference counter
+
+  ## Initialize/validate                                                        # -------------------------------------
+  "pfa.crate" 160 -CFG_get "sig.srate" 16000 -CFG_get / 1000 * nRinc =;         # Compute feature vector distance in ms
+  itHMM -get_dim nMsf =;                                                        # Get number of most significant feats.
+  itHMM.NC_TD_TIS itHMM.td -find_comp nIcTis =;                                 # Find input symbol comp. in itHMM.td
+  iFlist -reset;                                                                # Rewind file list
+  itHMM.gm if itHMM -reset_stats; end                                           # Reset internal HMM statistics
+	itHMM.NC_TD_LSR itHMM.td -find_comp nCLSR =;                                  # Get component index for LSR
+	nCLSR itHMM.td -get_comp_type itHMM.ud.nrec idPathWeights -addncomps;         # Initialize path weights
+	-type long itHMM.td.nrec idTransRC -addncomps;                                # Initialize transition RC
+
+	## Add transition id to transition table                                      # -------------------------------------
+	"~T_ID" itHMM.td -find_comp -1 == if;                                         # If no trans. id exists >>
+		"~T_ID" -type long itHMM.td -addcomp;                                       #   Add trans. id component
+	end;                                                                          # <<
+	"~T_ID" itHMM.td -find_comp nCTID =;                                          # Get component index for trans. id
+	itHMM.td -unmark; nCTID 1 itHMM.td -mark;                                     # Mark trans. id component
+	0 1 itHMM.td /mark -fill; itHMM.td -unmark;                                   # Reset trans. id's & unmark
+
+  ## Initialize or update HMM's                                                 # -------------------------------------
+  "\n   "  "Processing"  +                                                      # Protocol
+    " $[itHMM.ud.nrec] models with $[iFlist.len] samples ..." +           -MSG; # |
+  0 1 -PBAR;                                                                    # Begin progress bar
+  label L_FILE; iFlist -next                                                    # Loop over files
+  if                                                                            # >>
+    "\n     $[iFlist.nfile 1 +]/$[iFlist.len] - $[iFlist.sfile]: "       -MSG2; #   Protocol
+    :(iFlist.nfile+1)/iFlist.len: 1 -PBAR;                                      #   Display progress
+    iFlist NULL "A" idMsf -FEA_get not if goto L_FILE end;           "." -MSG2; #   Load feature file
+    stdprof -begin_timer;                                                       #   Start measuring time
+    idMsf iFI nMsf idMsf idLsf -FEA_sfa;                             "." -MSG2; #   Call secondary feature analysis
+    idMsf idMsf.dim 1 - idAux -compress;                                        #   Compress label sequence
+    idAux itHMM.ud 0 0 idAxs -gen_index;                                        #   Get AM index sequence for labels
+    idAux idAxs -join;                                                          #   Join label and index sequences
+    itHMM.gm if                                                                 #   Regular update >>
+		  idAxs 0 2 3 idAux itHMM -gen_map;                                         #     Create density computation map
+      idMsf idAux idNld itHMM.gm /neglog -density;                              #     Compute neg. log. densities
+    end                                                              "." -MSG2; #   <<
+    0 nL =; label L_LABEL; nL idAxs.nrec <                                      #   Loop over labels
+    if                                                                          #   >>
+      "\n       frame ${idAxs[nL,2]}: '${idAxs[nL,1]}'"                3 -MSGX; #     Protocol (verbose level 3)
+      ${idAxs[nL,0]} nU =;                                                      #     Get current AM index
+      nU 0 >= if                                                                #     Current model index valid >>
+        ${idAxs[nL,3]} ${itHMM.ud[nU,5]} >= if                                  #       Have one frame per HMM layer >>
+					nL 2 idAxs -dfetch nOfs =;                                            #         Get label offset
+					nL 3 idAxs -dfetch nLen =;                                            #         Get label length
+					idNld nOfs nLen idNldL /rec -select;                                  #         Get label's neg. log. densities
+					itHMM nU idNldL itAux -sdp;                                           #         Viterbi search of best path
+
+					:itAux.td[nCLSR]: idTmp =;                                            #         Get LSR vector
+					idTmp NULL 0 "sum" idTmp /rec -aggregate;                             #         Sum LSR to path weight
+					:idTmp[0,0]=idTmp[0,0]/itAux.td.nrec;                                 #         Norm path weight to length
+
+					:itAux.td[nCTID]: idTransRC =;                                        #         Get trans. id vector
+					1 itAux.td.nrec ones idTransRC -join;                                 #         Add reference counter vector
+					idTransRC 0 itHMM.td.nrec idTransRC fsttl -sum_comp_id;               #         Sum RCs according to t. id's
+					idTransRC :idTmp[0,0]: nU FALSE NULL itHMM fsttl -rc_by_used_path;    #         Save new path to history
+
+        else                                                                    #       << Fewer frames than layers >>
+          " skipping label (too few frames)"                           3 -MSGX; #         Protocol (verbose level 3)
+        end                                                                     #       <<
+      else                                                                      #     << Current model index invalid >>
+        "Label '${idAxs[nL,1]}' (frame ${idAxs[nL,2]}) invalid."    1 -WARNING; #       Warning (level 1)
+      end                                                                       #     <<
+      nL ++=; goto L_LABEL;                                                     #     End of label loop
+    end                                                              "." -MSG2; #   <<
+
+    "" stdprof -end_timer;                                                      #   Stop measurung time
+    " ok (RTF $[stdprof.time nRinc / idMsf.nrec /])"                     -MSG2; #   Protocol
+    nRinc idMsf.nrec * nTst +=;                                                 #   Accumulate total sample time
+    goto L_FILE;                                                                #   End of file loop
+  end                                                                           # <<
+  "\n  "                                                                 -MSG2; # Protocol (verbose level 2)
+  "done\n"                                                                -MSG; # Protocol
+  "\n   Total sample time: $[nTst 60000 /] min"                          -MSG2; # Protocol (verbose level 2)
+
+	itHMM.td nCTID 1 itHMM.td -delete;                                            # Remove trans. id from trans. table
+
+	nTransNum 0 == if;                                                            # Path number not bounded >>
+		:itHMM.ud[itHMM.IC_UD_XT]: idUnitTransCount =;                              #   Set trans. numbers to maximum
+	else; nTransNum 0 < if;                                                       # << Else if multiple of states >>
+    :itHMM.ud[itHMM.IC_UD_XS]: nTransNum -1 * .* idUnitTransCount =;            #   Multiply states num. by transnum
+	else;                                                                         # << Path number bounded >>
+		:itHMM.ud[itHMM.IC_UD_XT]: nTransNum .* itHMM.td.nrec ./ 1 +                #   Split num. of trans to units
+			idUnitTransCount =;                                                       #   | according there cur. num. of t.
+	end; end;                                                                     # <<
+	NULL 0 0 FALSE idUnitTransCount itHMM fsttl -rc_by_used_path;                 # Calc new RC's according num. of t.
+	NULL 0 0 TRUE NULL itHMM fsttl -rc_by_used_path;                              # Free memory used by method
+
+  ## Aftermath                                                                  # -------------------------------------
+  TRUE return;                                                                  # Ok 
+}
+
+function -TOPOHLP_Gm_Vars(itGM,idGmVars)
+{
+	data idCov;
+	data idCovall;
+	data idEW;
+	data idEV;
+	var nG;
+	var nGi;
+
+	itGM -get_n_valid_gauss nG =;
+	1 nG zeros idGmVars =;
+	NULL idCovall itGM -extract;
+	idCovall idCovall NULL matrix -invert;
+	0 nGi =;
+	label L_G; nGi nG < if;
+		nGi 1 idCovall /block -xfetch idCov =;
+		idCov idEV idEW matrix -eigen;
+#		idEV ' idEV =;
+#		idEV idCov akat idEW =;
+		:idEW[0,0]: nGi 0 idGmVars -store;
+		nGi ++=;
+	goto L_G; end;
+
+    0 "~Var" idGmVars -set_cname;
+}
+
+function -TOPOHLP_aggRCNld(idTrans,idTab,nIcTab,nDst,idDst)
+{
+	data idAux;
+	idTab nIcTab nDst unit 0 nDst idAux -lookup;
+	idTrans -unmark;
+	"~Nld" idTrans -find_comp 1 -mark;
+	"~RC" idTrans -find_comp 1 -mark;
+	idTrans 0 0 idDst /mark -select;
+	idTrans -unmark;
+	idDst idAux ' * idDst =;
+}
+
+function -TOPOHLP_Nldagg(idTrans,nIcTab,nDst,itHMM,idDst)
+{
+	data idAux;
+	data idAux2;
+	data idLMap;
+
+	idTrans itHMM.td nIcTab nDst idAux -TOPOHLP_aggRCNld;
+	## norm gaussian Nld
+	"~Nld" "~Nldavg" "~RC" idAux -TOPOHLP_add_norm;
+	idAux idDst -join;
+
+	## aggregate gaussian Nld for loops
+	:itHMM.td[itHMM.IC_TD_TER].==itHMM.td[itHMM.IC_TD_INI]: idLMap =;
+	itHMM.td -unmark; idLMap itHMM.td -dmark; itHMM.td 0 0 idAux /mark -select; itHMM.td -unmark;
+	idTrans -unmark; idLMap idTrans -dmark; idTrans 0 0 idAux2 /mark -select; idTrans -unmark;
+	idAux2 idAux nIcTab nDst idAux -TOPOHLP_aggRCNld;
+	"~Nld" idAux -find_comp "~LNld" idAux -set_cname;
+	"~RC" idAux -find_comp "~LRC" idAux -set_cname;
+	## norm gaussian Nld
+	"~LNld" "~LNldavg" "~LRC" idAux -TOPOHLP_add_norm;
+	idAux idDst -join;
+}
+
+function -TOPOHLP_Gm(itHMM,idTrans,idGm)
+{
+	data idAux;
+	data idLMap;
+	var nG;
+	itHMM.NC_TD_TIS itHMM.td -find_comp var nCTIS;
+
+	itHMM.gm -get_n_valid_gauss nG =;
+
+	## init idGm
+	-type long 1 nG idGm -array;
+	0 "~Id" idGm -set_cname;
+	0 1 idGm -fill;
+
+	## calc GmVars
+	itHMM.gm idAux -TOPOHLP_Gm_Vars;
+	idAux idGm -join;
+
+	## aggregate gaussian Nld and gaussian Nld for loops
+	idTrans nCTIS nG itHMM idGm -TOPOHLP_Nldagg;
+}
+
+## Trim unusable transitions and delete orphan Gm's in HMM
+##
+## @cgen:index
+## @parm itHMM hmm
+##          HMM instance
+function -TOPOHLP_cleanup(itHMM)
+{
+	"\n   Gm's: ${itHMM.gm.mean.nrec} ->"                                   -MSG; # Protocol
+	itHMM itHMM -cleanup;                                                         # Remove orphan Gm's
+	" ${itHMM.gm.mean.nrec}"                                                -MSG; # Protocol
+}
+
+## HMM Action Split
+##
+## Split a defined number of Gaussians. There are three
+## different selection criterions ("var"-Variance,
+## "rc"-Reference Counter, "pd"-Probability density,
+## "ipd"-Inverse probability density). The number of
+## Gaussians to split can be defined absolute (posivitve
+## value) or relative to the total number of Gaussians
+## (negative number).
+##
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance
+## @global &lt;uasr.am.train.split.minrc&gt;(Default:-1)   R
+## @global &lt;uasr.am.train.split.num&gt;(Default:0)      R
+## @global &lt;uasr.am.train.split.krit&gt;(Default:var) R
+function -HMM_Act_split(itHMM)
+{
+  var    nMinRc;  "am.train.split.minrc" -1   "S" -CFG_get_ex nMinRc =;         # Min. ref. counter for state split
+  var      nNum;  "am.train.split.num"    0   "S" -CFG_get_ex nNum =;           # Number of gaussians to split
+  var     sKrit;  "am.train.split.krit" "var" "S" -CFG_get_ex sKrit =;          # Kriterium für Selection
+  var      sNum;                                                                # String describing num. of G.
+
+  nNum 0 < if; itHMM.gm -get_n_valid_gauss nNum * -1 * 0.5 + ent nNum =; end;   # Negativ gauss num -> perc. of G.
+	nNum 0 == if; -1 nNum =; end;                                                 # All gauss -> path num = 0
+  nNum sNum =; nNum 0 < if; "all" sNum =; end;                                  # Get string describing num. of G.
+
+  ## HMM splitting                                                              # ---------------------------------
+  "\n   Splitting ${sNum} Gaussians of $[itHMM.ud.nrec] models ..."       -MSG; # Protocol
+  sKrit "var" == nNum 0 < || if;                                                # Variance as krit. >>
+    nMinRc nNum NULL itHMM -split;                                              #   Gaussian splitting (Baseline)
+    " done"                                                               -MSG; #   Protocol
+  else; sKrit "rc" == if;                                                       # << Ref. count. as krit. >>
+    nMinRc 0 < if itHMM -get_dim 25 * nMinRc =; end                             #  Automatic setting of nMinRc
+    nMinRc nNum NULL itHMM /byrc -split;                                        #  Gaussian splitting (Baseline)
+    " done (nMinRc=$[nMinRc])"                                            -MSG; #  Protocol
+  else; sKrit "pd" == sKrit == "ipd" || if;                                     # << Prob. dens. as krit. >>
+    data  idTrans;                                                              #   Trans. prob. dens. data inst.
+    data  idGm;                                                                 #   Gauss. prob. dens. data inst.
+    itHMM NULL NULL idTrans "" -TOPOHLP_Trans;                                  #   Calc trans. prob. dens.
+    itHMM idTrans idGm -TOPOHLP_Gm;                                             #   Sum to Gauss. prob. dens.
+		sKrit "pd" == if;                                                           #   Split max Nld / min Ld >>
+			idGm "~Nldavg" idGm -find_comp idGm -sortdown;                            #     Sort Gauss. prob. dens. desc.
+		else;                                                                       #   << Split min Nld / max Ld >>
+			idGm "~Nldavg" idGm -find_comp idGm -sortup;                              #     Sort Gauss. prob. dens. asc.
+		end;                                                                        #   <<
+		idGm "~Id" idGm -find_comp 1 idGm -select;                                  #   Select index component
+		1 nNum ones idGm -join;                                                     #   Add path num ones to index
+		idGm 0 idGm -sortup;                                                        #   Sort by index
+		idGm 1 1 idGm -select;                                                      #   Select split indicator comp.
+		-1 -1 idGm itHMM -split;                                                    #   Split selected Gaussians
+  end; end; end;                                                                # <<
+}
+
+## HMM Action Converting to mixture gaussians
+##
+## Convert models using -gmm_mix function.
+##
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance
+function -HMM_Act_mix(itHMM)
+{
+	"\n   Converting to mixture gaussians ..."                              -MSG; # Protocol
+	itHMM -gmm_mix;                                                               # Convert itHMM to mixture gaussians
+	" done"                                                                 -MSG; # Protocol
+}
+
+## HMM Action Transition Pruning
+## HMM Action Converting to hmm
+##
+## Convert models using -hmm function.
+##
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance
+function -HMM_Act_hmm(itHMM)
+{
+	"\n   Converting to hmm ..."                                            -MSG; # Protocol
+	itHMM -1 itHMM -hmm;                                                          # Convert itHMM to hmm
+	" done"                                                                 -MSG; # Protocol
+}
+
+## HMM Action Transition Pruning
+##
+## Do a simple transition pruning. For selection a threshold
+## for transition weights is used.
+##
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance
+## @global &lt;uasr.am.train.tprun.thresh&gt;(Default:1000) R
+function -HMM_Act_TPrun(itHMM)
+{
+	## Config                                                                     # ---------------------------------
+	"uasr.am.train.tprun.thresh" 1000 "S" -CFG_get_ex var prunthreshT;            # Get pruning threshold
+
+	## HMM Transition pruning                                                     # ---------------------------------
+	"\n   Transistion Pruning ..."                                          -MSG; # Protocol
+	itHMM.td.nrec var tdnum;                                                      # Get number of transitions
+	-1 prunthreshT itHMM -trim;                                                   # Trim HMM
+	"\n   pruned ${tdnum-itHMM.td.nrec} of ${tdnum} transitions"            -MSG; # Protocol
+
+	itHMM -TOPOHLP_cleanup;                                                       # Delete orphan Gm's
+}
+
+## HMM Action Best Paths
+##
+## This function reduces the models to their best paths.
+## As selection criterion neg.-log. density is used.
+##
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance
+## @global &lt;uasr.am.train.bn.num&gt;(Default:-1) R
+## @global &lt;uasr.am.train.bn.len&gt;(Default:-1) R
+function -HMM_Act_BestN(itHMM)
+{
+	hmm    itTMP;                                                                 # Temproray HMM instance
+	hmm    itBest;                                                                # Best paths HMM instance
+	hmm    itBest1;                                                               # Best paths HMM instance #1
+	data   idTrans;                                                               # Transition weight array
+	data   idAux;                                                                 # Auxilary array
+	data   idLenMean;                                                             # Mean len of paths through itHMM
+	var    nU;                                                                    # Current unit index
+	var    sDirLog;                                                               # Log directory
+	var    sDirModel;                                                             # Model directory
+	fsttools fsttl;                                                               # Instance of fsttools
+	"model" "" -CFG_get_path sDirModel =;                                         # Get model directory
+	"log"   "" -CFG_get_path sDirLog   =;                                         # Get log directory
+	"\n"                                                                    -MSG; # Protocol (verbose level 2)
+	"uasr.am.train.bn.num" -1 -CFG_get var nPathNum;                              # Number of paths to extract
+	"uasr.am.train.bn.len" -1 -CFG_get var nPathLen;                              # Length of paths to extract
+
+	itHMM -1 itHMM -hmm;                                                          # Convert itHMM to hmm
+
+	## Calculate Transition weights and mean length of paths                      # ---------------------------------
+	itHMM NULL idLenMean idTrans "" -TOPOHLP_Trans ent var nLenMean;              # Compute transition weights
+
+	## set nan's from Nld to high number                                          # ---------------------------------
+	itHMM.NC_TD_RC idTrans -find_comp var nCRC;                                   # Get component index for RC
+	:idTrans[nCRC].==0: idTrans -dmark;                                           # Mark records where RC==0
+	1000000 0 idTrans /mark -fill                                                 # Set Nldavg to inf where RC==0
+
+	itHMM itTMP =;                                                                # Copy HMM to temp. instance
+
+	## Add Nldavg to transition table                                             # ---------------------------------
+	itTMP.NC_TD_LSR itTMP.td -find_comp var nCLSR;                                # Find component index for LSR
+	nCLSR "~sLSR" itTMP.td -set_cname;                                            # Change name from LSR to saved LSR
+	itTMP.NC_TD_LSR nCLSR itTMP.td -get_comp_type itTMP.td -addcomp;              # Add new LSR component
+	itTMP.NC_TD_LSR itTMP.td -find_comp var nCNld;                                # Get component index for new LSR
+	idTrans "~Nldavg" idTrans -find_comp 1 nCNld itTMP.td -xstore;                # Copy Nldavg in new LSR
+
+	## Find best paths                                                            # ---------------------------------
+	"\n. bestn"                                                             -MSG; # Protocol
+	nPathLen "mean" == if;                                                        # If mean length should be used >>
+		0 nU =; label lU; nU itTMP.ud.nrec < if;                                    #   For all units in itTMP >>
+			"\n.. ${nU}/${itHMM.ud.nrec}"                                       -MSG; #     Protocol
+			itTMP nU nPathNum :idLenMean[nU,0]: itBest1 -best_n;                      #     Get best paths
+			itBest1 itBest -cat;                                                      #     Combine units
+		nU ++=; goto lU; end;                                                       #   <<
+	else;                                                                         # << If length as number given >>
+		itTMP -1 nPathNum nPathLen itBest -best_n;                                  #   Get best paths
+	end;                                                                          # <<
+
+	## Remove Nldavg component                                                    # ---------------------------------
+	itBest.td nCNld 1 itBest.td -delete;                                          # Delete Nldavg component
+	nCLSR itBest.NC_TD_LSR itBest.td -set_cname;                                  # Reset name for saved LSR
+
+	"\n. remove_ex_loops"                                                   -MSG; # Protocol
+	-1 itBest fsttl -remove_ex_loops;                                             # Remove ex-loops from best paths
+	"\n. minimize"                                                          -MSG; # Protocol
+	itBest -1 itBest -minimize;                                                   # Minimize best paths graph
+	"\n. restore_loops"                                                     -MSG; # Protocol
+	itHMM -1 itBest fsttl -restore_loops;                                         # Restore Loops from itHMM
+
+	itBest itHMM =;                                                               # Copy itBest to itHMM
+	itHMM -TOPOHLP_cleanup;                                                       # Delete orphan Gm's
+
+#	"${sDirLog}/1_$[nSpl]_$[nIte].prn.svg" NULL itHMM.ud -1 itHMM -FST_render;    # Render HMMs as SVG file
+#1 break;
+}
+
+## HMM Action Used Paths
+##
+## This function reduces the models to their used paths.
+## The used paths are defined by a development data set.
+##
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance
+## @global &lt;uasr.am.train.up.num&gt;(Default:-1)     R
+## @global &lt;uasr.am.train.up.shorttis&gt;(Default:0) R
+function -HMM_Act_UsedPath(itHMM)
+{
+	var    sDirLog;                                                               # Log directory
+	var    sDirModel;                                                             # Model directory
+	var    nCLSR;                                                                 # Component index of LSR
+	data   idAux;                                                                 # Auxilary data
+	fst    itUsed;                                                                # Fst for used paths
+	fsttools fsttl;                                                               # Instance of fsttools
+	"model" "" -CFG_get_path sDirModel =;                                         # Get model directory
+	"log"   "" -CFG_get_path sDirLog   =;                                         # Get log directory
+	"\n"                                                                    -MSG; # Protocol (verbose level 2)
+	"uasr.am.train.up.num" -1 "S" -CFG_get_ex var nNumPaths                       # Get num. of paths to extract
+
+	itHMM -1 itHMM -hmm;                                                          # Convert itHMM to hmm
+
+	## Copy LSR to sLSR                                                           # ---------------------------------
+	itHMM.NC_TD_LSR itHMM.td -find_comp nCLSR =;                                  # Get Comp. Index of LSR
+	"~sLSR" nCLSR itHMM.td -get_comp_type itHMM.td -addcomp;                      # Add saved LSR component
+	itHMM.td nCLSR 1 "~sLSR" itHMM.td -find_comp itHMM.td -xstore;                # Copy LSR to saved LSR
+
+	## Get used paths                                                             # ---------------------------------
+	"\n. compute used paths"                                                -MSG; # Protocol
+	itHMM nNumPaths itUsed -TOPOHLP_UsedPath;                                     # Computed used paths
+
+	## Recover LSR                                                                # ---------------------------------
+	"~sLSR" itUsed.td -find_comp nCLSR =;                                         # Get Comp. Index of saved LSR
+	itUsed.td nCLSR 1 itUsed.NC_TD_LSR itUsed.td -find_comp itUsed.td -xstore;    # Copy saved LSR over LSR
+	itUsed.td nCLSR 1 itUsed.td -delete;                                          # Delete saved LSR
+
+	"\n. remove_ex_looops"                                                  -MSG; # Protocol
+	-1 itUsed fsttl -remove_ex_loops;                                             # Remove ex-loops from used paths
+#	"\n. one_tis_per_path"                                                  -MSG; # Protocol
+#	-1 itUsed -one_tis_per_path;                                                  # Every TIS only once per path
+	"\n. minimize"                                                          -MSG; # Protocol
+	itUsed -1 itUsed -minimize;                                                   # Minimize used paths graph
+#	"\n. one eps end" -MSG;
+#	-1 itUsed -one_eps_end;
+	"\n. restore_loops"                                                     -MSG; # Protocol
+	itHMM -1 itUsed fsttl -restore_loops;                                         # Restore Loops from itHMM
+	"\n. rebuild hmm"                                                       -MSG; # Protocol
+	5 itHMM.ud.dim 5 - itHMM.ud -xfetch idAux =;                                  # Save extra ud components
+	itUsed itHMM -copy_fst;                                                       # Copy fst to itHMM
+	idAux 0 itHMM.ud.dim 5 - idAux -delete;                                       # Trim extra ud comp. to missing
+	idAux itHMM.ud -join;                                                         # Restore extre ud components
+
+	itHMM -TOPOHLP_cleanup;                                                       # Delete orphan Gm's
+
+#	"${sDirLog}/1_$[nSpl]_$[nIte].prn.svg" NULL itHMM.ud -1 itHMM -FST_render;    # Render HMMs as SVG file
+#	13 break;
+}
+
+## HMM Action Used Paths Reference Counter
+##
+## This function prunes the model by thier unused transitions.
+## These unused transitions are defined by a development data set.
+##
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance
+## @global &lt;uasr.am.train.uprc.num&gt;(Default:0) R
+function -HMM_Act_UsedPathRC(itHMM)
+{
+	data   idTmp;                                                                 # Temporary data instance
+	var    nCRC;                                                                  # Component index for ref. counter
+	var    sDirLog;                                                               # Log directory
+	var    sDirModel;                                                             # Model directory
+	"model" "" -CFG_get_path sDirModel =;                                         # Get model directory
+	"log"   "" -CFG_get_path sDirLog   =;                                         # Get log directory
+	"\n"                                                                    -MSG; # Protocol (verbose level 2)
+	"uasr.am.train.uprc.num" 0 "S" -CFG_get_ex var nTransNum;                     # Get number of trans. to remain
+	1000 var prunthreshT;                                                         # Threshold for punring
+
+	itHMM -1 itHMM -hmm;                                                          # Convert itHMM to hmm
+
+	## Update reference counters by used paths                                    # ---------------------------------
+	"\n. compute used paths"                                                -MSG; # Protocol
+	nTransNum itHMM -TOPOHLP_UsedPathRC;                                          # Update ref. counters by used p.
+
+	## Remove paths with reference counter 0                                      # ---------------------------------
+	itHMM.NC_TD_LSR itHMM.td -find_comp 1 itHMM.td -xfetch idTmp =;               # Get LSR from trans. table
+  itHMM.NC_TD_RC itHMM.td -find_comp nCRC =;                                    # Get comp. index for ref. counter
+	:itHMM.td[nCRC].==0: idTmp -dmark;                                            # Mark all LSR where RC==0
+	:prunthreshT+1: 0 idTmp /mark -fill;                                          # Set LSR to Threshold where RC==0
+	idTmp 0 1 itHMM.NC_TD_LSR itHMM.td -find_comp itHMM.td -xstore;               # Copy LSR back to trans. table
+	-1 prunthreshT itHMM -trim;                                                   # Delete all trans. with LSR>=Thr.
+
+	itHMM -TOPOHLP_cleanup;                                                       # Delete orphan Gm's
+
+#	"${sDirLog}/1_$[nSpl]_$[nIte].prn.svg" NULL itHMM.ud -1 itHMM -FST_render;    # Render HMMs as SVG file
+#	13 break;
+}
+
+## HMM Action Path-Pruning
+##
+## This function does a more complex transition pruning.
+## As selection criterion probability densities of paths
+## surrounding the prospected transition are used.
+##
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance
+## @global &lt;uasr.am.train.prun.pathit&gt;(Default:3) R
+## @global &lt;uasr.am.train.prun.tpers&gt;(Default:8)  R
+function -HMM_Act_Prun(itHMM)
+{
+	data   idTrans;                                                               # Transition weights table
+	data   idPath;                                                                # Path weights table
+	data   idPathU;                                                               # Path weights for current unit
+	data   idAux;                                                                 # Auxilary data
+	fst    itTest;                                                                # Test FST instance
+	var    nU;                                                                    # Current unit index
+	var    nT;                                                                    # Current transition
+	var    nPIt;                                                                  # Current path length
+	var    nTdDel;                                                                # Number of transitions to delete
+	var    sDirLog;                                                               # Log directory
+	var    sDirModel;                                                             # Model directory
+	fsttools fsttl;                                                               # Instance of fsttools
+	"model" "" -CFG_get_path sDirModel =;                                         # Get model directory
+	"log"   "" -CFG_get_path sDirLog   =;                                         # Get log directory
+	"\n"                                                                    -MSG; # Protocol (verbose level 2)
+	"uasr.am.train.prun.pathit" 3 "S" -CFG_get_ex var nPathIt;                    # Get maximal path length
+	"uasr.am.train.prun.tpers" 8 "S" -CFG_get_ex var nTperS;                      # Get trans. per state
+
+	"\n   Path Pruning ..."                                                 -MSG; # Protocol
+
+	itHMM -1 itHMM -hmm;                                                          # Convert itHMM to hmm
+
+	## Calculate transition weight table                                          # ---------------------------------
+	"\n. compute_trans"                                                     -MSG; # Protocol
+	itHMM NULL NULL idTrans "" -TOPOHLP_Trans;                                    # Calculate transition weight table
+	"\n. compute_path"                                                      -MSG; # Protocol
+	idTrans nPathIt idPath itHMM fsttl -compute_path;                             # Calculate path weight table
+
+	## HMM Pruning                                                                # ---------------------------------
+	"\n   Pruning ..."                                                      -MSG; # Protocol
+	1000 var prunthreshT;                                                         # Pruning threshold
+	itHMM.td.nrec var tdnum2;                                                     # Save number of transitions
+
+	"~Id" idPath -find_comp var nCPathId;                                         # Get trans. id component index
+	itHMM.NC_TD_LSR itHMM.td -find_comp var nCHMMLSR;                             # Get LSR component index
+
+	0 nU =; label LU; nU itHMM.ud.nrec < if;                                      # Loop over all units >>
+		idPath :itHMM.ud[nU,itHMM.IC_UD_FT]: :itHMM.ud[nU,itHMM.IC_UD_XT]:          #   Get path weights for cur. unit
+			idPathU /rec -select;                                                     #   |
+		:(itHMM.ud[nU,itHMM.IC_UD_XT]-itHMM.ud[nU,itHMM.IC_UD_XS]*nTperS)*0.5+0.5:  #   Calulate num of trans. to del.
+			ent nTdDel =;                                                             #   |
+		"\n.. ${nU}/${itHMM.ud.nrec}: try to del ${nTdDel} trans."            -MSG; #   Protocol
+
+		0 nT =; label LT; nT :itHMM.ud[nU,itHMM.IC_UD_XT]: < if;                    #   Loop over all trans. >>
+			nPathIt nPIt =; label LPIt; 0 nPIt <= 0 nTdDel < && if;                   #     Loop over path length >>
+				idPathU nPIt idPathU -sortdown;                                         #       Sort path wght. by cur. len
+				"\n pruning trans ${idPathU[nT,nCPathId]} (Path[${nT},${nPIt}])" -MSG2; #       Protocol
+				:itHMM.td[idPathU[nT,nCPathId],nCHMMLSR]: prunthreshT <= if;            #       If trans is not deleted >>
+					itHMM itTest =;                                                       #         Copy cur. FST to itTest
+					:itTest.td[idPathU[nT,nCPathId],nCHMMLSR]=prunthreshT+1;              #         Remove trans. in itTest
+					nU prunthreshT itTest -trim;                                          #         Delete trans. finaly
+					:itTest.ud[nU,itTest.IC_UD_XT]:                                       #         If not too much trans.
+						:itHMM.ud[nU,itHMM.IC_UD_XS]*nTperS: >= if;                         #         | deleted >>
+						nTdDel --=;                                                         #           Decrement TdDel
+						:itHMM.td[idPathU[nT,nCPathId],nCHMMLSR]=prunthreshT+1;             #           Rem. trans. in itHMM
+						" suc"                                                       -MSG2; #           Protocol
+					end;                                                                  #         <<
+				end;                                                                    #       <<
+				nPIt --=;                                                               #       Decrement path length
+			goto LPIt; end;                                                           #     <<
+			nT ++=;                                                                   #     Increment trans. index
+		goto LT; end;                                                               #   <<
+
+		nU ++=;                                                                     #   Increment unit index
+	goto LU; end;                                                                 # <<
+
+	-1 prunthreshT itHMM -trim;                                                   # Delete transitions finaly
+	"\n   pruned ${tdnum2-itHMM.td.nrec} of ${tdnum2} transitions"          -MSG; # Protocol
+
+	itHMM -TOPOHLP_cleanup;                                                       # Delete orphan Gm's
+#	10 break;
+}
+
+# EOF

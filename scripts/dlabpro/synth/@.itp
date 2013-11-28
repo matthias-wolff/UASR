@@ -1,0 +1,32 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Include all synthesis functions - DO NOT USE UNLESS ACTUALLY NEEDED!
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/synth
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"am.itp"   include;                                                             # HMM synthesis
+"cfg.itp"  include;                                                             # Configuration utilities
+"diph.itp" include;                                                             # HMM-coded diphone inventory generation
+"into.itp" include;                                                             # DRESS intonation data handling
+"syn.itp"  include;                                                             # HMM-coded diphone synthesis
+
+## EOF

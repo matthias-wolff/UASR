@@ -1,0 +1,2545 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<
+<    AUTHOR : n/a
+<    PACKAGE: manual
+<
+<    Copyright 2013 UASR contributors (see COPYRIGHT file)
+<    - Chair of System Theory and Speech Technology, TU Dresden
+<    - Chair of Communications Engineering, BTU Cottbus
+<
+<    This file is part of UASR.
+<
+<    UASR is free software: you can redistribute it and/or modify it under the
+<    terms of the GNU Lesser General Public License as published by the Free
+<    Software Foundation, either version 3 of the License, or (at your option)
+<    any later version.
+<
+<    UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+<    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+<    FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+<    more details.
+<
+<    You should have received a copy of the GNU Lesser General Public License
+<    along with UASR. If not, see [http://www.gnu.org/licenses/].
+-->
+<html>
+<head>
+  <meta http-equiv="Content-Type" content= "text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta name="description" content=   "UASR documentation - UASR script tools/UASR_DOC.xtp">
+  <meta name="author" content="">
+  <meta name="generator" content="UASR_DOC">
+  <title>UASR script tools/UASR_DOC.xtp</title>
+  <link rel=stylesheet type="text/css" href="../../default.css">
+</head>
+<script type="text/javascript" src="../../default.js"></script>
+<script type="text/javascript">__sRootPath="../../..";</script>
+<body>
+
+  <div id="clp_tools/UASR_DOC.xtp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        UASR script <span class="mid">tools/UASR_DOC.xtp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('','tools/UASR_DOC.xtp','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden">General</td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><nobr><b>UASR_DOC</b> $1</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Author</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Matthias Wolff
+</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Synopsis</h3>
+    <p>UASR documentation generator
+ </p>
+  <h3>Arguments</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>$1</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">- reserved for: UASR database name (optional) -
+
+      </td>
+    </tr>  </table>
+  <!--{{ CUSTOM_DOC -->
+	<a name="usage"></a><h3>Contents</h3>
+  <div class="indent"><ul class="linklist">
+    <li class="linklist"><a class="linklist" href="#usage">Usage</a></li>
+    <li class="linklist"><a class="linklist" href="#description">Description</a></li>
+    <li class="linklist"><a class="linklist" href="#doccomments">Documentation Comments</a></li>
+    <li class="linklist"><a class="linklist" href="#customizing">Customizing the HTML Documentation</a></li>
+    <li class="linklist"><a class="linklist" href="#kwdindex">Keyword index</a></li>
+    <li class="linklist"><a class="linklist" href="#reference">Reference</a></li>
+  </ul></div>
+  
+	<a name="usage"></a><h3>Usage</h3>
+	<pre class="code">
+ dlabpro UASR_DOC.xtp</pre>
+
+	<a name="description"></a><h3>Description</h3>
+
+	<p><code>UASR_DOC.xtp</code> scans all source files in the UASR script directory (see Fig. 1) and
+  creates the HTML manual. The UASR home directory is specified by the environment variable 
+  <code>UASR_HOME</code>; the script directory is <code>&lt;UASR_HOME&gt;/scripts</code>. The program
+  is based on the document generator class <a href="../../../../dLabPro/manual/automatic/dgen.html" 
+  class="code" target="_blank">DGen</a> of dLabPro (see <a href="../../../../dLabPro/manual/index.html"
+  target="_blank">dLabPro documentation</a> for details). A database specific manual can be generated
+  invoking <code>UASR_DOC.xtp</code> with the database identifiers as argument (e.&nbsp;g.: <code>UASR_DOC.xtp midi</code>). 
+  The database must be located in the UASR database home directory (see Fig. 1) and its folder structure
+  must conform to the <a href="../util/cfg.itp.html#index:datadirs">UASR database specification</a>.</p>
+	
+	<a name="index:uasrdirs" title="Directory Structure | UASR"
+	></a><table class="indent" cellpadding="0" cellspacing="0" border="0">
+  	<tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt05l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder_grey.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;dLabPro</td>
+      <td class="hidden"><nobr><a href="../../../../dLabPro/manual/index.html" target="_blank">dLabPro home directory</a>
+          <a class="sup" href="#dirs_fn1" title="Default (and strongly recommended) location is $UASR_HOME/../dlabpro">1)</a></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;<b><code>$UASR_HOME</code></b></td>
+      <td class="hidden"><nobr><b>UASR home directory</b>
+          <a class="sup" href="#dirs_fn2" title="Location defined through environment variable UASR_HOME">2)</a></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder_grey.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;_work</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="16" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Working directory (ignored by version control)</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;incubator</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="16" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Incubating programs</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;manual</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="16" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>HTML manual (UASR_DOC output folder)</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt03l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;scripts</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="16" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Script directory (UASR_DOC input folder)</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt01l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder_grey.gif" width="16" height="16" style="vertical-align:middle;"
+        >&nbsp;bash</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="32" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr><i>&ndash; reserved for Bash scripts &ndash;</i></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt01l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="16" height="16" style="vertical-align:middle;"
+        >&nbsp;dlabpro</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="32" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>dLabPro scripts</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt02l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt01l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt03l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder_grey.gif" width="16" height="16" style="vertical-align:middle;"
+        >&nbsp;perl</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="32" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr><i>&ndash; reserved for Perl scripts &ndash;</i></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt03l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;<b>&lt;</b>uasr.dir.data<b>&gt;</b>&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><nobr><a href="../util/cfg.itp.html#index:datadirs">UASR database home directory</a>
+          <a class="sup" href="#dirs_fn3" title="Default (and strongly recommended) location is {$UASR_HOME}-data">3)</a></nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt01l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt04l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder_grey.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;<b>&lt;</b>uasr.db<b>&gt;</b></td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="16" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Database 1</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt01l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt03l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/folder_grey.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;<b>&lt;</b>uasr.db<b>&gt;</b></td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="16" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>Database 2</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"
+        ><img src="../../resources/jtt01l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt01l.gif" width="18" height="16" style="vertical-align:middle;"
+        ><img src="../../resources/jtt01l.gif" width="18" height="16" style="vertical-align:middle;"
+        >&nbsp;&nbsp;&nbsp;.&nbsp;.&nbsp;.</td>
+      <td class="hidden"
+        ><img src="../../resources/blank_stc.gif" width="16" height="16" style="vertical-align:middle;"
+        >&nbsp;<nobr>. . .</nobr></td>
+    </tr>
+	</table>
+  <table class="indent">
+    <tr><td colspan="2" class="hidden"><hr class="footnote"></td></tr>
+    <tr>
+      <td class="hidden"><a name="dirs_fn1"></a><sup>1)</sup>&nbsp;</td>
+      <td class="hidden">Default (and strongly recommended) location is <code>$UASR_HOME/../dlabpro</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"><a name="dirs_fn2"></a><sup>2)</sup>&nbsp;</td>
+      <td class="hidden">Location defined through environment variable <code>UASR_HOME</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"><a name="dirs_fn3"></a><sup>3)</sup>&nbsp;</td>
+      <td class="hidden">Default (and strongly recommended) location is <code>{$UASR_HOME}-data</code></td>
+    </tr>
+  </table>
+	<p class="figure">Fig. 1: UASR directory structure</p>
+
+	<p>The immediate subdirectories of <code>$UASR_HOME/scripts</code> subdivide the scripts by their languages.
+  Subdirectories in the language folders are considered as "packages". <code>UASR_DOC.xtp</code> creates</p>
+  <ul>
+  	<li>one HTML page per script (named <code>$UASR_HOME/manual/automatic/&lt;packagename&gt;/&lt;scriptname&gt;.html</code>),</li>
+  	<li>one index page per package (<code>$UASR_HOME/manual/automatic/&lt;packagename&gt;/index.html</code>),</li>
+  	<li>one documentation home page (<code>$UASR_HOME/manual/home.html</code>),</li>
+  	<li>one table-of-contents page (<code>$UASR_HOME/manual/toc.html</code>),</li>
+  	<li>one keyword index page  (<code>$UASR_HOME/manual/automatic/kwdindex.html</code>), and</li>
+  	<li>one alphabetical-index-of-functions page  (<code>$UASR_HOME/manual/automatic/fncindex.html</code>).</li>
+  </ul>
+
+  <p>As of Nov. 2013, <code>UASR_DOC.xtp</code> documents scripts written in the following languages:</p>
+  <table class="indent" cellpadding="3" cellspacing="0">
+  	<tr><th>Language</th><th>File extension(s)</th></tr>
+  	<tr><td><a href="../../../../dLabPro/manual/index.html" target="_blank">dLabPro</a></td><td><code>.?tp</code></td></tr>
+  	<tr><td>Perl </td><td><code>.pl</code> </td></tr>
+  </table>
+
+	<!-- ============================================================================================================ -->
+	<a name="index:doccmts" title="Documentation comments"></a>
+	<a name="doccomments"></a><h3>Documentation Comments</h3>
+	<p>Like JavaDoc, <code>UASR_DOC.xtp</code> will scan all source files for documentation comments. There are two
+	types:</p>
+	<ul>
+		<li><a href="#doccomments:pre">preamble comments</a>, and</li>
+		<li><a href="#doccomments:jvd">function documenation comments</a>.</li>
+	</ul>
+
+	<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  -->
+	<a name="#doccomments:pre"></a><h4>Preamble Comments</h4>
+	<p>General information about a script may be placed as a properly formatted comment at the very beginning of a
+  script. Documentation comments start with a double hash character (<code>##</code>). The very first line may start
+  with <code>#!</code> specifying dLabPro or Perl as interpreter. The second line usually says "Unified Approach to
+  Speech Synthesis and Recognition" and is ignored by <code>UASR_DOC.xtp</code>. The third line contains a short
+  description of the script. A leading hyphen (<code>-</code>) will be trimmed. The rest of the preamble comment
+  consists of key-value pairs in the format "<code>## KEY: value</code>". Key and value are serparated by a colon
+  (<code>:</code>). There may be white spaces before and after the colon. The value may consist of several words and
+  may span multiple lines. Each new line must start with a double comment mark (<code>##</code>). The preamble comment
+  ends before the first line which is not blank <em>and</em> does not start with "<code>##</code>"</p>
+  <p>Here is an example of a well-formatted preamble comment of a dLabPro script:</p>
+  <pre class="code"><span class="c-cmt">#!/usr/bin/env dlabpro
+## Unified Approach to Speech Synthesis and Recognition
+## - Initialize graphone joint n-multigram
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/tools
+##
+## ARGUMENTS:
+##   $1: IN  string   Filename of setup script
+##
+## DESCRIPTION:
+##   GRPH_INIT  compiles and  analyzes the  phonetic dictionary
+##   and generates  the candidate graphone NM-gram. The  set of
+##   candidates  contains  every possible  grapheme  to phoneme
+##   alignment  found in the  dictionary.  Furthermore a symbol
+##   counter  data  instance  is  created containing  reference
+##   counters for each grapheme and phoneme as well as counters
+##   for  the  occourance  of segments  and different  segments
+##   ordered by their length.
+</span></pre>
+  <p>The key-value pairs must follow up in a defined order. Some sections require specially formatted values. Ill
+	formatted lines will be ignored. Details can be found in the table below. </p>
+	<table class="indent" cellpadding="3" cellspacing="0">
+		<tr>
+			<th>No.</th>
+			<th>&nbsp;</th>
+			<th>Key</th>
+			<th>Description</th>
+			<th>Doc. Scanner Specification</th>
+		</tr>
+		<tr>
+			<td>1.</td>
+			<td>1 line <i>(optional)</i></td>
+			<td><code>"#!"</code></td>
+			<td>
+				Unix shell command to execute this script
+			</td>
+			<td>
+				ignore
+			</td>
+		</tr>
+		<tr>
+			<td>2.</td>
+			<td>1 line <i>(mandatory)</i></td>
+			<td>none</td>
+			<td>
+				""
+			</td>
+			<td>
+				First line starting with <code>"##"</code>; ignore.
+			</td>
+		</tr>
+		<tr>
+			<td>3.</td>
+			<td>mulitple lines <i>(mandatory)</i></td>
+			<td>none</td>
+			<td>
+				Short description of script
+			</td>
+			<td>
+				Second line starting with <code>"##"</code> through next key. A hyphen ("-") at the beginning
+				of the <i>first</i> line of the short description will be trimmed. Blanks will be trimmed from
+				the beginning and the end of all lines of the short description.
+			</td>
+		</tr>
+		<tr>
+			<td>4.</td>
+			<td>1 line <i>(mandatory)</i></td>
+			<td><NOBR><code>"## AUTHOR"</code></NOBR></td>
+			<td>
+				Author of script
+			</td>
+			<td>
+				First line starting with key name. Value starts behind first ":" after key name and ends before
+				the next key name or the next blank line. Leading and trailing blanks to be removed from value.
+			</td>
+		</tr>
+		<tr>
+			<td>5.</td>
+			<td>1 line <i>(optional)</i></td>
+			<td><NOBR><code>"## PACKAGE"</code></NOBR></td>
+			<td>
+				UASR package name
+			</td>
+			<td>
+				First line starting with key name. Value starts behind first ":" after key name and ends before
+				the next key name or the next blank line. Leading and trailing blanks to be removed from value.
+			</td>
+		</tr>
+		<tr>
+			<td>6.</td>
+			<td>multiple lines <i>(mandatroy)</i></td>
+			<td><NOBR><code>"## ARGUMENTS"</code></NOBR></td>
+			<td>
+				Description of the script's command line arguments in the following form:
+				<ol>
+					<li><code>## </code></li>
+					<li><code>$x</code></li>
+					<li><code>:</code></li>
+					<li>description of argument</li>
+				</ol>
+				The values must be separated by white spaces. No white space is necessary between fields 2 and 3.
+			</td>
+			<td>
+				First line starting with key name. Value starts behind first ":" after key name and ends before
+				the next key name or the next blank line. Leading and trailing blanks to be removed from value.
+				Value consists or one or multiple lines	formatted as defined in previous column. Description of
+				argument starts at the 3rd white space separated field after ":" and ends at the of the line.
+			</td>
+		</tr>
+		<tr>
+			<td>7.</td>
+			<td>multiple lines <i>(optional)</i></td>
+			<td><code>"##&nbsp;DESCRIPTION"</code></td>
+			<td>
+				Description of script. May contain HTML code. Blank lines in synopsis must still be preceded by
+				"<code>##</code>".
+			</td>
+			<td>
+				First line starting with key name. Value starts behind first ":" after key name and ends before
+				the next key name or the next blank line. Leading and trailing blanks to be removed from value.
+			</td>
+		</tr>
+	</table>
+
+	<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  -->
+	<a name="doccomments:pre"></a><a name="index:jvd" title="JavaDoc"></a><h4>Function Documentation Comments</h4>
+	<p><code>UASR_DOC.xtp</code> supplies rudimentary JavaDoc-style documentation comments for functions. The 
+	documentation comment immediately precedes the function	definition. There are no blank lines allowd between the
+	comment and the definition. All documentation comment lines start with "<code>##</code>". There are no blank
+	lines allowed within the documentation comment. The comment consist of a description text (HTML is acceptable) 
+	and a set of <em>tags</em> describing parameters, the return value and other properties of a function:</p>
+	<table class="indent" cellpadding="3" cellspacing="0">
+		<tr><th>Tag</th><th>Description</th></tr>
+		<tr>
+			<td><code>@cgen&#x003A;ignore</code></td>
+			<td>Do not document this function.
+			This tag must precede all <code>@param</code> and <code>@return</code>
+			tags! <code>@cgen&#x003A;ignore</code> must be the first token on a line,
+			any extra tokens on that line will be ignored.</td>
+		</tr>
+		<tr>
+			<td><code>@cgen&#x003A;index</code></td>
+			<td>Adds this function to the alphabetical index of functions. This tag
+			must precede all <code>@param</code> and <code>@return</code> tags!
+			<code>@cgen&#x003A;ignore</code> must be the first token on a line, any
+			extra tokens on that line will be ignored.</td>
+		</tr>
+    <tr>
+      <td><nobr><code>@global</code><i> <code>&amp;lt;</code>configuration-key<code>&amp;gt;</code> access</i></nobr><br>
+          <code>@global</code><i> global-instance-id access</i></td>
+      <td>Adds an entry to the "Access to Configuration and Global Instances"
+          section. <i>access</i> is any combination of the letters C, W, and R
+          (without any separators in between them) for "create", "write", and
+          "read", respectively. <code>@global</code> must be the first token on
+          a line, any extra tokens on that line will be ignored.</td>
+    </tr>
+		<tr>
+			<td><code>@param</code><i> parameter-name parameter-type description</i></td>
+			<td>Adds a parameter to the "Parameters" section. The description may be
+			    continued on the next line. <code>@param</code>  must be the first
+			    token on a line.</td>
+		</tr>
+    <tr>
+      <td><code>@see</code><i> label [href]</i></td>
+      <td>Adds an entry to the "See also" section. <i>label</i> is the link
+          label and <i>href</i> the link reference (relative to the current HTML
+          file). If <i>href</i> is omitted, <i>label</i> is considered the name
+          of a function documented on the same HTML page and a reference is
+          created accordingly. <code>@see</code> must be the first token on a
+          line, any extra tokens on that line will be ignored.</td>
+    </tr>
+		<tr>
+			<td><code>@return</code><i> description</i></td>
+			<td>Adds a "Return value" section with the description text. This text
+      should describe the return type and permissible range of values. Use
+      <code>@return nothing</code> for functions which do not return a value.
+      <code>@return</code>  must be the firs token on a line.</td>
+		</tr>
+	</table>
+	<p>Here is an example of a well-formatted function documentation comment:</p>
+  <pre class="code"><span class="c-cmt">## Configures an UASR session. The function creates a list of key/value pairs
+## from the following sources (with descending priority):
+## &lt;ol&gt;
+##   &lt;li&gt;&lt;code&gt;-P&amp;lt;key&amp;gt;=&amp;lt;value&amp;gt;&lt;/code&gt; command line options,&lt;/li&gt;
+##   &lt;li&gt;the custom configuration file &lt;code&gt;sFile&lt;/code&gt; and &lt;/li&gt;
+##   &lt;li&gt;the default configuration file &lt;code&gt;config/default.cfg&lt;/code&gt;.&lt;/li&gt;
+## &lt;/ol&gt;
+##
+## &lt;h4&gt;Remarks&lt;/h4&gt;
+## &lt;ul&gt;
+##   &lt;li&gt;Custom configuration files only need to modify present or add new
+##     key/value pairs. They do not need to repeat key/value pairs contained in
+##     the default configuration.&lt;/li&gt;
+## &lt;/ul&gt; 
+##
+## &#x040;cgen:ignore
+## @param sFile string
+##          Path to UASR configuration file to be loaded
+## @return &lt;code&gt;TRUE&lt;/code&gt; if successful, &lt;code&gt;FALSE&lt;/code&gt; otherwise</span>
+<span class="c-key">function</span> -CFG_init(sFile)
+...
+</pre>
+
+	<!-- ============================================================================================================ -->
+	<a name="customizing"></a><h3>Customizing the HTML Documentation</h3>
+	<p><code>UASR_DOC.xtp</code> supports custom (i.e. manually written) HTML code in each of the documentation pages.
+  That means you may modify certain parts of the automatically generated and maintained HTML files.</p>
+	<p><code>UASR_DOC.xtp</code> will leave HTML code between the two markers <code class="c-cmt">&lt;!--{{ CUSTOM_DOC
+	--&gt;</code> and <code class="c-cmt">&lt;!--}} CUSTOM_DOC --&gt;</code> untouched.</p>
+	<p>There are some restrictions:</p>
+	<ul>
+	  <li>There is <em>only one</em> <code>&lt;!--{{ CUSTOM_DOC --&gt; ... &lt;!--}} CUSTOM_DOC --&gt;</code> section
+		per HTML file. Its location <em>cannot</em> be changed.</li>
+	  <li>You must not place custom HTML code outside the markers.</li>
+	  <li>You must not remove or alternate the markers.</li>
+	  <li>There must not be any HTML code on a line containing a marker (white spaces are ok).</li>
+	  <li>No line in the custom HTML code must be longer than 255 characters. Overlong lines will be truncated!</li>
+	</ul>
+
+  <!-- ============================================================================================================ -->
+  <a name="kwdindex"></a><h3>Keyword Index</h3>
+  <p>In both, <a href="#doccomments">documentation comments</a> and <a href="#customizing">custom HTML</a> you
+  can define index terms to add to the <a href="../kwdindex.html">keyword index page</a> by inserting the HTML code
+  <pre class="code">
+    &lt;a name="index&#58;&lt;anchor-name&gt;" title="&lt;keyword&gt;"&gt;&lt;/a&gt;</pre>
+  <p>where <code>&lt;anchor-name&gt;</code> is a globally unique identifier and <code>&lt;keyword&gt;</code>
+  is the index term itself.</p>
+  <p><b>Please note:</b> Key word definitions must be formatted <em>exactly</em> as shown above. The order of the
+  attributes cannot be altered and there must not be any extra white spaces (including line breaks).</p>
+
+	</div>
+	</div>
+
+  <!-- ===================================================================== -->
+  <div class="footer">End of user documentation.</div>
+  <div id="reference" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar"><b>Reference</b>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('reference','Reference','..');"><img src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr><td class="hidden">&nbsp;<br>
+    	The following sections are the programmers' reference and not relevant to the user.<br>&nbsp;
+   	</td></tr>
+  </table>
+  </div>
+  <div class="mframe2">
+
+  <!--}} CUSTOM_DOC -->
+  <a name="functions"></a><h3>Functions</h3>
+  <table cellSpacing="0" cellPadding="4" border="0">
+    <tr>
+      <td class="rowgroup" colSpan="2">Functions</td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-make_fname"><code class="link">-make_fname</code></a></td>
+      <td><code><b>-make_fname</b>(sPath,sFile)</code><br>&nbsp;<br> Concatencate path and file names.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-make_rpath"><code class="link">-make_rpath</code></a></td>
+      <td><code><b>-make_rpath</b>(sFname)</code><br>&nbsp;<br> Returns the relative path to the documentation root folder for a
+ documentation (or dLabPro script) file name.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-make_signature"><code class="link">-make_signature</code></a></td>
+      <td><code><b>-make_signature</b>(nDob,iDgn)</code><br>&nbsp;<br> Make signature string of a script or function parameter list.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-fnc_add"><code class="link">-fnc_add</code></a></td>
+      <td><code><b>-fnc_add</b>(sScr,sFid,sSgn,sSyn)</code><br>&nbsp;<br> Adds a function to the global function list.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-scan_cdc"><code class="link">-scan_cdc</code></a></td>
+      <td><code><b>-scan_cdc</b>(sFname,idCd)</code><br>&nbsp;<br> Scans custom HTML code from a documentation file.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-scan_keywords"><code class="link">-scan_keywords</code></a></td>
+      <td><code><b>-scan_keywords</b>(iDgn)</code><br>&nbsp;<br> Scans generated HTML code within a document generator for keyword index
+ entries.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-scan_jvdtag"><code class="link">-scan_jvdtag</code></a></td>
+      <td><code><b>-scan_jvdtag</b>(sTag,nDob,iDgn)</code><br>&nbsp;<br> Scans the JavaDoc of a function for the specified key.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-gen_clip_head"><code class="link">-gen_clip_head</code></a></td>
+      <td><code><b>-gen_clip_head</b>(sTitle,sSubtitle,idNav,iDgn)</code><br>&nbsp;<br> Generates a clip header.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-gen_clip_hitem"><code class="link">-gen_clip_hitem</code></a></td>
+      <td><code><b>-gen_clip_hitem</b>(sGroup,sKey,sValue,iDgn)</code><br>&nbsp;<br> Inserts a key/value pair in a clip header.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-gen_clip_body"><code class="link">-gen_clip_body</code></a></td>
+      <td><code><b>-gen_clip_body</b>(iDgn)</code><br>&nbsp;<br> Generates the end of a clip's header and the beginning of its body.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-gen_clip_foot"><code class="link">-gen_clip_foot</code></a></td>
+      <td><code><b>-gen_clip_foot</b>(iDgn)</code><br>&nbsp;<br> Generates the end of a clip.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-gen_html_head"><code class="link">-gen_html_head</code></a></td>
+      <td><code><b>-gen_html_head</b>(sTitle,iDgn)</code><br>&nbsp;<br> Generates the HTML page header.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-gen_html_foot"><code class="link">-gen_html_foot</code></a></td>
+      <td><code><b>-gen_html_foot</b>(iDgn)</code><br>&nbsp;<br> Generates the HTML page footer.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-jvd_synopsis"><code class="link">-jvd_synopsis</code></a></td>
+      <td><code><b>-jvd_synopsis</b>(nR,nXR,idTxt)</code><br>&nbsp;<br> Gets the synopsis from JavaDoc text.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-gen_cdc"><code class="link">-gen_cdc</code></a></td>
+      <td><code><b>-gen_cdc</b>(idCd,iDgn)</code><br>&nbsp;<br> Renders custom HTML documentation text.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-gen_dtxt"><code class="link">-gen_dtxt</code></a></td>
+      <td><code><b>-gen_dtxt</b>(sPrefix,sSuffix,nDob,bPre,iDgn)</code><br>&nbsp;<br> Renders the documentation text associated with a specified DOM object.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-gen_params"><code class="link">-gen_params</code></a></td>
+      <td><code><b>-gen_params</b>(sPrefix,sSuffix,nDob,iDgn)</code><br>&nbsp;<br> Renders the documentation for script or function parameters.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-gen_globals"><code class="link">-gen_globals</code></a></td>
+      <td><code><b>-gen_globals</b>(sPrefix,sSuffix,nDob,iDgn)</code><br>&nbsp;<br> Renders the documentation for functions' access to gloabl instances.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-gen_sees"><code class="link">-gen_sees</code></a></td>
+      <td><code><b>-gen_sees</b>(sPrefix,sSuffix,nDob,iDgn)</code><br>&nbsp;<br> Renders the "see also" references for a functions.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-doc_fnc"><code class="link">-doc_fnc</code></a></td>
+      <td><code><b>-doc_fnc</b>(nDob,nMode,iDgn)</code><br>&nbsp;<br> Generates the documentation for one dLabPro function.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-doc_fncindex"><code class="link">-doc_fncindex</code></a></td>
+      <td><code><b>-doc_fncindex</b>(idFni,iDgn)</code><br>&nbsp;<br> Generates the alphabetical function index page.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-doc_kwdindex"><code class="link">-doc_kwdindex</code></a></td>
+      <td><code><b>-doc_kwdindex</b>(idKwd,iDgn)</code><br>&nbsp;<br> Generates the keyword index page.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-doc_script"><code class="link">-doc_script</code></a></td>
+      <td><code><b>-doc_script</b>(idCd,iDgn)</code><br>&nbsp;<br> Generates the documentation for one dLabPro script.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-doc_package"><code class="link">-doc_package</code></a></td>
+      <td><code><b>-doc_package</b>(idS,nS0,nXS,idCd,iDgn)</code><br>&nbsp;<br> Generates the documentation for one package.
+      </td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <div id="clp_-make_fname">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-make_fname</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-make_fname','-make_fname','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-make_fname</b>(sPath,sFile)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(66)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Concatencate path and file names.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sPath</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Path name
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFile</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          File name
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> <code>sFile</code> if <code>sPath</code> is empty or
+         <code>sPath</code>+"/"+<code>sFile</code> otherwise
+
+  </div>
+  </div>
+  <div id="clp_-make_rpath">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-make_rpath</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-make_rpath','-make_rpath','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-make_rpath</b>(sFname)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(81)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Returns the relative path to the documentation root folder for a
+ documentation (or dLabPro script) file name.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFname</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Name of a documentation or dLabPro script file including the
+          package name, e.g. <code>"util/cfg.itp.html"</code>
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> the relative path to the documentation root folder, e.g.
+         <code>"../.."</code>
+
+  </div>
+  </div>
+  <div id="clp_-make_signature">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-make_signature</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-make_signature','-make_signature','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-make_signature</b>(nDob,iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(108)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Make signature string of a script or function parameter list.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nDob</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Index of first paramater DOM object in <code>iDgn.dom</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> The signature string, e.g. <code>"$1 $2 $3"</code> or
+         <code>"(nParam1,sParam2)"</code>
+
+  </div>
+  </div>
+  <div id="clp_-fnc_add">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-fnc_add</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-fnc_add','-fnc_add','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-fnc_add</b>(sScr,sFid,sSgn,sSyn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(138)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Adds a function to the global function list.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sScr</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Script name (package qualified)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFid</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Function identifier
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Function signature
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSyn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The function's documentation synopsis
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-scan_cdc">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-scan_cdc</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-scan_cdc','-scan_cdc','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-scan_cdc</b>(sFname,idCd)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(165)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Scans custom HTML code from a documentation file.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFname</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Name of documentation file to be scanned
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idCd</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Will be filled with the custom documentation text
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-scan_keywords">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-scan_keywords</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-scan_keywords','-scan_keywords','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-scan_keywords</b>(iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(191)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Scans generated HTML code within a document generator for keyword index
+ entries. <a name="index:kwdmake" title="Keyword index | Add a keyword"></a>
+ A keyword index entry is defined by the following HTML code:
+ <pre class="code">
+   &lt;a name="index&#58;&lt;href&gt;" title="&lt;keyword&gt;"&gt;&lt;/a&gt;
+ </pre>
+ <h4>Remarks</h4>
+ <ul>
+   <li>The key word definitions are expected <em>exactly</em> as shown above.
+     Neither the order of the attributes must be altered nor any extra spaces
+     or even line breaks must be contained.
+ </ul>
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance containing the script's DOM and to be
+          filled with the generated documentation text
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-scan_jvdtag">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-scan_jvdtag</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-scan_jvdtag','-scan_jvdtag','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-scan_jvdtag</b>(sTag,nDob,iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(239)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Scans the JavaDoc of a function for the specified key. The key must stand at
+ the very beginning of a JavaDoc line.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sTag</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">         JavaDoc tag to scan for
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nDob</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Zero based index of function object in <code>iDgn.dom</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> The zero-based component index in <code>iDgn.txt</code> starting with
+         <code>sTag</code> or -1 if the tag was not found.
+
+  </div>
+  </div>
+  <div id="clp_-gen_clip_head">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-gen_clip_head</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-gen_clip_head','-gen_clip_head','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-gen_clip_head</b>(sTitle,sSubtitle,idNav,iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(272)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Generates a clip header.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sTitle</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Clip title (being printed in bold letters)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSubtitle</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Clip subtitle, may be empty bot <em>not</em> <code>NULL</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idNav</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Navigation buttons, component 0 is expected to contain link targets,
+          component 1 is expected to contain link labels.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-gen_clip_hitem">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-gen_clip_hitem</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-gen_clip_hitem','-gen_clip_hitem','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-gen_clip_hitem</b>(sGroup,sKey,sValue,iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(312)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Inserts a key/value pair in a clip header. The function must be called
+ after <a href="#fnc_-gen_clip_head"><code
+ class="link">-gen_clip_head</code></a> and before <a
+ href="#fnc_-gen_clip_body"><code class="link">-gen_clip_body</code></a>.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sGroup</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Name of key group, may be empty but <em>must not</em> be
+          <code>NULL</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sKey</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Key string, may be empty but <em>must not</em> be <code>NULL</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sValue</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Value string
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-gen_clip_body">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-gen_clip_body</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-gen_clip_body','-gen_clip_body','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-gen_clip_body</b>(iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(333)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Generates the end of a clip's header and the beginning of its body.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-gen_clip_foot">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-gen_clip_foot</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-gen_clip_foot','-gen_clip_foot','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-gen_clip_foot</b>(iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(344)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Generates the end of a clip.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-gen_html_head">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-gen_html_head</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-gen_html_head','-gen_html_head','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-gen_html_head</b>(sTitle,iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(356)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Generates the HTML page header.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sTitle</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Page title
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-gen_html_foot">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-gen_html_foot</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-gen_html_foot','-gen_html_foot','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-gen_html_foot</b>(iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(405)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Generates the HTML page footer.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-jvd_synopsis">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-jvd_synopsis</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-jvd_synopsis','-jvd_synopsis','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-jvd_synopsis</b>(nR,nXR,idTxt)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(426)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Gets the synopsis from JavaDoc text. The synopsis is the first sentence of
+ the full documentation text.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nR</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          First record of full documentation text stored in
+          <code>idTxt</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nXR</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Number of records of full documentation text stored in
+          <code>idTxt</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idTxt</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Documentation texts table (texts expected in component 0, all
+          other components will be ignored)
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> The synopsis text or an empty string if no synopsis text could be
+         found.
+
+  </div>
+  </div>
+  <div id="clp_-gen_cdc">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-gen_cdc</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-gen_cdc','-gen_cdc','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-gen_cdc</b>(idCd,iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(445)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Renders custom HTML documentation text.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idCd</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Custom documentation (returned by <a href="#fnc_-scan_cdc"><code
+          class="link">-scan_cdc</code></a>). May be <code>NULL</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-gen_dtxt">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-gen_dtxt</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-gen_dtxt','-gen_dtxt','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-gen_dtxt</b>(sPrefix,sSuffix,nDob,bPre,iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(470)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Renders the documentation text associated with a specified DOM object.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sPrefix</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Prefix text to be placed before the DOM obejct's documentation
+          text, ignored if there is no documentation text. May be empty but
+          <em>must not</em> be <code>NULL</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSuffix</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Suffix text to be placed after the DOM obejct's documentation
+          text, ignored if there is no documentation text. May be empty but
+          <em>must not</em> be <code>NULL</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nDob</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Index of the DOM object in <code>iDgn.dom</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">boolean&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>bPre</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Render documentation text as preformatted HTML
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-gen_params">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-gen_params</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-gen_params','-gen_params','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-gen_params</b>(sPrefix,sSuffix,nDob,iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(502)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Renders the documentation for script or function parameters. The function
+ generates an HTML table with one row per parameter starting with the
+ parameter <code>nDob</code>. The table is continued from <code>nDob</code>
+ as long as DOM objects of the same type (script or function parameter)
+ follow.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sPrefix</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Prefix text to be placed before the DOM obejct's documentation
+          text, ignored if there is no documentation text. May be empty but
+          <em>must not</em> be <code>NULL</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSuffix</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Suffix text to be placed after the DOM obejct's documentation
+          text, ignored if there is no documentation text. May be empty but
+          <em>must not</em> be <code>NULL</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nDob</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Index of the DOM object of the first parameter in
+          <code>iDgn.dom</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-gen_globals">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-gen_globals</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-gen_globals','-gen_globals','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-gen_globals</b>(sPrefix,sSuffix,nDob,iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(550)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Renders the documentation for functions' access to gloabl instances. The
+ function generates an HTML table with one row per global instance starting
+ with the the first <code>.UDM_OT_FGLOB</code> DOM object found after
+ <code>nDob</code> but <em>before</em> the next <code>.UDM_OT_CLARG</code> or
+ <code>.UDM_OT_FHEAD</code> DOM object.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sPrefix</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Prefix text to be placed before the DOM object's documentation
+          text, ignored if there is no documentation text. May be empty but
+          <em>must not</em> be <code>NULL</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSuffix</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Suffix text to be placed after the DOM object's documentation
+          text, ignored if there is no documentation text. May be empty but
+          <em>must not</em> be <code>NULL</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nDob</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Index of the function (<code>.UDM_OT_FHEAD</code>) DOM object in
+          <code>iDgn.dom</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-gen_sees">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-gen_sees</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-gen_sees','-gen_sees','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-gen_sees</b>(sPrefix,sSuffix,nDob,iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(608)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Renders the "see also" references for a functions. The function generates a
+ link list starting with the the first <code>.UDM_OT_SEE</code> DOM object
+ found after <code>nDob</code> but <em>before</em> the next
+ <code>.UDM_OT_FHEAD</code> DOM object.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sPrefix</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Prefix text to be placed before the DOM object's documentation
+          text, ignored if there is no documentation text. May be empty but
+          <em>must not</em> be <code>NULL</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSuffix</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Suffix text to be placed after the DOM object's documentation
+          text, ignored if there is no documentation text. May be empty but
+          <em>must not</em> be <code>NULL</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nDob</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Index of the function (<code>.UDM_OT_FHEAD</code>) DOM object in
+          <code>iDgn.dom</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-doc_fnc">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-doc_fnc</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-doc_fnc','-doc_fnc','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-doc_fnc</b>(nDob,nMode,iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(657)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Generates the documentation for one dLabPro function.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nDob</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Index of the function's DOM object in <code>iDgn.dom</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nMode</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Rendering mode, 0: function overview, 1: full documentation
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance containing the script's DOM and to be
+          filled with the generated documentation text
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-doc_fncindex">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-doc_fncindex</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-doc_fncindex','-doc_fncindex','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-doc_fncindex</b>(idFni,iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(731)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Generates the alphabetical function index page.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFni</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Function list (generated by <a href="#clp_-fnc_add"><code
+          class="link">-fnc_add</code></a>)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-doc_kwdindex">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-doc_kwdindex</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-doc_kwdindex','-doc_kwdindex','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-doc_kwdindex</b>(idKwd,iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(768)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Generates the keyword index page.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idKwd</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Keyword list (generated by <a href="#clp_-scan_keywords"><code
+          class="link">-scan_keywords</code></a>)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-doc_script">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-doc_script</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-doc_script','-doc_script','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-doc_script</b>(idCd,iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(832)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Generates the documentation for one dLabPro script.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idCd</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Custom documentation (returned by <a href="#fnc_-scan_cdc"><code
+          class="link">-scan_cdc</code></a>). May be <code>NULL</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance containing the script's DOM and to be
+          filled with the generated documentation text
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-doc_package">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-doc_package</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-doc_package','-doc_package','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-doc_package</b>(idS,nS0,nXS,idCd,iDgn)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/UASR_DOC.xtp(909)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Generates the documentation for one package.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idS</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          List of scripts, including one DOM (nested <code>DGen</code>
+          instance) and one custom documentation text (nested
+          <code>data</code> instance) per script
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nS0</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Index of first script of package in <code>idS</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nXS</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Number of scripts of package
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idCd</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Custom documentation of package (returned by <a
+          href="#fnc_-scan_cdc"><code class="link">-scan_cdc</code></a>).
+          May be <code>NULL</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">DGen&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iDgn</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Document generator instance to be filled with the generated
+          documentation text
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+<div class="footer">End of page</div>
+</body>
+</html>
+

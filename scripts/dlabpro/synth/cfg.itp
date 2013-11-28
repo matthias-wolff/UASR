@@ -1,0 +1,91 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Synthesis functions: Configuration utilities
+##
+## AUTHOR : Guntram Strecha
+## PACKAGE: uasr/scripts/dlabpro/synth
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+function -CFG_getAmId(sAmId,sDirModel)
+{
+  data idAux;
+  
+  { sAmId } "_" "split" idAux -strop; idAux.dim 2 < if
+    sDirModel "$[sAmId]_*.hmm" FALSE idAux -SH_find;
+    0 0 idAux -sfetch "." "split" -VAR_strop sAmId =;
+  end
+  sAmId return;
+}
+
+function -CFG_generate()
+{
+  var  sDb;          "db"                  "" "S" -CFG_get_ex        sDb     =;
+  var  sExp;        "exp"                  "" "S" -CFG_get_ex        sExp    =;
+  var  sCommon;     "$UASR_HOME-data/$[sDb]/common"                  sCommon =;
+  var  sPfa;
+  var  nPfa;
+  var  nSfa;
+  var  nSrate;
+  var  nCrate;
+  var  nWlen;
+  var  nLen;
+  var  nLambda;
+  var  nModel;
+  data dSplit;
+
+  { sExp } "_" "split" dSplit -strop;
+  
+  0 0 dSplit -sfetch sPfa       =;
+  0 1 dSplit -sfetch nSrate -vset;
+  0 2 dSplit -sfetch nPfa   -vset;
+  0 3 dSplit -sfetch nSfa   -vset;
+  dSplit.dim 4 > if  0 4 dSplit -sfetch nModel -vset; end
+  
+  nSrate  8000 == if  80 nCrate =; 200 nWlen =; 256 nLen =; 0.35 nLambda =;else
+  nSrate 16000 == if 160 nCrate =; 400 nWlen =; 512 nLen =; 0.47 nLambda =;else
+  nSrate 32000 == if 320 nCrate =; 800 nWlen =;1024 nLen =; 0.57 nLambda =;else
+  "\nsamping rate not supported for automatic configuration" -COLOR_error -MSG; end;end;end
+  "$[sPfa]_$[nSrate]_$[nPfa]_$[nSfa]" sExp =;
+
+  "exp"                sExp                                                          -CFG_set;
+  "dir.sig"            "$[sCommon]/sig.${:ent(nSrate/1000):}kHz"                     -CFG_set;
+  "dir.fea"            "$UASR_HOME-data/$[sDb]/common/fea/$[sPfa]_$[nSrate]_$[nPfa]" -CFG_set;
+  "dir.pm"             "$[sCommon]/pm.${ent(nSrate/1000)}kHz"                        -CFG_set;
+  "dir.lab"            "$[sCommon]/lab"                                              -CFG_set;
+  "dir.into"           "$[sCommon]/into"                                             -CFG_set;
+  "sig.srate"          nSrate                                                        -CFG_set;
+  "pfa"                sPfa                                                          -CFG_set;
+  "pfa.crate"          nCrate                                                        -CFG_set;
+  "pfa.wlen"           nWlen                                                         -CFG_set;
+  "pfa.len"            nLen                                                          -CFG_set;
+  "pfa.FBA.pfa_lambda" nLambda                                                       -CFG_set;
+  "pfa.dim"            nPfa                                                          -CFG_set;
+  "sfa.dim"            nSfa                                                          -CFG_set;
+  "am.model"           nModel                                                        -CFG_set;
+  "flist.all"          "$[sCommon]/flists/cut.flst"                                  -CFG_set;
+  "flist.train"        "$[sCommon]/flists/cut.flst"                                  -CFG_set;
+  "flist.test"         "$[sCommon]/flists/cut.flst"                                  -CFG_set;
+  "flist.stat"         "$[sCommon]/flists/cut.flst"                                  -CFG_set;
+  "flist.stat_t"       "$[sCommon]/flists/cut.flst"                                  -CFG_set;
+  "flist.cut"          "$[sCommon]/flists/cut.flst"                                  -CFG_set;
+}
+
+## EOF

@@ -1,0 +1,1278 @@
+## Unified Approach to Speech Synthesis and Recognition
+## - Training functions: Triphones
+##
+## AUTHOR : Soeren Wittenberg
+## PACKAGE: uasr/scripts/dlabpro/train
+##
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## --- Global variable ---
+".__TRIPHONE_bCompressed" "var" ?instance not if                                # if: there a global variable bComp.
+  var __TRIPHONE_bCompressed;                                                   #   declare global variable
+  1 __TRIPHONE_bCompressed =;                                                   #   set default
+end                                                                           # end
+
+
+## Gathers triphone list from labels of feature files.
+## 
+## @cgen:index
+## @param idPhoneTab data
+##          Phoneme table
+## @param iFl file
+##          List with feature files
+## @param nOccurrence var
+##          Min. triphone occurrence 
+## @param idTriphones data
+##          Triphone list (result); 1st comp -> triphone; 2nd comp nr. of observation
+##
+function -triphone_stat(idPhoneTab,iFl,nOccurrence,idTriphones)
+{
+  # === Create instances ====================================================== # ==================================== #
+
+  fst   iFST;                                                                   # a Finite State Transducers           #
+  data  idMonophones;                                                           # (Compressed) monophone label stream  #
+  data  idIndex;                                                                # data object to hold indices          #
+  data  idAux;                                                                  # auxiliary data object                #
+  data  idAux2;                                                                 # auxiliary data object                #
+  data  idCompress;                                                             # data object for compressed data      #
+  var   nFiles;                                                                 # number of files to process           #
+  var   nCounter1;                                                              # loop cycle counter                   #
+  var   nCounter2;                                                              # loop cycle counter                   #
+  var   nCounter3;                                                              # loop cycle counter                   #
+  var   nIndexPos;                                                              # holds a comp. or record index        #
+  var   nFstTdRC;                                                               # "reference counter" index at iFST.td #
+  var   nFstTdTER;                                                              # "terminal state" index at iFST.td    #
+  var   nOrder;                                                                 # n-gram order                         #
+  var   sTemp1;                                                                 # temp. variable of type string        #
+  var   sTemp2;                                                                 # temp. variable of type string        #
+
+  # === Check important parameter values ====================================== # ==================================== #
+ 
+  nOccurrence 0 <= if                                                           # if: is desired tri. occurrence < 1   # 
+    "\n Occurence has to be greater then 0!"                              -MSG; # protocol                             #
+    FALSE return                                                                # return false                         #
+  end                                                                         # end                                #
+
+  # === Initialize ============================================================ # ==================================== #
+
+  "\n Initializing "                                                     -MSG2; # protocol                             #
+  3 nOrder -vset;                                                               # define n-gram order (3 => triphone)  #
+  nOrder iFST -set max_len;                                          "." -MSG2; # set max. path length of multigrams   #
+  iFl -getlen nFiles -vset;                                          "." -MSG2; # get number of files                  #
+
+  # === Process all files in list ============================================= # ==================================== #
+                                                                                
+  "\n Gather triphones! Processing ${nFiles} files!"                     -MSG2; # Protocol                             #
+  0 nCounter1        -vset;                                                     # use nCounter as a file counter       #
+  label __L_FILE                                                                # beginning of file processing loop    #
+  nCounter1 nFiles < if                                                         # if_1: one more file in list          #
+
+    # --- Get next monophone label stream ------------------------------------- # ------------------------------------ #
+
+    :(iFl.nfile+1)/iFl.len: 2 -PBAR;                                            #   Display progress                   #
+    iFl -next;                                                                  # get next file                        #
+    iFl.sfile_fq idMonophones -FEA_load_monophone;                              # load features (incl. mono. labels)   #
+    idMonophones 0 idMonophones.dim -- idMonophones -delete;                    # keep only mono. labels, delete data  #
+    0 0 idMonophones -fetch "" == if                                            # if_2: first record monophone label   #
+      idMonophones 0 1 idMonophones /rec -delete;                               # if empty del. 1. rec. (holds scale   #
+                                                                                # coeffs for data D2S-conversion)      #
+    end                                                                       # end_2                              #
+
+    .__TRIPHONE_bCompressed if
+      idMonophones 0 idMonophones -compress;                                    # compress monophone label stream      #
+      idMonophones 1 2 idMonophones -delete;                                    # delete unused data                   #
+    end
+    
+    # --- Insert whitespace " " at the beginning and at the end of labels ----- # ------------------------------------ #    
+
+    0 0 idMonophones -fetch " " == not if                                       # if_2: pause monophone at first rec.  #
+      idMonophones.nrec ++ idMonophones -reallocate;                            # append one record                    #
+      idMonophones 1 idMonophones /rec -shift;                                  # shift by one record                  #
+      " " 0 0 idMonophones -store;                                              # store pause label into cell 0:0      #
+    end                                                                       # end_2                              #
+
+    idMonophones.nrec -- 0 idMonophones -fetch " " == not if                    # if_2: pause monophone at last rec    #
+      idMonophones.nrec ++ idMonophones -reallocate;                            # append one record                    #
+      " " idMonophones.nrec -- 0 idMonophones -store;                           # store pause label into last record   #
+    end                                                                       # end_2                              #
+   
+    # --- Update n-gram statistics -------------------------------------------- # ------------------------------------ #
+
+    idMonophones idPhoneTab 0 0 idIndex -gen_index;                             # convert phoneme symbols to indices   #
+    idIndex 0 -1 -1 0 iFST /multigram -addseq;                                  # add index sequence (re-use existing  #
+                                                                                # transitions and states )             #
+    nCounter1 ++=;                                                              # increment file counter               #
+    goto __L_FILE                                                               # back to beginning of file proc. loop #
+  end                                                                         # end_1                              #
+  "\n ${nCounter1} Turns complete"                                       -MSG2; # protocol                             #
+
+  # === Statistic / Information =============================================== # ==================================== #
+
+  0 nCounter1 -vset;                                                            # reset loop cycle counter             #
+  1 nCounter2 -vset;                                                            # use as temp. variable                #
+  label __L_POSSIBLE_DIFF_N_PHONES                                              # calc. possible nr. of diff. n-phones #
+  nCounter1 nOrder < if                                                         # if_1: loop counter < n-phone order   #
+    idPhoneTab.nrec nCounter2 *=;                                               # (nr. of phones)^(n-gram order)       #
+    nCounter1 ++=;                                                              # increment loop cycle counter         #
+    goto __L_POSSIBLE_DIFF_N_PHONES                                             # back to beginning of loop            #
+  end                                                                         # end_1                              #
+  "\n Possible different triphones:     ${nCounter2}"                    -MSG2; # protocol                             #
+  idIndex 0 iFST -analyze_multigram;                                            # check multigram tree; count n-phones #
+  "\n Different triphones found   :     ${idIndex[iFST.max_len,0]}"      -MSG2; # protocol                             #
+  "\n Total triphone observation  : ${idIndex[iFST.max_len,1]}"          -MSG2; # protocol                             #
+  "\n Selecting triphones "                                              -MSG2; # protocol                             #
+
+  # === Decode n-phones ======================================================= # ==================================== #
+  "."                                                                    -MSG2; # protocol                             #
+# da bei multigramm alle States final sind -> finde alle Zust‰nde ohne Folgezustand
+# also ohne Eintrag in iFST.td
+  iFST.td "~INI" iFST.td -find_comp idTriphones -compress;                      # get all initial states               #
+  idTriphones 1 2 idTriphones -delete;                                          # delete unneeded components           #
+  idIndex -reset;                                                               # reset index instance                 #
+  "nIndex" -type long idIndex -addcomp;                                         # add one component of type long       #
+  ${iFST.sd.nrec-idTriphones.nrec} idIndex -allocate                            # allocate as many rec as nodes in tree#
+  0 nCounter1 -vset;                                                            # reset                                #
+  0 nCounter2 -vset;                                                            # reset                                #
+  0 nIndexPos -vset;                                                            # reset                                #
+  label __L_FINAL_STATE                                                         # count form 0 to index of last state  # 
+  nCounter2 idTriphones.nrec < if                                               # if_1: is there another initial state #
+    nCounter1 nCounter2 0 idTriphones -dfetch == if                             # if_2: state index in init state list #
+      nCounter2 ++=;                                                            # increment counter                    #
+    else                                                                        # else_2                               #
+      nCounter1 nIndexPos 0 idIndex -store;                                     # this state is final -> save counter  #
+      nIndexPos ++=;                                                            # inc. position counter (idIndex)      #
+    end                                                                       # end_2                              #
+    nCounter1 ++=;                                                              # inc. position counter (idTriphones)  #
+    goto __L_FINAL_STATE                                                        # process next state                   #
+  end                                                                         # end_1                              #
+  label __L_FINAL_STATE2                                                        # get terminal st. after last init. st.#
+  nCounter1 iFST.sd.nrec < if                                                   # if_1: st. counter < nr of total st.  #
+    nCounter1 nIndexPos 0 idIndex -store;                                       # this state is final -> save counter  # 
+    nIndexPos ++=;                                                              # increment positiopn in idTriphones   #
+    nCounter1 ++=;                                                              # increment state counter              #
+    goto __L_FINAL_STATE2                                                       # back to process next state           #
+  end                                                                         # end_1                              #
+
+  # --- Extract all n-grams and create n-phones (symbolic) -------------------- # ------------------------------------ #
+  "."                                                                    -MSG2; # protocol                             #
+  iFST idIndex 0 iFST -paths;                                                   # extract paths                        #
+  iFST.td "~TIS" iFST.td -find_comp idPhoneTab 0 1 idMonophones -lookup;        # input symbol index -> monophone      #
+  0 nCounter1 -vset;                                                            # reset                                #
+  1 nCounter3 -vset;                                                            # reset                                #
+  0 nIndexPos -vset;                                                            # reset                                #
+  idTriphones -reset;                                                           # reset data instance for the n-phones #
+  "lab" -type char[8] idTriphones -addcomp;                                     # add component for the n-phone labels # 
+  label __L_GEN_COMPS_FOR_MONOPHONES                                            # beginning of loop "comp. creation"   #
+  nCounter3 nOrder <= if                                                        # if_1: create as many components like #
+    "lab" nCounter3 + -type char[3] idTriphones -addcomp;                       # a triphone consists of monophones(3) #
+    nCounter3 ++=;                                                              # increment                            #
+    goto __L_GEN_COMPS_FOR_MONOPHONES;                                          # back to next comp                    #
+  end                                                                         # end_1                              #
+  
+  ${idMonophones.nrec/nOrder} idTriphones -allocate;                            # allocate data object for triphones   #
+  label __L_NEXT_TRIPHONE                                                       # beginning of triphone creation loop  #
+  nCounter1 idMonophones.nrec < if                                              # if_1: futher monophones available    #
+    0 nCounter2 -vset;                                                          # reset                                #
+    nOrder nCounter3 -vset;                                                     # reset
+    "" sTemp1 -sset;                                                            # reset                                #
+    "" sTemp2 -sset;                                                            # reset                                #
+    label __L_CREATE_TRIPHONE                                                   # loop to concatenate monophones       #
+    nCounter2 nOrder < if                                                       # if_2: another monoph. to concat.?    #
+      nCounter1 0 idMonophones -sfetch sTemp1 =;                                # fetch next monophone                 #
+      sTemp1 nIndexPos nCounter3 idTriphones -store;                            # add monophones to rec.               #
+      sTemp2 sTemp1 +=;                                                         # concatenate                          #
+      sTemp1 sTemp2 =;                                                          # restore                              #
+      nCounter1 ++=;                                                            # increment monophone stream index     #
+      nCounter2 ++=;                                                            # increment n-phone counter            #
+      nCounter3 --=;                   
+      goto __L_CREATE_TRIPHONE                                                  # concatenate next monophone           #
+    end                                                                       # end_2                              #
+    sTemp2 nIndexPos 0 idTriphones -store;                                      # store triphone                       #
+    nIndexPos ++=;                                                              # increment pos. in triphone data      #
+    goto __L_NEXT_TRIPHONE                                                      # back to beginning of creation loop   #
+  end                                                                         # end_1                              #
+
+  # --- Get Reference Counter of last transition of any path ------------------ # ------------------------------------ #
+  "."                                                                    -MSG2; # protocol                             #
+  "nobs" -type long idTriphones -addcomp;                                       # add comp. "Number of Observation"    #
+  0 nCounter1 -vset;                                                            # reset                                #
+  0 nCounter2 -vset;                                                            # reset                                #
+  "~RC" iFST.td -find_comp nFstTdRC -vset;                                      # "Reference Counter" component index  #
+  "~TER" iFST.td -find_comp nFstTdTER -vset;                                    # "Terminal State" component index     #
+  "nobs" idTriphones -find_comp nIndexPos -vset;                                # "Nr. of Oberservations" comp index   #
+  label __L_FIND_LAST_TRANS_PER_PATH                                            # beginning of loop                    #
+  nCounter1 iFST.td.nrec < if                                                   # if_1: transition in iFST available?  #
+    nOrder nCounter1 nFstTdTER iFST.td -dfetch == if                            # if_2: transition to terminal state?  #
+     nCounter1 nFstTdRC iFST.td -dfetch nCounter2 nIndexPos idTriphones -store; # save reference counter of transition #
+     nCounter2 ++=;                                                             # increment counter for next triphone  #
+    end                                                                       # end_2                              #
+    nCounter1 ++=;                                                              # increment counter for next trans.    #
+    goto __L_FIND_LAST_TRANS_PER_PATH                                           # back to beginning of loop            #
+  end                                                                         # end_1                              #
+
+  # === Select frequent n-phones and return =================================== # ==================================== #
+  "."                                                                    -MSG2; # protocol                             #
+  idAux -reset;                                                                 # reset                                #
+  idAux2 -reset;                                                                # reset                                #
+  idTriphones "nobs" idTriphones -find_comp idTriphones -sortup;                # sort up number of observations       #
+  nOccurrence 1 == if                                                           # if_1: occurence is 1                 #
+    goto __L_PROVIDE_ALL_TRIPHONES                                              # then goto to the end                 #
+  end                                                                         # end_1                              #
+  idTriphones "nobs" idTriphones -find_comp idCompress -compress;               # count occurence of the triphones     #
+  idCompress nOccurrence ">=" idAux -scalop;                                    # mark common triphones                #
+  idAux 0 idAux2 -compress;                                                     # get number of un-/common triphones   #
+  idAux2.nrec 1 > if                                                            # if_1: there are common triphones?    #
+    idTriphones 0 ${idCompress[idAux2[0,2],1]} idTriphones /rec -delete;        # remove uncommon triphone             #         
+  else                                                                          # else_1                               #
+    idTriphones -reset;                                                         # no common triphones -> empty return  #    
+  end                                                                         # end_1                              #
+  label __L_PROVIDE_ALL_TRIPHONES                                               # exit label                           #
+  " Found ${idTriphones.nrec} triphones with"                            -MSG2; # protocol                             #
+  " an occurrence >= ${nOccurrence} \n"                                  -MSG2; # protocol                             #
+}
+
+
+## Replaces the monophone label stream of a data instance by a corresponding 
+## triphone label stream and joins three new components holding the left, center 
+## and right part of each triphone separately.
+##
+## @cgen:index
+## @param idData data
+##          a data object with monophone label comp. (symbolic) 
+## @param nLabIndex var
+##          component index of the monophone label 
+##
+function -triphone_mono2triphone(idData,nLabIndex)
+{
+  # === Declaration =========================================================== # ==================================== #
+
+  data idAux1;                                                                  # first auxiliary data object          #
+  data idAux2;                                                                  # second auxiliary data object         #
+  data idAux3;                                                                  # third auxiliary data object          #
+  data idCompressed;                                                            # auxiliary object for compressed data #
+
+  # === Process =============================================================== # ==================================== #
+
+  idData nLabIndex 1 idAux1 -select;                                            # get monophone label stream           #
+  .__TRIPHONE_bCompressed if                                                    # if: compress monophone label stream? #
+    idAux1 0 idAux1 -compress;                                                  #   compress monophone label stream    #
+    idAux1 idCompressed =;                                                      #   save compress for later expand     #
+    idAux1 1 idAux1.dim 1 - idAux1 -delete;                                     #   get only compressed label stream   #
+    idCompressed 0 1 idCompressed -delete;                                      #   get only compressed information    #
+  end                                                                         # end                                #
+  idAux1 idAux2 =;                                                              # copy monophone label                 #
+  idAux1 1 idAux1 /rec -shift;                                                  # shift down by one record             #
+  " " 0 0 idAux1 -store;                                                        # store pause label into cell 0:0      #
+  .__TRIPHONE_bCompressed if                                                    # if: compress monophone label stream? #
+    idCompressed idAux1 -join;                                                  #   join compress info to shifted lab. # 
+    idAux1 0 1 2 idAux1 -expand;                                                #   expand shifted label stream        #
+    idAux2 idAux3 =;                                                            #   copy org. label stream to aux.     #
+    idCompressed idAux2 -join;                                                  #   join compress info to org. labels  # 
+    idAux2 0 1 2 idAux2 -expand;                                                #   expand org. label stream           #
+  end                                                                         # end                                #
+  idAux2 idAux1 -join;                                                          # join original label to shifted label #
+  .__TRIPHONE_bCompressed if                                                    # if: compress monophone label stream? #
+    idAux3 idAux2 =;                                                            #   copy org. labels back to aux.2     # 
+  end                                                                         # end                                #
+  idAux2 -1 idAux2 /rec -shift;                                                 # shift up by one record               #
+  " " idAux2.nrec -- 0 idAux2 -store;                                           # store pause label into last rec      #
+  .__TRIPHONE_bCompressed if                                                    # if: compress monophone label stream? #
+    idCompressed idAux2 -join;                                                  #   join compress info to shifted lab. # 
+    idAux2 0 1 2 idAux2 -expand;                                                #   expand shifted label stream        #
+  end                                                                         # end                                #
+  idAux2 idAux1 -join;                                                          # join up shifted label to other label #
+  0 "lab1" idAux1 -set_cname;                                                   # set component name of left tri. part #
+  1 "lab2" idAux1 -set_cname;                                                   # set component name of center part    #
+  2 "lab3" idAux1 -set_cname;                                                   # set component name of right part     #
+  idAux1 idAux3 =;                                                              # make a local copy                    #
+  idAux1 "" "ccat" idAux1 -strop;                                               # aggregate components into one comp.  #
+
+  # === Create return data ==================================================== # ==================================== #
+ 
+  0 nLabIndex idData -get_cname idAux1 -set_cname;                              # set comp. name equal to orig. name   #
+  idData 0 nLabIndex idAux2 -select;                                            # get comp. of orig. data before label #
+  idAux1 idAux2 -join;                                                          # join triphone label                  #
+  idData nLabIndex ++ idData.dim -- idAux1 -select;                             # get comp. of orig. data after label  #
+  idAux1 idAux2 -join;                                                          # join data to other data + triphone   #
+  idAux3 idAux2 -join;                                                          # join separated triphone parts        #
+  idAux2 idData =;                                                              # return result                        #
+}
+
+
+## Replaces triphones at label stream of a data instance that are not part of the 
+## defined triphone table by corresponding monophones 
+##
+## @param idData data
+##          a data object with triphone label comp. (symbolic) 
+## @param nLabIndex var
+##          component index of the triphone label 
+## @param sTriphoneTab var
+##          path to triphone table file
+## @return TRUE or FALSE
+##
+function -triphone_make_valid(idData,nLabIndex,sTriphoneTab)
+{
+  # === Declaration =========================================================== # ==================================== #
+
+  data idTriphoneTab;                                                           # locale triphone table                #
+  data idAux;                                                                   # auxiliary data object                #
+  var sTemp;                                                                    # auxiliary string variable            #
+  var nCounter;                                                                 # counter for next block of unk. tri.s #
+  var nCounter2;                                                                # count next unknown triphone in block #
+  var nPos;                                                                     # current position in label stream     #
+
+  # === Restore triphone table ================================================ # ==================================== #
+
+  ".idTriphoneTab" NULL ?instance not if                                        # if: is there a global triphone table #
+    goto __L_DEFINE_TAB;                                                        #   no -> go to load triphone table    #
+  else                                                                          # else                                 #
+    .idTriphoneTab -is_empty if                                                 #   if: is global tri. table empty?    #
+      goto __L_DEFINE_TAB;                                                      #     yes -> go to load tri. table     #
+    end                                                                       #   end                              #
+  end                                                                         # end                                #
+  
+  .idTriphoneTab idTriphoneTab =;                                               # copy global to locale tri. table     #
+  goto __L_GO_ON;                                                               # go to start processing               #
+
+  label __L_DEFINE_TAB                                                          # define goto-label                    # 
+  idTriphoneTab -reset;                                                         # reset locale tri. table              #
+  "mlab" -type char[8] idTriphoneTab -addcomp;                                  # add Model label to tri. table        #
+  "nn"   -type short   idTriphoneTab -addcomp;                                  # add Number of HMM nodes to tri. tab  #
+  "v/uv" -type short   idTriphoneTab -addcomp;                                  # add Voiced/unvoiced to tri. table    #
+  "alab" -type char[8] idTriphoneTab -addcomp;                                  # add Abstract model label to tri. tab #
+  "lab1" -type char[4] idTriphoneTab -addcomp;                                  # add label of left triphone context   #
+  "lab2" -type char[4] idTriphoneTab -addcomp;                                  # add label of triphone center         #
+  "lab3" -type char[4] idTriphoneTab -addcomp;                                  # add label of right triphone context  #
+  sTriphoneTab "ascii" idTriphoneTab stdfile -import;                           # import triphones from "classes.txt"  #
+
+  idTriphoneTab -is_empty if                                                    # if: check again; tri. table empty    #
+    "\n Can¥t find path to triphone table file! \n"                    2 -MSGX; #   protocol                           #
+    FALSE return;
+  end                                                                         # end                                #
+  
+  label __L_GO_ON                                                               # define goto-label                    #
+
+  # === Processing ============================================================ # ==================================== #
+
+  idData idTriphoneTab nLabIndex 0 idAux /noerror -gen_index;                   # tri. label sequence 2 tri. index seq #
+  idAux 0.0 "min" idAux -scalop;                                                # tri. not in tri. tab. are important  #
+  idAux 0 idAux -compress;                                                      # compress to organize -1s into blocks #
+  0 nCounter =;                                                                 # reset -1 block counter               #
+  label __L_NEXT_BLOCK                                                          # define goto-label                    #
+  nCounter idAux.nrec < if                                                      # if_1: more unknown triphones (block) #
+    nCounter 0 idAux -fetch -1 == if                                            #   if_2: a block of unknown? (= -1)   #
+      0 nCounter2 =;                                                            #     reset unknown tri in block       #
+      label __L_NEXT_UNKNOWN_TRI_IN_BLOCK;                                      #     define goto-label                #
+      nCounter2 nCounter 2 idAux -fetch <= if                                   #     if_3: more unknown tri. in block #
+        nCounter 1 idAux -fetch nCounter2 + nPos =;                             #       get current pos. in lab stream #
+        nPos "lab2" idData -find_comp idData -fetch sTemp =;                    #       get current unknown tri center #  
+        sTemp nPos "lab" idData -find_comp idData -store;                       #       store tri. center as mono lab. #
+        "_" nPos "lab1" idData -find_comp idData -store;                        #       reset left tri. context        #
+        "_" nPos "lab3" idData -find_comp idData -store;                        #       reset right tri. context       #
+        nCounter2 ++=;                                                          #       inc. counter unk. tri in block #
+        goto __L_NEXT_UNKNOWN_TRI_IN_BLOCK;                                     #       goto to next unknown triphone  #
+      end                                                                     #     end_3                          #
+    end                                                                       #   end_2                            #
+    nCounter ++=;                                                               #   increment block counter            #
+    goto __L_NEXT_BLOCK                                                         #   goto next block                    #
+  end                                                                         # end_1                              #
+
+  # === Clean output ========================================================== # ==================================== #
+  
+  idData "lab3" idData -find_comp 1 idData -delete;                             # remove comp. "right tri. context"    #
+  idData "lab2" idData -find_comp 1 idData -delete;                             # remove comp. "triphone center"       #
+  idData "lab1" idData -find_comp 1 idData -delete;                             # remove comp. "left tri. context"     #
+}
+
+## Generates a matrix with the phoneme to phoneme class membership.
+##
+## @param idPhonemeTab data
+##          Phoneme table
+## @param idPhonClasses data
+##          comp.: monophones (symbolic) of a class; one monophone per comp.
+##          rec.:  phoneme class
+## @param idPhonQuestionTable data
+##          phoneme to phoneme class membership (matrix)
+##
+##
+function -triphone_table_phon_question(idPhonemeTab,idPhonClasses,idPhonQuestionTable)
+{
+  # === Create instances ====================================================== # ==================================== #
+          
+    data iIndexTab;
+    data idPhonemeClasses;
+    data idTemp;                                                                # temporary data object                #
+    var  nMaxPhonemesPerClass;                                                  # maximum number of phones per class   #
+    var  nNrPhonemeClasses;                                                     # number of phoneme classes            #
+    var  nPhonemeIndex;                                                         # index of a phoneme                   #
+    var  nCompCounter;                                                          # a loop counter for comp. position    #
+    var  nRecCounter;                                                           # a loop counter for rec. position     #
+    var  nNrOfMonophones;                                                       # total number of used monophones      #
+
+  # === Instantiate =========================================================== # ==================================== #
+
+    idPhonemeTab.nrec nNrOfMonophones -vset;                                    # get total number of used monophones  #
+    idPhonClasses idPhonemeClasses =;                                           # create local copy                    #
+    idPhonemeClasses.nrec nNrPhonemeClasses -vset;                              # get number of phoneme classes        #
+
+    # --- Max. number of phonemes per class; delete empty components ---------- # ------------------------------------ #
+
+    idPhonemeClasses.dim nCompCounter -vset;                                    # set loop counter                     #
+    nCompCounter --=;                                                           # decrement loop counter -> last comp. #
+    label __L_DELETE_EMPTY_COMP                                                 # delete comp with which all rec empty #
+    nCompCounter 0 >= if                                                        # if_1: one comp. left?                #
+      idPhonemeClasses nCompCounter idTemp -compress;                           # compression of current component     #
+      idTemp.nrec 1 == if                                                       # if_2: only one rec after compression #
+        idPhonemeClasses nCompCounter 1 idPhonemeClasses -delete;               # remove comp. without any monophone   #
+      # end
+        nCompCounter --=;                                                       # decrement loop counter               #
+        goto __L_DELETE_EMPTY_COMP                                              # back to beginning of loop            #
+      end                                                                     # end_2                              #
+    end                                                                       # end_1                              #
+    idPhonemeClasses.dim nMaxPhonemesPerClass -vset;                            # get max number of phonemes per class #
+
+  # === Convert monophones (symbolic) to corresponding indices ================ # ==================================== #
+
+    0 nCompCounter -vset;                                                       # reset                                #
+    idTemp -reset;                                                              # reset                                #
+    label __L_TO_INDEX                                                          # convert to indices (comp after comp) #
+    nCompCounter nMaxPhonemesPerClass < if                                      # if_1: one component left?            #
+      idPhonemeClasses idPhonemeTab nCompCounter 0 idTemp /noerror -gen_index;  # generate indices                     #
+      idTemp iIndexTab -join;                                                   # join comp. to index table            #
+      idTemp -reset;                                                            # reset                                #
+      nCompCounter ++=;                                                         # increment loop counter               #
+      goto __L_TO_INDEX                                                         # back to beginning of loop            #
+    end                                                                       # end_1                              #
+
+  # === Sorting =============================================================== # ==================================== #
+
+    -type double nNrPhonemeClasses idPhonQuestionTable -addncomps;              # create components (phoneme classes)  # 
+    nNrOfMonophones idPhonQuestionTable -allocate;                              # allocate rec. (number of monophones) #
+    0 nCompCounter -vset;                                                       # reset                                #
+    label __L_PROCESS_RECS                                                      # process all records                  #
+    nCompCounter nMaxPhonemesPerClass < if                                      # if_1: one more components available? #
+      0 nRecCounter -vset;                                                      # reset                                #
+      label __L_PROCESS_COMPS                                                   # process all components               #
+      nRecCounter nNrPhonemeClasses < if                                        # if_2: one more components available? #
+        nRecCounter nCompCounter iIndexTab -fetch nPhonemeIndex -vset;          # get phoneme index at current pos.    #
+        nPhonemeIndex -1 > if                                                   # if_3: phoneme index greater -1 ?     #
+          1 nPhonemeIndex nRecCounter idPhonQuestionTable -store;               # store "1" at right phoneme/class pos #
+        end                                                                   # end_3                              #
+        nRecCounter ++=;                                                        # increment component counter          #
+        goto __L_PROCESS_COMPS                                                  # go to next component                 #
+      end                                                                     # end_2                              #
+      nCompCounter ++=;                                                         # increment record counter             #
+      goto __L_PROCESS_RECS                                                     # go to next record                    #
+    end                                                                       # end_1                              #
+}
+
+
+## @param nMinObserv var
+##          Mininum number of observations per cluster
+## @param nMinCluster var
+##          Minimum distance between clusters
+## @param idPhonQuestionTable data
+##          phoneme to phoneme class membership (matrix)
+
+function -triphone_cluster(nMinObserv,nMinDistance,idPhonQuestionTable)
+{
+  # === Create instances ====================================================== # ==================================== #
+  
+  Bintree iTree;                                                                # binary tree                          #
+SMG MySMG
+data Use
+data MyMean
+data QuesTab
+data Tri
+
+
+"lab"  3 Use -addcomp
+"$HOME/uasr/data/vm/phon_tab.txt" "ascii" Use stdfile -import
+"$HOME/uasr/data/vm/mf_63/triphone_model/ite_0_0.smg" MySMG -restore
+"$HOME/uasr/mydata1/MyMean.dn3" MyMean -restore
+"$HOME/uasr/mydata1/triphones_selecte.dn3" Tri -restore
+
+Use iTree set UsePhon 
+nMinObserv iTree set dThreshold 
+nMinDistance iTree set bThreshold
+MySMG iTree set smg
+MyMean iTree set dmean
+idPhonQuestionTable iTree set UsePhcltab
+
+Tri 22 2 iTree -DecTree
+iTree.dectreetab -print
+}
+
+
+## @param idTriphones "Tri_Mon_Phon_Table.dn3" Triphon list with separatet phoneme and state occupancy
+## @param idPhonemTab "phon_tab.txt" UASR Monophon set
+function -triphone_decision_tree(idTriphones,idPhonemTab)
+{
+  # === Declarations ========================================================== # ==================================== #
+  data idTriSameCenter;                                                         # List of triphones with same center   #
+
+data Triphon_List;   # Triphon list compressed
+data Triphon_List_A;  #first child Triphon list   
+data Triphon_List_B;  #second chld Triphon list
+data C_Sdev;          #mean vector of one leaf node    
+data C_Mean;          #standard deviation of one leaf node
+data MEAN;         # mean vector table of decision tree         
+data SDEV;         #standard deviation table of decision tree
+data iTriCompr;    #Triphon list compress
+data idCenter;      #triphon list with the same central phoneme
+data iDecision;    #one record of decision tree table
+data DECISION;     #decision tree table
+
+
+var OBSERVATION;   #state occupancy each child node
+var nPhoNr;        #index phoneme counter 
+var nStatNr;       #state counter
+var nn;            #node counter and Nummer
+var Nn;            #node nummer
+var nPos;          #position of triphon context
+var nObsev;        #state occupancy number
+var TriRec;
+var nPo;
+
+var nGaus;        #counter of the gaus function (mean and Sdev)
+  var THRESTHOLD;    #Threshold of the likelihood increase
+  var maxDISTANCE;   #likelihood increase
+  var nDISTANCE;    #number of splitting to know that at less one split exist
+data idLocalTriphones;
+
+  # === Initialization ======================================================== # ==================================== #
+  THRESTHOLD 800 -vset;                                                         #set the thresthold of likelihood increase
+  nGaus 0 -vset;                                                                #set the first Gaus counter
+  
+  "statNr"   -type long iDecision -addcomp;
+  "PhonNr"   -type long iDecision -addcomp;
+  "PosiNr"   -type long iDecision -addcomp;
+  "QuesNr"   -type long iDecision -addcomp;
+  "NodeNr"   -type long iDecision -addcomp;
+  "GausNr"   -type long iDecision -addcomp;
+  "ExplNr"   -type long iDecision -addcomp;
+1 iDecision -allocate;
+
+  idTriphones 2 idLocalTriphones -sortup;                                       # sort triphones by center phoneme
+  idLocalTriphones 2 iTriCompr -compress;                                       # compress the center phoneme to find number of triphones with same center phoneme  
+  iTriCompr idPhonemTab 0 0 idCenter -gen_index;                                # Convert center phoneme symbols to phoneme indices
+  0 0 iTriCompr -get_cname idCenter -set_cname;                                 # set comp. name of phoneme indices to "lab2"
+  iTriCompr idCenter -join;                                                     # join components of compressed data to <code>idCenter</code>
+  idCenter 1 1 idCenter /comp -delete;                                          # remove 2nd comp. containing phoneme symbols
+ 
+  1 nStatNr =;                                                                  # set <code>nStatNr</code> to 1 (first triphon state)
+  label __L_STATNR                                                              # define label to loop over all triphone states
+  nStatNr 4 < if                                                                # >> loop over all three triphone states
+    0 nPhoNr =;                                                                 #    start each triphone state at first phoneme
+    label _L_PHONR                                                              #    define label to loop over all center phonemes
+    nPhoNr idCenter.nrec < if                                                   #    >> loop over all center phonemes
+
+      #select Triphone with the same central phoneme and the same position in the state
+      idLocalTriphones ${idCenter[nPhoNr,1]} ${idCenter[nPhoNr,2]} idTriSameCenter /rec -select; 
+
+      #save into the root node 
+      "data" "" -CFG_get_path "/" + "exp" "" -CFG_get + "/stat_${nStatNr}/_PHON_${nPhoNr}_0.dn3" + idTriSameCenter -save;
+
+      idTriSameCenter -reset;                                                   # reset                                #
+      0 Nn =;          # root node counter
+      1 nn =;
+      label __L_DECIS_1
+      Nn nn < if
+          # Restore the triphone from the root node
+         "data" "" -CFG_get_path "/" + "exp" "" -CFG_get + "/stat_${nStatNr}/_PHON_${nPhoNr}_${Nn}.dn3" + idTriSameCenter -restore
+         
+         #find the best split to split these states into child nodes
+         idTriSameCenter Triphon_List_A Triphon_List_B maxDISTANCE nDISTANCE -triphone_seach_questions;
+         maxDISTANCE THRESTHOLD > if     #Condition that the likelihood increase not exceed the throshold      
+            nDISTANCE 1 > if             # if one split at less exist
+               "..SAVE\n" -echo
+               
+               #save the first child Triphon list with the answer "yes" of the phonetic question
+               #"$HOME/uasr/mydata1/Triphon_list/STAT_${nStatNr}/_PHON_${nPhoNr}_${nn}.dn3" Triphon_List_A -save
+               "data" "" -CFG_get_path "/" + "exp" "" -CFG_get + "/stat_${nStatNr}/_PHON_${nPhoNr}_${nn}.dn3" + Triphon_List_A -save  #into the CD
+
+               nn ++=;       #next node counter
+                
+               #save the first child Triphon list with the answer "no" of the phonetic question               
+               #"$HOME/uasr/mydata1/Triphon_list/STAT_${nStatNr}/_PHON_${nPhoNr}_${nn}.dn3" Triphon_List_B -save
+               "data" "" -CFG_get_path "/" + "exp" "" -CFG_get + "/stat_${nStatNr}/_PHON_${nPhoNr}_${nn}.dn3" + Triphon_List_B -save  #into the CD
+
+               nn ++=;       #next node counter
+               ${Nn}           0 4 iDecision -dstore    #store the node number
+               -1              0 5 iDecision -dstore    #store -1 into the Gaus component: no leaf node
+               idTriSameCenter.nrec 0 6 iDecision -dstore    #strore the number of example triphon each parent node
+               iDecision   DECISION -cat                #cat iDecision into the decition tree table
+            else
+               goto __L_DECIS_2
+            end
+         else
+            label __L_DECIS_2            #label to indentify the case of leaf node
+            "..FINITO\n" -echo;
+            ${nStatNr} 0 0 iDecision -dstore #store the state number
+            ${nPhoNr}  0 1 iDecision -dstore #store the index of phoneme 
+            -1         0 2 iDecision -dstore #store -1 into the position of the question: no question
+            -1         0 3 iDecision -dstore #store -1 into the phone class of the question: no question
+            ${Nn}      0 4 iDecision -dstore #store the node number
+         
+            #find the mean vector and the standard deviation of the leaf node
+            idTriSameCenter C_Mean C_Sdev nStatNr OBSERVATION -triphone_mean_std_dev;
+
+            ${nGaus}        0 5 iDecision -dstore # store the Index of the Gaus distribution
+            idTriSameCenter.nrec 0 6 iDecision -dstore #strore the number of example triphon each leaf node
+            iDecision   DECISION -cat             #cat the result into the decition tree table
+            nGaus ++=;      #next gaus index
+            C_Mean MEAN -cat    #cat the mean vectore each leaf node into mean table result
+            C_Sdev SDEV -cat    #cat the standard deviation vectore each leaf node into SDEV table result 
+            C_Mean   -reset;      #reset mean vector for the next leaf node
+            C_Sdev   -reset;      #reset  standard deviation vector for the next leaf node
+         end
+
+         Nn ++=;               #next node number
+         Triphon_List_A -reset;   #reset the both child triphon list
+         Triphon_List_B -reset;
+         maxDISTANCE     -reset;  #reset likelihood for the next split 
+         idTriSameCenter -reset;       #reset the parent triphon-list for the next child list
+         goto  __L_DECIS_1      #end of the split and iteration to the next split 
+      end                     #end of the decision tree
+      ".......__TRIPHON_${nPhoNr}\n\n" -echo
+
+      nPhoNr ++=;    #next central phonem to the next decision tree
+      goto _L_PHONR       #goto to next decision tree
+   end                  #end of decition tree with the same state index
+
+   nStatNr ++=;    #next state index
+   goto __L_STATNR
+ end                  #end of all decision tree
+
+  #parameter of Gaus distribution
+  "log" "" -CFG_get_path "/mean.dn3" + MEAN -save;                              # save mean vector
+  "log" "" -CFG_get_path "/sdev.dn3" + SDEV -save;                              # save standard deviation vector
+
+  "log" "" -CFG_get_path "/DECISION_TABLE.dn3" + DECISION -save;                # save decision tree
+}
+
+
+
+##
+## Gather to find the best split to split these states into child nodes
+##
+## @param idTriSameCenter  data 
+##                    Triphon list with same central phonem
+## @param iTriList_J  data
+##                    first output list after the split "yes"
+## @param iTriList_N  data
+##                    second output list after the split "no"
+## @param maxDISTANCE data
+##                    maximal likelihood increased
+
+function -triphone_seach_questions(idTriSameCenter,iTriList_J,iTriList_N,maxDISTANCE,nDISTANCE)
+{
+  # === Declarations ========================================================== # ==================================== #
+
+data iTriList    #Triphon list with same central phonem
+data iDistanceList #table of all the splitting to fing the best split
+data iDistance     #Record table of one splitting
+data TriPhonClass
+var nDistance      #distance of one split
+var QuestionNr     #counter of the phonetic question
+var PositionNr     #counter of the context phonem
+var Priz
+var nDec           #counter to decide the situation of state occupancy
+var ObservNrP      #number of state occupancy of the triphon list parent
+var ObservNrC1     #number of state occupancy of the first triphon list child
+var ObservNrC2     #number of state occupancy of the second triphon list child
+var nPo_J          #record number of the first triphon list child 
+var nPo_N          #record number of the second triphon list child
+var nPo            #record number of the triphon list parent
+var W              #
+var iDistRec       #maximal record of the splitting table
+var nThreshold;
+1 W =;
+800 nThreshold =;
+0 nDec =;
+
+
+#--Initialization instances------------------------------------------------
+ idTriSameCenter iTriList -copy      #copy the configuration skript $1 into iTriList
+
+ "statNr"  -type long iDistance -addcomp
+ "PosNr"   -type long iDistance -addcomp
+ "QuestNr" -type long iDistance -addcomp
+ "Distanz" -type long iDistance -addcomp
+ 1 iDistance -allocate
+ #2 PositionNr =;       #Initialization of the left context phonem 
+ 1 PositionNr =;       #Initialization of the left context phonem 
+
+ #--Start Programm---------------------------------------------------------
+ label __L_POSITION
+# PositionNr 5 < if                      
+  PositionNr 4 < if                      
+                     
+   0 QuestionNr =;     #for the first question
+   
+   label __L_QUESTION
+   QuestionNr 41 < if     #Until 41 Questions
+
+      #find the both Triphone list (J & N) after the split of iTriList  depending  the question
+      iTriList ${PositionNr} ${QuestionNr} iTriList_J iTriList_N -triphone_loock_for_table;
+    
+      iTriList_J.nrec nPo_J =;    #set the maximal record of the first triphon list child
+      iTriList_N.nrec nPo_N =;    #set the maximal record of the second triphon list child 
+      iTriList.nrec nPo =;         #set the maximal record of the second triphon list parent
+      nPo --=; 
+  
+      nPo_J 2 < if            #the child must have at less two record     
+         goto __L_CONT_1     #if's not the case, no distance ist compited
+      end
+
+      nPo_J nPo > if          #the child must not habe the same record like the parent
+         goto __L_CONT_1     #if's the case, no distance ist compited
+      end
+
+      nPo_N 2 < if            #the child must have at less two record 
+         goto __L_CONT_1     #if's not the case, no distance ist compited
+      end
+
+      nPo_N nPo > if          #the child must not habe the same record like the parent
+         goto __L_CONT_1     #if's the case, no distance ist compited
+      end
+
+      #find the priz that the state occupancy doesn't exceed 800
+      iTriList iTriList_J iTriList_N nDec nThreshold -triphone_priz_obtion;
+
+      nDec 1 < if            #if the state occupancy exceed 800  
+         goto __L_CONT_1    #no distance ist compited
+      else
+         goto __L_CONT_0    #the distance ist compited
+      end   
+      label __L_CONT_0     
+
+      #computed the maximal Likelihood increased (max. distance). 
+      LOG_LIKELIHOOD iTriList iTriList_J iTriList_N nStatNr  nDistance
+
+      ${nStatNr}    0 0 iDistance -dstore      #store the state counter of one splitting
+      ${PositionNr} 0 1 iDistance -dstore      #store the context phonem (left=2,right=4)
+      ${QuestionNr} 0 2 iDistance -dstore      #store the phonem class for the question
+      ${nDistance}  0 3 iDistance -dstore      #store the distance of one splitting
+      iDistance  iDistanceList -cat            #cat this record into the table
+
+      label __L_CONT_1      
+      QuestionNr ++=;   #next question           
+      iTriList_N  -reset;         #reset the both child triphon list
+      iTriList_J  -reset;
+      goto __L_QUESTION          #next split with the next question
+   end                         #end of all the split with the same context phonem of triphon
+   2 PositionNr +=;     #next position of triphon label
+   "----" -echo
+   iTriList_N   -reset;      #reset the both child triphon list
+   iTriList_J   -reset;
+   goto __L_POSITION       #goto to the next split
+ end                     #end of all the split 2 (context) time 41 (question)=82 (splittings)
+
+ iDistanceList.nrec iDistRec =; #set the maximal record of the splitting table 
+ iDistRec nDISTANCE  =;               
+
+ iDistRec 0 > if            #if at less one split exist
+
+    #sort down the component of split table to find the (best)split with the maximal distance
+    iDistanceList 3 iDistanceList -sortdown   
+
+    #hier is the best split of the triphon list with the best question
+    LOOCK_FOR_TABLE iTriList ${iDistanceList[0,1]} ${iDistanceList[0,2]} iTriList_J iTriList_N
+    "Zustand Nr:${iDistanceList[0,0]} Posit.Triphon:${iDistanceList[0,1]} und Question:${iDistanceList[0,2]}" -echo
+    ${nStatNr}    0 0 iDecision -dstore     #store the index state number for the best splitting
+    ${nPhoNr}      0 1 iDecision -dstore    #store the index of the central phon for the best splitting
+    :iDistanceList[0,1]: 3 < if        #to indentify the left or right of the question
+        1  0 2 iDecision -dstore     #left = 1
+    else 
+        0  0 2 iDecision -dstore     #right =0
+    end 
+    ${iDistanceList[0,2]} 0 3 iDecision -dstore  #store the best question index
+#    $4=iDistanceList[0,3];       #output of the maximal likelihood
+     :iDistanceList[0,3]: maxDISTANCE =;
+#    iTriList_J $2 -copy          #output of the first child after the spitting
+#    iTriList_N $3 -copy          #output of the second child after the splitting
+ else                       #no computing of distance and no splitting
+   "..NICHT.." -echo
+ end
+
+}
+
+
+
+##
+## Gather to find the both child Triphone list (J & N) after the split
+## of the parent triphon list depending  the question 
+##
+## @param iTriList parent Triphon list
+## @param PositionNr counter of the context phonem
+## @param QuestionNr counter of the phonetic question
+## @param iTriList_J first output child after the split "yes"
+## @param iTriList_N second output child after the split "no"
+
+function -triphone_loock_for_table(iTriList,PositionNr,QuestionNr,iTriList_J,iTriList_N)
+{
+  # === Declarations ========================================================== # ==================================== #
+  data iTriMonPhonTab_1      #first output child after the split "yes" 
+  data iTriMonPhonTab_0      #second output child after the split "no"
+ data iTriMonHelp           #select record list to answer the question
+  data idPhonQuestionTable;                                                     # phonem(rec)-question(comp)-table     #
+  data idPhonemTab;                                                             # table of all monophones              #
+ data iIndex                #index of the triphon list fron the usephonem 
+ var nIndex                 #counter record of Index
+
+  # === Restore monophone table =============================================== # ==================================== #
+
+  .idPhonemTab if                                                               # if: is there a table with monophones #
+    .idPhonemTab idPhonemTab =;                                                 #   copy it to locale monophone table  #
+  else                                                                          # else: restore it from file           # 
+    "mlab" -type char[3] idPhonemTab -addcomp;                                  #   add monophone name component       #
+    "nn"   -type short   idPhonemTab -addcomp;                                  #   add comp. for number of HMM nodes  #
+    "v/uv" -type short   idPhonemTab -addcomp;                                  #   add comp. holding voiced/unvoiced  #
+    "alab" -type char[6] idPhonemTab -addcomp;                                  #   add abstract model label comp.     #
+    "info" "" -CFG_get_path "/monophones.txt" +                                 #   get path to monophones and         #
+      "ascii" idPhonemTab stdfile -import;                                      #   restore monotable from file        #
+  end                                                                         # end                                #
+  
+  # === Restore phoneme question table ======================================== # ==================================== #
+
+  .idPhonQuestionTable if                                                       # if: is there a phonem question table # 
+    .idPhonQuestionTable idPhonQuestionTable =;                                 #   copy it to locale question table   #
+  else                                                                          # else: create it!                     #
+    data idPhonemClasses;                                                       #   helper object                      #
+    "info" "" -CFG_get_path "/monophone_classes.txt" +                          #   get path to monophones classes and #
+      "ascii" idPhonemClasses stdfile -import;                                  #   restore monophonem classes         #
+    idPhonemTab idPhonemClasses idPhonQuestionTable                             #   call function to create question   #
+      -triphone_table_phon_question;                                            #   table                              #
+  end                                                                         # end                                #
+
+  # === Processing ============================================================ # ==================================== #
+
+  iTriList idPhonemTab PositionNr 0 iIndex -gen_index;                          # get symbol indecies of triphon list
+  0 nIndex =;
+  label __L_TAB
+  nIndex iIndex.nrec < if              
+    :idPhonQuestionTable[(iIndex[nIndex,0]),QuestionNr]: 0 > if                 #if the phonem class of the question has the label 
+                                                                                #(index (iIndex[nIndex,0])) for the use phonem 
+                                                                                #it mean if the question answer "yes"          
+      iTriList nIndex 1 iTriMonHelp /rec -select;                               #select one record of the first child (yes)  
+      iTriMonHelp iTriMonPhonTab_1 -cat;                                        #cat it into the first child table 
+    else
+      iTriList nIndex 1 iTriMonHelp /rec -select;                               # select one record of the second child (no)
+      iTriMonHelp iTriMonPhonTab_0 -cat;                                        # cat it into the second child table
+    end                                                                       # end the first answer of the record  
+    iTriMonHelp -reset;                                                         # reset select record list 
+    nIndex ++=;                                                                  
+    goto __L_TAB                                                                # goto to the next record to select...
+  end                                                                         # end of the select
+  iTriMonPhonTab_1 iTriList_J -copy;                                            # copy the first output
+  iTriMonPhonTab_0 iTriList_N -copy;                                            # copy the second output
+}
+
+## Gather to find the mean vector and the standard deviation vector
+## of the parent triphone list
+## AUTHOR:  P. C. Fokam Nkwonkam
+##
+## @param idTriSameCenter data 
+##          Triphon list
+## @param C_Mean data
+##          mean vector output
+## @param C_Sdev data 
+##          standard deviation vbector output
+## @param nStatNr var
+##          state counter
+## @param nObserv var
+##          state occupancy (observation counter)
+function -triphone_mean_std_dev(idTriSameCenter,C_Mean,C_Sdev,nStatNr,nObserv)
+{
+  # === Declaration =========================================================== # ==================================== #
+
+  hmm  itAM;                                                                    # acoustic triphone model with pfsm    #
+  data idAux;                                                                   # auxiliary data object                #
+  data idStat;                                                                  # observations of each triphone with.. #
+                                                                                # .. same center monophone             #
+ data d_Mean;     #mean vector of the triphon list
+ data dQ_Mean;    #mean vector square of the triphon list
+ data dQS_Mean;   #mean mult with the observation list
+ data dM_Mean;    #mean vector multiplied with the observation
+ data c_Mean;     #mean vector of the state (inside the node)
+ data cQ_Mean;    #mean vector square of the state
+ data dSdev;      #Standard deviation vector of the state (inside the node)
+ data MyTAB;
+ data iIndex;
+ data MyComp;     #table to compress the triphon stat
+ data MySEL;      #index of triphon list with the same state counter
+ data _MySEL;     #Gauﬂ index of the Triphom list
+ data _iIndex;    #table of triphon-Gaus-Index 
+
+  # === Initialisation ======================================================== # ==================================== #
+
+  "model" "" -CFG_get_path "/0_0.hmm" + itAM -restore;                          # restore HMM                          #
+  idTriSameCenter "nobs" idTriSameCenter -find_comp 1 idStat -select;           # get observations of each triphone..  #
+                                                                                # .. with same center monophone        #
+  idStat NULL 0 "sum" idAux /rec -aggregate;                                    # sum different occupancies to find..  #
+                                                                                # .. total center monophone occupancy  #
+  0 0 idAux -fetch nObserv = ;                                                  # store total center monoph. occupancy #
+
+  # === get the triphon list with their Gauss distribution parameter index ==== # ==================================== #
+
+  idTriSameCenter itAM.ud "lab" idTriSameCenter -find_comp                      # convert tri. with same center into.. #
+    itAM.ud.IC_UD_NAME idAux -gen_index;                                        # .. curresponding tri. model index    # 
+  idAux 0 idAux -sortup;                                                        # sort up by triphone model indices    # 
+  "gdpi" -type int idAux -addcomp;                                              # add comp. for Gauss dist. index      #
+  0 var nCounter;
+  0 var nCounter2;
+  0 var nTemp;
+  label __L_LOOP
+  nCounter itAM.ud.nrec < if
+    nCounter itAM.ud.IC_UD_XS  itAM.ud -fetch 2 - nTemp + nTemp =; 
+    nCounter2 0 idAux -fetch nCounter if
+      nStatNr 1 - nTemp + nCounter2 1 idAux -store;
+      nCounter2 ++=;
+    end
+    nCounter ++=;
+    goto __L_LOOP
+  end
+  idAux 0 1 iIndex -delete;
+
+#  itAM.sd 0 1 MyTAB /rec -delete;                                               # delete the first record  ????        #
+#  MyTAB 1 MyComp -compress;                                                     # compress by second component "~LYR"  #
+#  MyComp 1 1  MySEL -select           #select the index of triphon list with the first state counter
+# MyComp 1 2 MyComp -delete           #get all the triphon list
+# MySEL :nStatNr-1: "add" MySEL -scalop      #select the index of triphon list with the "$4" state counter
+# MySEL 0 MyTAB 2 1 _MySEL -lookup    #get the Gauﬂ index of the Triphom list
+# _MySEL MyComp -join                 #join its to the triphons labels
+# idTriSameCenter 0 MyComp 0 _iIndex -gen_index    #get the triphon list in the triphon-Gaus-Index table
+# _iIndex 0 MyComp 1 1 iIndex -lookup #lookup to get the triphon list with their Gaus 
+                                     #distribution parameter index
+
+  # === mean vector-------------------------------------------------------------------------------------
+ iIndex 0 itAM.gm.mean 0 itAM.gm.mean.dim d_Mean -lookup   #get the mean vector of the triphon list
+ d_Mean idStat "mult" dM_Mean -scalop_d       #multiplied it with the observation of triphon list
+ dM_Mean NULL 0 "sum" c_Mean /rec -aggregate   #aggregate and divise with the observation...
+ c_Mean nObserv "div" c_Mean -scalop            #...to get the mean vector of the state
+ c_Mean C_Mean -copy                               #copy the result to the output
+
+#--Standard derivation vector---------------------------------------------------------------------
+ c_Mean c_Mean "mult" cQ_Mean -scalop_d         #get the mean vector square of the triphon list
+ d_Mean d_Mean "mult" dQ_Mean -scalop_d         #get the mean vector square of the state
+ dQ_Mean idStat "mult" dQ_Mean -scalop_d       #mult its with the observation list
+ dQ_Mean NULL 0 "sum" dQS_Mean /rec -aggregate  #aggregate with the "sum" and divise with 
+ dQS_Mean nObserv "div" dQS_Mean -scalop         #and "diff" its to get the Standard
+ dQS_Mean cQ_Mean "diff" dSdev -scalop_d        #deviation vector of the state (inside the node
+ dSdev C_Sdev -copy                                 #copy the result to the output
+
+}
+
+
+
+
+## Gather to find the priz that the state occupancy doesn't exceed 800
+##
+## @param iTriList     parent triphon list 
+## @param iTriList_J   first child list after the split "yes"
+## @param iTriList_N   second child list after the split "no"
+## @param nDec         counter to decide state occupancy
+## @param nThreshold   state occupancy thresthold ist 800
+##
+function -triphone_priz_obtion(iTriList,iTriList_J,iTriList_N,nDec,nThreshold)
+{
+
+  #--Define instances -------------------------------------------------------
+  data iTriListPriz;       #priz of the parent
+  data iTriListPriz_J     #priz of the first child
+  data iTriListPriz_N     #priz of the second child
+  var nPriz               #priz counter
+
+#--Start Programm---------------------------------------------------------
+ iTriList 1 1 iTriListPriz -select            #select the priz list of the parent
+
+ #aggregate to get the priz of the parent
+ iTriListPriz NULL 0 "sum" iTriListPriz /rec -aggregate 
+
+ :iTriListPriz[0,0]-26: nPriz =;             #priz of parent-26; the minimal priz ist
+                                       #25. (-26) mean at less one split 
+ iTriList_J 1 1 iTriListPriz_N -select         #select the priz list of the first child
+
+ #aggregate to get the priz of the first child
+ iTriListPriz_N NULL 0 "sum" iTriListPriz_N /rec  -aggregate
+ :iTriListPriz_N[0,0]: nPriz > if   #the child's priz must not great then then parent's 
+    0 nDec =;                      #if it's not the case->decide=0
+    goto __E_ENDE              
+ else
+     :iTriListPriz_N[0,0]: nThreshold > if #priz of the first child must not exceed the thresthold=800
+        -1 nDec =;                  #if it's not the case->decide=-1
+        goto __E_ENDE
+     else
+       1 nDec =;                   #if it's the case, look for the second child
+       goto __E_CONT
+     end
+ end
+ label __E_CONT
+ iTriList_N 1 1 iTriListPriz_J -select  #select the priz list of the second child
+
+ #aggregate to get the priz of the second child
+ iTriListPriz_J NULL 0 "sum" iTriListPriz_J /rec  -aggregate
+ :iTriListPriz_J[0,0]: nPriz > if  #the child's priz must not great then then parent's
+   0 nDec =;                       #if it's not the case->decide=0
+   goto __E_ENDE
+ else
+   :iTriListPriz_J[0,0]: nThreshold < if  #priz of the second child must not exceed the thresthold=800
+        -1 nDec =;                 #if it's not the case->decide=-1
+        goto __E_ENDE
+   else
+       nDec=1;                  #if it's the case, the condition ist reach
+       goto __E_ENDE
+     end
+  end
+label __E_ENDE
+}
+
+
+
+
+## 
+## Gather to compute the maximal Likelihood increased (max. distance)
+##
+## @param iTriList      parent Triphon list
+## @param iTriList_J    first child triphon list after the split
+## @param iTriList_N    second child list after the split
+## @param nStatNr       state number counter
+## @param nDistance     maximal likelihood increased
+##                       
+function -triphone_log_likelihood(iTriList,iTriList_J,iTriList_N,nStatNr,nDistance)
+{
+  # --- Define instances ------------------------------------------------------
+
+ data c_MeanP        #mean vector of the parent triphone list 
+ data c_SdevP        #standard deviation vector of the parent triphone list
+ data c_SdevD1       #division of (c_SdevP/c_SdevC1)
+ data c_SdevD2       #division (c_SdevP/c_SdevC2)
+ data c_SdevDQL1   #Logarithm (log(c_SdevP/c_SdevC1)
+ data c_SdevDQL2   #Logarithm (log(c_SdevP/c_SdevC2)
+ data c_MeanC1     #mean vector of the  first triphone list
+ data c_SdevC1     #standard deviation vector of the first triphone list
+ data c_MeanC2     #mean vector of the second triphone list
+ data c_SdevC2     #standard deviation vector of the second triphone list
+ data Distanz1     #first part of the distance
+ data Distanz2     #second part of the distance
+ data Fdistanz     #distance (likelihood of the splitting)
+
+#--Initilazation instaces--------------------------------------------------------------
+
+ #find the mean vector and the standard deviation vector of the parent triphone list
+ iTriList c_MeanP c_SdevP nStatNr ObservNrP -triphone_mean_std_dev;
+
+ #find the mean vector and the standard deviation vector of the first child triphone list
+ iTriList_J c_MeanC1 c_SdevC1 nStatNr ObservNrC1 -triphone_mean_std_dev;
+
+ #find the mean vector and the standard deviation vector of the second child triphone list
+ iTriList_N c_MeanC2 c_SdevC2 nStatNr ObservNrC2 -triphone_mean_std_dev;
+
+#--programm start----------------------------------------------------------------------  
+
+ #Computed the first part of the distance 
+ c_SdevP c_SdevC1 "div" c_SdevD1 -scalop_d     #get the division (c_SdevP/c_SdevC1)
+ c_SdevD1  0 "log" c_SdevDQL1 -scalop          #get the Logarithm (log(c_SdevP/c_SdevC1)
+ c_SdevDQL1 NULL 0 "sum" Distanz1 -aggregate   #get with aggregate the summe of D(=25)-Dimentional
+ Distanz1 ObservNrC1 "mult" Distanz1 -scalop   #mutliplied the first computing with the state... 
+                                               #...of the first child Triphon list 
+ #Computed the second part of the distance
+ c_SdevP c_SdevC2 "div" c_SdevD2 -scalop_d     #get the division (c_SdevP/c_SdevC2)
+ c_SdevD2  0 "log" c_SdevDQL2 -scalop          #get the Logarithm (log(c_SdevP/c_SdevC2)
+ c_SdevDQL2 NULL 0 "sum" Distanz2 -aggregate   #get with aggregate the summe of D(=25)-Dimentional
+ Distanz2 ObservNrC2 "mult" Distanz2 -scalop   #mutliplied the second computing with the state...
+                                               #...of the second child Triphon list 
+ Distanz2 Distanz1 "add"  Fdistanz -scalop_d   #add the both part of distand
+ Fdistanz 0.5 "mult"  Fdistanz -scalop         #multiplied the result with 1/2
+ :Fdistanz[0,0]: nDistance =;                             #get the output of the distance
+ Fdistanz -reset;                                #reset
+
+}
+
+
+function -FEA_load_triphone(sFile,idDst)
+{
+  idDst -reset;                                                                 # Clear feature vector sequence
+  sFile idDst /noerror -restore;                                                # Try to load features from file
+  idDst -is_empty if                                                            # Load failed or file empty >>
+    "Load FAILED or file empty, skipping"                                -MSG2; #   Protocol
+     FALSE return;                                                              #   Return FALSE
+  end                                                                         # <<
+  "\n  $sFile contains $[idDst.nrec] frames. "                         3 -MSGX; # Protocol
+  var bCmpr; "fea.savecompressed" FALSE -CFG_get bCmpr -bset;                   # Decompress features?
+  bCmpr if idDst idDst -dequantize; end                                       # Decompress featurea!
+  idDst "lab" idDst -find_comp -triphone_mono2triphone;
+  idDst "lab" idDst -find_comp "uasr.am.hmm_1" "" -CFG_get -triphone_make_valid;
+  TRUE return;                                                                  # Ok
+}
+
+function -FEA_load_monophone(sFile,idDst)
+{
+  idDst -reset;                                                                 # Clear feature vector sequence
+  sFile idDst /noerror -restore;                                                # Try to load features from file
+  idDst -is_empty if                                                            # Load failed or file empty >>
+    "Load FAILED or file empty, skipping"                                -MSG2; #   Protocol
+     FALSE return;                                                              #   Return FALSE
+  end                                                                         # <<
+  "\n  $sFile contains $[idDst.nrec] frames. "                         3 -MSGX; # Protocol
+  var bCmpr; "fea.savecompressed" FALSE -CFG_get bCmpr -bset;                   # Decompress features?
+  bCmpr if idDst idDst -dequantize; end                                       # Decompress featurea!
+idDst "lab" idDst -find_comp .idTemp -sortup;
+.idTemp "lab" .idTemp -find_comp .idTemp -compress;
+.idTemp 1 1 .idTemp -delete;
+var nCounter1;
+var nCounter2;
+var sTemp;
+var nTemp;
+0 nCounter1 =;
+label __L_1;
+nCounter1 .idTemp.nrec < if
+  0 nCounter2 =;
+  label __L_2;
+  nCounter2 .idPhonemCount.nrec < if
+    nCounter1 0 .idTemp -fetch sTemp =;
+    sTemp nCounter2 0 .idPhonemCount -fetch == if
+      nCounter1 1 .idTemp -fetch nTemp =;
+      nCounter2 1 .idPhonemCount -fetch nTemp + nTemp =;
+      nTemp nCounter2 1 .idPhonemCount -store;
+      goto __L_NEXT;
+    end
+    nCounter2 ++=;
+    goto __L_2;
+  end
+  label __L_NEXT;
+  nCounter1 ++=;
+  goto __L_1;
+end
+
+  TRUE return;                                                                  # Ok
+}
+
+## Kopie von fea.itp + Transformation monophone -> triphone (letzten Zeilen)
+## findet Verwendung in durch HMM_eval(..) Zeile 601 in train/am.itp
+function -FEA_get_triphone(iF,sSns,bForcePfa,idFea)
+{
+  ## Check/create session persistent variables                                  # -------------------------------------
+  ".__bCprFea" "var" ?instance not if                                           # Is there a global __bCprFea? No >>
+    var .__bCprFea;                                                             #   Create one
+    ( "fea.savecompressed" FALSE -CFG_get ) .__bCprFea =;                       #   Get compress feature files option
+  end                                                                         # <<
+  ".__sDirFea" "var" ?instance not if                                           # Is there a global __sDirFea? No >>
+    var .__sDirFea;                                                             #   Create one
+    ( "fea" "S" -CFG_get_path ) .__sDirFea =;                                   #   Silently get feature files path
+  end                                                                         # <<
+  ".__sDirSig" "var" ?instance not if                                           # Is there a global __sDirSig? No >>
+    var .__sDirSig;                                                             #   Create one
+    ( "sig" "S" -CFG_get_path ) .__sDirSig =;                                   #   Silently get signal files path
+  end                                                                         # <<
+  ".__bF0Fea" "var" ?instance not if                                            # Is there a global __bF0Fea? No >>
+    var .__bF0Fea;                                                              #   Create one
+    ( "fea.f0" FALSE -CFG_get ) .__bF0Fea =;                                    #   Get F0-as-feature option
+  end                                                                         # <<
+  ".__sExtFea" "var" ?instance not if                                           # Is there a global __sExtFea? No >>
+    var .__sExtFea;                                                             #   Create one
+    ( "fea.ext" "" -CFG_get ) .__sExtFea =;                                     #   Get feature files extension
+    ( .__sExtFea "1" "left" -VAR_strop ) "." == if                              #   Extension has heading period >>
+      .__sExtFea "-1" "right" -VAR_strop ) .__sExtFea =;                        #     Remove it
+    end                                                                       #   <<
+  end                                                                         # <<
+  ".__bPmFea" "var" ?instance not if                                            # Is there a global __bPmFea? No >>
+    var .__bPmFea;                                                              #   Create one
+    ( "fea.pm" FALSE -CFG_get ) .__bPmFea =;                                    #   Get pitch sync. fea. extr. option
+  end                                                                         # <<
+
+  ## Initialize                                                                 # -------------------------------------
+  idFea -reset;                                                                 # Clear destination object
+  ( sSns -SNS_get_ext ) sSns =;                                                 # Make extension out of sensor name
+  var sF; "$[.__sDirFea]/$[iF.sfile]$[sSns].$[.__sExtFea]" sF =;                # Make path name of feature file
+  .__bPmFea if                                                                  # Pitch sync. feature extraction >>
+    PMproc iPM;                                                                 #   Create pitch mark processor
+    "sig.srate" 16000  -CFG_get iPM set srate;                                  #   Configure PM processor
+    "fea.pm.level" 2.0 -CFG_get iPM set level;                                  #   Configure PM processor
+  end                                                                         # <<
+
+  ## Try loading primary feature vector file                                    # -------------------------------------
+  bForcePfa not if                                                              # Feature extraction not forced >>
+    "\n     - loading: $[sF] ..."                                      3 -MSGX; #   Protocol
+    sF idFea /noerror -restore;                                                 #   Try to load features from file
+  end                                                                         # <<
+  idFea -is_empty if                                                            # Force pfa or load failed >>
+
+    bForcePfa not if " FAILED (or empty)" 3 -MSGX; end                        #   Protocol
+    data idSig;                                                                 #   Signal
+    data idPm;                                                                  #   Pitch marks
+
+    ## Try loading signal file                                                  #   - - - - - - - - - - - - - - - - - -
+    iF sSns idSig -SIG_get;                                                     #   Load signal file
+    idSig -is_empty if                                                          #   Failed >>
+      "Load FAILED or file empty, skipping"                              -MSG2; #     Protocol
+       FALSE return;                                                            #     Return FALSE
+    end                                                                       #   <<
+
+    ## Process pitch                                                            #   - - - - - - - - - - - - - - - - - -
+    .__bPmFea .__bF0Fea || if                                                   #   Processing pitch >>
+      "\n     - pitch sync. analysis"                                  3 -MSGX; #     Protocol
+      "$[.__sDirSig]/$[iF.sfile]$[sSns].pm" sF =;                               #     Make path name of pitch mark file
+      "\n     - loading: $[sF] ..."                                    3 -MSGX; #     Protocol
+      sF "pm" idPm stdfile /noerror -import ?error if                           #     Have NO pitch mark file >>
+        " FAILED, doing pitch analysis ..."                            3 -MSGX; #     Protocol
+        idPm 0 idPm.dim idPm -delete;                                           #       Del. all comps.of PM inst.(?)
+        idSig idPm iPM -analyze;                                                #       Compute pitch marks
+      else                                                                      #     << Have pitch mark file >>
+        idPm -type short idPm -tconvert;                                        #       Convert pitch marks to short
+      end                                                                     #     <<
+    " ok"                                                              3 -MSGX; #     Protocol
+    end                                                                       #   <<
+
+    ## Primary feature analysis                                                 #   - - - - - - - - - - - - - - - - - -
+    .__bPmFea if                                                                #   Pitch sync. feature analysis >>
+      idSig idPm idFea -FEA_pfa;                                                #     Do it
+    else                                                                        #   << Pitch async. feature analysis >>
+      idSig NULL idFea -FEA_pfa;                                                #     Do it
+    end                                                                       #   <<
+
+    ## Add F0 as additional feature component                                   #   - - - - - - - - - - - - - - - - - -
+    ## HACK! Find a general solution for additional feature components!         #
+    .__bF0Fea if                                                                #   Use fundamental freq. as feature >>
+      idPm ( "sig.srate" 16000 -CFG_get ) ( "pfa.crate" 160 -CFG_get )          #     Convert pitch marks to F0 contour
+      idFea.nrec idF0 -PM2F0;                                                   #     |
+      "F0" -type short idFea.dim -- idFea -insertcomp;                          #     Insert F0 feature component
+      :idFea[idFea.dim-2]=idF0[0];                                              #     Copy F0 contour
+    end                                                                       #   <<
+
+  else                                                                          # << Loading features ok >>
+    " ok"                                                              3 -MSGX; #   Protocol
+    .__bCprFea if idFea idFea -dequantize; end                                #   Decompress features!
+  idFea "lab" idFea -find_comp -triphone_mono2triphone;
+  idFea "lab" idFea -find_comp "uasr.am.hmm_1" "" -CFG_get -triphone_make_valid;
+  end                                                                         # <<
+  "\n       "                                                          3 -MSGX; # Protocol
+  " $[idFea.nrec] frames ."                                              -MSG2; # Protocol
+#  "\n     "                                                            3 -MSGX; # Protocol
+
+  TRUE return;                                                                  # Ok
+}
+
+data idTemp;
+#/disarm -FEA_get_triphone /disarm -FEA_get =;
+#/disarm -FEA_load_triphone /disarm -FEA_load =;
+
+## EOF

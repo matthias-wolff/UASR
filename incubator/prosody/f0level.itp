@@ -1,0 +1,76 @@
+## Unified Approach to Speech Synthesis and Recognition
+## - Verbmobil data base functions
+##
+## AUTHOR : Hussein Hussein
+## UPDATE : 
+##          $Revision: 		 $
+## PACKAGE: 
+## RCS-ID : 
+##
+
+
+
+## <p>Postprocessing of F0 contour.</p>
+## @param idF0 data
+##          Data instance of F0 contour (input)
+## @param idLab data
+##          Data instance of postprocessed F0 contour  (output)
+function -Postprocessing_F0_Contour(idF0,idLab)
+{
+
+	var i;
+	var ii;
+	var nF0Diff1;																	# Difference between F0 value and previous F0 value
+	var nF0Diff2;																	# Difference between F0 value and next F0 value
+	var nAbsF0Diff1;
+	var nAbsF0Diff2;
+	var nF0DiffTolerance;															# Tolerance in the difference between two F0 values
+	var nF0MinValue;																# Minimal value of F0
+	var nF0MaxValue;																# Maximal value of F0
+
+
+  	## Initialize                                                                 	# -------------------------------------
+	0 i =;
+	0 ii =;
+	0 nF0Diff1 =;
+	0 nF0Diff2 =;	
+	0 nAbsF0Diff1 =;
+	0 nAbsF0Diff2 =;
+	120 nF0DiffTolerance =;
+	40 nF0MinValue =;
+	500 nF0MaxValue =;
+	
+	## Define a data object structure                                              	# -------------------------------------	
+	"nF0proc" type double idLab -addcomp;
+	
+	
+  	## Postprocessing of F0 Contour                                                 # -------------------------------------
+	1 idLab -reallocate;										    				# Reallocates a new record of memory keeping the contents
+	:idLab[0,0]=idF0[0,0];															# Copy the first F0 value
+			
+	1 i =; 																			# Init a loop counter i	
+	1 ii =; 																		# Init a loop counter ii	
+	label L1;                                             							# Define a jump label named L1
+	i idF0.nrec 1 - < if                                            	 			# If loop counter < (number of records-1)
+		:idF0[i,0]: :idF0[i-1,0]: - nF0Diff1 =;
+		:idF0[i,0]: :idF0[i+1,0]: - nF0Diff2 =;
+		:nAbsF0Diff1=abs(nF0Diff1);
+		:nAbsF0Diff2=abs(nF0Diff2);
+		:idF0[i,0]: 0 != :idF0[i-1,0]: 0 != :idF0[i+1,0]: 0 !=  :idF0[i,0]: nF0MinValue > :idF0[i,0]: nF0MaxValue < nAbsF0Diff1 nF0DiffTolerance < nAbsF0Diff2 nF0DiffTolerance < && && && && && && if
+			ii 1 + idLab -reallocate;										    	# Reallocates a new record of memory keeping the contents
+			:idLab[ii,0]=idF0[i,0];
+			ii ++=;
+		else
+			ii 1 + idLab -reallocate;										    	# Reallocates a new record of memory keeping the contents
+			:idLab[ii,0]=0;
+			ii ++=;			
+		end
+		i ++=;                                              						# Increment loop counter i
+  		goto L1;                                            						# Jump to label L1
+	end                                                 							# End of conditional branch
+
+}
+
+
+
+## EOF

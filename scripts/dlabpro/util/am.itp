@@ -1,0 +1,303 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: Acoustic model
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Checks a acoustic model instance for consistency.
+##
+## @cgen:index
+## @param itAM hmm
+##          The acoustic model
+## @return <code>TRUE</code> if successful, <code>FALSE</code> otherwise
+function -AM_check(itAM)
+{
+  5 itAM.ud -get_cname "~XL" != if FALSE return end;
+
+  ## TODO: Implement!
+  TRUE return;
+}
+
+## Adaptation.
+##
+## @cgen:index
+## @param iS statistics
+##          Statistics containing new mean and standard deviation vectors for
+##          all Gaussians of <code>itHMM</code>
+## @param nWmn number
+##         	Adapted mean vectors weight (0&le;<code>nWmean</code>&le;1)
+## @param nWcv number
+##         	Adapted covariance matrices weight (0&le;<code>nWsdev</code>&le;1)
+## @param itAM hmm
+##          hmm instance to be adapted
+## @return <code>TRUE</code> if successful, <code>FALSE</code> otherwise
+##
+## @global &lt;uasr.am.adapt.imean&gt; R
+## @global &lt;uasr.am.adapt.icov&gt;  R
+function -AM_adapt(iS,nWmn,nWcv,itAM)
+{
+  iS not if FALSE return; end                                                   # No adaptation statistics -> forget it
+
+  data idMa;  idMa iS -mean;                                                    # Adaptation mean vectors
+  data idCa;  idCa iS -cov;                                                     # Adaptation covariance matrices
+#  data idVa;  idVa iS -var;                                                     # Adaptation variance vectors
+  data idIa;  idIa iS -freq;                                                    # Adaptation sample sizes
+  data idMh;                                                                    # HMM mean vectors
+  data idCh;                                                                    # HMM covariance matrices
+  data idA;                                                                     # Adaptation data (one Gaussian)
+  data idH;                                                                     # HMM data (one Gaussian)
+#  data idWc;                                                                    # Covariance weighting matrix
+  var  nC;                                                                      # Current Gaussian
+  var  nCm;                                                                     # Actually adapted mean vectors
+  var  nCc;                                                                     # Actually adapted covariance matrices
+  var  nXC;  itAM.gm.mean.nrec                          nXC  =;                 # Number of Gaussians
+  var  nXN;  itAM.gm.mean.dim                           nXN  =;                 # Gaussian dimension
+  var  nImn; "am.adapt.imean" :nXN:     "S" -CFG_get_ex nImn =;                 # Get minimal sample size for adapting
+  var  nIcv; "am.adapt.icov"  :nXN*nXN: "S" -CFG_get_ex nIcv =;                 # Get minimal sample size for adapting
+
+  ## Limit weights                                                              # -------------------------------------
+  nWmn 0 < if 0 nWmn =; end                                                     # Mean weight must be >= 0
+  nWmn 1 > if 1 nWmn =; end                                                     # Mean weight must be <= 1
+  nWcv 0 < if 0 nWcv =; end                                                     # Std. deviation weight must be >= 0
+  nWcv 1 > if 1 nWcv =; end                                                     # Std. deviation weight must be <= 1
+
+  ## Thoroughly check statistics before doing anyting                           # -------------------------------------
+  ( idMa.nrec nXC == not ) ( idCa.nblock nXC == not ) || if                     # Wrong number of classes >>
+    "Expect $[nXC] stats. classes (have $[idMa.nrec])." -ERROR;   FALSE return; #   Error message, forget it
+  end                                                                           # <<
+  ( idMa.dim nXN == not ) ( idCa.dim nXN == not ) || if                         # Wrong dimension >>
+    "Expect $[nXN] stats. dimensions (have $[idMa.dim])." -ERROR; FALSE return; #   Error message, forget it
+  end                                                                           # <<
+
+  ## Compute adapted Gaussian data                                              # -------------------------------------
+  "\n\n   Adapting $[nXC] Gaussians"                                      -MSG; # Protocol
+    "\n   - Mean vectors: weight=$[nWmn]; min. sample size=$[nImn]"       -MSG; # Protocol
+    "\n   - Cov.matrices: weight=$[nWcv]; min. sample size=$[nIcv]"       -MSG; # Protocol
+  0 1 -PBAR;                                                                    # Begin progress bar
+  idMh idCh itAM.gm -extract;                                                   # Extract Gaussian data
+  :idCh = inv(idCh);                                                            # Compute covariance matrix
+  #:idWc = (ones(nXN,nXN)-(nWcv*unit(nXN)));                                     # Compute covariance weighting matrix
+  label L_C; nC nXC < if                                                        # Loop over single Gaussians nC >>
+  
+    "\n   - $[nC]: ${idIa[nC,0]} samples ."                              -MSG2; #   Protocol
+    :(nC+1)/nXC: 1 -PBAR;                                                       #   Display progress
+
+    ## Adapt mean vector                                                        #   - - - - - - - - - - - - - - - - - -
+    :idIa[nC,0]: nImn >= if
+      ( nC 1 idMa /rec -xfetch ) idA =;                                         #     Get adaptation mean vector
+      ( nC 1 idMh /rec -xfetch ) idH =;                                         #     Get HMM mean vector
+      :(1-nWmn)*idH + nWmn*idA: 0 1 nC idMh /rec -xstore;                       #     Compute/store adapted mean vec.
+      nCm ++=; 
+      "."                                                                -MSG2; #     Protocol
+    else
+      "[skip mean]"                                                      -MSG2;
+    end
+
+    ## Adapt covariance matrix                                                  #   - - - - - - - - - - - - - - - - - -
+    :idIa[nC,0]: nIcv >= if
+      ( nC 1 idCa /block -xfetch ) idA =;                                       #     Get adaptation covariance matrix
+      ( nC 1 idCh /block -xfetch ) idH =;                                       #     Get HMM covariance matrix
+      :(1-nWcv)*idH + nWcv*idA: 0 1 nC idCh /block -xstore;                     #     Compute/store adapted cov. matr.
+      nCc ++=; 
+      "."                                                                -MSG2; #     Protocol
+    else
+      "[skip cov]"                                                       -MSG2;
+    end
+    ". ok"                                                               -MSG2;
+
+#    ## Adapt main diagonal of covariance matrix                                 #   - - - - - - - - - - - - - - - - - -
+#    ( nC 1 idVa /rec   -xfetch ) idA =;                                         #   Get adaptation variance vector
+#    ( nC 1 idCh /block -xfetch ) idH =;                                         #   Get HMM covariance matrix
+#    :idWc.*idH + nWcv*diag(idA): 0 1 nC idCh /block -xstore;                     #   Compute and store adapted cov.matr.
+#    ". ok"                                                               -MSG2; #   Protocol
+
+    nC ++=; goto L_C;                                                           #   The next one, please!
+  end                                                                           # <<
+  "\n  "                                                                 -MSG2; # Protocol (verbose level 2)
+  "done\n\n   Adapted $[nCm] mean vectors and $[nCc] covariance matrices" -MSG; # Protocol
+
+  ## Resetup Gaussians                                                          # -------------------------------------
+  idMh idCh itAM.gm.mmap itAM.gm -setup ?error not return;                      # Setup adapted Gaussians
+}
+
+## <p>Decoder. There are four possbile types of input data and two possible
+## types of output data (both to be specified through <code>sMode</code>).</p>
+##
+## @cgen:index
+## @param idSrc data
+##          Source data as specified by <code>nMode</code>  (see table above)
+## @param iFI object
+##          A feature information object (may be <code>NULL</code> in modes 2
+##          and 3)
+## @param itAM hmm
+##          The Hidden Markov model to be used for decoding. The automaton
+##          graph is expected to describe an appropriate decoding network. If
+##          <code>itAM</code> contains more than one unit, the function will
+##          decode the input through all networks and store the results in
+##          separate units of <code>idDst</code>.
+## @param nUnit 
+##          Unit to process (may be <code>-1</code> for all units). 
+## @param sMode string
+##          A string of two characters, the first specifies the input data type
+##          committed through <code>idSrc</code>, the second specifies the
+##          output data type to be stored in <code>itDst</code>. A third character
+##          may be given and specifies the search algorithm.
+##          <table cellpadding="3">
+##            <tr><th>1st char.</th><th>Description</th></tr>
+##            <tr><td>0</td><td>Signal (one numeric component)</td></tr>
+##            <tr><td>1</td><td>Primary feature vector sequence</td></tr>
+##            <tr><td>2</td><td>Secondary feature vector sequence</td></tr>
+##            <tr><td>3</td><td>Gaussian neg. log. density array</td></tr>
+##            <tr><th>2nd char.</th><th>Description</th></tr>
+##            <tr><td>A</td><td>Unprocessed path in deconding network</td></tr>
+##            <tr><td>O</td><td>Chain of output symbols</td></tr>
+##            <tr><th>3nd char. (optional)</th><th>Description</th></tr>
+##            <tr><td>D</td><td>Use dynamic programming (default)</td></tr>
+##            <tr><td>T</td><td>Use token passing search</td></tr>
+##            <tr><td>A</td><td>Use synchron a* search</td></tr>
+##            <tr><td>F</td><td>Use forward-backward algorithm</td></tr>
+##          </table>
+## @param itDst fst
+##          The recognition result
+function -AM_decode(idSrc,iFI,itAM,nUnit,sMode,itDst)
+{
+  fstsearch itFsts;                                                             # Search processor
+  fst  itRNU;                                                                   # Recognition network of current unit
+  fst  itRRU;                                                                   # Recognition result of current unit
+  data idFea;                                                                   # Primary feature data
+  data idMsf;                                                                   # Secondary feature data
+  data idNld;                                                                   # Neg. log. Gaussian density array
+  var  nU;                                                                      # ID of unit beeing processed
+  var  nXU;                                                                     # Units to be processed
+  var  nMode1; sMode "1" "left" -VAR_strop nMode1 -vset;                        # Get input mode (first char. of sMode)
+  var  sMode2; sMode "2" "left" -VAR_strop "1" "right" -VAR_strop sMode2 -sset; # Get output mode (sec. char. of sMode)
+  var  sMode3; sMode "3" "left" -VAR_strop "1" "right" -VAR_strop sMode3 -sset; # Get algo mode (third char. of sMode)
+  ".nAMPrune" "uasr.am.decode.prune" 0 -CFG_get_persistent;                     # Get pruning value
+  
+  sMode "" "len" -VAR_strop 3 < if; "D" sMode3 =; end                           # Default algo mode: DP
+  itDst -reset;                                                                 # Reset destination instance
+  nMode1 0 < nMode1 3 > || if "Invalid mode ${nMode1}" -ERROR; leave; end       # Unknown input mode -> sorry ...
+
+  ## Analyzing input data                                                       # -------------------------------------
+  nMode1 0 == if                                                                # Signal data committed >>
+    idSrc NULL idFea -FEA_pfa;                                                  #   Call primary feature analysis
+  end                                                                           # <<
+  nMode1 1 <= if                                                                # Do secondary feature analysis >>
+    nMode1 1 == if idSrc idFea -copy; end                                       #   Primary features committed
+    idSrc iFI itAM.gm.mean.dim idMsf NULL -FEA_sfa;                             #   Call secondary feature analysis
+  end                                                                           # <<
+  nMode1 2 <= if                                                                # Compute neg. log. densities >>
+    nMode1 2 == if idSrc idMsf -copy; end                                       #   Secondary features committed
+    idMsf NULL idNld itAM.gm /neglog -density;                      #"0" -MSG2; #   Compute neg.log. Gaussian densities
+  end                                                                           # <<
+  nMode1 3 == if idSrc idNld -copy; end                             #"1" -MSG2; # Neg. log. density array committed
+  itDst -reset;                                          "." -MSG2; #"2" -MSG2; # Reset target instance
+
+  ## Forward-backward algorithm                                                 # -------------------------------------
+  sMode3 "F" == if                                                              # Forward-backward algorithm >>
+    "itDst.idAlp" "data" ?instance not if data itDst.idAlp end;                 #   Create itDst.idAlp
+    ( nUnit 0 < if 0 else nUnit end ) idNld itDst.idAlp itAM -bwalpha;          #   Do forward-backward algorithm
+    return;                                                                     #   Ready
+  end                                                                           # <<
+
+  ## Viterbi decoding                                                           # -------------------------------------
+  nUnit 0 < if 0 nU =; itAM.ud.nrec nXU =;                                      # Process unit nUnit or loop over all
+  else nUnit nU =; nUnit ++ nXU =; end                                          # units if nUnit < 0
+  0 nU =; label L_UNIT; nU nXU < if                                             # >>
+    :itAM.ud[nU,itAM.IC_UD_XS]: 0 == if nU ++=; goto L_UNIT; end                #   Skip empty HMMs
+    itAM NULL nU itRNU -copy_ui;                                    #"3" -MSG2; #   Copy current unit
+    sMode3 "D" == if                                                            #   Use DP >>
+      .nAMPrune 0 == if                                                         #     No pruning active >>
+        itRNU 0 idNld itRRU /epsremove -sdp;                                    #       Decode through RN (1-best)
+      else                                                                      #     << Use pruning >>
+        .nAMPrune itRRU -set prn_const;                                         #       Set pruning constant
+        itRNU 0 idNld itRRU /epsremove /prune -sdp;                             #       Decode through RN (1-best)
+      end                                                                       #     <<
+      "GW" -type double itRRU.ud -addcomp;                          #"9" -MSG2; #     Add comp for recognition score ..
+      :itRRU.ud[0,"GW"]=itRRU.gw/idNld.nrec;                        #"A" -MSG2; #     .. and store recognition score
+    else sMode3 "A" == sMode3 "T" == || if                                      #   << Use A* or TP search >>
+      sMode3 "A" == if;                                                         #     Config for A* search >>
+        "as" itFsts -set algo;                                                  #       Set decoding algorithm
+        .nAMPrune itFsts -set as_prnw;                                          #       Activate pruning
+      end                                                                       #     <<
+      sMode3 "T" == if;                                                         #     Config for TP search >>
+        "tp" itFsts -set algo;                                                  #       Set decoding algorithm
+        .nAMPrune itFsts -set tp_prnw;                                          #       Activate pruning
+      end                                                                       #     <<
+      sMode2 "O" == if "os" else "t" end itFsts -set bt;                        #     Set backtracking type
+      itRNU 0 idNld itRRU itFsts -search;                                       #     Decode through RN (1-best)
+      "~GW" itRRU.ud -find_comp "GW" itRRU.ud -set_cname;           #"9" -MSG2; #     Rename recognition score ..
+      :itRRU.ud[0,"GW"]=itRRU.ud[0,"GW"]/idNld.nrec;                #"A" -MSG2; #     .. and normalize recognition score
+    end end                                                         #"4" -MSG2; #   <<
+    sMode2 "A" == not if                                            #"5" -MSG2; #   Create output symbol chain >>
+      itRRU 0 itRRU -invert;                                        #"6" -MSG2; #     Swap input and output symbols
+      itRRU 0 itRRU -project;                                       #"7" -MSG2; #     Remove output syms.(Gaussian IDs)
+      # FIXME: -epsremove creates no unique path!
+      itRRU 0 itRRU -epsremove;                                     #"8" -MSG2; #     Remove epsilon transitions
+    end                                                                         #   <<
+    itRRU itDst -cat;                                    "." -MSG2; #"B" -MSG2; #   Append recognition result 
+  nU ++=; goto L_UNIT; end                                                      # <<
+}
+
+## Determines the number of statistical parameters of an acoustic model.
+##
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance
+## @return The number of statistical parameters
+function -AM_get_nparams(itHMM)
+{
+  itHMM.gm.mean.dim var nMsf;
+	:(nMsf*(nMsf+1)/2+nMsf)*itHMM.gm.mean.nrec + itHMM.td.nrec: return;
+}
+
+## Computes an initial update sequence by uniformly distributing feature
+## vectors over the states of one HMM.
+##
+## @cgen:index
+## @param idFea data
+##          Feature vector sequence
+## @param itHMM hmm
+##          Acoustic model (set)
+## @param nU number
+##          Index of acoustic mode to distribute frames over
+## @param idUsq fst
+##          Data instance to be filled with an update sequence (feature vectors -> transitions)
+/inline function -HMM_iniusq(idFea,itHMM,nU,idUsq)
+{
+  ".HMM_iniusq_itAux"  "fst"  ?instance not if fst  .HMM_iniusq_itAux  end      # Pesistently create aux. transducer
+  ".HMM_iniusq_idAux"  "data" ?instance not if data .HMM_iniusq_idAux  end      # Pesistently create aux. data inst. #1
+  ".HMM_iniusq_idAux2" "data" ?instance not if data .HMM_iniusq_idAux2 end      # Pesistently create aux. data inst. #2 
+
+  itHMM.NC_TD_TIS itHMM.td -find_comp var nIcTis;                               # Find input symbol comp. index
+  itHMM.ud [ $[nU] 5 ]                var nXL;                                  # Get number of HMM layers
+  idFea.nrec                          var nXV;                                  # Get number of feature vectors
+
+  -type long 1 nXV 1 + idUsq -array;                                            # Allocate HMM state index sequence
+  nXL nXV / 2 / ++ nXL nXV / idUsq -fill;                                       # Distr. frames over model states
+  itHMM NULL nU .HMM_iniusq_itAux -copy_ui;                                     # Copy single HMM nU from model set
+  idUsq .HMM_iniusq_itAux.td 0 itHMM.IC_TD_TER .HMM_iniusq_idAux -gen_index;    # Get transition id's for state seq.
+  .HMM_iniusq_idAux 0 .HMM_iniusq_itAux.td nIcTis 1 .HMM_iniusq_idAux2 -lookup; # Lookup Gaussian id's for trans. id's
+  .HMM_iniusq_idAux2 idUsq -join;                                               # Join Gaussian id's to state id's
+}
+
+## EOF

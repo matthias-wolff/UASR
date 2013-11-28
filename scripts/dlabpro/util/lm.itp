@@ -1,0 +1,555 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: Language model
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Loads a context free and/or regular grammar (set of rules) from a text file. Each line in the file defines one rule
+## or a set of rules sharing that same left side. Multiple right sides on one line are separated by commas. Rules
+## consist of a sequence of white space separated strings which denote named states, termial symbols or non-terminal
+## symbols (for details see dcoumentation of <a href="#clp_-FSG_compile" class="code">-FSG_compile</a>). The first
+## string defines the rule's left side, all other strings define the right side.
+##
+## <h4>Example (<code>sFiler</code>="GRM:")</h3>
+## <pre class="code">
+## &nbsp;
+##   FOO: what ever ...
+## &nbsp;
+##   GRM: (S) H hundert (A) und (B) ZE
+##   GRM: (A) (F)
+##   GRM: (A) (B)
+##   GRM: (S) (B)
+## &nbsp;
+##   BAR: what ever ...
+## </pre>
+## 
+## <h4>See also</h4>
+## <ul class="linklist">
+##   <li class="linklist"><a href="#clp_-FSG_load_builtin" class="code">-FSG_load_builtin</a></li>
+##   <li class="linklist"><a href="#clp_-FSG_compile" class="code">-FSG_compile</a></li>
+## </ul>
+##
+## @cgen:index
+## @param sFile string
+##          Path of text file to be loaded
+## @param sFilter string
+##          Line filter (consider only lines starting with the given string), 
+##          commit "" to read all lines
+## @param idRules data
+##          Will be filled with the rule set
+## @return <code>TRUE</code> if successfull, <code>FALSE</code> otherwise
+function -FSG_load(sFile,sFilter,idRules)
+{
+  file iF;
+  data idL;
+  data idR0;
+  data idR;
+  data idAux;
+  var  nL;
+  var  nR;
+
+  idRules -reset;
+  sFilter iF -set line_flt;
+  "\n\r" iF -set sep;
+  "" 255 idL -addcomp;
+  sFile "ascii" idL iF /strings -import ?error if FALSE return; end
+  idL "," "split" idL -strop;
+  
+  :idL[0]: " \t" "split" idR0 -strop;
+  sFilter if idR0 0 1 idR0 -delete; end
+  idR0 idRules =;
+  0 "LEFT" idRules -set_cname;
+
+  1 nR =; label L_RULE; nR idL.dim < if
+    :idR0[0]: idR =; :idL[nR]: idR -join;
+    idR "" "len" idAux -strop;
+    :idAux[1].==0: idR -dmark;
+    idR 0 0 idR /mark -delete;
+    idR " \t" "split" idR -strop;
+    idR idRules -cat;
+    nR ++=; goto L_RULE;
+  end
+  TRUE return;
+}
+
+## Loads the rule set of a built-in finite state grammar. The following table lists the available grammars.
+## <table class="indent" style="margin-top:6pt;">
+##   <tr><th><code>sId</code></th><th>Description</th></tr>
+##   <tr><td>"&lt;CMD&gt;"   </td><td>Single command</td></tr>
+##   <tr><td>"&lt;VA+CMD&gt;"</td><td>Voice activation keyword plus single command</td></tr>
+##   <tr><td>"&lt;PLG&gt;"   </td><td>Phone loop grammer (free phoneme recognition)</td></tr>
+## </table>
+## 
+## <h4>See also</h4>
+## <ul class="linklist">
+##   <li class="linklist"><a href="#clp_-FSG_load" class="code">-FSG_load</a></li>
+##   <li class="linklist"><a href="#clp_-FSG_compile" class="code">-FSG_compile</a></li>
+## </ul>
+##
+## @cgen:index
+## @param sId string
+##          Identifier of the built-in grammar
+## @param idRules data
+##          Will be filled with the rule set
+## @return <code>TRUE</code> if successful, <code>FALSE</code> if <code>sId</code> does not denote a built-in grammar.
+function -FSG_load_builtin(sId,idRules)
+{
+  sId "<CMD>" == if
+    { { "S  VOCABULARY" }
+      { "(S) <PAU> (S)" }
+      { "(F) <PAU> (F)" }
+    } " \t" "split" idRules -strop;
+    TRUE return;
+  end
+  sId "<VA+CMD>" == if
+    { { "S  <VA> (A) <PAU> (B) VOCABULARY" }
+      { "(A) (B)"                          }
+      { "(S) <PAU> (S)"                    }
+      { "(F) <PAU> (F)"                    }
+    } " \t" "split" idRules -strop;
+    TRUE return;
+  end
+  sId "<PLG>" == if
+    { { "(S) <PAU> (S)" }
+      { "(S) <OOV> (F)" }
+      { "(F) <PAU> (F)" }
+    } " \t" "split" idRules -strop;
+    TRUE return;
+  end
+
+  FALSE return;
+}
+
+## Compiles a context free and/or regular grammar (given as set of rules) into a
+## finite state machine.
+## <h4>Remarks</h4>
+## <ul>
+##   <li>The rule set <em>must not</em> be recursive. If so the function will
+##     run an endless loop! This is to be fixed.</li> 
+## </ul>
+## <h4>See also</h4>
+## <ul class="linklist">
+##   <li class="linklist"><a href="#clp_-FSG_load" class="code">-FSG_load</a></li>
+##   <li class="linklist"><a href="#clp_-FSG_load_builtin" class="code">-FSG_load_builtin</a></li>
+## </ul>
+##
+## @cgen:index
+## @param idRules data
+##          <p>Set of context free or regular rules. Each record defines exactly one rule. The first component
+##          defines rule's left side, the remaining components define the rule's right side. Trailing empty cells will
+##          be ignored. All components must be symbolic (strings).</p>
+##          <p>Each cell defines either a named state of the finite state grammar, a terminal symbol or a non-terminal
+##          symbol (the latter two are transition names of the grammer):<br>
+##          <b>Named states:</b> a string enclosed in parentheses is interpreted as state name, e.g. "(A)". The
+##          names "(S)" and "(F)" are reserved and denote the start and final states.<br>
+##          <b>Named transitions:</b> a string not enclosed in parathesis is considered a transition name. Transition
+##          names consist of an input symbol and, optionally, an output symbol, a logarithmic weight, and a stack push or pop token;
+##          all separared by a colon ":" (e.g. "in:out:0:+token", no white spaces!). There are two types of transition names:<br>
+##          <b>&nbsp;&nbsp;&nbsp;Terminal symbols:</b> transition name is considered a terminal symbol if and
+##          only if its input symbol (the part before the colon or, if there is no colon, the entire string) is
+##          contained in the terminal symbol table (parameter <code>idTrmTab</code>).<br>
+##          <b>&nbsp;&nbsp;&nbsp;Non-terminal symbols:</b> all other strings are considered non-terminal symbols. The symbol "S" is
+##          reserved and denotes the start rule. Non-terminal symbols must not contain an output symbols, hence they
+##          <em>must not</em> contain any colons. A transition with an infinite weight (e.&nbsp;g. "::INF") is not added to the
+##          grammar. However, the path up to the transtion's start state und from the transition's end state will be correctly
+##          inserted. Rules with infinite weight are useful in connection with stack tokens in order to re-use previosly addad
+##          paths in the grammar.</p>
+##          <p>The first string (component 0) defines the left side of a rule, all other strings define the right side.
+##          There are two types of rules:<br>
+##          <b>Regular rules:</b> the left side is a state name. Such rules are expanded by appending a path of
+##          (named) states and transitions to the named state on the rule's left side. If the last string does not
+##          denote a named state, the last generated transition will terminate at the final state. Example:
+##          <code>{ "(S)" "foo" "bar" "(B)" }</code>.<br> 
+##          <b>Context free rules:</b> the left side is a non-terminal. All transitions named after the non-terminal
+##          on the rule's left side will be replaced by the path defined by the right side. Example:
+##          <code>{ "S" "foo" "bar" }</code>.</p>
+##          <p>In both cases, the rule expansion will properly regard named states in the rule. That is, if the state
+##          exists it will be used and if it does not exists, it will be created.<br>&nbsp;</p>
+## @param idTrmTab data
+##          Table of terminal input symbols. The symbols are expected in component 0, other components will be ignored.
+## @param idTosTab data
+##          Will be filled with the table of terminal output symbol found in the grammar rules (may be
+##          <code>NULL</code>)
+## @param itFsg fst
+##          Finite state grammar to be created
+## @see -FSG_load
+function -FSG_compile(idRules,idTrmTab,idTosTab,itFsg)
+{
+  ## Local functions                                                            # -------------------------------------
+  function -FSG_print_rule(idR)                                                 # Pretty print a rule to a string
+  {
+    var n;
+    var s;
+    :idR[0,0]: if "${idR[0,0]}" else "(${idR[0,1]})" end " ->" + s =;
+    1 n =; label L; n idR.nrec < if
+      :idR[n,0]: if " ${idR[n,0]}" else " ." end s +=;
+      :idR[n,1]: if " (${idR[n,1]})" s +=; end;
+      n ++=; goto L;
+    end
+    s return;
+  }
+  
+  function -FSG_findaddnode(sName,itFsg)                                        # Find named state or create a new one
+  {                                                                             # >>
+    sName if                                                                    #   State named >>
+      var nS; label L_S; nS itFsg.sd.nrec < if                                  #     Seek it by looping over states >>
+        :itFsg.sd[nS,1]==sName: if nS return; end                               #       Found it, return it
+        nS ++=; goto L_S;                                                       #       Next state
+      end                                                                       #     <<
+    end                                                                         #   <<
+    0 1 itFsg -addstates { "$[sName]" 0 };                                      #   Add a new (named) state
+    ( itFsg.sd.nrec -- ) return;                                                #   Return its state index
+  }                                                                             # <<
+
+  function -FSG_addtrans(nIni,nTer,sSym,idTrmTab,idTosTab,idStkTab,itFsg)       # Add a transition to the grammar FSM
+  {                                                                             # >>
+    sSym not if 0 nIni nTer itFsg -addtrans { "" -1 -1 0 0 }; leave; end        #   Unnamed transition -> epsilon
+    data idAux;                                                                 #   Auxilary data instance
+    data idAux2;                                                                #   Auxilary data instance #2
+    var  nTis;    -1 nTis =;                                                    #   Transducer input symbol
+    var  nTos;    -1 nTos =;                                                    #   Transducer output symbol
+    var  nLsr;     0 nLsr =;                                                    #   Logarithmic weight
+    var  nStk;     0 nStk =;                                                    #   Stack symbol
+    var  bNot; FALSE bNot =;                                                    #   No-transition flag
+    { { "$[sSym]"       } } ":" "splitall" idAux -strop;                        #   Split input and output symbols
+    { { "${idAux[0,0]}" } } idTrmTab 0 0 idAux2 /noerror -gen_index ?error      #   Lookup terminal input symbol ...
+    not if :idAux2[0,0]: nTis =; end                                            #   ... and store index in nTis
+    ( nTis 0 < ) ( "${idAux[0,0]}" ) && if -2 nTis =; end                       #   It's a non-terminal to be expanded
+    ( idAux.dim 1 > ) ( idTosTab ) && :idAux[0,1]!="": && if                    #   Have output symbol >>
+      nTis -1 < if "Non-terminal $[sSym] has an output symbol" 1 -WARNING; end  #     ... which will be ignored
+      { { "${idAux[0,1]}" } } idTosTab 0 0 idAux2 /noerror -gen_index ?error    #     Lookup terminal output symbol ...
+      not if :idAux2[0,0]: nTos =; end                                          #     ... and store index in nTos
+      nTos 0 < if                                                               #     Output symbol not found >>
+        idTosTab.nrec nTos =; { { "${idAux[0,1]}" } } idTosTab -cat;            #       Add it to output symbol table
+      end                                                                       #     <<
+    end                                                                         #   <<
+    idAux.dim 2 > :idAux[0,2]!="": && if                                        #   Have logarithmic weight >>
+      nTis -1 < if "Non-terminal $[sSym] has an log. weight" 1 -WARNING; end    #     ... which will be ignored
+      :idAux[0,2]: "INF" == if INF nLsr =; else :idAux[0,2]: nLsr =; end        #     Store it in nLsr
+    end                                                                         #   <<
+    ( idAux.dim 3 > ) ( idStkTab ) && :idAux[0,3]!="": && if                    #   Have stack symbol >>
+      nTis -1 < if "Non-terminal $[sSym] has a stack token" 1 -WARNING; end     #     ... which will be ignored
+			( :idAux[0,3]: 1 "left" -VAR_strop ) var nSignStk;                        #     Get sign from symbol name
+			nSignStk "-" == nSignStk "+" == || if;                                    #     Check for sign in symbol name >>
+				nSignStk "+" == if;  1 nSignStk =; end  ;                               #       Remember pos. sign
+				nSignStk "-" == if; -1 nSignStk =; end  ;                               #       Remember neg. sign
+				:idAux[0,3]: -1 "right" -VAR_strop 0 3 idAux -sstore;                   #       Remove sign from name
+			else;                                                                     #     << no sign in symbol name >>
+        "Stack token ${idAux[0,3]} does not start with + or -" 1 -WARNING;      #       Warn
+				1 nSignStk =;                                                           #       Use neutral one
+			end  ;                                                                    #     <<
+      { { "${idAux[0,3]}" } } idStkTab 0 0 idAux2 /noerror -gen_index;          #     Lookup stack output symbol ...
+      :idAux2[0,0]: nStk =;                                                     #     ... and store index in nStk
+      nStk 0 < if                                                               #     Stack symbol not found >>
+        idStkTab.nrec nStk =; { { "${idAux[0,3]}" } } idStkTab -cat;            #       Add it to stack symbol table
+      end                                                                       #     <<
+			nStk nSignStk * nStk =;                                                   #     Add sign
+    end                                                                         #   <<
+    nLsr INF != if                                                              #   If weight not infinity >>
+      0 nIni nTer itFsg -addtrans { "$[sSym]" $[nTis] $[nTos] $[nLsr] $[nStk] };#     Add transition
+    end                                                                         #   <<
+  }                                                                             # <<
+
+  function -FSG_expand(nIni0,nTer0,idR,idTrmTab,idTosTab,idStkTab,itFsg)        # Expand a rule
+  {                                                                             # >>
+    var nIni;                                                                   #   Current initial state
+    var nTer;                                                                   #   Current terminal state
+    var nS;                                                                     #   Current right side symbol
+    "\n     - Rule: " ( idR -FSG_print_rule ) +                        4 -MSGX; #   Protocol
+    nIni0 nIni =; 1 nS =; label L_S; nS idR.nrec < if                           #   Loop over right side symbols >>
+      :nS==idR.nrec-1 && !idR[0,1]: if                                          #   Last symbol of a CFG-rule >> 
+        nTer0 nTer =;                                                           #     Rejoin network
+      else                                                                      #   << Reg. rule or not last symbol >>
+        ( :idR[nS,1]: itFsg -FSG_findaddnode ) nTer =;                          #     Stubbornly create states
+      end                                                                       #   <<
+      nIni nTer :idR[nS,0]: idTrmTab idTosTab idStkTab itFsg -FSG_addtrans;     #     Add new transition
+      nTer nIni =; nS ++=; goto L_S;                                            #     Next right side symbol
+    end                                                                         #   <<
+  }                                                                             # <<
+
+  ## Local variables                                                            # -------------------------------------
+  data idAux;                                                                   # Auxilary data instance
+	data idStkTab;                                                                # Stack symbol table
+  var nT;                                                                       # Current transition in grammar
+  var nR;                                                                       # Current rule
+  var nI;                                                                       # Current rule item
+  var nS;                                                                       # Current (right side) symbol
+  var sMri;                                                                     # Most recenct rule item
+  var nIni;                                                                     # Current initial state
+  var nTer;                                                                     # Current terminal state
+  var nExS;                                                                     # Number expanded states
+  var nExN;                                                                     # Number expanded non-terminals
+
+  ## Prepare rule set                                                           # -------------------------------------
+  0 nR =; label L_R1; nR idRules.nrec < if                                      # Loop over rules >>
+    data idR$[nR]; 255 2 idRules.dim idR$[nR] -array;                           #   Create rule instance
+    { { "TRANS" } { "STATE" } } 0 idR$[nR] -set_cnames;                         #   Name components
+    "" sMri =; 0 nS =; 0 nI =; label L_I1; nI idRules.dim < if                  #   Loop over rule items >>
+      ( :idRules[nR,nI]: "1" "left" -VAR_strop ) "(" == if                      #     State item >>
+        :nI==1 && sMri=="t": if nS ++=; end                                     #       Keep left side a single symbol
+        ( :idRules[nR,nI]: "()" "trim" -VAR_strop ) nS 1 idR$[nR] -sstore;      #       Store state name
+        "s" sMri =; nS ++=;                                                     #       Remember parsed state item
+      else                                                                      #     << Transition item >>
+        sMri "t" == if nS ++=; end                                              #       Two subsequent trans. items
+        :idRules[nR,nI]: nS 0 idR$[nR] -sstore;                                 #       Store transition name
+        "t" sMri =;                                                             #       Remember parsed transition item
+      end                                                                       #     <<
+      :idRules[nR,nI+1]: if nI ++=; goto L_I1; end                              #     Next rule item (if present)
+    end                                                                         #   <<
+    "t" sMri == if nS ++=; end                                                  #   Last item was a transition
+    nS idR$[nR] -reallocate;                                                    #   Shrink rule instance
+    ( idR$[nR].nrec 1 == ) if { { "" "" } } idR$[nR] -cat; end                  #   Enforce a right side
+    :idR$[nR][0,1] && !idR$[nR][idR$[nR].nrec-1,1]: if                          #   Regular rule to nowhere >>
+      "F" :idR$[nR].nrec-1: 1 idR$[nR] -sstore;                                 #     Make last state the final one
+    end                                                                         #   <<
+    :idR$[nR][0,0] && idR$[nR][idR$[nR].nrec-1,1]: if                           #   CF rule to named state >>
+      { { "" "" } } idR$[nR] -cat;                                              #     Add trailing epsilon rule
+    end                                                                         #   <<
+    #"\n$[nR]\t: " ( idR$[nR] -FSG_print_rule ) + -echo;                        #   Debuggin' 
+    nR ++=; goto L_R1;                                                          #   Next rule
+  end                                                                           # <<
+  "~CNT" -type long idRules -addcomp;                                           # Add rule counting component
+
+  ## Create initial grammar FSA with non-terminal start transition 0 -"S"-> 1   # -------------------------------------
+  itFsg -reset;                                                                 # Reset grammar FSM
+  "~NAM"        255 itFsg.sd -addcomp;                                          # Add state component (state names)
+  "~EXP" -type char itFsg.sd -addcomp;                                          # Add state component (expanded flag)
+  "~SYM"        255 itFsg.td -addcomp;                                          # Add trans. component (symbol names)
+  "~TIS" -type int  itFsg.td -addcomp;                                          # Add trans. component (TIS)
+  "~TOS" -type int  itFsg.td -addcomp;                                          # Add trans. component (TOS)
+  "~LSR" -type double itFsg.td -addcomp;                                        # Add logarithmic weights
+  "~STK" -type int  itFsg.td -addcomp;                                          # Add stack symbol
+  "GRM"  itFsg -addunit;                                                        # Add grammar FSM
+  0 1   itFsg        -addstates { "S"  0        };                              # Add start state
+  0 1   itFsg /final -addstates { "F"  0        };                              # Add final state
+  0 0 1 itFsg        -addtrans  { "S" -2 -1 0 0 };                              # Add start transition
+  idTrmTab itFsg.is -copy;                                                      # Copy input symbol table
+  itFsg.os -reset; "~SYM" 255 itFsg.os -addcomp;                                # Create output symbol table
+
+  ## Create initial stack symbol table                                          # -------------------------------------
+	255 1 1 idStkTab -array; :idStkTab[0,0]="";                                   # Create empty stack symbol
+
+  ## FSM compilation                                                            # -------------------------------------
+  "\n   Creating finite state grammar from $[idRules.nrec] rules ..."  4 -MSGX; # Protocol 
+  0 nT =; label L_T; nT itFsg.td.nrec < if                                      # Loop over transitions >>
+
+    :itFsg.td[nT,1]: nIni =;                                                    #   Get initial state index
+    :itFsg.td[nT,0]: nTer =;                                                    #   Get terminal state index
+    0                nExS =;                                                    #   No states expanded yet
+    0                nExN =;                                                    #   No non-terminals expanded yet
+
+    ## Expand named states                                                      #   - - - - - - - - - - - - - - - - - -
+    :itFsg.sd[nIni,1] && itFsg.sd[nIni,2]==0: if                                #   Ini,state named and not expanded >>
+      "\n   - Expanding state (${itFsg.sd[nIni,1]})"                   5 -MSGX; #     Protocol
+      0 nR =; label L_R2; nR idRules.nrec < if                                  #     Loop over rules >>
+        :idR$[nR][0,1]==itFsg.sd[nIni,1]: if                                    #       Rule matches initial state >>
+          nIni -1 idR$[nR] itFsg.is itFsg.os idStkTab itFsg -FSG_expand;        #         Expand named state
+          nExS ++=;                                                             #         Count expanding rules
+          :idRules[nR,idRules.dim-1]=idRules[nR,idRules.dim-1]+1;               #         Update rule counter
+        end                                                                     #       <<
+        nR ++=; goto L_R2;                                                      #       Next rule
+      end                                                                       #     <<
+      :itFsg.sd[nIni,2]=1;                                                      #     Mark state expanded
+    end                                                                         #   <<
+    :itFsg.sd[nTer,1] && itFsg.sd[nTer,2]==0: if                                #   Ter,state named and not expanded >>
+      "\n   - Expanding state (${itFsg.sd[nTer,1]})"                   5 -MSGX; #     Protocol
+      0 nR =; label L_R2; nR idRules.nrec < if                                  #     Loop over rules >>
+        :idR$[nR][0,1]==itFsg.sd[nTer,1]: if                                    #       Rule matches initial state >>
+          nTer -1 idR$[nR] itFsg.is itFsg.os idStkTab itFsg -FSG_expand;        #         Expand named state
+          nExS ++=;                                                             #         Count expanding rules
+          :idRules[nR,idRules.dim-1]=idRules[nR,idRules.dim-1]+1;               #         Update rule counter
+        end                                                                     #       <<
+        nR ++=; goto L_R2;                                                      #       Next rule
+      end                                                                       #     <<
+      :itFsg.sd[nTer,2]=1;                                                      #     Mark state expanded
+    end                                                                         #   <<
+
+    ## Expand non-terminals                                                     #   - - - - - - - - - - - - - - - - - -
+    :itFsg.td[nT,3]: -2 > if nT ++=; goto L_T; end                              #   Ignore terminal transitions   
+    "\n   - Expanding non-terminal \"${itFsg.td[nT,2]}\""              5 -MSGX; #   Protocol (verbose level 2)
+    0 nExN =; 0 nR =; label L_R3; nR idRules.nrec < if                          #   Loop over rules >>   
+      :idR$[nR][0,0]==itFsg.td[nT,2]: if                                        #     Rule matches non-terminal >>
+        nIni nTer idR$[nR] itFsg.is itFsg.os idStkTab itFsg -FSG_expand;        #       Expand non-terminal
+        nExN ++=;                                                               #       Count expanding rules
+        :idRules[nR,idRules.dim-1]=idRules[nR,idRules.dim-1]+1;                 #       Update rule counter
+      end                                                                       #     <<
+      nR ++=; goto L_R3;                                                        #     Next rule
+    end                                                                         #   <<
+    :nExN>0 || (nExS>0 && itFsg.td[nT,2]=="S"): if                              #   Non-terminal or start state expd.>>
+      0 nT itFsg -deltrans;                                                     #     Remove expanded transition
+    else                                                                        #   << Non-terminal not expanded >>
+      "No rule to expand non-terminal \"${itFsg.td[nT,2]}\"" -ERROR;            #     Error message
+      nT ++=;                                                                   #     Inc. trans. ctr. (none removed!)
+    end                                                                         #   <<
+
+    goto L_T;                                                                   #   Next transition - NOTE -v
+  end                                                                           # << (DO NOT inc. trans. counter!!)
+
+  ## Expand final state                                                         # -------------------------------------
+  :itFsg.sd[1,1] && itFsg.sd[1,2]==0: if                                        # Final state named and not expanded >>
+    "\n   - Expanding state (${itFsg.sd[1,1]})"                        5 -MSGX; #   Protocol
+    0 nR =; label L_R2; nR idRules.nrec < if                                    #   Loop over rules >>
+      :idR$[nR][0,1]==itFsg.sd[1,1]: if                                         #     Rule matches initial state >>
+        1 -1 idR$[nR] itFsg.is itFsg.os idStkTab itFsg -FSG_expand;             #       Expand named state
+        :idRules[nR,idRules.dim-1]=idRules[nR,idRules.dim-1]+1;                 #       Update rule counter
+        nExS ++=;                                                               #       Count expanding rules
+      end                                                                       #     <<
+      nR ++=; goto L_R2;                                                        #     Next rule
+    end                                                                         #   <<
+    :itFsg.sd[1,2]=1;                                                           #   Mark state expanded
+  end                                                                           # <<
+
+  ## Post-process                                                               # -------------------------------------
+  itFsg.td 2 1 itFsg.td -delete;                                                # Remove transition names
+  itFsg.sd 2 1 itFsg.sd -delete;                                                # Remove state expanded flag
+  itFsg.os -is_empty if                                                         # << No output symbols found >>
+    itFsg.is itFsg.os -copy;                                                    #   Fill in input symbols
+    :itFsg.td["~TOS"]=itFsg.td["~TIS"];                                         #   Make acceptor
+  end                                                                           # <<
+  idTosTab if itFsg.os idTosTab -copy; end                                      # Copy output symbol table  
+	idStkTab.nrec 1 == if                                                         # No stack symbols inserted >>
+	  itFsg.td ( "~STK" itFsg.td -find_comp ) 1 itFsg.td -delete;                 #   Remove stack symbols
+  else                                                                          # << with stack symbols >>
+    data itFsg.stk; idStkTab itFsg.stk =;                                       #   copy tab to itFst.stk
+  end                                                                           # <<
+  0 nR =; label L_R4; nR idRules.nrec < if;                                     # Loop over rules >>
+    :idRules[nR,idRules.dim-1]: 0 == if;                                        #   Unused rules ? >>
+      "Unused Rule: " idR$[nR] -FSG_print_rule +                    2 -WARNING; #     Warn
+    end  ;                                                                      #   << 
+    nR ++=; goto L_R4;                                                          #   Next rule
+  end                                                                           # <<
+  idRules idRules.dim -- 1 idRules -delete;                                     # Delete rule counting component
+
+  "\n  " 5 -MSGX; " done (${itFsg.sd.nrec} states)\n"                  4 -MSGX; # Protocol
+}
+
+## Obtains the recognition grammar.
+##
+## <p>This default implementation returns the grammar specified through the
+## configuration keys <code>&lt;uasr.lm*&gt; and <code>&lt;uasr.lx*&gt;.
+## Databases may overwrite this function in order to provide a custom
+## grammar:</p>
+## <pre class="code">
+## &nbsp;
+##  /disarm -MY_GRAMMAR /disarm -GRM_get =;
+## </pre> 
+##
+## <h4>See also</h4>
+## <ul>
+##   <li><a href="../train/am.itp.html#clp_-HMM_process" class="linklist"><code>-HMM_process</code></a></li>
+## </ul>
+## 
+## @cgen:index
+## @return the recognition grammar (fst)
+function -GRM_get()
+{
+  ".GRM_get_itGrm" "" ?instance if .GRM_get_itGrm return; end                   # Return persistent grammar
+  "\n   Creating recognition grammar "                                    -MSG; # Protocol
+  fst  .GRM_get_itGrm;                                                          # Create recognition grammar
+  data idAM; -LAB_get_tab idAM =;                                               # Table of acousic model names
+  fst  itLX; idAM    itLX -LX_get;                                    "." -MSG; # Lexical transducer
+  fst  itLM; itLX.os itLM -LM_get;                                    "." -MSG; # Language model transducer
+  "\n   - Close lexical transducer ..."                                  -MSG2; #     Protocol (verbose level 2)
+  itLX itLX -LX_close;                                                "." -MSG; # Close lexical transducer
+  itLX 0 itLX /lazy -minimize;                                                  # Lazy minimization of lexical transducer
+  itLM 0 itLM /lazy -minimize;                                                  # Lazy minimization of language model transducer
+  "\n   - Composing regognition grammar ..."                             -MSG2; #     Protocol (verbose level 2)
+  0 0 0 itLX -addtrans { -1 -1 0 };                                             # Instrument for composition
+  0 itLM /noerror -loops { -1 -1 0 };                                           # |
+  itLX itLM 0 0 .GRM_get_itGrm /noeps /noint -compose;             ". ok" -MSG; # Compose recongition grammar
+  .GRM_get_itGrm return;                                                        # Return grammar
+}
+
+## Loads the configured language model.
+##
+## <h4>See also</h4>
+## <ul class="linklist">
+##   <li class="linklist"><a href="#clp_-FSG_load" class="code">-FSG_load</a></li>
+##   <li class="linklist"><a href="#clp_-FSG_compile" class="code">-FSG_compile</a></li>
+## </ul>
+##
+## @cgen:index
+## @param idLX data
+##          Lexicon (list of terminal symbols of the language model)
+## @param itLM fst
+##          Filled with the language model transducer
+## @global &lt;uasr.lm&gt;     R
+## @global &lt;uasr.lm.fsg&gt; R
+## @global &lt;uasr.lm.imp&gt; R
+function -LM_get(idLX,itLM)
+{
+  data idFsg;                                                                   # Grammar rules
+  var  sType; ( "lm" "none" "S" -CFG_get_ex ) sType -sset;                      # Get configured LM type
+  var  sFn;                                                                     # File name
+  var  nW;                                                                      # Current word index 
+
+  ## <uasr.lm>="none"                                                           # -------------------------------------
+  sType "none" == if goto L_DEFAULT; end                                        # Jump to default
+  
+  ## <uasr.lm>="fsg"                                                            # -------------------------------------
+  sType "fsg" == if                                                             # Using a finite state grammar >>
+    ( "lm.fsg" "" -CFG_get ) sFn =;                                             #   Get finite state grammar file name
+    "\n   - Loading finite state grammar from $[sFn] ..."                -MSG2; #   Protocol (verbose level 2)
+    sFn "GRM:" idFsg -FSG_load;                                                 #   Load grammar file
+    " ($[idFsg.nrec] rules) "                                            -MSG2; #   Protocol (verbose level 2)
+    idFsg idLX NULL itLM -FSG_compile;                                          #   Compile grammar
+    ( itLM.NC_TD_LSR itLM.td -find_comp ) 0 >= if                               #   LM has logarithmic weights >>
+      var nLmFactor; ( "lm.factor" 1 "S" -CFG_get_ex ) nLmFactor =;             #     Get language model factor
+      "\n   - Applying LM factor $[nLmFactor] ..."                       -MSG2; #     Protocol (verbose level 2)
+      :itLM.td[itLM.NC_TD_LSR]*=nLmFactor;                                      #     Apply LM factor
+    end                                                                         #   <<
+    leave;                                                                      #   Have ready ...
+  end                                                                           # <<
+
+  ## <uasr.lm>="imp"                                                            # -------------------------------------
+  sType "imp" == if                                                             # Using a import from file >>
+    ( "lm.imp" "" -CFG_get ) sFn =;                                             #   Get import file name
+    "\n   - Importing language model from $[sFn] ..."                    -MSG2; #   Protocol (verbose level 2)
+    sFn itLM -restore;                                                          #   Restore language model
+    ( itLM.NC_TD_LSR itLM.td -find_comp ) 0 >= if                               #   LM has logarithmic weights >>
+      var nLmFactor; ( "lm.factor" 1 "S" -CFG_get_ex ) nLmFactor =;             #     Get language model factor
+      "\n   - Applying LM factor $[nLmFactor] ..."                       -MSG2; #     Protocol (verbose level 2)
+      :itLM.td[itLM.NC_TD_LSR]*=nLmFactor;                                      #     Apply LM factor
+    end                                                                         #   <<
+    leave;                                                                      #   Have ready ...
+  end                                                                           # <<
+
+  ## <uasr.lm>="nmg"                                                            # -------------------------------------
+  sType "nmg" == if                                                             # Using an n-multigram LM >>
+    "n-multigram language models not yet supported" -ERROR;                     #   Error message
+    goto L_DEFAULT;                                                             #   Fall back 
+  end                                                                           # <<
+
+  ## Value of <uasr.lm> unknown                                                 # -------------------------------------
+  "Unknown language model type \"$[sType]\"." -ERROR;                           # Error message
+
+  ## Default                                                                    # -------------------------------------
+label L_DEFAULT;                                                                # Default language model
+   itLM -reset;                                                                 # Reset grammar transducer
+   "GRM" itLM /fst /lsr -addunit;                                               # Add one grammar unit
+   0 1 itLM /final -addstates;                                                  # Add one central state
+   nW idLX.nrec < while 0 0 0 itLM -addtrans { $[nW] $[nW] 0 }; nW ++=; end     # Add a transition for every lexicon entry
+   idLX itLM.is -copy;                                                          # Set input symbol table
+   idLX itLM.os -copy;                                                          # Set output symbol table
+}
+
+## EOF

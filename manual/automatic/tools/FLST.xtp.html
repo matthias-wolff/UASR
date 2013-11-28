@@ -1,0 +1,820 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<
+<    AUTHOR : n/a
+<    PACKAGE: manual
+<
+<    Copyright 2013 UASR contributors (see COPYRIGHT file)
+<    - Chair of System Theory and Speech Technology, TU Dresden
+<    - Chair of Communications Engineering, BTU Cottbus
+<
+<    This file is part of UASR.
+<
+<    UASR is free software: you can redistribute it and/or modify it under the
+<    terms of the GNU Lesser General Public License as published by the Free
+<    Software Foundation, either version 3 of the License, or (at your option)
+<    any later version.
+<
+<    UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+<    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+<    FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+<    more details.
+<
+<    You should have received a copy of the GNU Lesser General Public License
+<    along with UASR. If not, see [http://www.gnu.org/licenses/].
+-->
+<html>
+<head>
+  <meta http-equiv="Content-Type" content= "text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta name="description" content=   "UASR documentation - UASR script tools/FLST.xtp">
+  <meta name="author" content="">
+  <meta name="generator" content="UASR_DOC">
+  <title>UASR script tools/FLST.xtp</title>
+  <link rel=stylesheet type="text/css" href="../../default.css">
+</head>
+<script type="text/javascript" src="../../default.js"></script>
+<script type="text/javascript">__sRootPath="../../..";</script>
+<body>
+
+  <div id="clp_tools/FLST.xtp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        UASR script <span class="mid">tools/FLST.xtp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('','tools/FLST.xtp','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden">General</td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><nobr><b>FLST</b> $1</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Author</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Matthias Wolff
+</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Synopsis</h3>
+    <p>File list management tool
+ </p>
+  <h3>Arguments</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>$1</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Command or 'help'
+
+      </td>
+    </tr>  </table>
+  <!--{{ CUSTOM_DOC -->
+	<a name="usage"></a><h3>Contents</h3>
+  <div class="indent"><ul class="linklist">
+    <li class="linklist"><a class="linklist" href="#usage">Usage</a></li>
+    <li class="linklist"><a class="linklist" href="#reference">Reference</a></li>
+  </ul></div>
+  
+	<a name="usage"></a><h3>Usage</h3>
+	<pre class="code">
+ dlabpro CFG.xtp &lt;command&gt; [arguments] [options]
+ dlabpro CFG.xtp help [&lt;command&gt;</pre>
+
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td><b>$1</b>: command</td>
+			<td>Command, one of the following:<br>&nbsp;
+				<table class="indent" cellpadding="3" cellspacing="0">
+					<tr>
+						<td class="hidden"><a href="#clp_exc"><b>exc</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">Exclude entries from file list(s)</td>
+					</tr>
+					<tr>
+						<td class="hidden"><a href="#clp_mrg"><b>mrg</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">Merge file lists</td>
+					</tr>
+					<tr>
+						<td class="hidden"><a href="#clp_spl"><b>spl</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">Filter and/or randomly split file list</td>
+					</tr>
+					<tr>
+						<td class="hidden"><a href="#clp_srt"><b>srt</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">Sort file list</td>
+					</tr>
+				</table><br>
+				or "help"
+			</td>
+		</tr>
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+
+	  <tr><td class="rowgroup" colspan="2">Options</td></tr>
+		<tr>
+			<td><b>-h</b>, <b>--help</b></td>
+			<td>Display help and exit</td>
+		</tr>
+		<tr>
+			<td><b>-P</b>&lt;key&gt;=&lt;value&gt;</td>
+			<td>Define or override <a href="../util/cfg.itp.html#index:cfgk">configuration key-value pairs</a></td>
+		</tr>
+		<tr>
+			<td><b>-v</b>&lt;n&gt;</td>
+  		<td>Verbose level
+  			<table>
+  				<tr><td class="hidden">-v1&nbsp;&nbsp;&nbsp;</td><td class="hidden">minimal screen protocol (default)</td></tr>
+  				<tr><td class="hidden">-v2</td><td class="hidden">extended screen protocol</td></tr>
+  				<tr><td class="hidden">-v3</td><td class="hidden">even more screen protocol, program may break</td></tr>
+  			</table>
+  		</td>
+		</tr>
+	  <tr><td class="hidden" colspan="2"><span class="small">There are further, individual options to some commands.</span></td></tr>
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+	</table>
+
+	</div>
+	</div>
+
+  <!-- == FLST.xtp exc ====================================================== -->
+  <div id="clp_exc" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        FLST.xtp <span class="mid">exc</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_exc','FLST.xtp exc','../..');"><img src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>FLST.xtp <b>exc</b> &lt;exclflst&gt; &lt;flstfile&gt; ... [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Exclude entries from file list(s)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+
+  <a name="exc_description"></a><h3>Description</h3>
+	<p>Seeks all entries of a <a href="../util/cfg.itp.html#index:flists">file list</a> <code>&lt;exclflst&gt;</code> in
+	one or several other file lists, removes these entries and saves the modified lists.</p>
+
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+ dlabpro FLST.xtp exc &lt;exclflst&gt; &lt;flstfile&gt; ... [options]</pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>exclflst</td>
+			<td>list of entries to exclude</td>
+		</tr>
+		<tr>
+			<td>flstfile</td>
+			<td>file list(s) file to be processed</td>
+		</tr>
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+	  <tr><td class="rowgroup" colspan="2">Options</td></tr>
+		<tr>
+			<td><b>-n</b></td>
+			<td>do not write output, just say what to do</td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see section <a href="#usage">Usage</a> above).</p>
+
+  <h4>Examples</h4>
+	<pre class="code">
+ dlabpro FLST.xtp exc exclude.flst *.flst</pre>
+	<p>Exclude entries in <code>exclude.flst</code> from all files named <code>*.flst</code>.</p>
+	<pre class="code">
+ dlabpro FLST.xtp exc exclude.flst *.flst -n</pre>
+	<p>Just tell what to do for excluding entries in <code>exclude.flst</code> from all files named <code>*.flst</code>.</p>
+
+	</div>
+	</div>
+
+  <!-- == FLST.xtp mrg ====================================================== -->
+  <div id="clp_mrg" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        FLST.xtp <span class="mid">mrg</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_mrg','FLST.xtp mrg','../..');"><img src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>FLST.xtp <b>mrg</b> &lt;flist1&gt; [&lt;flist2&gt; ...] [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Merge file lists</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+
+  <a name="mrg_description"></a><h3>Description</h3>
+	<p>Merges and/or shuffles <a href="../util/cfg.itp.html#index:flists">file lists</a>.</p>
+
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+ dlabpro FLST.xtp mrg &lt;flist1&gt; [&lt;flist2&gt; ...] [options]</pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>flist1</td>
+			<td>first file list</td>
+		</tr>
+		<tr>
+			<td>flist2</td>
+			<td>second file list (optional)</td>
+		</tr>
+		<tr>
+			<td>...</td>
+			<td>optionally more file lists</td>
+		</tr>
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+	  <tr><td class="rowgroup" colspan="2">Options</td></tr>
+		<tr>
+			<td><b>-P</b>i=TRUE/FALSE</td>
+			<td>If TRUE, the file lists will be interleaved (default: concatenate lists)</td>
+		</tr>
+		<tr>
+			<td><b>-P</b>o=&lt;filename&gt;</td>
+			<td>Store resulting file list in <code>&lt;filename&gt;</code> (default: print at stdout)</td>
+		</tr>
+		<tr>
+			<td><b>-P</b>r=TRUE/FALSE</td>
+			<td>If TRUE, shuffle input file lists.</td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see section <a href="#usage">Usage</a> above).</p>
+
+  <h4>Example</h4>
+	<pre class="code">
+ dlabpro FLST.xtp mrg foo.flst bar.flst -Pi=TRUE -Po=result.flst</pre>
+	<p>Interleaves the file lists <code>foo.flst</code> and <code>bar.flst</code> without shuffling
+	and stores the resulting file list into <code>result.flst</code>.</p>
+
+	</div>
+	</div>
+
+  <!-- == FLST.xtp spl ====================================================== -->
+  <div id="clp_spl" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        FLST.xtp <span class="mid">spl</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_spl','FLST.xtp spl','../..');"><img src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>FLST.xtp <b>spl</b> &lt;flstfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Filter and/or randomly split file list</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+
+  <a name="spl_description"></a><h3>Description</h3>
+	<p>Filters a <a href="../util/cfg.itp.html#index:flists">file lists</a> for entries with a particular label (provided
+	the file list contains labels in a second coloumn), randomly selects a sepcified quantity of the remaining entries,
+	saves the selected entries to one new file list and the unselected entries to another new file list. This program is
+	useful to disjoint create training, test and evaluation sets.</p>
+
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+ dlabpro FLST.xtp spl &lt;flstfile&gt; [options]</pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>flstfile</td>
+			<td>file list file to be processed</td>
+		</tr>
+
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+	  <tr><td class="rowgroup" colspan="2">Options</td></tr>
+		<tr>
+			<td><b>-P</b>l=&lt;label&gt;</td>
+			<td>Filter for label (2nd column in file list). Optional; if omitted all entries will be processed regardless of
+				their labels.</td>
+		</tr>
+		<tr>
+			<td><b>-P</b>n=&lt;number&gt;</td>
+			<td>Number of entries to pick randomly. Optional; if omitted all entries remaining after filtering will be
+				written to the first output file. The option is mutually exclusive with <code>-Pp</code>.</td>
+		</tr>
+		<tr>
+			<td><b>-P</b>p=&lt;amount&gt;</td>
+			<td>Amount of entries to pick randomly (0 for 0&nbsp;% through 1 for 100&nbsp;%). Optional; if omitted all
+				entries remaining after filtering will be written to the first output file. The option is mutually exclusive
+				with <code>-Pn</code>.</td>
+		</tr>
+		<tr>
+			<td><b>-P</b>r=TRUE/FALSE</td>
+			<td>If TRUE, shuffle output file lists (default: FALSE).</td>
+		</tr>
+		<tr>
+			<td><nobr><b>-P</b>o1=&lt;filename&gt;</nobr></td>
+			<td>First output file. Optional; if omitted the output goes to stdout, if an empty filename is committed the
+				output will be discarded.</td>
+		</tr>
+		<tr>
+			<td><nobr><b>-P</b>o2=&lt;filename&gt;</nobr></td>
+			<td>Second output file. Optional; if omitted the output goes to stdout, if an empty filename is committed the
+				output will be discarded.</td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see section <a href="#usage">Usage</a> above).</p>
+
+  <h4>Example</h4>
+	<pre class="code">
+ dlabpro FLST.xtp spl all.flst -Pl=Z00 -Pn=100 -Po2=</pre>
+	<p>Filter entries labelled "Z00" from <code>all.flst</code>, randomly pick 100 entries, dump picked entries at stdout
+	and discard all others.</p>
+
+	</div>
+	</div>
+
+  <!-- == FLST.xtp srt ====================================================== -->
+  <div id="clp_srt" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        FLST.xtp <span class="mid">srt</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_srt','FLST.xtp srt','../..');"><img src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>FLST.xtp <b>srt</b> &lt;flstfile&gt;</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Sort a file list</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+
+  <a name="srt_description"></a><h3>Description</h3>
+	<p>Sorts a file list and saves the sorted file list.</p>
+
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+ dlabpro FLST.xtp srt &lt;flstfile&gt;</pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>flstfile</td>
+			<td>file list file to be processed</td>
+		</tr>
+	</table>
+
+  <h4>Example</h4>
+	<pre class="code">
+ dlabpro FLST.xtp srt all.flst</pre><br>&nbsp;
+	
+	</div>
+	</div>
+
+  <!-- ===================================================================== -->
+  <div class="footer">End of user documentation.</div>
+  <div id="reference" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar"><b>Reference</b>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('reference','Reference','../..');"><img src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe2">
+
+  <!--}} CUSTOM_DOC -->
+  <a name="functions"></a><h3>Functions</h3>
+  <table cellSpacing="0" cellPadding="4" border="0">
+    <tr>
+      <td class="rowgroup" colSpan="2">Functions</td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_usage"><code class="link">-CMD_usage</code></a></td>
+      <td><code><b>-CMD_usage</b>(sCmd)</code><br>&nbsp;<br> Prints help on usage
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_new"><code class="link">-CMD_new</code></a></td>
+      <td><code><b>-CMD_new</b></code><br>&nbsp;<br> EXPERIMENTAL.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_spl"><code class="link">-CMD_spl</code></a></td>
+      <td><code><b>-CMD_spl</b></code><br>&nbsp;<br> Filters and/or randomly splits a file list.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_srt"><code class="link">-CMD_srt</code></a></td>
+      <td><code><b>-CMD_srt</b></code><br>&nbsp;<br> Sorts a file list.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_exc"><code class="link">-CMD_exc</code></a></td>
+      <td><code><b>-CMD_exc</b></code><br>&nbsp;<br> Excludes entries from file list(s).
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_mrg"><code class="link">-CMD_mrg</code></a></td>
+      <td><code><b>-CMD_mrg</b></code><br>&nbsp;<br> Merges file lists
+.
+      </td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <div id="clp_-CMD_usage">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_usage</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_usage','-CMD_usage','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_usage</b>(sCmd)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/FLST.xtp(37)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Prints help on usage
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sCmd</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-CMD_new">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_new</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_new','-CMD_new','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_new</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/FLST.xtp(150)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> EXPERIMENTAL. Creates a new file list.
+
+  </div>
+  </div>
+  <div id="clp_-CMD_spl">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_spl</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_spl','-CMD_spl','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_spl</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/FLST.xtp(176)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Filters and/or randomly splits a file list.
+
+  </div>
+  </div>
+  <div id="clp_-CMD_srt">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_srt</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_srt','-CMD_srt','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_srt</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/FLST.xtp(276)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Sorts a file list.
+
+  </div>
+  </div>
+  <div id="clp_-CMD_exc">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_exc</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_exc','-CMD_exc','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_exc</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/FLST.xtp(294)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Excludes entries from file list(s).
+
+  </div>
+  </div>
+  <div id="clp_-CMD_mrg">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_mrg</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_mrg','-CMD_mrg','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_mrg</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/FLST.xtp(345)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Merges file lists
+
+  </div>
+  </div>
+<div class="footer">End of page</div>
+</body>
+</html>
+

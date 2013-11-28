@@ -1,0 +1,620 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: UASR configuration files
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+data __CFG_idCfg;                                                               # Configuration key/value list
+var  __CFG_nJobs;                                                               # Max. number of parallel jobs
+var  __CFG_bNwr;  FALSE __CFG_bNwr =;                                           # Do not write output
+var  __CFG_bFce;  FALSE __CFG_bFce =;                                           # Force mode
+var  __CFG_bCol;  FALSE __CFG_bCol =;                                           # Colorize output 
+var  __CFG_sCfgfilename;                                                        # Configuration file name
+
+## Configures an UASR session. The function creates a list of key/value pairs
+## from the following sources (with descending priority):
+## <ol>
+##   <li><code>-P&lt;key&gt;=&lt;value&gt;</code> command line options,</li>
+##   <li>the custom configuration file <code>sFile</code> and </li>
+##   <li>the default configuration file <code>config/default.cfg</code>.</li>
+## </ol>
+##
+## <h4>Remarks</h4>
+## <ul>
+##   <li>Custom configuration files only need to modify present or add new
+##     key/value pairs. They do not need to repeat key/value pairs contained in
+##     the default configuration.</li>
+## </ul>
+##
+## @cgen:index
+## @global __CFG_nJobs CW
+## @global __CFG_bNwr  CW
+## @global __CFG_bFcc  CW
+## @param sFile string
+##          Path to UASR configuration file to be loaded
+## @param bTerm boolean
+##          If <code>TRUE</code>, the function will terminate the dLabPro
+##          session if <code>sFile</code> could not be loaded
+## @return <code>TRUE</code> if successful, <code>FALSE</code> otherwise
+function -CFG_init(sFile,bTerm)
+{
+  ## Local functions                                                            # -------------------------------------
+  function -CFG_init_fil(sFile)                                                 # Load Java property file
+  {                                                                             # >>
+    data idCfg;                                                                 #   Buffer for configuration file
+    data idKey;                                                                 #   Buffer for keys
+    data idVal;                                                                 #   Buffer for values
+    file iCfg;                                                                  #   File processor
+    "uasr." iCfg -set line_flt;                                                 #   - set line filter
+    "=;#"   iCfg -set sep;                                                      #   - set separators
+    "key" 255 idCfg -addcomp;                                                   #   Setup config. file buffer
+    "val" 255 idCfg -addcomp;                                                   #   ...
+    "_"   255 idCfg -addcomp;                                                   #   ...
+    "_"   255 idCfg -addcomp;                                                   #   ...
+    sFile "ascii" idCfg iCfg -import ?error if FALSE return; end                #   Load config file
+    idCfg 0 1 idKey -select;                                                    #   Get keys
+    idCfg 1 1 idVal -select;                                                    #   Get values
+    idKey "? ?"  "replace" idKey -strop;                                        #   Remove spaces from keys
+    idKey "?\t?" "replace" idKey -strop;                                        #   Remove tabs from keys
+    idKey idCfg -copy;                                                          #   Copy keys to config buffer
+    idVal idCfg -join;                                                          #   Join values
+    .__CFG_idCfg idCfg -cat;                                                    #   Insert new keys before old ...
+    idCfg .__CFG_idCfg -copy;                                                   #   ... in .__CFG_idCfg
+    TRUE return;                                                                #   Configuration file loaded
+  }                                                                             # <<
+  function -CFG_get_include(sFile)                                              # Load included files
+  {                                                                             # >>
+    data idCfg;                                                                 #   Buffer for configuration file
+    file iCfg;                                                                  #   File processor
+    var i;
+    "include" iCfg -set line_flt;                                               #   - set line filter
+    "=;# " iCfg -set sep;                                                       #   - set separators
+    "key" 255 idCfg -addcomp;                                                   #   Setup config. file buffer
+    "val" 255 idCfg -addcomp;                                                   #   ...
+    sFile "ascii" idCfg iCfg -import ?error if FALSE return; end                #   Load config file
+    idCfg 1 1 idCfg -select;                                                    #   Select values
+    :i=-1:; :i++: :i<idCfg.nrec: while                                          #   Loop values
+      ${idCfg[i,0]} i 0 idCfg -sstore;                                          #     Replace global variables
+    end                                                                         #   <<
+    idCfg return;                                                               #   Return file list
+  }                                                                             # <<
+  function -CFG_init_clo(sArg)                                                  # Parse -P command line options
+  {                                                                             # >>
+    sArg "-P" "search" -VAR_strop 0 == if                                       #   Cmd. line arg. starts with "-P" >>
+      data idAux;                                                               #     Auxilary data instance
+      var  nLen;                                                                #     String length
+      sArg "" "len" -VAR_strop 2 - nLen =;                                      #     Get net length of arg. string
+      sArg "${nLen}" "right" -VAR_strop sArg =;                                 #     Remove the "-P"
+      { { "${sArg}" } } "=" "split" idAux -strop;                               #     Split key/value
+      "${idAux[0,0]}" "uasr." "search" -VAR_strop 0 == not if                   #     Key not starting with "uasr." >>
+        "uasr.${idAux[0,0]}" 0 0 idAux -sstore;                                 #       Prefix with "uasr."
+      end                                                                       #     <<
+      .__CFG_idCfg.nrec ++ .__CFG_idCfg -reallocate;                            #     Insert one record at top of ...
+      .__CFG_idCfg 1 .__CFG_idCfg /rec -shift;                                  #     ... .__CFG_idCfg
+      "${idAux[0,0]}"     0 0 .__CFG_idCfg -sstore;                             #     Store key
+      "\"${idAux[0,1]}\"" 0 1 .__CFG_idCfg -sstore;                             #     Store value
+      leave;                                                                    #     All done
+    end                                                                         #   <<
+    sArg "-v" "search" -VAR_strop 0 == if                                       #   Cmd. line arg. starts with "-v" >>
+      var nVlevel;                                                              #     Auxilary variable
+      sArg "-2" "right" -VAR_strop nVlevel -vset;                               #     Parse verbose level
+      nVlevel 0 >= if nVlevel .__UTL_nVlevel =; end                             #     Set it (if >= 0 :)
+      leave;                                                                    #     All done
+    end                                                                         #   <<
+    sArg "-j" "search" -VAR_strop 0 == if                                       #   Cmd. line arg. starts with "-j" >>
+      var nBuf;                                                                 #     Auxilary variable
+      sArg "-2" "right" -VAR_strop nBuf -vset;                                  #     Parse max. no. of jobs level
+      nBuf 1 > if                                                               #     More than one job requested >>
+        "Parallel computing is in an experimental stage!" 1 -WARNING;           #       Not such a good idea 
+        nBuf .__CFG_nJobs =;                                                    #       Set it
+      end                                                                       #     <<
+      leave;                                                                    #     All done
+    end                                                                         #   <<
+    sArg "-n" == if TRUE .__CFG_bNwr =; leave; end                              #   Cmd. line arg. is "-n" -> no write
+    sArg "-f" == if TRUE .__CFG_bFce =; leave; end                              #   Cmd. line arg. is "-f" -> force
+    sArg "-c" == if TRUE .__CFG_bCol =; leave; end                              #   Cmd. line arg. is "-c" -> colorize
+  }                                                                             # <<
+
+  ## Local variables                                                            # -------------------------------------
+  var bRet;    TRUE bRet =;                                                     # Return value
+  var sDefCfg;                                                                  # Default configuration file name
+  var nArg;                                                                     # Counter of command line arguments
+  data idAux;                                                                   # Auxilary data instance
+  data idFiles;                                                                 # Configuration files to load
+
+  ## Save configuration file name                                               # -------------------------------------
+  { { "$[sFile]" } } "" "splitp" idAux -strop;                                  # | 
+  :idAux[0,idAux.dim-1]: "." "split" -VAR_strop .__CFG_sCfgfilename =;          # |
+
+  ## Load default configuration                                                 # -------------------------------------
+  .__CFG_idCfg -reset;                                                          # Reset configuration kay/value list
+  this :sfl[0,0]: "" "splitp" -VAR_strop sDefCfg =;                             # Get path of current script
+  sDefCfg "/../../../default.cfg" + sDefCfg =;                                  # Get path of default config. file
+  sDefCfg -CFG_init_fil;                                                        # Load default configuration file
+
+  ## Find included config files                                                 # -------------------------------------
+  { { "$[sFile]" } } idFiles =;                                                 # Init list of files
+  0 var nF; nF idFiles.nrec < while;                                            # Loop over list of files >>
+    :idFiles[nF,0]: -CFG_get_include idFiles -cat;                              #   Append included files
+  nF ++=; end                                                                   # <<
+
+  ## Load config file                                                           # -------------------------------------
+  nF --=; nF 0 >= while;                                                        # Loop over list of files >>
+    :idFiles[nF,0]: sFile =;                                                    #   Fetch file name
+    sFile "." == if "" sFile =; end                                             #   '.' -> default configuration
+    sFile if                                                                    #   sFile not empty >>
+      sFile -CFG_init_fil not if                                                #     Load custom config., if failed >>
+        bTerm if "FATAL: cannot load configuration file.\n" -ERROR; quit; end   #       Terminate session (if bTerm)
+        FALSE bRet =;                                                           #       Return false
+      end                                                                       #     <<
+    end                                                                         #   <<
+  nF --=; end                                                                   # <<
+
+  ## Analyze command line options (to find the exp-key)                         # -------------------------------------
+  0 nArg =; nArg $$ < while                                                     # Loop over command line arguments >>
+    nArg ++=; nArg -argv -CFG_init_clo;                                         #   Parse command line argument nArg
+  end                                                                           # <<
+
+  ## Load default experiment configuration                                      # -------------------------------------
+  "cfg" "S" -CFG_get_path "/default.cfg" + var sExpDefFile;                     # default.cfg should be in [exp]/cfg
+  sExpDefFile stdfile -exists if;                                               # If it exists >>
+    sExpDefFile -CFG_init_fil;                                                  #   Parse it
+
+    ## Analyze command line options (to overwrite default experiment keys)      #   -----------------------------------
+    0 nArg =; nArg $$ < while                                                   #   Loop over command line arguments >>
+      nArg ++=; nArg -argv -CFG_init_clo;                                       #     Parse command line argument nArg
+    end                                                                         #   <<
+
+  end;                                                                          # <<
+  ## Aftermath                                                                  # -------------------------------------
+  .__UTL_nVlevel .__UTL_nElevel =;                                              # Set error level
+  bRet return;                                                                  # Return success
+}
+
+## <p>Returns the value for a key from the session's configuration.</p>
+## <h4>Remarks</h4>
+## <ul>
+##   <li>UASR sessions are configured though configuration files.</li>
+##   <li><span class="warning">Use sparingly!</span> Function is time-consuming.</li>
+## </ul>
+##
+## @cgen:index
+## @param sKey string
+##          Configuration key
+## @param default
+##          Default value (string, number, Bool or instance) to return if <code>sKey</code> is not found
+## @return The string, number, Bool or instance associated with <code>sKey</code> or <code>default</code> in case of
+##         errors
+function -CFG_get(sKey,default)
+{
+  sKey default "" -CFG_get_ex return;                                           # Call extended function
+}
+
+## Returns the value for a key from the session's configuration (extended
+## function).
+## <h4>Remarks</h4>
+## <ul>
+##   <li>UASR sessions are configured though configuration files.</li>
+##   <li>The leading "uasr." of any key may be omitted.</li>
+##   <li><span class="warning">Use sparingly!</span> Function is time-consuming.</li>
+## </ul>
+##
+## @cgen:index
+## @param sKey string
+##          Configuration key
+## @param default
+##          Default value (string, number, Bool or instance) to return if <code>sKey</code> is not found
+## @param sMode string
+##          Empty string (default operation) or any combination of the following characters
+##          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+##            <tr><th>Character     </th><th>Description</th></tr>
+##            <tr><td><code>S</code></td><td>Silent: do not warn if key is not found</td></tr>
+##          </table>
+## @return The string, number, Bool or instance associated with <code>sKey</code> or <code>default</code> in case of
+##         errors
+function -CFG_get_ex(sKey,default,sMode)
+{
+  data idIdx;                                                                   # Index
+  sKey "uasr." "search" -VAR_strop 0 == not if "uasr.${sKey}" sKey =; end       # Key to be prefixed with "uasr."
+  { { "${sKey}" } } .__CFG_idCfg 0 0 idIdx /noerror -gen_index;                 # Find key
+  idIdx.nrec 0 == :idIdx[0,0]: -1 == || if                                      # Key not found >>
+    sMode "S" "search" -VAR_strop 0 < if                                        #   Not in silent mode >>
+      "Property ${sKey} not found." 1 -WARNING;                                 #     Warning
+    end                                                                         #   <<
+    default return;                                                             #   Return default value
+  else                                                                          # << Key found >>
+    ${.__CFG_idCfg[idIdx[0,0],1]} var sVal;                                     #   Get value
+    sVal "%CFGFILENAME%" == if .__CFG_sCfgfilename sVal = end;                  #   Replace by config file name
+    sVal return;                                                                #   Return value
+  end                                                                           # <<
+}
+
+## Loads the value for a key from the session's configuration persistently
+## in a global variable. Does not read key if global variable already exists.
+##
+## @cgen:index
+## @param sVar string
+##          Name of the global Variable as string (should start with <code>.</code>)
+## @param sKey string
+##          Configuration key
+## @param default
+##          Default value (string, number, Bool or instance) to return if <code>sKey</code> is not found
+## @return The string, number, Bool or instance associated with <code>sKey</code> or <code>default</code> in case of
+##         errors
+function -CFG_get_persistent(sVar,sKey,default)
+{
+  sVar "" ?instance not if;
+    sKey default "S" -CFG_get_ex var $[sVar];
+  end;
+  $[sVar] return;
+}
+
+## Loads the value for a key from the session's configuration persistently
+## in a global variable (extended function). Does not read key if global variable already exists.
+## @cgen:index
+## @param sVar string
+##          Name of the global Variable as string (should start with <code>.</code>)
+## @param sKey string
+##          Configuration key
+## @param default
+##          Default value (string, number, Bool or instance) to return if <code>sKey</code> is not found
+## @param sMode string
+##          Empty string (default operation) or any combination of the following characters
+##          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+##            <tr><th>Character     </th><th>Description</th></tr>
+##            <tr><td><code>S</code></td><td>Silent: do not warn if key is not found</td></tr>
+##          </table>
+## @return The string, number, Bool or instance associated with <code>sKey</code> or <code>default</code> in case of
+##         errors
+function -CFG_get_ex_persistent(sVar,sKey,default,sMode)
+{
+  sVar "" ?instance not if;
+    sKey default sMode -CFG_get_ex var $[sVar];
+  end;
+  $[sVar] return;
+}
+
+
+## Determines if the value for a key from the session's configuration contains
+## a specified item.
+## <h4>Remarks</h4>
+## <ul>
+##   <li>UASR sessions are configured though configuration files.</li>
+##   <li>The leading "uasr." of any key may be omitted.</li>
+##   <li><span class="warning">Use sparingly!</span> Function is time-consuming.</li>
+## </ul>
+##
+## @cgen:index
+## @param sKey string
+##          Configuration key
+## @param sValItem string
+##          Item to search
+## @param sDel string
+##          String of delimiter characters separation value items
+## @return The zero-based index of the item in the value or -1 if the item was
+##         not found
+function -CFG_get_item(sKey,sValItem,sDel)
+{
+  var sVal;   sKey "" "S" -CFG_get_ex sVal -sset;                               # Get value for sKey
+  data idVal; { { sVal } } sDel "split" idVal -strop;                           # Split values at sDel
+  idVal sValItem "cmp" idVal -strop; idVal 0 .== idVal =;                       # Find sValItem
+  idVal -is_empty if -1 return; end;                                            # Val empty => not found
+  data idIdx; idVal NULL 0 "imax" idIdx -aggregate;                             # Get index
+  :idVal[0,idIdx[0,0]]==1: if :idIdx[0,0]: return; else -1 return; end          # Return position of sValElem
+}
+
+## <p>Returns the path to a file list. <a name="index:flists" title="File lists"></a>
+## The function returns the path to the file named "<code>&lt;sKey&gt;</code>.flst" in
+## the file lists directory (see function <a href="#clp_-CFG_get_path"><code
+## class="link">-CFG_get_path</code></a>). There are some fallback rules (see
+## description of parameter <code>sKey</code>).</p>
+## 
+## <h4>Remarks</h4>
+## <ul>
+##   <li>The function does not guarantee that the returned path name denotes an
+##     existing file or is even valid.</li>
+##   <li><span class="warning">Use sparingly!</span> Function is time-consuming.</li>
+## </ul>
+## 
+## @cgen:index
+## @param sKey string
+##          Identifier of the file list to return. The following keys are supported
+##          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+##            <tr><th><code>sKey  </code></th><th>Description</th><th>Fall back</th></tr>
+##            <tr><td><code>all   </code></td><td>Complete data set</td><td>-</td></tr>
+##            <tr><td><code>dev   </code></td><td>Development set</td><td><code>test</code></td></tr>
+##            <tr><td><code>stat  </code></td><td>Statistics set</td><td><code>train</code></td></tr>
+##            <tr><td><code>stat_t</code></td><td>Linear feature transformation statistics set</td><td><code>train</code></td></tr>
+##            <tr><td><code>test  </code></td><td>Test set</td><td>-</td></tr>
+##            <tr><td><code>train </code></td><td>Training set</td><td>-</td></tr>
+##          </table>
+##          You can use any other "keys" as well. The function will then
+##          create a file name as described above.
+## @param sMode string
+##          Empty string (default operation) or any combination of the following characters
+##          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+##            <tr><th>Character     </th><th>Description</th></tr>
+##            <tr><td><code>S</code></td><td>Silent: do not print messages (except errors)</td></tr>
+##          </table>
+## @return The path name of the file list
+function -CFG_get_flist(sKey,sMode)
+{
+  ## Local functions                                                            # -------------------------------------
+  function -CFG_get_flist_fallback(sDefault,sFallback)                          # Fall back to other file lisz
+  {                                                                             # >>
+    "${sDir}/${sDefault}.flst" stdfile -exists if leave; end                    #   Default file list exists -> ok
+    "${sDir}/${sFallback}.flst" stdfile -exists if                              #   Fall back file exists >>
+      "${sDir}/${sFallback}.flst" sFlist =;                                     #     Fall back to it
+      ( "fallback" -COLOR_yellow ) sType =;                                     #     Remember "fallback file list"
+      leave;                                                                    #     That's it
+    end                                                                         #   <<
+  }                                                                             # <<
+
+  ## Local variables                                                            # -------------------------------------
+  var sDir;                                                                     # File list directory
+  var sFlist;                                                                   # Path to file list (return value)
+  var sType;  "" sType =;                                                       # How the return value was found
+  
+  ## Determine file list path                                                   # -------------------------------------
+  "flists"            "S" -CFG_get_path sDir   =;                               # Get file lists directory silently
+  "flist.${sKey}" "#" "S" -CFG_get_ex   sFlist =;                               # Get configured file list name
+  "#" sFlist == not if                                                          # Config key exists >>
+    sFlist stdfile -exists not if "${sDir}/${sFlist}" sFlist =; end             #   Make file list name
+    "config" sType =;                                                           #   Remember "configured file list"
+  else                                                                          # << Config key does not exist >>
+    "${sDir}/${sKey}.flst" sFlist =;                                            #   Make default file list name
+    "default" sType =;                                                          #   Remember "default file list"
+    "xval"   sKey == if "xval"   "all"   -CFG_get_flist_fallback; end           #   Fallback xval.flst -> all.flst
+    "dev"    sKey == if "dev"    "test"  -CFG_get_flist_fallback; end           #   Fallback dev.flst -> test.flst
+    "stat"   sKey == if "stat"   "train" -CFG_get_flist_fallback; end           #   Fallback stat.flst -> train.flst
+    "stat_t" sKey == if "stat_t" "train" -CFG_get_flist_fallback; end           #   Fallback stat_t.flst -> train.flst
+  end                                                                           # <<
+  
+  ## Protocol                                                                   # -------------------------------------
+  sMode "S" "search" -VAR_strop 0 < if                                          # Not in silent mode >>
+    "\n   - " "File list" -14 -MSG_pad +                                        #   Print file list path
+      ": " + sFlist + " (${sType}, " +                                    -MSG; #  |
+    sFlist stdfile -exists if                                                   #   Check if file list exists
+     "exists)"                                                                  #     Exists
+   else                                                                         #   Else
+     "NOT FOUND" -COLOR_red ")" +                                               #     Not found
+   end                                                                    -MSG; #  <<
+  end                                                                           # <<
+  sFlist return;                                                                # Return path to file list
+}
+
+## <p>Returns a path to data files.</p>
+## <a name="index:paths" title="Paths to data files"></a>
+## <p>The function uses the following rules to determine a path name:</p>
+## <ol>
+##   <li>If a key named "uasr.dir.&lt;sKey&gt;" exists in the current
+##     configuration return the value of that key.</li>
+##   <li>If a directory named
+##     "&lt;uasr.data&gt;/&lt;uasr.db&gt;/exp/&lt;uasr.exp&gt;/&lt;sKey&gt;"
+##     exists <em>or</em> a fallback is not allowed (see parameter
+##     <code>sMode</code>) return that directory name.</li>
+##   <li>Return the path "&lt;uasr.data&gt;/&lt;uasr.db&gt;/&lt;sKey&gt;"
+##     (fallback does not apply for keys "log" and "model").</li>
+## </ol>
+## <p>&lt;uasr.xxx.yyy&gt; denotes the value associated with the respective
+## key in the current configuration (i.e. the value returned by
+## <code>"uasr.xxx.yyy" "" <a href="#clp_-CFG_get"><code
+## class="link">-CFG_get</code></a></code>).</p>
+## 
+## <h4>Remarks</h4>
+## <ul>
+##   <li>Special rules apply for the feature files directory (key "fea").</li>
+##   <li>The function does not guarantee that the returned path name denotes an
+##     existing directory or is even valid.</li>
+##   <li>If not set otherwise, the default value for &lt;uasr.data&gt; is
+##     "$UASR_HOME/data", where <code>$UASR_HOME</code> is an environment
+##     variable to be set by the user.</li>
+##   <li><span class="warning">Use sparingly!</span> Function is time-consuming.</li>
+## </ul>
+##
+## @cgen:index
+## @param sKey string
+##          Identifier of the path to return. The following keys are supported
+##          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+##            <tr><th><code>sKey  </code></th><th>Description</th></tr>
+##            <tr><td><code>data  </code></td><td>Data root directory</td></tr>
+##            <tr><td><code>f0    </code></td><td>Fundamental frequency contour files</td></tr>
+##            <tr><td><code>fea   </code></td><td>Feature files</td></tr>
+##            <tr><td><code>flists</code></td><td>File list</td></tr>
+##            <tr><td><code>info  </code></td><td>Info files (classes.txt, labmap.txt, etc.)</td></tr>
+##            <tr><td><code>lab   </code></td><td>Label files</td></tr>
+##            <tr><td><code>log   </code></td><td>Log files</td></tr>
+##            <tr><td><code>model </code></td><td>Model files (feainfo.object, HMMs, etc.)</td></tr>
+##            <tr><td><code>pm    </code></td><td>Pitch mark files</td></tr>
+##            <tr><td><code>sig   </code></td><td>Signal files</td></tr>
+##            <tr><td><code>trl   </code></td><td>Transliteration (orthographic transcription) files</td></tr>
+##          </table>
+##          You can use any other "keys" as well. The function will then
+##          create a path name as described above.
+## @param sMode string
+##          Empty string (default operation) or any combination of the following characters
+##          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+##            <tr><th>Character     </th><th>Description</th></tr>
+##            <tr><td><code>F</code></td><td>Force: do not fallback to common directory</td></tr>
+##            <tr><td><code>S</code></td><td>Silent: do not print messages (except errors)</td></tr>
+##          </table>
+## @return The path name
+function -CFG_get_path(sKey,sMode)
+{
+  ## Local functions                                                            # -------------------------------------
+  function -CFG_get_path_finish(sPath,sType)                                    # Finish path name
+  {                                                                             # >>
+    var sEx;                                                                    #   Message buffer
+    sPath "?\\?/" "replace" -VAR_strop sPath -sset;                             #   Remove backslashes
+    sPath "?//?/" "replace" -VAR_strop sPath -sset;                             #   Remove double slashes
+    sPath stdfile /dir -exists if "exists"                                      #   Check if directory exists
+    else "NOT FOUND" -COLOR_red end sEx =;                                      #   |
+    bSilent not if sPath " (${sType}, ${sEx})" + -MSG; end                      #   Protocol
+    sPath return;                                                               #   Return the path
+  }                                                                             # <<
+  function -CFG_get_path_int(sKey,sRelPath,sAltPath,sName)                      # Implementation of path rules
+  {                                                                             # >>
+    bSilent not if "\n   - " sName -14 -MSG_pad + ": " + -MSG; end              #   Protocol;
+    var sPath;                                                                  #   Return value
+    sKey "" "S" -CFG_get_ex sPath -sset;                                        #   Get configured directory
+    sPath "" == not if                                                          #   Configured: overrides guesses >>
+      sPath "config" -CFG_get_path_finish return;                               #     Return path
+    end                                                                         #   <<
+    "${sEroot}/${sRelPath}" sPath =;                                            #   Experiment data directory
+    bForce sPath stdfile /dir -exists || if                                     #   No fallback or dflt. path exists >>
+      sPath "default" -CFG_get_path_finish return;                              #     Return path
+    end                                                                         #   <<
+    sAltPath if                                                                 #   Alternative path specified >>
+      "${sEroot}/${sAltPath}" sPath =;                                          #     Experiment data directory
+      sPath stdfile /dir -exists if                                             #     Path exists >>
+        sPath "alternative" -COLOR_yellow -CFG_get_path_finish return;          #       Return path
+      end                                                                       #     <<
+      "${sRoot}/${sAltPath}" sPath =;                                           #     Data base directory
+      sPath stdfile /dir -exists if                                             #     Path exists >>
+        sPath "alternative, fallback" -COLOR_yellow -CFG_get_path_finish return;#       Return path
+      end                                                                       #     <<
+    end                                                                         #   <<
+    "${sRoot}/${sRelPath}" sPath =;                                             #   Fall back to data base directory
+    sPath "fallback"-COLOR_yellow -CFG_get_path_finish return;                  #   Return path
+  }                                                                             # <<
+
+  ## Local variables                                                            # -------------------------------------
+  var sDb;                                                                      # Data base identifier
+  var sExp;                                                                     # Experiment identifier
+  var sUasrHome; ( "$UASR_HOME" "?\\?/" "replace" -VAR_strop ) sUasrHome -sset; # UASR home directory
+  var sDirData;  ( "dir.data" "" "S" -CFG_get_ex             ) sDirData  -sset; # UASR data directory
+  var sRoot;                                                                    # Database root directory
+  var sEroot;                                                                   # Experiment root directory
+  var sName;     "???" sName =;                                                 # Clear text name of directory
+  var bForce;    sMode "F" "search" -VAR_strop 0 >= bForce  =;                  # Force mode (do not fall back)
+  var bSilent;   sMode "S" "search" -VAR_strop 0 >= bSilent =;                  # Silent mode
+
+  ## Initialize                                                                 # -------------------------------------
+  "db"  "" "S" -CFG_get_ex sDb  =;                                              # Get data base identifier
+  "exp" "" "S" -CFG_get_ex sExp =;                                              # Get experiment identifier
+  sDirData if                                                                   # UASR data directory configured >>
+    "$[sDirData]/$[sDb]" sRoot =;                                               #  Make data base root directory
+  else                                                                          # << UASR data dir. not configured >>
+    "$[sUasrHome]-data/$[sDb]" sRoot =;                                         #  Standard data base root
+    ## TODO: To be removed later -->                                            #  -->
+    sRoot stdfile /dir -exists not if                                           #  Does not exist >>
+      "$[sUasrHome]/data/$[sDb]" stdfile /dir -exists if                        #    Old std. data root does exist >>
+        "$[sUasrHome]/data/$[sDb]" sRoot =;                                     #      Use the old one
+      end                                                                       #    <<
+    end                                                                         #  <<
+    ## <--                                                                      #  <--
+  end                                                                           # <<
+  sKey "data" == if sRoot return; end                                           # Data root req.? -> return it
+  sRoot ( sExp "" == if "/common" else "/$[sExp]" end ) + sEroot -sset;         # Get experiment data root directory
+  sRoot "/common" + sRoot =;                                                    # Get common data root directory
+  "log"   sKey == if TRUE bForce =; end                                         # No fallback on log directory
+  "model" sKey == if TRUE bForce =; end                                         # No fallback on model directory
+  
+  ## Special processing                                                         # -------------------------------------
+  sKey "fea" == if                                                              # Feature files directory >>
+    var sPfa; "pfa"     "" -CFG_get sPfa -sset;                                 #   Get frame based analysis type
+    var nDim; "pfa.dim" "" -CFG_get nDim -vset;                                 #   Get primary feature vector dim.
+    "dir.fea" "/fea/$[sPfa]_$[nDim]" "" "Feature dir" -CFG_get_path_int return; #   Get and return path
+  end                                                                           # <<
+  sKey "trl" == if                                                              # Transliteration files directory >>
+    "dir.trl" "/trl" "/lab" "Translit. dir" -CFG_get_path_int return;           #   Get and return path
+  end                                                                           # <<
+  sKey "out" == if                                                              # Ouput files directory >>
+    "dir.out" "/out" "/log" "Output dir" -CFG_get_path_int return;              #   Get and return path
+  end                                                                           # <<
+
+  ## Standard paths                                                             # -------------------------------------
+  sKey "flists" == if "File list"  sName =; end                                 # File list directory 
+  sKey "info"   == if "Info"       sName =; end                                 # Info files directory
+  sKey "lab"    == if "Label"      sName =; end                                 # Label files directory
+  sKey "log"    == if "Log"        sName =; end                                 # Log directory
+  sKey "model"  == if "Model"      sName =; end                                 # Model directory
+  sKey "pm"     == if "Pitch mark" sName =; end                                 # Pitch mark files directory
+  sKey "sig"    == if "Signal"     sName =; end                                 # Signal files directory
+  sKey "syn"    == if "Synthesis"  sName =; end                                 # Synthesis files directory
+  sKey "into"   == if "Into"       sName =; end                                 # Intonation files directory
+  sKey "midi"   == if "Midi"       sName =; end                                 # Midi files directory
+  sKey "inv"    == if "Inventory"  sName =; end                                 # Synthesis inventory files directory
+  "dir.${sKey}" "/${sKey}" "" "${sName} dir" -CFG_get_path_int return;          # Get and return path
+}
+
+## Sets the value for a key in the UASR configuration.
+##
+## @cgen:index
+## @param sKey string
+##          Configuration key
+## @param sValue string
+##          Value assigned to key
+function -CFG_set(sKey,sValue)
+{
+  "$sKey" "uasr." "search" -VAR_strop 0 == not if                               # Key not starting with "uasr." >>
+    "uasr." sKey + sKey =;                                                      #   Prefix with "uasr."
+  end                                                                           # <<
+  .__CFG_idCfg.dim 0 == if                                                      # Initialize key/value list >>
+    "key" 255 .__CFG_idCfg -addcomp;                                            #   Add key component
+    "val" 255 .__CFG_idCfg -addcomp;                                            #   Add value component
+  end                                                                           # <<
+  .__CFG_idCfg.nrec ++ .__CFG_idCfg -reallocate;                                # Insert one record at top of ...
+  .__CFG_idCfg 1 .__CFG_idCfg /rec -shift;                                      # ... .__CFG_idCfg
+  "${sKey}"     0 0 .__CFG_idCfg -sstore;                                       # Store key
+  "\"${sValue}\"" 0 1 .__CFG_idCfg -sstore;                                     # Store value
+}
+
+## Deletes the topmost key in the UASR configuration.
+##
+## @cgen:index
+## @param sKey string
+##          Configuration key
+function -CFG_del(sKey)
+{
+  data idAux;
+  .__CFG_idCfg { sKey } 0 0 idAux /noerror -gen_index ?error not if
+    idAux 1 + .__CFG_idCfg -dmark; .__CFG_idCfg -1 -1 .__CFG_idCfg /mark -delete;
+  end
+}
+
+## Dumps the current configuration to a data instance. The result will comprise
+## exactly one string component. Each record contains a key-value-string in the
+## Java properties file format.
+##
+## @cgen:index
+## @param idDst data
+##          Data instance to be filled with dump of current configuration
+## @return nothing
+function -CFG_dump(idDst)
+{
+  DGen iDG;                                                                     # Document generator
+  data idAux;                                                                   # Auxilary data instance
+
+  ## Get first instances of all keys (i.e. their actually used values)          # -------------------------------------
+  .__CFG_idCfg .__CFG_idCfg 0 0 idAux -gen_index;                               # Create first key instance index
+  idAux idAux -join; 1 1 idAux -mark; 0 1 idAux /mark -fill; idAux -unmark;     # Create record index
+  :idAux[0].==idAux[1]: .__CFG_idCfg -dmark;                                    # Mark first instance of all keys
+  .__CFG_idCfg 0 0 idAux /mark -select;                                         # Copy first instances
+  .__CFG_idCfg -unmark;                                                         # Unmark configuration object
+
+  ## Make a configuration "file"                                                # -------------------------------------
+  idAux "" " = " ";\n" iDG -table;                                              # Generate text
+  iDG.gen idDst -copy;                                                          # Copy to destination
+}
+
+## EOF

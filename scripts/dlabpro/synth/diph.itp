@@ -1,0 +1,437 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Synthesis functions: HMM-coded diphone inventory generation
+##
+## AUTHOR : Guntram Strecha
+## PACKAGE: uasr/scripts/dlabpro/synth
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## HMM inventory generation - Initialization
+##
+## @cgen:index
+## @param iSI object
+##          Session information object, consists of
+##          iSI.itAM hmm
+##          iSI.itLX fst
+##          iSI.itRN fst
+function -HMM_inventory_init(iSI)
+{
+  iSI.itAM.sd "~LYR" iSI.itAM.sd -find_comp 1 iSI.itAM.sd -delete;              # Delete HMM layer state component
+  iSI.itAM.td "~RC"  iSI.itAM.td -find_comp 1 iSI.itAM.td -delete;              # Delete ref. ctr. transition component
+
+  iSI.itAM iSI.itGP     -LAB_get_fst;                                           # Create phoneme labeling transducer
+}
+
+## HMM inventory generation - Create cut list data structure
+## @cgen:index
+## @param idCutList data
+##          The cut list data instance
+function -HMM_inventory_init_cutlist(idCutList)
+{
+    "FILE"   -type 255    idCutList -addcomp;                                    # Carrier file name
+    "TRAN"   -type 255    idCutList -addcomp;                                    # Phoneme transcription of carrier signal
+    "INDE"   -type int    idCutList -addcomp;                                    # Index of diphone in carrier transcription
+    "COUN"   -type int    idCutList -addcomp;                                    # Number of phonemes of diphone, commonly 2
+    "DIPH"   -type 10     idCutList -addcomp;                                    # Diphone name
+    "SCOR_0" -type double idCutList -addcomp;                                    # Mean recognition neglog likelihood of first phoneme
+    "SCOR_1" -type double idCutList -addcomp;                                    # Mean recognition neglog likelihood of second phoneme
+    "FRMS"   -type int    idCutList -addcomp;                                    # Index of analysis frame diphone starts
+    "FRMC"   -type int    idCutList -addcomp;                                    # Number of analysis frames diphone consists of
+    "PHON_0" -type 5      idCutList -addcomp;                                    # First phoneme name
+    "FRMS_0" -type int    idCutList -addcomp;                                    # Index of analysis frame first phoneme starts
+    "PHON_1" -type 5      idCutList -addcomp;                                    # Second phoneme name
+    "FRMS_1" -type int    idCutList -addcomp;                                    # Index of analysis frame second phoneme starts
+}
+
+## HMM inventory generation - Create inventory description data structure for packed inventories (diphone inventories)
+## @cgen:index
+## @param idInv data
+##          The inventory description data instance
+function -HMM_inventory_init_inv_descr(idInv)
+{
+    "UNIT"    -type 10  idInv -addcomp;                                          # Unit name
+    "POS_SIG" -type int idInv -addcomp;                                          # Start position unit samles
+    "CNT_PER" -type int idInv -addcomp;                                          # Number of periods
+    "POS_PER" -type int idInv -addcomp;                                          # Start position of unit periods
+    "CNT_PHO" -type int idInv -addcomp;                                          # Number of phonemes of unit
+    "PHO_0"   -type 5   idInv -addcomp;                                          # First phoneme name
+    "NP_0"    -type int idInv -addcomp;                                          # Number of periods of first phoneme
+    "IP30_0"  -type int idInv -addcomp;                                          # Period index in first phoneme for 30 percent rule
+    "IP60_0"  -type int idInv -addcomp;                                          # Period index in first phoneme for 60 percent rule
+    "PHO_1"   -type 5   idInv -addcomp;                                          # Second phoneme name
+    "NP_1"    -type int idInv -addcomp;                                          # Number of periods of second phoneme
+    "IP30_1"  -type int idInv -addcomp;                                          # Period index in second phoneme for 30 percent rule
+    "IP60_1"  -type int idInv -addcomp;                                          # Period index in second phoneme for 60 percent rule
+}
+
+## HMM inventory generation - Add unit
+##
+## @cgen:index
+## @param iF file
+##          TODO: ...
+## @param iSI object
+##          Session information object consists of
+##          iSI.itAM hmm
+##          iSI.itLX fst
+##          iSI.itRN fst
+## @param idSeq data
+##          TODO: ...
+## @return Data instance with GSS, LSR, PHO component.
+function -HMM_inventory_recognize_turn(iF,iSI,idSeq)
+{
+  fst     itAux;                                                                # Auxilary transducer
+  fst     itDC;                                                                 # Decoded chain
+  data    idAux;                                                                # Auxilary data instance
+  data    idLex                                                                 # Lexicon
+  data    idPfa;                                                                # Primary features
+  data    idSfa;                                                                # Secondary features
+  data    idNld;                                                                # Neglog Gaussian densities package
+
+  iF "" "A" idPfa -FEA_get;                                                     # Call primary feature analysis
+  :idPfa["lab"]: 0 idAux -compress;                                             # Get lexicon
+  :idAux["lab"]: "" "rcat" idAux -strop;                                        # |
+  " ${idAux[0,0]} "                                                     -MSG2;  # | Protocol
+  { iF.sfile "${idAux[0,0]}" } idLex =;                                         # Generate lexicon
+  { { "ORTH" } { "PHON" } } 0 idLex -set_cnames;                                # |
+  iSI.itAM.ud idLex iSI.itLX -LX_compile;                            "." -MSG2; # Compile lexical transducer
+  "~LSR" -type double iSI.itLX.td -addcomp;                                     # | Add dummy weights
+  iSI.itLX -1 iSI.itLX -minimize;                                    "." -MSG2; # Minimize lexical transducer
+  iSI.itAM iSI.itRN /index -union; iSI.itRN 0 iSI.itRN -close        "." -MSG2; # Kleene-close HMMs
+  iSI.itRN iSI.itLX 0 0 itAux -compose;                                         # Forced recognition
+
+  idPfa iSI.iFI ( iSI.itAM -get_dim ) idSfa NULL -FEA_sfa;           "." -MSG2; # Call secondary feature analysis
+  idSfa NULL idNld iSI.itAM.gm /neglog -density;                     "." -MSG2; # Comp. neglog. Gaussian densities
+  itAux 0 idNld itDC /epsremove -sdp;                                           # Synchroneous DP
+
+  ## Phonetic labeling                                                          # -------------------------------------
+  itDC itAux -copy; 0 itAux -invert; itAux iSI.itGP 0 0 itAux -compose;         # Compute phonemes (per frame)
+  itAux 0 1 -1 itAux -best_n;                                                   # HACK: sometimes labels not unique!
+  :itAux.td[itAux.NC_TD_TOS]: itDC.td -join;                                    # Join phonemes to transitions
+  itDC.td.dim -- "~PHN" itDC.td -set_cname;                                     # Rename
+  ## Set time axis                                                              # -------------------------------------
+  idNld.rinc itDC.td -set rinc; idNld.runit itDC.td -set runit;                 # In case anyone wants to know the time
+  itDC.td "~LSR" itDC.td -find_comp 1 itDC.td /comp -mark;                      # Select LSR,TIS,PHN
+  itDC.td "~TIS" itDC.td -find_comp 1 itDC.td /comp -mark;                      # |
+  itDC.td -1 -1 idSeq /mark -select;                                            # |
+  itDC.td "~PHN" itDC.td -find_comp iSI.itAM.ud 0 1 idAux -lookup;              # | Replace index with phoneme string
+  0 "~PHO" idAux -set_cname;                                                    # Rename phoneme component
+  idAux idSeq -join;                                                            # Join with GSS
+  idPfa return;                                                                 # Return result data instance
+}
+
+## HMM inventory generation - Add all diphones contained in carrier signal to cut list
+## Diphones will only be added if <ul>
+##   <li>the diphone not exists already or</li>
+##   <li>the existing diphone has lower score</li></ul>
+## @cgen:index
+## @param sFn string
+##          Carrier file name
+## @param idSeq data
+##          Data instance generated by <a href="#clp_-HMM_inventory_recognize_turn"><code class="link">-HMM_inventory_recognize_turn</code></a>
+## @param idCutList
+##          The cut list
+function -HMM_inventory_addto_cutlist(sFn,idSeq,idCutList)
+{
+  data idLab;                                                                     # Label sequence
+  data idAux;                                                                     # Auxilary data instance
+  data idPho0;                                                                    # Holds first phoneme
+  data idPho1;                                                                    # Holds second phoneme
+  var  nDiphScore0;                                                               # Mean recognition score of first phoneme
+  var  nDiphScore1;                                                               # Mean recognition score of second phoneme
+  var  nRecDiph;                                                                  # Index of diphone in cut list
+  var  nDiphCount;                                                                # Number of diphones contained in GSS
+  var  nFrameStart0;                                                              # Start frame of first phoneme in feature vector sequence
+  var  nFrameStart1;                                                              # Start frame of second phoneme in feature vector sequence
+  var  nFrameCount;                                                               # Frame count of whole diphone
+  var  nFrameCount0;                                                              # Frame count of first phoneme
+  var  nFrameCount1;                                                              # Frame count of second phoneme
+  var  nDiph;                                                                     # Counter
+  var  sDiph;                                                                     # Diphone name
+  var  sTran;                                                                     # Phoneme transcription of GSS
+  
+  idCutList -is_empty if                                                          # Cut list empty? >>
+    idCutList -HMM_inventory_init_cutlist;                                        #   Init cut list structure
+  end                                                                             # <<
+
+  idSeq "~PHO" idSeq -find_comp idLab -compress;                                  # Generate label sequence
+  idLab.nrec 1 - nDiphCount =;                                                    # Get number of diphones
+  0 1 idLab /comp -xfetch "" "rcat" idAux -strop; 0 0 idAux -sfetch sTran =;      # Get transciption string
+  label L_DIPH; nDiph nDiphCount < if                                             # Loop over all diphones >>
+    0 1 nDiph 2 idLab /rec -xfetch /comp -xfetch NULL "rcat" idAux -strop;        #   Get diphone name
+    0 0 idAux -sfetch sDiph =;                                                    #   Store it
+    idAux idCutList 0 "DIPH" idCutList -find_comp idAux /noerror -gen_index       #   Search diphone in cut list
+    ?error 0 0 idAux -dfetch 0 < || if                                            #   Not found >>
+      idCutList.nrec nRecDiph =;                                                  #     Get number of entries in cut list
+      nRecDiph 1 + idCutList -reallocate;                                         #     Allocate one more entry
+      1e+37 nRecDiph "SCOR_0" idCutList -find_comp idCutList -dstore;             #     Init with very bad score
+      1e+37 nRecDiph "SCOR_1" idCutList -find_comp idCutList -dstore;             #     Init with very bad score
+    else                                                                          #   << Found >>
+      0 0 idAux -dfetch nRecDiph =;                                               #     Get position
+    end                                                                           #   <<
+
+    :nFrameCount0=ent(idLab[nDiph,2]/2+1):;                                       #   Frame count of first phoneme
+    :nFrameCount1=ent(idLab[nDiph+1,2]/2+1):;                                     #   Frame count of first phoneme
+    :nFrameCount=nFrameCount0+nFrameCount1:;                                      #   Frame count of whole diphone
+    :nFrameStart0=idLab[nDiph+1,1]-nFrameCount0:;                                 #   Get start frame of first phoneme
+    :nFrameStart1=idLab[nDiph+1,1]:;                                              #   Get start frame of second phoneme
+
+    idSeq nFrameStart0 nFrameCount0 idPho0 /rec -select;                          #   Cut frames of first phoneme
+    idSeq nFrameStart1 nFrameCount1 idPho1 /rec -select;                          #   Cut frames of second phoneme
+    :idPho0["~LSR"]: NULL 3 "mom" idAux /rec -aggregate;                          #   Get geometric mean score of first phoneme
+    :idAux[0,0]: nDiphScore0 =;                                                   #   Store it
+    :idPho1["~LSR"]: NULL 3 "mom" idAux /rec -aggregate;                          #   Get geometric mean score of second phoneme
+    :idAux[0,0]: nDiphScore1 =;                                                   #   Store it
+
+    
+    nRecDiph 0 :idCutList["SCOR_0"]: -dfetch nDiphScore0 >                        #   Score is improved >>
+    nRecDiph 0 :idCutList["SCOR_1"]: -dfetch nDiphScore1 > && if                  #   |
+      " $[sDiph]" -COLOR_green                                         2 -MSGX;   #     Protocoll
+      sFn                nRecDiph "FILE"   idCutList -find_comp idCutList -sstore;#     Store file in cut list
+      sTran              nRecDiph "TRAN"   idCutList -find_comp idCutList -sstore;#     Store transciption in cut list
+      nDiph              nRecDiph "INDE"   idCutList -find_comp idCutList -dstore;#     Store GSS start index in cut list 
+      2                  nRecDiph "COUN"   idCutList -find_comp idCutList -dstore;#     Store count of GS in cut list
+      sDiph              nRecDiph "DIPH"   idCutList -find_comp idCutList -sstore;#     Store diphone name in cut list
+      nDiphScore0        nRecDiph "SCOR_0" idCutList -find_comp idCutList -dstore;#     Store score in cut list
+      nDiphScore1        nRecDiph "SCOR_1" idCutList -find_comp idCutList -dstore;#     Store score in cut list
+      nFrameStart0       nRecDiph "FRMS"   idCutList -find_comp idCutList -dstore;#     Store start frame of diphone in cut list
+      nFrameCount        nRecDiph "FRMC"   idCutList -find_comp idCutList -dstore;#     Store frames count of diphone in cut list
+      :idLab[nDiph,0]:   nRecDiph "PHON_0" idCutList -find_comp idCutList -sstore;#     Store first phoneme name in cut list
+      nFrameStart0       nRecDiph "FRMS_0" idCutList -find_comp idCutList -dstore;#     Store first phoneme start frame in cut list
+      :idLab[nDiph+1,0]: nRecDiph "PHON_1" idCutList -find_comp idCutList -sstore;#     Store second phoneme name in cut list
+      nFrameStart1       nRecDiph "FRMS_1" idCutList -find_comp idCutList -dstore;#     Store second phoneme start frame in cut list
+    else                                                                          #   << Score is worse >>
+      " $[sDiph]" -COLOR_red                                           2 -MSGX;   #     Protocoll
+    end                                                                           #   <<
+    nDiph ++=;                                                                    #   Increment diphone counter
+    goto L_DIPH;                                                                  #   Next diphone 
+  end                                                                             # <<
+
+  return;
+}
+
+## HMM inventory generation - Add all diphones contained in GSS and specified by cut list to inventory
+## @cgen:index
+## @param idSeq data
+##          Data instance generated by <a href="#clp_-HMM_inventory_recognize_turn"><code class="link">-HMM_inventory_recognize_turn</code></a>
+## @param idCutList data
+##          Section of the whole cut list regarding the diphones of the given GSS.
+## @param idInv data
+##          The inventory data instance.
+## @return Number of frames stored to inventory.
+function -HMM_inventory_addto_inv(idSeq,idCutList,idInv)
+{
+  data idAux;                                                                   # Auxiliary data instance
+  data idSeqDiph;                                                               # GSS of current diphone
+  var  i;                                                                       # Counter
+  var  n;                                                                       # Counter for number of frames of diphones
+  var  nFrameStart;                                                             # Start frame of diphone
+  var  nFrameCount;                                                             # Frame count of diphone
+  var  sDiph;                                                                   # Diphone name
+
+  label L_DIPH; i idCutList.nrec < if                                           # Loop over all entries in cut list >>
+    idCutList i "FRMS" idCutList -find_comp idCutList -dfetch nFrameStart =;    #   Get start frame of diphone
+    idCutList i "FRMC" idCutList -find_comp idCutList -dfetch nFrameCount =;    #   Get frame count of diphone
+    idSeq nFrameStart nFrameCount idSeqDiph /rec -select;                       #   Get GSS of diphone
+    i "DIPH" idCutList -find_comp idCutList -sfetch sDiph =;                    #   Get diphone name
+    " $[sDiph]"                                                          -MSG2; #   Protocoll
+    { "$[sDiph]" 0 ${idSeqDiph.nrec} } 0 1 2 idAux -expand;                     #   Generate label sequence
+    idSeqDiph idAux -join;                                                      #   Join it with GSS
+    idAux idInv -cat;                                                           #   Append it to inventory
+    idSeqDiph.nrec n +=;                                                        #   Increment frame counter
+    i ++=;                                                                      #   Increment cut list entry counter
+    goto L_DIPH;                                                                #   Next entry in cut list
+  end                                                                           # <<
+  n return;                                                                     # Return number of frames stored to inventory
+}
+
+function -HMM_gss_to_fea(itHMM,iFI,idGss,nDimFea) {
+  data idMsc;
+  data idLsc;
+  data idFea;
+
+  idGss "~TIS" idGss -find_comp itHMM.gm.mean 0 itHMM.gm.mean.dim idMsc -lookup;# Get mean vectors of MSCs from HMM
+  idGss "~TIS" idGss -find_comp itHMM.lsmean  0 itHMM.lsmean.dim  idLsc -lookup;# Get mean vectors of LSCs from HMM 
+  idMsc idFea =;
+  idLsc idFea -join;
+  iFI.idW inv idFea * iFI.idX - idFea =;                                        # idFea = idFea * inv(iFI.idW) - iFI.idX
+  0 nDimFea idFea -xfetch idFea =;                                              # Cut feature vector to synthesis parameter
+
+  idFea return;
+}
+
+## HMM inventory - Search for diphone in inventory and return feature vector sequence
+## @cgen:index
+## @param sDiph string
+##          Diphone name to look for.
+## @param idInv data
+##          The inventory data instance.
+## @param itHMM hmm
+##          HM model for extract feature vector sequence
+## @param iFI object
+##          Feature info object
+## @param nDimFea number
+##          Dimension of feature vectors (commonly pfa.dim)
+## @param idFea data
+##          The feature vector sequence data instance to be filled
+## @return The function returns <ul><li><code>&nbsp;0</code> - no error</li><li><code>-1</code> - diphone not found.</li>
+function -HMM_inv_get_fea(sDiph,idInv,itHMM,iFI,nDimFea,bIntRepl,idFea)
+{
+  data idGss;
+  data idVuv;
+  data idPho;
+  data idInvD;
+  data idAux;
+  var  nDiph;
+
+  idInv "~DPH" idInv -find_comp idInvD -compress;                               # Generate inventory description
+  { "$[sDiph]" } idInvD 0 0 idAux /noerror -gen_index;                          # Find diphon index in inventory
+  ?error if 1 return; end                                                       # Not found? return with error
+  0 0 idAux -dfetch nDiph =;                                                    # get diphon index
+  nDiph 0 < if " $[sDiph] not found in inventory." 0 -WARNING; -1 return; end   # diphone not found -> return
+  idInv nDiph 1 idInvD -dfetch nDiph 2 idInvD -dfetch idGss /rec -select;       # Select diphon from inventory
+  itHMM iFI idGss nDimFea -HMM_gss_to_fea idFea =;                              # Get feature from gauss sequence
+  "~PHO" idGss -find_comp 1 idGss -xfetch idPho =;                              # Generate v/uv information from phoneme names and hmm model
+  idPho itHMM.ud 0 0 idVuv -gen_index;                                          # |
+  idVuv 0 itHMM.ud "v/uv" itHMM.ud -find_comp 1 idVuv -lookup;                  # |
+
+  bIntRepl TRUE == if                                                           # Should intensity taken from inventory ? >>
+    "~INT" idGss -find_comp 0 >= if                                             #   Intensity hint exists? >>
+      "~INT" idGss -find_comp 1 /comp idGss -xfetch 0 1 0 idFea -xstore;        #     Replace intensity
+    end                                                                         #   <<
+  end                                                                           # <<
+  
+  idPho idFea -join;                                                            # Append labels
+  idVuv idFea -join;                                                            # Append v/uv
+
+  0 return;
+}
+
+function -PHONEME_convert_to_filename(sPhonemes)
+{  
+  sPhonemes "/2:/22"   "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/3:/33"   "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/9:/99"   "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/A:/aa%"  "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/E:/ee%"  "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/O:/oo%"  "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/a:/aa"   "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/e:/ee"   "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/i:/ii"   "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/o:/oo"   "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/u:/uu"   "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/y:/yy"   "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/?/Q"     "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/A/a%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/B/b%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/C/c%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/D/d%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/E/e%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/G/g%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/H/h%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/I/i%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/J/j%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/L/l%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/N/n%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/O/o%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/Q/8%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/R/r%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/S/s%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/T/t%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/U/u%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/V/v%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/Y/y%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/Z/z%"    "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/./_"     "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/}/}"     "replace" -VAR_strop sPhonemes =;
+  sPhonemes "/=/#"     "replace" -VAR_strop sPhonemes =;
+  sPhonemes return;
+}
+
+function -DUMP_diphone(sFnInv,dC)
+{
+  var sDirSig;   "sig"                 ""     -CFG_get_path  sDirSig     =;    # Signal files path
+  var sDirPm;    "pm"                  ""     -CFG_get_path  sDirPm      =;    # Pitchmark files path
+  var nCrate;    "pfa.crate"          160     -CFG_get       nCrate  -vset;    # Get frame rate (in samples)
+  var sF;
+  var sD;
+  var sDF;
+  var sP0;
+  var sP1;
+  var nS;
+  var nM;
+  var nE;
+  var nISS; 0        nISS =;
+  var nIPS; 8        nIPS =;
+  var iD;   0        iD =;
+  var nD;   dC.nrec nD =;
+  data dS;
+  data dP;
+  data dPA;
+  data dID;
+  data dIS;
+  data dIP;
+  data dAux;
+  
+  dID -HMM_inventory_init_inv_descr;
+
+  0 1 -PBAR;  
+  label ROW; iD nD < if                                                         # For all dipones in list
+    iD "FILE"   dC -find_comp dC -sfetch sF =;                                  #   Get file diphon is taken from
+    iD "DIPH"   dC -find_comp dC -sfetch sD =;                                  #   Get diphon name
+    iD "FRMS"   dC -find_comp dC -dfetch nS =;                                  #   Get start frame of diphone in file
+    iD "FRMC"   dC -find_comp dC -dfetch nS + nE =;                             #   Get end frame of diphone file
+    iD "PHON_0" dC -find_comp dC -sfetch sP0 =;                                 #   Get first phoneme name
+    iD "PHON_1" dC -find_comp dC -sfetch sP1 =;                                 #   Get second phoneme name
+    iD "FRMS_1" dC -find_comp dC -dfetch nM =;                                  #   Get start frame of second phoneme
+
+    sP0 "/./_"     "replace" -VAR_strop sP0 =;
+    sP1 "/./_"     "replace" -VAR_strop sP1 =;
+    sD -PHONEME_convert_to_filename sDF =;                                      #   Convert diphone to filename
+    
+    "$[sDirSig]" sF dS -SIG_import;                                             #   Load signal 
+    "$[sDirPm]/$[sF].pm" "pm" dP stdfile -import;                               #   Load pitch marks
+    { 0 } dPA =; 0 1 dP /comp -xfetch ' { 1 1 } NULL iir ' dPA -cat;            #   Calculate start sample of each period
+    0 0 dPA nS nCrate * - abs NULL 0 "imin" dAux /rec -aggregate -dfetch nS =;  #   Get start pitchmark index
+    0 0 dPA nM nCrate * - abs NULL 0 "imin" dAux /rec -aggregate -dfetch nS - nM =;   #   Get start pitchmark index of second phoneme
+    0 0 dPA nE nCrate * - abs NULL 0 "imin" dAux /rec -aggregate -dfetch nE =;  #   Get end pitchmark index
+    dS :dPA[nS,0]: :dPA[nE,0]-dPA[nS,0]: dS /rec -select;                       #   Cut diphone
+    dP nS nE nS - dP /rec -select;                                              #   Cut pitch marks
+    "\n     $[iD]/$[nD]: Diphone: \"$[sP0]$[sP1]\"\t(length: $[dS.nrec],\tperiods: $[dP.nrec]" -MSG2; #   Protocoll
+    dS descale -type short dS -tconvert; dS dIS -cat;                           #   Append unit samples to inventory
+    dP dIP -cat;                                                                #   Append unit pitchmarks to inventory
+    { "$[sDF]" $[nISS] $[dP.nrec] $[nIPS] 2 "$[sP0]" $[nM] 0 0 "$[sP1]" ${dP.nrec-1} 0 0 } dID -cat; #   Append unit description to inventory
+    dS.nrec 2 * nISS +=;                                                        #   Increase unit signal position
+    dP.nrec 4 * nIPS +=;                                                        #   Increase unit pitchmark position
+    iD ++=;                                                                     #   Next diphone
+    iD nD / 1 -PBAR;                                                            #   Progress
+    goto ROW;                                                                   # <<
+  end
+
+  "$[sFnInv].bin" "raw"       dIS stdfile -export;                              #   Write inventory signal
+  "$[sFnInv].pm"  "pm"        dIP stdfile -export;                              #   Write inventory pitch marks
+  "$[sFnInv].inv" "inv_descr" dID stdfile -export;                              #   Write inventory description
+  "\n  "                                                                 -MSG2; # Protocol
+  "done\n"                                                                -MSG; # Protocol
+  
+  0 return;
+}
+
+## EOF

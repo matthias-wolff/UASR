@@ -1,0 +1,544 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - DRAFT - Finite state grammar analysis and synthesis
+##
+## AUTHOR : Ronald Römer, Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro
+##
+## ARGUMENTS:
+##   $1: Command or 'help'
+##   $2: Setup file or, if 1st arg. is 'help', command
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## TODO:
+##   o Smoof
+
+## REMARKS at the end of the file!
+
+"$UASR_HOME/scripts/dlabpro/util/cfg.itp"  include;                             # Include UASR config. utilities
+"$UASR_HOME/scripts/dlabpro/util/fst.itp"  include;                             # Include UASR FST utilities
+"$UASR_HOME/scripts/dlabpro/util/lab.itp"  include;                             # Include UASR label utilities
+"$UASR_HOME/scripts/dlabpro/util/lx.itp"   include;                             # Include UASR lexicon utilities
+"$UASR_HOME/scripts/dlabpro/util/uasr.itp" include;                             # Include UASR utilities
+"$UASR_HOME/scripts/dlabpro/util/var.itp"  include;                             # Include UASR variables utilities
+
+## Global variables
+var SIDX; "SIDX" SIDX =;                                                        # Name of state index component
+var TORD; "TORD" TORD =;                                                        # Name of topological order component
+
+## Prints help on usage
+##
+## @param sCmd string
+##          Command to display help for (general help if empty).
+function -usage(sCmd)
+{
+  "\n"                                                                    -MSG;
+  sCmd "trn" == if
+      "\n   trn: Language model training"                                 -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp trn <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -c              use colors for screen protocol"             -MSG;
+      "\n     -n              do not write any files"                     -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp trn myconfig.cfg"                            -MSG;
+    "\n\n   REMARKS:"                                                     -MSG;
+      "\n     Special <key>s for $__SFILE__.xtp trn:"                     -MSG;
+      "\n       lx             : pre-defined lexicon file (set to NULL"   -MSG;
+      "\n                        to gather the word list automatically)"  -MSG;
+      "\n       lx.cutoff      : pruning treshold for word counts"        -MSG;
+      "\n       lm.ngram.order : maximal n-gram order"                    -MSG;
+      "\n       lm.ngram.cutoff: pruning treshold for n-gram counts"      -MSG;
+      "\n     Important common <key>s:"                                   -MSG;
+      "\n       flist.train    : Transliteration file list"               -MSG;
+      "\n       dir.trl        : Transliteration directory (input files)" -MSG;
+      "\n       dir.model      : Model directory (output files)"          -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+    "\n   SYNOPSIS:"                                                      -MSG;
+    "\n     FSG: Finite state grammar analysis and synthesis"             -MSG;
+  "\n\n   USAGE:"                                                         -MSG;
+    "\n     dlabpro $__SFILE__.xtp <command> <cfgfile> [options]"         -MSG;
+  "\n\n   COMMANDS:"                                                      -MSG;
+    "\n     trn - Language model training"                                -MSG;
+  "\n\n  Type 'dlabpro $__SFILE__.xtp help <command>' for help on a "     -MSG;
+         "specific command."                                              -MSG;
+    "\n"                                                                  -MSG;
+  0 return;
+}
+
+## DEBUGGING: Labels the states of an n-gram tree.
+##
+## @param sMode string
+##          Labeling mode: "history" to label with history (slow for large
+##          trees!) or "index" to label with state index and topological
+##          order (if found in the state table).
+## @param itNgr fst
+##          The n-gram tree.
+## @return void
+function -LM_labelstates(sMode,itNgr)
+{
+  data idAux;                                                                   # Auxiliary data object
+  data idAux2;                                                                  # Auxiliary data object #2
+  fst  itAux;                                                                   # Auxiliary transducer
+  var  nIc;                                                                     # Component index
+  var  nS;                                                                      # State index
+
+  ## History mode                                                               # ------------------------------------- 
+  sMode "history" == if                                                         # History mode >>
+    "[State labeling..."                                                  -MSG; #   Protocol (as this may take a while)
+    "~NAM" 255 itNgr.sd -addcomp;                                               #   Add state label component
+    itNgr.sd.dim -- nIc =;                                                      #   Remember the component index 
+    ( -type long ) 1 itNgr.sd.nrec idAux -array; 0 1 idAux -fill;               #   Make anchor state list (all states)
+    itNgr 0 idAux 0 NULL -1 itAux /backward -excerpt;                           #   Get the paths to all states
+    :itAux.td["~TIS"]: 0 itNgr.is 0 1 idAux -lookup;                            #   Get transition labels
+    0 nS =; nS itNgr.sd.nrec < while                                            #   Loop over n-gram tree states >>
+      idAux :itAux.ud[nS,"~FT"]: :itAux.ud[nS,"~XT"]: idAux2 /rec -select;      #     Select path lables
+      idAux2 NULL "rcat" idAux2 -strop;                                         #     Compile state name
+      :itNgr.sd[nS,nIc]=idAux2[0,0];                                            #     Label state
+      nS ++=;                                                                   #     Next state
+    end                                                               "]" -MSG; #   <<
+    leave;                                                                      #   Get out 'a here
+  end                                                                           # <<
+
+  ## Index mode                                                                 # -------------------------------------
+  sMode "index" == if                                                           # Index mode >>
+    ( .SIDX itNgr.sd -find_comp ) nIc =;                                        #   Find state index comp. ("SIDX")
+    nIc 0 >= if :itNgr.sd[.SIDX]: idAux =; end                                  #   Copy index if existing
+    ( .TORD itNgr.sd -find_comp ) nIc =;                                        #   Find topo. order comp. ("TORD")
+    nIc 0 >= if :itNgr.sd[.TORD]: idAux -join; end                              #   Join to aux. object if existing
+    idAux.dim 0 > if                                                            #   Have something in idAux >>
+      idAux "/" "ccat" idAux -strop;                                            #     Compile state names
+      0 "~NAM" idAux -set_cname;                                                #     Name the name component
+      idAux itNgr.sd -join;                                                     #     Join state names to state table
+    end                                                                         #   <<
+    leave;                                                                      #   Leave function
+  end                                                                           # <<
+
+  "\"$[sMode]\" is not a valid mode identifier"                         -ERROR; # Error message
+}
+
+## DEBUGGING: Special FST rendering for language models. The function displays
+## transition reference counters instead of output symbols.
+##
+## @param sFile string
+##          The name of the SVG file to create.
+## @param itLM fst
+##          The language model to render.
+## @return void
+function -LM_render(sFile,itLM)
+{
+  var nIc;                                                                      # Component index
+  fst itAux;                                                                    # Auxiliary transducer
+
+  ## Initialization                                                             # -------------------------------------
+  itLM itAux -copy;                                                             # Make copy of source
+
+  ## Tune transitions                                                           # -------------------------------------
+  itAux.NC_TD_RC itAux.td -find_comp nIc =;                                     # Find trans. reference counter comp.
+  nIc 0 >= if                                                                   # Component exists >>
+    nIc itAux.NC_TD_TOS itAux.td -set_cname;                                    #   Rename it as "output symbol"
+  end                                                                           # <<
+
+  ## Do render                                                                  # -------------------------------------
+  sFile NULL NULL -1 itAux -FST_render;                                         # Render tuned LM
+}
+
+## Adds a text to an n-gram tree.
+##
+## @param idTxt data
+##          The text. The words (as strings) are expected in component 0, any
+##          other components will be ignored.
+## @param nOov number
+##          Zero-based index of the out-of-vocabulary pseudo word in
+##          <code>itNgr.is</code> or -1 if none. 
+## @param N number
+##          The n-gram order.
+## @param itNgr fst
+##          The n-gram tree to add the sentence to.
+## @return void
+function -LM_addtext(idTxt,nOov,N,itNgr)
+{
+  data idSeq;                                                                   # The word index sequence
+  idTxt itNgr.is 0 0 idSeq -gen_index { $[nOov] };                              # Create the word index sequence
+  N itNgr -set max_len;                                                         # Set the maximal path length in itNgr
+  idSeq 0 -1 -1 0 itNgr /multigram -addseq;                                     # Add all index sub-sequences
+}
+
+## Loads a word list from a lexicon file. The function uses {@link -LX_import}
+## to load the lexicon. The function will assure that the generated word list
+## contains the pseudo-words "<OOV>" (out-of-vocabulary), "_" (sentence start),
+## and "."(sentence end). Add pseudo-words which are not yet contained in the
+## lexicon will be added to the word list.
+##
+## @param sLexFile string
+##          The relative or fully qualified name of the lexicon file.
+## @param idWls data
+##          Filled with the word list.
+function -LM_load_wordlist(sLexFile,idWls)
+{
+  data idAux;                                                                   # Auxiliary data object.
+
+  "\n\n   Loading word list from \"$[sLexFile]\" ..."                     -MSG; # Protocol
+  sLexFile idWls -LX_import;                                                    # Import lexicon
+  { "<OOV>" "_" "." } ' idWls 0 0 idAux /noerror -gen_index;                    # Look for special entries
+  :idAux[0,0]<0: if "<OOV>" "." idWls -LX_ladd; end                             # Add <OOV> (if not yet present)
+  :idAux[1,0]<0: if "_"     "." idWls -LX_ladd; end                             # Add _     (if not yet present)
+  :idAux[2,0]<0: if "."     "." idWls -LX_ladd; end                             # Add .     (if not yet present)
+  idWls 0 1 idWls -select;                                                      # Keep orthographic strings only
+  " done. ($[idWls.nrec] words)"                                          -MSG; # Protocol
+}
+
+## Gathers a word list from transliteration files. The function will add the
+## pseudo-words "<OOV>" (out-of-vocabulary), "_" (sentence start), and "."
+## (sentence end) to the list. The transliteration files <em>must not</em>
+## contain any of these pseudo-words by definition!
+##
+## @param iF file
+##          The file list.
+## @param nWrdCutoff number
+##          Words with counts less or equal the cut-off will be discarded and
+##          replaced by the out-of-vocabulary pseudo word "<OOV>".
+## @param idWls data
+##          Filled with the word list.
+function -LM_gather_wordlist(iF,nWrdCutoff,idWls)
+{
+  data idTrl;                                                                   # The transliteration
+  data idAux;                                                                   # Auxiliary data object
+  fst  itAux;                                                                   # Auxiliary transducer
+
+  ## Initialize                                                                 # -------------------------------------
+  "\n\n// Gathering word list from $[iF.len] text files..." -MSG;    0 1 -PBAR; # Protocol
+  iF.len 0 == if                                                                # File ist empty >>
+    "File list is empty. Nothing to be done."                           -ERROR; #   Print error
+    leave;                                                                      #   Abort
+  end                                                                           # <<
+
+  ## Gather word list                                                           # -------------------------------------
+  iF -reset; iF -next while                                                     # Loop over files >>
+    "\n   - $[iF.nfile 1 +]/$[iF.len] $[iF.sfile].$[iF.ext]: ..."        -MSG2; #   Protocol (verbose level 2)
+    :(iF.nfile+1)/iF.len: 1                                              -PBAR; #   Display progress
+    iF.path iF.sfile idTrl -TRL_import not if                                   #   Load transliteration, failed >>
+      "Unable to read transliteration \"$[iF.sfile]\". Skipping turn."  -ERROR; #     Error message                     
+      continue;                                                                 #     Continue with next turn
+    end                                                                         #   <<
+    itAux.is -is_empty if                                                       #   Word list has no entries yes >>
+     idTrl idAux -copy;                                                         #     All words are unknown
+    else                                                                        #   << Word list already has entries >>
+      idTrl itAux.is 0 0 idAux /noerror -gen_index;                             #     Find unknown words
+      :idAux.<0: idTrl /comp -dmark; idTrl 0 0 idAux /mark -select;             #     Get unknown words
+    end                                                                         #   <<
+    idAux.nrec 0 > if                                                           #   Anything actually unknown? Yes >>
+      idAux 0 idAux -sortup; idAux 0 idAux -compress; idAux 0 1 idAux -select;  #     Get SET of unknown words
+      idAux itAux.is -cat;                                                      #     Append to word list
+    end                                                                         #   <<
+    idTrl -1 1 itAux -LM_addtext;                                               #   Count words
+    " ok ($[idTrl.nrec] words, $[idAux.nrec] new)"                       -MSG2; #   Protocol (verbose level 2)
+  end                                                                           # <<
+  :itAux.td["~TIS"]: 0 itAux.is 0 1 idWls -lookup;                              # Lookup word names
+  :itAux.td["~RC"]: idWls -join;                                                # Append counts
+  "\n   " -MSG2; "done\n"                                                 -MSG; # Finish progress bar
+
+  ## Pruning                                                                    # -------------------------------------
+  nWrdCutoff 0 > if                                                             # Pruning threshold > 0 >>
+    "\n   Pruning (cut-off: $[nWrdCutoff]) ..."                           -MSG; #   Protocol
+    :idWls[1].<=nWrdCutoff: idWls -dmark; idWls 0 0 idWls /mark -delete;        #   Prune word list
+    " done ($[itAux.td.nrec] -> $[idWls.nrec] words)"                     -MSG; #   Protocol
+  end                                                                           # <<
+
+  ## Post-processing                                                            # -------------------------------------
+  "\n   Post-processing ."                                                -MSG; # Protocol
+  idWls 0 idWls -sortup;                                              "." -MSG; # Sort word list
+  { "<OOV>" "_" "." } ' idWls -cat; idWls 3 idWls /rec -rotate;                 # Insert words at beginning of list
+  ". done ($[idWls.nrec --] words)"                                       -MSG; # Protocol
+}
+
+## Gathers an n-gram tree text files.
+##
+## @param iF file
+##          The file list.
+## @param nNgrCutoff number
+##          N-grams with counts less or equal the cut-off threshold will be
+##          discarded unless they are unigrams (which will never be pruned).
+## @param N number
+##          The n-gram order, e.g. 3 for trigrams.
+## @param itNgr fst
+##          Filled n-gram tree. The field <code>itNgr.is</code> is expected to
+##          be initialized with the word list (either taken from the lexicon or
+##          obtained through {@link -LM_gather_wordlist}). 
+function -LM_gather_ngrams(iF,nNgrCutoff,N,itNgr)
+{
+  data idTrl;                                                                   # The text (loaded from ASCII file)
+  data idAux;                                                                   # Auxiliary data object
+  var  nOov;  { "<OOV>" } itNgr.is 0 0 idTrl -gen_index; :idTrl[0,0]: nOov =    # Get index of OOV word 
+
+  ## Initialize                                                                 # -------------------------------------
+  "\n\n// Gathering n-grams from $[iF.len] text files..." -MSG;      0 1 -PBAR; # Protocol
+  iF.len 0 == if                                                                # File ist empty >>
+    "File list is empty. Nothing to be done."                           -ERROR; #   Print error
+    leave;                                                                      #   Abort
+  end                                                                           # <<
+
+  ## Gather n-grams                                                             # -------------------------------------
+  itNgr.is idTrl =; itNgr -reset; idTrl itNgr.is =;                             # Clear target
+  iF -reset; iF -next while                                                     # Loop over files >>
+    "\n   - $[iF.nfile 1 +]/$[iF.len] $[iF.sfile].$[iF.ext]: ..."        -MSG2; #   Protocol (verbose level 2)
+    :(iF.nfile+1)/iF.len: 1                                              -PBAR; #   Display progress
+    iF.path iF.sfile idTrl -TRL_import not if                                   #   Load transliteration, failed >>
+      "Unable to read transliteration \"$[iF.sfile]\". Skipping turn."  -ERROR; #     Error message                     
+      continue;                                                                 #     Continue with next turn
+    end                                                                         #   <<
+    { "." "_" } ' idTrl -cat; idTrl 1 idTrl /rec -rotate;                       #   Insert start and end word
+    idTrl nOov N itNgr -LM_addtext;                                             #   Add text to n-gram tree
+    " ok"                                                                -MSG2; #   Protocol (verbose level 2)
+  end                                                                           # <<
+  "\n   " -MSG2; "done\n"                                                 -MSG; # Finish progress bar
+
+  ## Pruning                                                                    # -------------------------------------
+  nNgrCutoff 0 > if                                                             # Pruning threshold > 0 >>
+    "\n   Pruning (cut-off: $[nNgrCutoff]) ..."                           -MSG; #   Protocol
+    var nXT; itNgr.td.nrec nXT =;                                               #   Rememver number of n-grams
+    :(itNgr.td["~RC"].<=nNgrCutoff).&&(itNgr.td["~INI"].!=0): itNgr.td -dmark;  #   Mark n-grams to prune
+    itNgr.td 0 0 itNgr.td /mark -delete;                                        #   Delete n-grams to prune
+    :itNgr.ud[0,"~XT"]=itNgr.td.nrec;                                           #   Adjust transition number
+    0 0 itNgr -trim;                                                            #   Remove unconnected states
+    " done ($[nXT] -> $[itNgr.td.nrec] n-grams)"                          -MSG; #   Protocol
+  end                                                                           # <<
+  
+  "\n   Gathered $[itNgr.td.nrec] n-grams"                                -MSG; # Protocol
+}
+
+## Creates the back-off language model from an n-gram tree.
+##
+## @param itNgr fst
+##          The n-gram tree (as obtained trough {@link -LM_addtext}. Warning:
+##          the function will add state components to this FST!
+## @patam itLM fst
+##          The back-off language model to create (may be identical with
+##          <code>itNgr</code>).
+## @return void
+function -LM_backoff(itNgr,itLM)
+{
+  data idIni;                                                                   # List of <N>-gram final states
+  data idAux;                                                                   # Auxiliary data object
+  fst  itDst;                                                                   # Working copy of n-gram tree
+  fst  itAux;                                                                   # Auxiliary transducer
+  fst  itDbg;                                                                   # FOR DEBUGGIN' ONLY
+  var  n;                                                                       # Current n-gram order
+  var  N;                                                                       # Maximal n-gram order
+  var  nT;                                                                      # Transition index
+  var  nNh;                                                                     # Index of the no-history state
+  var  nFn;                                                                     # Index of the final state
+  var  nRIni;                                                                   # Record counter connection ini. state
+  var  nRTer;                                                                   # Record counter connection ter. state
+  var  nIni;                                                                    # Connection initial state
+  var  nTer;                                                                    # Connection terminal state
+  var  nTis;                                                                    # Connection input symbol
+  var  nRc;                                                                     # Connection reference counter
+
+  "\n\n// Creating back-off language model\n"                             -MSG; # Protocol
+  ( itNgr.ud -is_empty ) ( itNgr.td -is_empty ) || if                           # File ist empty >>
+    "N-gram tree is empty. Nothing to be done."                         -ERROR; #   Print error
+    leave;                                                                      #   Abort
+  end                                                                           # <<
+
+  ## Obtain topological order of the n-gram states                              # -------------------------------------
+  ## TODO: Speed this up! (Obtaining topo. order would be a simple C method)    # :
+  "\n   Preparing $[itNgr.sd.nrec] n-gram states ..." -MSG;          0 1 -PBAR; # Begin progress bar
+  ( .TORD itNgr.sd -find_comp ) 0 < if                                          # No top. order state comp. in itNgr >>
+    .TORD ( -type long ) itNgr.sd -addcomp;                                     #   Make one
+  end                                                                           # <<
+  0 nTer =; nTer itNgr.sd.nrec < while                                          # Loop over states in n-gram >>
+    "\n     $[nTer 1 +]/$[itNgr.sd.nrec]: ..."                           -MSG2; #   Protocol (verbose level 2)
+    :(nTer+1)/itNgr.sd.nrec: 1                                           -PBAR; #   Display progress
+    itNgr 0 { $[nTer] } 0 NULL -1 itAux /backward -excerpt;                     #   Get n-gram ending at nTer
+    :itNgr.sd[nTer,.TORD]=itAux.ud[0,"~XT"];                                    #   Set topological oder of state
+    " done (topological order: ${itNgr.sd[nTer,.TORD]})"                 -MSG2; #   Protocol (verbose level 2)
+    nTer ++=;                                                                   #   Next state
+  end                                                                           # <<
+  :itNgr.sd[.TORD]: NULL 0 "max" idAux /rec -aggregate; :idAux[0,0]: N =;       # Detect n-gram order --> N 
+  "\n   " -MSG2; "done\n\n   Detected n-gram order: $[N]\n"               -MSG; # Finish progress bar
+
+  "\n   Initializing "                                                    -MSG; # Protocol
+  ## Create state index (and label states)                                      # -------------------------------------
+  .SIDX -1 itNgr.sd -rindex;                                          "." -MSG; # Add/replace state index
+  .__UTL_nVlevel 2 > if                                                         # On verbose level 3 and up >>
+    "history" itNgr -LM_labelstates;                                              #   Label states for display
+  end                                                                           # <<
+
+  ## Initialize back-off language model                                         # -------------------------------------
+  itNgr itDst -copy;                                                  "." -MSG; # Copy source
+  0 1 itDst -addstates; itDst.sd.nrec -- nNh =;                                 # Create no-history state
+  { "_" } itNgr.is 0 0 idAux -gen_index; :idAux[0,0]: nTis =;                   # Get sentence start word index
+  :((itDst.td["~INI"].==0).&&(itDst.td["~TIS"].!=nTis))*nNh: idAux =;           # Create initial state index offset
+  :itDst.td["~INI"]+=idAux;                                           "." -MSG; # Connect no-history state
+  { "." } itNgr.is 0 0 idAux -gen_index; :idAux[0,0]: nTis =;                   # Get sentence end word index
+  :itDst.td["~TER"]: idAux =;                                                   # All transitions' terminal states
+  :itDst.td["~TIS"].==nTis: idAux -join;                                        # Transitions' input symbol is "."?
+  idAux 0 idAux -sortup;                                                        # Sort list by terminal state index
+  { 0 0 } idAux -cat; idAux 1 idAux /rec -rotate;                               # Add start state at beginning of list
+  :itDst.sd["~FLG"]=idAux[1];                                         "." -MSG; # Toggle final state flag of all states
+  " done"                                                                 -MSG; # Protocol
+
+  ## Connect N-grams                                                            # -------------------------------------
+  1 n =; n N <= while                                                           # Loop over n-grams >>
+    :itNgr.sd[.TORD].==n: itNgr.sd -dmark;                                      #   Mark <N>-gram states in state table
+    itNgr.sd 0 0 idAux /mark -select;                                           #   Copy marked states
+    :idAux[.SIDX]: idIni =;                                                     #   Keep only state indices 
+    "\n   Connecting $[idIni.nrec] $[n]-grams ..." -MSG;             0 1 -PBAR; #   Begin progress bar
+    0 nRIni =; nRIni idIni.nrec < while                                         #   Loop over <n>-gram final states >>
+      :idIni[nRIni,0]: nIni =;                                                  #     Get the final state's index
+      "\n     $[nRIni 1 +]/$[idIni.nrec]: ->(${itNgr.sd[nIni,.SIDX]}) ." -MSG2; #     Protocol (verbose level 2)
+      :(nRIni+1)/idIni.nrec: 1                                           -PBAR; #     Display progress
+
+      ## - Get <n>-gram and <n-1>-gram                                          #     - - - - - - - - - - - - - - - - -
+      itNgr 0 { ${nIni} } 0 NULL -1 itAux /backward -excerpt;        "." -MSG2; #     Get the <n>-gram path
+      :itAux.td["~TIS"]: 1 :n-1: idAux /rec -select;                            #     Get the <n-1>-gram sequence
+      itNgr 0 { 0 } 0 idAux 0 itAux /forward -excerpt;                          #     Get the <n-1>-gram path
+      :itAux.sd[n-1,.SIDX]: nTer =; n 1 == if nNh nTer =; end        "." -MSG2; #     Get final state of <n-1>-gram
+
+      ## - Create fall-back transition                                          #     - - - - - - - - - - - - - - - - -
+      :(n<N) && (itDst.sd[nIni,0]&1)==0: if                                     #     Not top lvl.& ini.st.not final >>
+        " fall back to ($[nTer]) ."                                      -MSG2; #       Protocol
+        0 nIni nTer itDst -addtrans { -2 1 0 };                     ".." -MSG2; #       Add fall-back transition
+      end                                                                       #     <<
+
+      ## - Connect top level n-grams                                            #     - - - - - - - - - - - - - - - - -
+      n N == if                                                                 #     Top level n-grams >>
+        " reconnect transition"                                          -MSG2; #       Protocol (verbose level 2)
+        { $[nIni] } :itDst.td["~TER"]: 0 0 idAux -gen_index; :idAux[0,0]: nT =; #       Get n-gram transition index
+        " $[nT]: ${itDst.td[nT,itDst.IC_TD_INI]}->$[nIni] to ->$[nTer]"  -MSG2; #       Protocol (verbose level 2)
+        :itDst.td[nT,"~TER"]=nTer;                                 " .." -MSG2; #       Reconnect transition
+      end                                                                       #     <<
+      nRIni ++=;                                                 " done" -MSG2; #     Next <n>-gram final state
+    end                                                                         #   <<
+    "\n   " -MSG2; "done\n"                                               -MSG; #   Finish progress bar
+
+    n ++=;                                                                      #   Next n-gram order
+  end                                                                           # <<
+
+  ## Finish                                                                     # -------------------------------------
+  "\n   Finishing "                                                       -MSG; # Protocol
+  0 itDst -fsunify;                                                             # Unify final states, trim, comp.probs.
+  itDst /lsr -wsr_convert;                                            "." -MSG; # Convert to log. weights
+  itDst 0 itDst /lazy -minimize;                                      "." -MSG; # Lazily minimize
+  itDst.is itDst.os =;                                                          # Output = input symbol table
+  { "_" "." } ' itDst.is 0 0 idAux -gen_index;                                  # Get indices of sent.start/stop symbs.
+  :(itDst.td["~TIS"].!=idAux[0,0]).&&(itDst.td["~TIS"].!=idAux[1,0]): idAux =;  # Make output symbol mask
+  :itDst.td["~TIS"].*idAux+(idAux-1): idAux =; 0 "~TOS" idAux -set_cname;       # Create output symbol component
+  idAux itDst.td -join;                                               "." -MSG; # Join output symbols to trans. table
+  itDst itLM -copy;                                                             # Copy result
+  ". done ($[itLM.sd.nrec] states, $[itLM.td.nrec] transitions)"          -MSG; # Protocol
+}
+
+## Command handler for "trn".
+function -CMD_trn()
+{
+  fst  itNgr;                                                                   # n-gram tree
+  fst  itLM;                                                                    # Back-off language model
+  var  N;          ( "lm.ngram.order"  3 "S" -CFG_get_ex ) N          =;        # The n-gram order
+  var  nWrdCutoff; ( "lx.cutoff"       0 "S" -CFG_get_ex ) nWrdCutoff =;        # Minimal word count
+  var  nNgrCutoff; ( "lm.ngram.cutoff" 0 "S" -CFG_get_ex ) nNgrCutoff =;        # Minimal n-gram count
+  var  sLexFile;   ( "lx"           NULL "S" -CFG_get_ex ) sLexFile   =;        # Get lexicon file name
+  var  sDirModel;                                                               # Model directory
+  var  sDirLog;                                                                 # Log directory
+  file iF;                                                                      # Language model training file list
+
+  ## Initialize
+  "\n\n// LANGUAGE MODEL TRAINING"                                        -MSG; # Protocol
+  "\n   - N-gram order  : $[N]"                                           -MSG; # Protocol
+  ( "trl"   "" -CFG_get_path ) iF -set path;                                    # Get translitaration file path
+  ( "log"   "" -CFG_get_path ) sDirLog =;                                       # Get log directory
+  ( "model" "" -CFG_get_path ) sDirModel =;                                     # Get model directory
+  ( "flist.sep" "\t " "S" -CFG_get_ex ) iF set sep;                             # Set file list separator(s)  
+  ( "train" "" -CFG_get_flist ) iF -set flist;                                  # Load training set
+  .__CFG_bNwr if "\n   - Write protect : " "ON" -COLOR_yellow + -MSG; end       # Protocol
+
+  ## Do language model training                                                 # -------------------------------------
+  ## - Load or gather word list                                                 #
+  sLexFile if                                                                   # Lexicon file specified >>
+    sLexFile itNgr.is -LM_load_wordlist;                                        #   Load word list
+  else                                                                          # << No lexicon file specified >>
+    iF nWrdCutoff itNgr.is -LM_gather_wordlist;                                 #   Gather word list
+  end                                                                           # <<
+  "$[sDirLog]/wordlist.txt" "ascii" itNgr.is -SAVE;                             # Save word list  
+
+  ## - Gather n-gram tree                                                       # - - - - - - - - - - - - - - - - - - -
+  iF nNgrCutoff N itNgr -LM_gather_ngrams;                                      # Gather n-gram tree
+  "$[sDirLog]/n-gram.fst" NULL itNgr -SAVE;                                     # Save n-gram tree
+
+  ## - Create back-off language model                                           # - - - - - - - - - - - - - - - - - - -
+  itNgr itLM -LM_backoff;                                                       # Create back-off language model
+  "$[sDirModel]/LM.fst" NULL itLM -SAVE;                                        # Save language model
+  
+  ## Logging                                                                    # -------------------------------------
+  ( .__UTL_nVlevel 2 > ) ( .__CFG_bNwr not ) && if                              # On verbose level 3 >>
+    "\n\n   Rendering n-gram tree and back-off language model ..."       -echo; #   Protocol
+    "$[sDirLog]/n-gram.svg" itNgr -LM_render;                                   #   Render n-gram tree
+    "$[sDirLog]/LM.svg"     itLM  -LM_render;                                   #   Render back-off language model
+    " done\n   (stored in folder \"$[sDirLog]\")"                        -echo; #   Protocol
+  end                                                                           # <<
+
+  "\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors)."           -MSG; # Protocol
+  .__CFG_bNwr if "Write protection on. No files written!" 1 -WARNING; end       # Write-protected-warning
+  "\n\n"                                                                  -MSG; # Protocol
+  0 return;                                                                     # Return positive
+}
+
+## == MAIN PROGRAM ==                                                           # =====================================
+
+"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
+"\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
+"\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
+"\n// dLabPro VID     : " -version +                                      -MSG; # Protocol
+"\n// UASR VID        : " -UASR_version +                                 -MSG; # Protocol
+( "$1" "help" == ) -UASR_help || if "$2" -usage; 0 return; end                  # Print help
+"$1" var sCmd;                                                                  # Get command
+sCmd "trn" ==                                                                   # | Training
+not ( $$ 2 < ) || if                                                            # Bad command or less than 2 args. >> 
+  $$ 2 < if "Too few arguments" else "unknown command '$1'"  end   -ERROR;      #   Error
+  "\nType '$__SFILE__.xtp help' for usage\n" -echo;                             #   Give a little help
+  1 return;                                                                     #   Terminate with error code
+end                                                                             # <<
+
+## Initialize session                                                           # -------------------------------------
+"\n// Configuration   : $2"                                               -MSG; # Protocol
+"$2" TRUE -CFG_init;                                                            # Configure session
+"$UASR_HOME/scripts/dlabpro/util/uasr_session.itp" include;                     # Include UASR session startup script
+
+## Execute commands                                                             # -------------------------------------
+-CMD_$[sCmd] return;                                                            # Call command handler function
+
+## EOF
+
+## 2012-11-22: PROFILING OF fst -excerpt (jschutz/test.cfg, rev. 8)
+##
+##   Version   prepare  unigrams  bigrams  trigrams
+##   ----------------------------------------------
+##   sorted      913 s     441 s   1569 s    3002 s  
+##   unsorted    313 s      68 s    259 s     465 s
+##
+## Conclusion: Keep unsorted (as defined in docs)

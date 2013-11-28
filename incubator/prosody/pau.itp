@@ -1,0 +1,966 @@
+## Unified Approach to Speech Synthesis and Recognition
+## - Verbmobil data base functions
+##
+## AUTHOR : Hussein Hussein
+## UPDATE : 
+##          $Revision: 		 $
+## PACKAGE: 
+## RCS-ID : 
+##
+
+
+
+
+
+
+## <p>Annotate pauses to the sentence.</p>
+## @param idPau data
+##          Data instance of pauses (input)
+## @param idOrthographic data
+##          Data instance of orthographic words without extra words (d or T) [Using (-Delete_Extra_Ortho_Word_LAB_WORD) if there is extra word] (input)
+## @param idLabWordNoPau data
+##          Data instance of word labels without pauses [Calculated with (-LAB_WORD_extract_vm) and (-Delete_Pauses_LAB_WORD)] (input)
+## @param nTimeMinor var
+##          Minimal length of Minor Pause (input)
+## @param nTimeMajor var
+##          Minimal length of Major Pause (input)
+## @param idLab data
+##          Data instance to be filled with prosodic annotated (pause) words  (output)
+function -Pause_Annotation(idPau,idOrthographic,idLabWordNoPau,nTimeMinor,nTimeMajor,idLab)
+{
+	data idLabWordEndTime;															# Data object of Word-Label with End-Time of words
+	data idDiffAux;																	# Difference between Begin-Time of pause and End-Time of word
+	data idMinDiffAux;																# Data object of the Minimum of difference
+	data idPauseIndex;																# Data object of Index of pause in orthographic words
+  	var nRecPause; 														  			# Get the number of records (number of pauses) 
+  	var nRecOrtho; 														  			# Get the number of records (number of orthographic words)
+  	var nRecLabWord; 																# Get the number of records (number of word labels without pauses)
+	var sWordOrtho;          														# Variable to read the orthographic word in every cell
+	var nAux;
+	var nPauseBegin;																# Begin-Time of pause
+	var nDiffTime;																	# Difference between Begin-Time of pause and End-Time of word
+	var nDiffTimeAbs;																# Absolute value of difference time
+	var nMinDiff;																	# Minimum value of difference (nearest value to Pause-Begin)
+	var nPauseIndex;																# Index of pause in orthographic words
+	var nRecPauIndAux;																# Get the number of records
+	var nIndAux;																	# Auxiliary variable of Pause Index
+	var sMinorPause;          														# Minor Pause
+	var sMajorPause;          														# Major Pause
+	var i;
+	var j;
+	var jj;
+	var jjj;
+	var jjjj;
+	var k;
+	var kk;
+	var kkk;
+	
+  	## Initialize                                                                 	# -------------------------------------
+  	idPau.nrec  nRecPause =;          												# Get the number of records
+  	idOrthographic.nrec  nRecOrtho =;          										# Get the number of records
+  	idLabWordNoPau.nrec  nRecLabWord =;          									# Get the number of records
+	"<p>" sMinorPause =;															# Init a minor pause variable 
+	"<pp>" sMajorPause =;															# Init a major pause variable 
+
+	idLabWordEndTime -reset;
+	idPauseIndex -reset;															# Reset data object
+
+
+	"EndTime" type long idLabWordEndTime -addcomp;
+	"IndexP" type long idPauseIndex -addcomp;										# Data object of the Index of pause in orthographic words
+	"WordPau" 25 idLab -addcomp;													# Output data object
+
+
+
+	## Calculate the End-Time of Word-Label                                      	# -------------------------------------
+	0 i =; 																			# Init a loop counter i	
+	label L1;                                             							# Define a jump label named L1
+	i nRecLabWord < if                                            	 				# If loop counter < (number of records)
+		:idLabWordNoPau[i,1]: :idLabWordNoPau[i,2]: + nAux =; 
+		i 1 + idLabWordEndTime -reallocate;										    # Reallocates a new record of memory keeping the contens
+		:idLabWordEndTime[i,0]=nAux;
+		i ++=;                                              						# Increment loop counter i
+  		goto L1;                                            						# Jump to label L1
+	end                                                 							# End of conditional branch
+
+	## Important: idOrthographic, idLabWordNoPau and idLabWordEndTime have the same length (same number of records)
+
+
+	## Find the index of pause in Orthographic words (PauseIndex)                 	# ------------------------------------- 
+	## Compare the Begin-Time of pause with End-Time of word
+	0 j =; 																			# Init a loop counter j
+	label L2;                                             							# Define a jump label named L2
+	j nRecPause < if                                            	 				# If loop counter < (number of records)
+		:idPau[j,0]: nPauseBegin =; 												# Begin-Time of pause
+		idDiffAux -reset;															# Reset data object
+		"DifTime" type long idDiffAux -addcomp;										# Difference between Begin-Time of pause and End-Time of word
+		## Calculate the difference between Begin-Time of pause and End-Time of word
+		0 jj =; 																	# Init a loop counter jj
+		label L3;                                             						# Define a jump label named L3
+		jj idLabWordEndTime.nrec < if                                            	# If loop counter < (number of records)
+			nPauseBegin :idLabWordEndTime[jj,0]: - nDiffTime =;						# Difference between Begin-Time of pause and End-Time of word
+			:nDiffTimeAbs=abs(nDiffTime);											# Absolute value of difference
+			jj 1 + idDiffAux -reallocate;										    # Reallocates a new record of memory keeping the contens
+			:idDiffAux[jj,0]=nDiffTimeAbs;											# Copy the value to data object
+			jj ++=;                                              					# Increment loop counter jj
+  			goto L3;                                            					# Jump to label L3
+		end                                                 						# End of conditional branch
+		## Calculate the Minimum value of Difference data object
+		idMinDiffAux -reset;														# Reset data object
+		"MinDif" type long idMinDiffAux -addcomp;									# Data object of the Minimum of difference
+		1 idMinDiffAux -reallocate;													# Reallocates a new record of memory keeping the contens
+		idDiffAux NULL 0 "min" idMinDiffAux /rec -aggregate;						# Calculate the Minimum
+		#:idMinDiffAux[0,0];
+		
+		## Find the location of the Minimun value in Difference data object
+		0 jjj =; 																	# Init a loop counter jj
+		label L4;                                             						# Define a jump label named L4
+		jjj idDiffAux.nrec < if                                            			# If loop counter < (number of records)
+			:idDiffAux[jjj,0]: :idMinDiffAux[0,0]: == if							# If difference value == Minimum value >>
+				jjj nPauseIndex =;													# Index of pause in orthographic words
+				j 1 + idPauseIndex -reallocate;										# Reallocates a new record of memory keeping the contens
+				:idPauseIndex[j,0]=nPauseIndex;										# Copy the value to data object
+			end																	# <<
+			jjj ++=;                                              					# Increment loop counter jjj
+  			goto L4;                                            					# Jump to label L4
+		end                                                 						# End of conditional branch	
+		j ++=;                                              						# Increment loop counter j
+  		goto L2;                                            						# Jump to label L2
+	end                                                 							# End of conditional branch
+
+
+	## Delete one pause, if two pauses have the same index		                 	# ------------------------------------- 
+	## Delete the Index of second pause (idPauseIndex) and delete the Begin-Time and Length of pause (idPau)
+	0 jjjj =; 																		# Init a loop counter jjjj
+	idPauseIndex.nrec 1 - nRecPauIndAux =;											# (Number of records of Pause Index - 1)
+	label L5;                                             							# Define a jump label named L5
+	jjjj nRecPauIndAux < if                                            				# If loop counter < (number of records - 1)
+		:idPauseIndex[jjjj,0]: :idPauseIndex[jjjj+1,0]: == if						# Two pauses >>
+			jjjj 1 + nIndAux =;														# Next Index (Second pause)
+			idPau nIndAux 1 idPau /rec -delete;										# Delete second pause, if two pauses have the same index
+			idPauseIndex nIndAux 1 idPauseIndex /rec -delete;						# Delete index of second pause, if two pauses have the same index
+			idPauseIndex.nrec 1 - nRecPauIndAux =;									# New (Number of records of Pause Index - 1)
+			jjjj --=;                                              					# Decrement loop counter jjjj (In case of three same index)
+		end																		# << 
+		jjjj ++=;                                              						# Increment loop counter jjjj
+  		goto L5;                                            						# Jump to label L5
+	end                                                 							# End of conditional branch	
+
+
+	## Delete a pause, if a pause begins before a word 								# ------------------------------------- 
+	var nBeginTimeWord;																# Variable of begin time of word
+	0 nBeginTimeWord =;
+	
+	
+	0 jjjj =; 																		# Init a loop counter jjjj
+	idPauseIndex.nrec nRecPauIndAux =;												# Number of records of Pause Index
+	label L55;                                             							# Define a jump label named L55
+	jjjj nRecPauIndAux < if                                            				# If loop counter < (number of records)
+		:idPau[jjjj,0]: nPauseBegin =;												# Begin time of pause
+		:idPauseIndex[jjjj,0]: nPauseIndex =;										# Index of pause
+		:idLabWordNoPau[nPauseIndex,1]: nBeginTimeWord =;							# Begin time of word
+		nPauseBegin nBeginTimeWord < if												# Pause begins before a word >>
+			jjjj nIndAux =;															# Index of pause
+			idPau nIndAux 1 idPau /rec -delete;										# Delete a pause
+			idPauseIndex nIndAux 1 idPauseIndex /rec -delete;						# Delete index of pause
+			idPauseIndex.nrec nRecPauIndAux =;										# New Number of records of Pause Index
+			jjjj --=;                                              					# Decrement loop counter jjjj (In case of three same index)
+		end																		# << 
+		jjjj ++=;                                              						# Increment loop counter jjjj
+  		goto L55;                                            						# Jump to label L55
+	end                                                 							# End of conditional branch	
+
+
+
+	## Annotate pauses to the sentence							                 	# ------------------------------------- 
+	## Minor Pause (Neben) = <p> 
+	## Major Pause (Haupt) = <pp> 
+	0 k =;																			# Init an index of orthographic words
+	0 kk =;																			# Init an index of pauses
+	0 kkk =;																		# Init an index of annotated words
+	label L6;                                             							# Define a jump label named L6
+	k idOrthographic.nrec < if                                            			# If loop counter < (number of records)
+		:idOrthographic[k,0]: sWordOrtho =;											# Read the orthographic word
+		## Pause-Index is smaller than Word-Index
+		kk idPauseIndex.nrec < if                                            		# If loop counter < (number of records)
+			## Pause
+			:idPauseIndex[kk,0]: k == if											# There is a pause
+				## Minor Pause
+				:idPau[kk,1]: nTimeMinor >= :idPau[kk,1]: nTimeMajor < && if		# Minor pause (100 msec =< pause < 700 msec)
+					# Copy the Orthographic Word
+					kkk 1 + idLab -reallocate;										# Reallocates a new record of memory keeping the contens
+					:idLab[kkk,0] = sWordOrtho;										# Copy the word  to the output data object
+					kkk ++=;														# Increment the counter kkk for annotated words
+					# Copy the Minor Pause
+					kkk 1 + idLab -reallocate;										# Reallocates a new record of memory keeping the contens
+					:idLab[kkk,0] = sMinorPause;									# Copy minor pause to the output data object
+					kkk ++=;														# Increment the counter kkk for annotated words
+					
+					kk ++=; 														# Increment the Pause Index kk 
+				## Major Pause
+				else
+				:idPau[kk,1]: nTimeMajor >= if										# Major pause (pause >= 700 msec)
+					# Copy the Orthographic Word
+					kkk 1 + idLab -reallocate;										# Reallocates a new record of memory keeping the contens
+					:idLab[kkk,0] = sWordOrtho;										# Copy the word to the output data object
+					kkk ++=;														# Increment the counter kkk for annotated words
+					# Copy the Major Pause
+					kkk 1 + idLab -reallocate;										# Reallocates a new record of memory keeping the contens
+					:idLab[kkk,0] = sMajorPause;									# Copy major pause to the output data object
+					kkk ++=;														# Increment the counter kkk for annotated words
+					
+					kk ++=; 														# Increment the Pause Index kk 			
+				end
+				end
+			## No Pause
+			else
+			:idPauseIndex[kk,0]: k != if											# There is no pause
+				# Copy the Orthographic Word
+				kkk 1 + idLab -reallocate;										  	# Reallocates a new record of memory keeping the contens
+				:idLab[kkk,0] = sWordOrtho;											# Copy the word to the output data object
+				kkk ++=;															# Increment the counter kkk for annotated words
+			end
+			end
+		## Pause-Index is greater than Word-Index
+		else
+		kk idPauseIndex.nrec >= if
+			# Copy the Orthographic Word
+			kkk 1 + idLab -reallocate;										  		# Reallocates a new record of memory keeping the contens
+			:idLab[kkk,0] = sWordOrtho;												# Copy the word to the output data object
+			kkk ++=; 																# Increment the counter kkk for annotated words
+		end	
+		end
+		k ++=;                                              						# Increment loop counter k
+  		goto L6;                                            						# Jump to label L6
+	end                                                 							# End of conditional branch	
+
+}
+
+
+
+
+
+
+## <p>Convert an automatic prosodic annotated sentence to a BAS Partitur Format.</p>
+## @param idProsAnnoSent data
+##          Data instance of an automatic prosodic annotated sentence  (input)
+## @param idLab data
+##          Data instance of a BAS Partitur Format  (output)
+function -Convert_PauAnnoSent2Partitur(idProsAnnoSent,idLab)
+{
+	var sTierDefinit;	        													# Definition of tier (Spur)
+	var i;																			# Loop counter
+
+  	## Initialize                                                                 	# -------------------------------------
+	"PAU:" sTierDefinit =;															# Definition of tier (Spur)
+	0 i =;
+	
+  	## Reset data                                                                 	# -------------------------------------
+	idLab -reset;
+	
+  	## Define a data object structure                                              	# -------------------------------------	
+	"Tier" 5 idLab -addcomp;														# Output data object (Tier (Spur))
+	"WordNum" type long idLab -addcomp;												# Output data object (number of word (begin with 0))
+	"Word" 50 idLab -addcomp;														# Output data object (word)
+	idProsAnnoSent.dim idLab -allocate;												# Allocates (n) records
+
+  	## Copy the informations to the output data object                              # -------------------------------------	
+	0 i =; 																			# Init a loop counter i
+	label L1;                                             							# Define a jump label named L1
+	i idProsAnnoSent.dim < if                                   					# If loop counter < (number of records)
+		:idLab[i,0] = sTierDefinit;													# Copy the tier (Spur)
+		:idLab[i,1] = i;															# copy the number of word
+		:idLab[i,2] = idProsAnnoSent[0,i];											# Copy the word
+
+		i ++=;                                              						# Increment loop counter i
+  		goto L1;                                            						# Jump to label L1
+	end                                                 							# End of conditional branch
+
+#100 break;
+
+}
+
+
+
+
+
+
+
+## <p>Evaluation of major and minor pauses.</p>
+## @param idProsoTest data
+##          Data instance of automatic prosodic annotated sentence (Test) (input)
+## @param idProsoRef data
+##          Data instance of manual prosodic annotated sentence (Reference) (input)
+## @param idLab data
+##          Data instance for the result of evaluation  (output)
+function -Pause_Evaluation_Major_Minor(idProsoTest,idProsoRef,idLab)
+{
+	data idAux;																		# Auxiliary data instance
+
+	var sMinorPause;																# Minor pause
+	var sMajorPause;																# Major pause
+
+	var sPause;	        															# A word is a pause
+	var sAuxWord;
+
+	var nMajorRef;																	# Number of major annotation symbols in reference file
+	var nMajorTest;																	# Number of major annotation symbols in test file
+	var nMajorCorr;																	# Number of major corrected symbols
+	var nMajorDel;																	# Number of major deleted symbols
+	var nMajorIns;																	# Number of major inserted symbols
+	var nMajorSub;																	# Number of major substituted symbols (Substitution = Ersatz)
+
+	var nMinorRef;																	# Number of minor annotation symbols in reference file
+	var nMinorTest;																	# Number of minor annotation symbols in test file
+	var nMinorCorr;																	# Number of minor corrected symbols
+	var nMinorDel;																	# Number of minor deleted symbols
+	var nMinorIns;																	# Number of minor inserted symbols
+	var nMinorSub;																	# Number of minor substituted symbols (Substitution = Ersatz)
+
+	var nNumWordsSentTest;															# Number of words in Test sentence
+	var nNumWordsSentRef;															# Number of words in Reference sentence
+
+	var i;
+	var j;
+
+
+  	## Initialize                                                                 	# -------------------------------------
+	"<p>" sMinorPause =;															# Init a minor pause variable 
+	"<pp>" sMajorPause =;															# Init a major pause variable 
+
+	"<p:>" sPause =;
+
+	0 nMajorRef =;																	# Number of major annotation symbols in reference file
+	0 nMajorTest =;																	# Number of major annotation symbols in test file
+	0 nMajorCorr =;																	# Number of major corrected symbols
+	0 nMajorDel =;																	# Number of major deleted symbols
+	0 nMajorIns =;																	# Number of major inserted symbols
+	0 nMajorSub =;																	# Number of major substituted symbols
+	
+	0 nMinorRef =;																	# Number of minor annotation symbols in reference file
+	0 nMinorTest =;																	# Number of minor annotation symbols in test file
+	0 nMinorCorr =;																	# Number of minor corrected symbols
+	0 nMinorDel =;																	# Number of minor deleted symbols
+	0 nMinorIns =;																	# Number of minor inserted symbols
+	0 nMinorSub =;																	# Number of minor substituted symbols
+
+	idProsoTest.dim nNumWordsSentTest =;											# Number of words in Test sentence
+	idProsoRef.dim nNumWordsSentRef =;												# Number of words in Reference sentence
+	
+  	## Reset data                                                                 	# -------------------------------------
+	idAux -reset;
+	idLab -reset;
+	
+  	## Define a data object structure                                              	# -------------------------------------	
+	"Report" 50 idLab -addcomp;														# Output data object
+	"FeaNum" type long idLab -addcomp;												# Output data object
+	12 idLab -allocate;																# Allocates (n) records
+
+	## Init a data object structure                                              	# -------------------------------------	
+	"Number of major symbols in reference file:" sAuxWord =;
+	:idLab[0,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[0,1] = 0;																# Init a number with 0
+
+	"Number of minor symbols in reference file:" sAuxWord =;
+	:idLab[1,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[1,1] = 0;																# Init a number with 0
+	
+	"Number of major symbols in test file:" sAuxWord =;
+	:idLab[2,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[2,1] = 0;																# Init a number with 0
+
+	"Number of minor symbols in test file:" sAuxWord =;
+	:idLab[3,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[3,1] = 0;																# Init a number with 0
+
+	"Correct major symbols:" sAuxWord =;
+	:idLab[4,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[4,1] = 0;																# Init a number with 0
+
+	"Correct minor symbols:" sAuxWord =;
+	:idLab[5,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[5,1] = 0;																# Init a number with 0
+
+	"Substitution major symbols:" sAuxWord =;
+	:idLab[6,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[6,1] = 0;																# Init a number with 0
+
+	"Substitution minor symbols:" sAuxWord =;
+	:idLab[7,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[7,1] = 0;																# Init a number with 0
+
+	"Deleted major symbols:" sAuxWord =;
+	:idLab[8,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[8,1] = 0;																# Init a number with 0
+
+	"Deleted minor symbols:" sAuxWord =;
+	:idLab[9,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[9,1] = 0;																# Init a number with 0
+
+	"Inserted major symbols:" sAuxWord =;
+	:idLab[10,0] = sAuxWord;														# Copy the word  to the output data object
+	:idLab[10,1] = 0;																# Init a number with 0
+
+	"Inserted minor symbols:" sAuxWord =;
+	:idLab[11,0] = sAuxWord;														# Copy the word  to the output data object
+	:idLab[11,1] = 0;																# Init a number with 0
+
+
+  	## Calculate the number of prosodic symbols in Test file                        # -------------------------------------	
+	## Minor symbol in Test file													#   - - - - - - - - - - - - - - - - - -
+	0 i =; 																			# Init a loop counter i
+	label L1;                                             							# Define a jump label named L1
+	i nNumWordsSentTest < if                                   						# If loop counter < (number of records)
+		:idProsoTest[0,i]: sMinorPause == if										# A word is a minor symbol >>
+			nMinorTest ++=;															# Increment the number of minor symbols in Test file
+		end																		# <<
+		i ++=;                                              						# Increment loop counter i
+  		goto L1;                                            						# Jump to label L1
+	end                                                 							# End of conditional branch
+
+	## Major symbol in Test file													#   - - - - - - - - - - - - - - - - - -
+	0 i =; 																			# Init a loop counter i
+	label L2;                                             							# Define a jump label named L2
+	i nNumWordsSentTest < if                                   						# If loop counter < (number of records)
+		:idProsoTest[0,i]: sMajorPause == if										# A word is a major symbol >>
+			nMajorTest ++=;															# Increment the number of major symbols in Test file
+		end																		# <<
+		i ++=;                                              						# Increment loop counter i
+  		goto L2;                                            						# Jump to label L2
+	end                                                 							# End of conditional branch
+
+
+  	## Calculate the number of prosodic symbols in Reference file                   # -------------------------------------
+	## Minor symbol in Reference file												#   - - - - - - - - - - - - - - - - - -
+	0 i =; 																			# Init a loop counter i
+	label L3;                                             							# Define a jump label named L3
+	i nNumWordsSentRef < if                                   						# If loop counter < (number of records)
+		:idProsoRef[0,i]: sMinorPause == if											# A word is a minor symbol >>
+			nMinorRef ++=;															# Increment the number of minor symbols in Reference file
+		end																		# <<
+		i ++=;                                              						# Increment loop counter i
+  		goto L3;                                            						# Jump to label L3
+	end                                                 							# End of conditional branch
+
+	## Major symbol in Reference file												#   - - - - - - - - - - - - - - - - - -
+	0 i =; 																			# Init a loop counter i
+	label L4;                                             							# Define a jump label named L4
+	i nNumWordsSentRef < if                                   						# If loop counter < (number of records)
+		:idProsoRef[0,i]: sMajorPause == if											# A word is a major symbol >>
+			nMajorRef ++=;															# Increment the number of major symbols in Reference file
+		end																		# <<
+		i ++=;                                              						# Increment loop counter i
+  		goto L4;                                            						# Jump to label L4
+	end                                                 							# End of conditional branch
+
+#00 break;
+
+  	## Add one word to the end of both sentences (to stay in sentence domain) 		# -------------------------------------
+	var sEmptyWord;
+	"EmptyWord" sEmptyWord =;
+	
+	25 1 idAux -addncomps;															# Add component of type (char) to data object
+	1 idAux -allocate;																# Allocates (n) records of memory
+	:idAux[0,0] = sEmptyWord;
+
+	idAux idProsoRef -join; 														# Append component to idProsoRef
+	idAux idProsoRef -join; 														# Append component to idProsoRef
+	idAux idProsoTest -join; 														# Append component to idProsoTest
+	idAux idProsoTest -join; 														# Append component to idProsoTest
+
+#01 break;
+
+	nNumWordsSentTest ++=;
+	nNumWordsSentRef ++=;	
+
+	################################
+	##### Example(ROVER Fis97) #####
+	################################
+	#####  a   b   c   d   -   ##### Reference sentence
+	#####  -   b   z   d   e   ##### Test sentence
+	#####  C1  C2  C3  C4  C5  ##### The Number of Character
+	################################
+	##### Correct: 		C2, C4 #####
+	##### Substitution: C3	   #####
+	##### Deletion:		C1     #####
+	##### Insertion:	C5     #####
+	################################
+
+  	## Evaluation of Minor symbols (Correct, Substitution, Deletion)                # -------------------------------------
+	var sWordRef;																	# A word in a reference file
+	var sWordPreviousRef;															# Previous word to the minor symbol in Reference sentence
+	var sWordNextRef;																# Next word to the minor symbol in Reference sentence
+	var sWordTest;																	# A word in a test file	
+	var sWordPreviousTest;															# Previous word to the minor symbol in Test sentence
+	var sWordNextTest;																# Next word to the minor symbol in Test sentence
+
+	# Loop for every word in the reference file										#   - - - - - - - - - - - - - - - - - -
+	1 i =; 																			# Init a loop counter i
+	label L5;                                             							# Define a jump label named L5
+	i nNumWordsSentRef < if                                   						# If loop counter < (number of records)
+		:idProsoRef[0,i]: sWordRef =;												# Read one word in the Reference sentence
+		:idProsoRef[0,i-1]: sWordPreviousRef =;										# Previous word in Reference sentence
+		:idProsoRef[0,i+1]: sWordNextRef =;											# Next word in Reference sentence
+
+		sWordRef sMinorPause == if													# The word in Reference sentence is a minor symbol >> 
+			# Loop for every word in the test file									#   - - - - - - - - - - - - - - - - - -
+			1 j =; 																	# Init a loop counter j
+			label L6;                                             					# Define a jump label named L6
+			j nNumWordsSentTest < if                                   				# If loop counter < (number of records)
+				:idProsoTest[0,j]: sWordTest =;										# Read one word in the Test sentence
+				:idProsoTest[0,j-1]: sWordPreviousTest =;							# Previous word in Test sentence
+				:idProsoTest[0,j+1]: sWordNextTest =;								# Next word in Test sentence
+
+				sWordTest sMinorPause == sWordPreviousRef sWordPreviousTest == sWordNextRef sWordNextTest == && && if
+					nMinorCorr ++=;													# Increment the Correct
+					goto L7;                                            			# Jump to label L7 (Exit from loop)
+				else
+				sWordTest sMajorPause == sWordPreviousRef sWordPreviousTest == sWordNextRef sWordNextTest == && && if
+					nMinorSub ++=;													# Increment the Substitution
+					goto L7;                                            			# Jump to label L7 (Exit from loop)
+				else
+				#sWordPreviousRef sWordTest == sWordNextRef sWordNextTest == && if
+				sWordPreviousRef sWordPreviousTest == sWordNextRef sWordTest == && if
+					nMinorDel ++=;													# Increment the Deletion
+					goto L7;                                            			# Jump to label L7 (Exit from loop)
+				end
+				end
+				end
+
+				j ++=;                                              				# Increment loop counter j
+  				goto L6;                                            				# Jump to label L6
+			end                                                 					# End of conditional branch
+		end																		# <<
+		label L7;                                             						# Define a jump label named L7
+		i ++=;                                              						# Increment loop counter i
+  		goto L5;                                            						# Jump to label L5
+	end                                                 							# End of conditional branch
+
+
+  	## Evaluation of Minor symbols (Insertion)                						# -------------------------------------
+	# Loop for every word in the test file											#   - - - - - - - - - - - - - - - - - -
+	1 i =; 																			# Init a loop counter i
+	label L8;                                             							# Define a jump label named L8
+	i nNumWordsSentTest < if                                   						# If loop counter < (number of records)
+		:idProsoTest[0,i]: sWordTest =;												# Read one word in the Test sentence
+		:idProsoTest[0,i-1]: sWordPreviousTest =;									# Previous word in Test sentence
+		:idProsoTest[0,i+1]: sWordNextTest =;										# Next word in Test sentence
+
+		sWordTest sMinorPause == if													# The word in Test sentence is a minor symbol >>
+			# Loop for every word in the reference file								#   - - - - - - - - - - - - - - - - - -
+			1 j =; 																	# Init a loop counter j
+			label L9;                                             					# Define a jump label named L9
+			j nNumWordsSentRef < if                                   				# If loop counter < (number of records)
+				:idProsoRef[0,j]: sWordRef =;										# Read one word in the Reference sentence
+				:idProsoRef[0,j-1]: sWordPreviousRef =;								# Previous word in Reference sentence
+				:idProsoRef[0,j+1]: sWordNextRef =;									# Next word in Reference sentence
+				#sWordPreviousTest sWordRef == sWordNextTest sWordNextRef == && if
+				sWordPreviousTest sWordPreviousRef == sWordNextTest sWordRef == && if
+					nMinorIns ++=;													# Increment the Insertion
+					goto L10;                                            			# Jump to label L10 (Exit from loop)
+				end
+
+				j ++=;                                              				# Increment loop counter j
+  				goto L9;                                            				# Jump to label L9
+			end                                                 					# End of conditional branch
+		end																		# <<
+		label L10;                                             						# Define a jump label named L10
+		i ++=;                                              						# Increment loop counter i
+  		goto L8;                                            						# Jump to label L8
+	end                                                 							# End of conditional branch
+
+
+
+  	## Evaluation of Major symbols (Correct, Substitution, Deletion)                # -------------------------------------
+	# Loop for every word in the reference file										#   - - - - - - - - - - - - - - - - - -
+	1 i =; 																			# Init a loop counter i
+	label L11;                                             							# Define a jump label named L11
+	i nNumWordsSentRef < if                                   						# If loop counter < (number of records)
+		:idProsoRef[0,i]: sWordRef =;												# Read one word in the Reference sentence
+		:idProsoRef[0,i-1]: sWordPreviousRef =;										# Previous word in Reference sentence
+		:idProsoRef[0,i+1]: sWordNextRef =;											# Next word in Reference sentence
+
+		sWordRef sMajorPause == if													# The word in Reference sentence is a minor symbol >> 
+			# Loop for every word in the test file									#   - - - - - - - - - - - - - - - - - -
+			1 j =; 																	# Init a loop counter j
+			label L12;                                             					# Define a jump label named L12
+			j nNumWordsSentTest < if                                   				# If loop counter < (number of records)
+				:idProsoTest[0,j]: sWordTest =;										# Read one word in the Test sentence
+				:idProsoTest[0,j-1]: sWordPreviousTest =;							# Previous word in Test sentence
+				:idProsoTest[0,j+1]: sWordNextTest =;								# Next word in Test sentence
+
+				sWordTest sMajorPause == sWordPreviousRef sWordPreviousTest == sWordNextRef sWordNextTest == && && if
+					nMajorCorr ++=;													# Increment the Correct
+					goto L13;                                            			# Jump to label L13 (Exit from loop)
+				else
+				sWordTest sMinorPause == sWordPreviousRef sWordPreviousTest == sWordNextRef sWordNextTest == && && if
+					nMajorSub ++=;													# Increment the Substitution
+					goto L13;                                            			# Jump to label L13 (Exit from loop)
+				else
+				#sWordPreviousRef sWordTest == sWordNextRef sWordNextTest == && if
+				sWordPreviousRef sWordPreviousTest == sWordNextRef sWordTest == && if
+					nMajorDel ++=;													# Increment the Deletion
+					goto L13;                                            			# Jump to label L13 (Exit from loop)
+				end
+				end
+				end
+
+				j ++=;                                              				# Increment loop counter j
+  				goto L12;                                            				# Jump to label L12
+			end                                                 					# End of conditional branch
+		end																		# <<
+		label L13;                                             						# Define a jump label named L13
+		i ++=;                                              						# Increment loop counter i
+  		goto L11;                                            						# Jump to label L11
+	end                                                 							# End of conditional branch
+
+
+  	## Evaluation of Major symbols (Insertion)                						# -------------------------------------
+	# Loop for every word in the test file											#   - - - - - - - - - - - - - - - - - -
+	1 i =; 																			# Init a loop counter i
+	label L14;                                             							# Define a jump label named L14
+	i nNumWordsSentTest < if                                   						# If loop counter < (number of records)
+		:idProsoTest[0,i]: sWordTest =;												# Read one word in the Test sentence
+		:idProsoTest[0,i-1]: sWordPreviousTest =;									# Previous word in Test sentence
+		:idProsoTest[0,i+1]: sWordNextTest =;										# Next word in Test sentence
+
+		sWordTest sMajorPause == if													# The word in Test sentence is a major symbol >>
+			# Loop for every word in the reference file								#   - - - - - - - - - - - - - - - - - -
+			1 j =; 																	# Init a loop counter j
+			label L15;                                             					# Define a jump label named L15
+			j nNumWordsSentRef < if                                   				# If loop counter < (number of records)
+				:idProsoRef[0,j]: sWordRef =;										# Read one word in the Reference sentence
+				:idProsoRef[0,j-1]: sWordPreviousRef =;								# Previous word in Reference sentence
+				:idProsoRef[0,j+1]: sWordNextRef =;									# Next word in Reference sentence
+				#sWordPreviousTest sWordRef == sWordNextTest sWordNextRef == && if
+				sWordPreviousTest sWordPreviousRef == sWordNextTest sWordRef == && if
+					nMajorIns ++=;													# Increment the Insertion
+					goto L16;                                            			# Jump to label L16 (Exit from loop)
+				end
+
+				j ++=;                                              				# Increment loop counter j
+  				goto L15;                                            				# Jump to label L15
+			end                                                 					# End of conditional branch
+		end																		# <<
+		label L16;                                             						# Define a jump label named L16
+		i ++=;                                              						# Increment loop counter i
+  		goto L14;                                            						# Jump to label L14
+	end                                                 							# End of conditional branch
+
+
+	## Test if the values are correct                  								# -------------------------------------	
+	nMajorCorr nMajorDel + nMajorSub + i =;
+	i nMajorRef != if
+		4646 break;
+	end
+	
+	nMinorCorr nMinorDel + nMinorSub + i =;
+	i nMinorRef != if
+		4747 break;
+	end	
+
+
+	nMajorCorr nMajorIns + nMinorSub + i =;
+	i nMajorTest != if
+		4848 break;
+	end
+	
+	nMinorCorr nMinorIns + nMajorSub + i =;
+	i nMinorTest != if
+		4949 break;
+	end	
+
+
+	## Save the values in output data object                  						# -------------------------------------
+	:idLab[0,1] = nMajorRef;
+	:idLab[1,1] = nMinorRef;
+	:idLab[2,1] = nMajorTest;
+	:idLab[3,1] = nMinorTest;
+	:idLab[4,1] = nMajorCorr;
+	:idLab[5,1] = nMinorCorr;
+	:idLab[6,1] = nMajorSub;
+	:idLab[7,1] = nMinorSub;
+	:idLab[8,1] = nMajorDel;
+	:idLab[9,1] = nMinorDel;
+	:idLab[10,1] = nMajorIns;
+	:idLab[11,1] = nMinorIns;
+	
+	
+#100 break;
+
+}
+
+
+
+
+
+
+## <p>Evaluation of minor pauses.</p>
+## @param idProsoTest data
+##          Data instance of automatic prosodic annotated sentence (Test) (input)
+## @param idProsoRef data
+##          Data instance of manual prosodic annotated sentence (Reference) (input)
+## @param idLab data
+##          Data instance for the result of evaluation  (output)
+function -Pause_Evaluation_Minor(idProsoTest,idProsoRef,idLab)
+{
+	data idAux;																		# Auxiliary data instance
+
+	var sMinorPause;																# Minor pause
+	var sMajorPause;																# Major pause
+
+	var sPause;	        															# A word is a pause
+	var sAuxWord;
+
+	var nMinorRef;																	# Number of minor annotation symbols in reference file
+	var nMinorTest;																	# Number of minor annotation symbols in test file
+	var nMinorCorr;																	# Number of minor corrected symbols
+	var nMinorDel;																	# Number of minor deleted symbols
+	var nMinorIns;																	# Number of minor inserted symbols
+
+	var nNumWordsSentTest;															# Number of words in Test sentence
+	var nNumWordsSentRef;															# Number of words in Reference sentence
+
+	var i;
+	var j;
+
+
+  	## Initialize                                                                 	# -------------------------------------
+	"<p>" sMinorPause =;															# Init a minor pause variable 
+	"<pp>" sMajorPause =;															# Init a major pause variable 
+
+	"<p:>" sPause =;
+	
+	0 nMinorRef =;																	# Number of minor annotation symbols in reference file
+	0 nMinorTest =;																	# Number of minor annotation symbols in test file
+	0 nMinorCorr =;																	# Number of minor corrected symbols
+	0 nMinorDel =;																	# Number of minor deleted symbols
+	0 nMinorIns =;																	# Number of minor inserted symbols
+
+	idProsoTest.dim nNumWordsSentTest =;											# Number of words in Test sentence
+	idProsoRef.dim nNumWordsSentRef =;												# Number of words in Reference sentence
+	
+  	## Reset data                                                                 	# -------------------------------------
+	idAux -reset;
+	idLab -reset;
+	
+  	## Define a data object structure                                              	# -------------------------------------	
+	"Report" 50 idLab -addcomp;														# Output data object
+	"FeaNum" type long idLab -addcomp;												# Output data object
+	5 idLab -allocate;																# Allocates (n) records
+
+	## Init a data object structure                                              	# -------------------------------------	
+	"Number of minor symbols in reference file:" sAuxWord =;
+	:idLab[0,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[0,1] = 0;																# Init a number with 0
+	
+	"Number of minor symbols in test file:" sAuxWord =;
+	:idLab[1,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[1,1] = 0;																# Init a number with 0
+
+	"Correct minor symbols:" sAuxWord =;
+	:idLab[2,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[2,1] = 0;																# Init a number with 0
+
+	"Deleted minor symbols:" sAuxWord =;
+	:idLab[3,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[3,1] = 0;																# Init a number with 0
+
+	"Inserted minor symbols:" sAuxWord =;
+	:idLab[4,0] = sAuxWord;															# Copy the word  to the output data object
+	:idLab[4,1] = 0;																# Init a number with 0
+
+
+  	## Convert the major symbols to minor symbols in Test file                      # -------------------------------------	
+	0 i =; 																			# Init a loop counter i
+	label L111;                                             						# Define a jump label named L111
+	i nNumWordsSentTest < if                                   						# If loop counter < (number of records)
+		:idProsoTest[0,i]: sMajorPause == if										# A word is a major symbol >>
+			:idProsoTest[0,i] = sMinorPause;										# Convert major symbol to minor symbol
+		end																		# <<
+		i ++=;                                              						# Increment loop counter i
+  		goto L111;                                            						# Jump to label L111
+	end                                                 							# End of conditional branch
+
+
+  	## Convert the major symbols to minor symbols in Reference file                 # -------------------------------------	
+	0 i =; 																			# Init a loop counter i
+	label L222;                                             						# Define a jump label named L222
+	i nNumWordsSentRef < if                                   						# If loop counter < (number of records)
+		:idProsoRef[0,i]: sMajorPause == if											# A word is a major symbol >>
+			:idProsoRef[0,i] = sMinorPause;											# Convert major symbol to minor symbol
+		end																		# <<
+		i ++=;                                              						# Increment loop counter i
+  		goto L222;                                            						# Jump to label L222
+	end                                                 							# End of conditional branch
+
+
+  	## Calculate the number of prosodic symbols in Test file                        # -------------------------------------	
+	## Minor symbol in Test file													#   - - - - - - - - - - - - - - - - - -
+	0 i =; 																			# Init a loop counter i
+	label L1;                                             							# Define a jump label named L1
+	i nNumWordsSentTest < if                                   						# If loop counter < (number of records)
+		:idProsoTest[0,i]: sMinorPause == if										# A word is a minor symbol >>
+			nMinorTest ++=;															# Increment the number of minor symbols in Test file
+		end																		# <<
+		i ++=;                                              						# Increment loop counter i
+  		goto L1;                                            						# Jump to label L1
+	end                                                 							# End of conditional branch
+
+
+  	## Calculate the number of prosodic symbols in Reference file                   # -------------------------------------
+	## Minor symbol in Reference file												#   - - - - - - - - - - - - - - - - - -
+	0 i =; 																			# Init a loop counter i
+	label L3;                                             							# Define a jump label named L3
+	i nNumWordsSentRef < if                                   						# If loop counter < (number of records)
+		:idProsoRef[0,i]: sMinorPause == if											# A word is a minor symbol >>
+			nMinorRef ++=;															# Increment the number of minor symbols in Reference file
+		end																		# <<
+		i ++=;                                              						# Increment loop counter i
+  		goto L3;                                            						# Jump to label L3
+	end                                                 							# End of conditional branch
+
+
+#00 break;
+
+  	## Add one word to the end of both sentences (to stay in sentence domain) 		# -------------------------------------
+	var sEmptyWord;
+	"EmptyWord" sEmptyWord =;
+	
+	25 1 idAux -addncomps;															# Add component of type (char) to data object
+	1 idAux -allocate;																# Allocates (n) records of memory
+	:idAux[0,0] = sEmptyWord;
+
+	idAux idProsoRef -join; 														# Append component to idProsoRef
+	idAux idProsoRef -join; 														# Append component to idProsoRef
+	idAux idProsoTest -join; 														# Append component to idProsoTest
+	idAux idProsoTest -join; 														# Append component to idProsoTest
+
+#01 break;
+
+	nNumWordsSentTest ++=;
+	nNumWordsSentRef ++=;	
+
+	################################
+	##### Example(ROVER Fis97) #####
+	################################
+	#####  a   b   c   d   -   ##### Reference sentence
+	#####  -   b   z   d   e   ##### Test sentence
+	#####  C1  C2  C3  C4  C5  ##### The Number of Character
+	################################
+	##### Correct: 		C2, C4 #####
+	##### Substitution: C3	   #####
+	##### Deletion:		C1     #####
+	##### Insertion:	C5     #####
+	################################
+
+  	## Evaluation of Minor symbols (Correct, Deletion)                				# -------------------------------------
+	var sWordRef;																	# A word in a reference file
+	var sWordPreviousRef;															# Previous word to the minor symbol in Reference sentence
+	var sWordNextRef;																# Next word to the minor symbol in Reference sentence
+	var sWordTest;																	# A word in a test file	
+	var sWordPreviousTest;															# Previous word to the minor symbol in Test sentence
+	var sWordNextTest;																# Next word to the minor symbol in Test sentence
+
+	# Loop for every word in the reference file										#   - - - - - - - - - - - - - - - - - -
+	1 i =; 																			# Init a loop counter i
+	label L5;                                             							# Define a jump label named L5
+	i nNumWordsSentRef < if                                   						# If loop counter < (number of records)
+		:idProsoRef[0,i]: sWordRef =;												# Read one word in the Reference sentence
+		:idProsoRef[0,i-1]: sWordPreviousRef =;										# Previous word in Reference sentence
+		:idProsoRef[0,i+1]: sWordNextRef =;											# Next word in Reference sentence
+
+		sWordRef sMinorPause == if													# The word in Reference sentence is a minor symbol >> 
+			# Loop for every word in the test file									#   - - - - - - - - - - - - - - - - - -
+			1 j =; 																	# Init a loop counter j
+			label L6;                                             					# Define a jump label named L6
+			j nNumWordsSentTest < if                                   				# If loop counter < (number of records)
+				:idProsoTest[0,j]: sWordTest =;										# Read one word in the Test sentence
+				:idProsoTest[0,j-1]: sWordPreviousTest =;							# Previous word in Test sentence
+				:idProsoTest[0,j+1]: sWordNextTest =;								# Next word in Test sentence
+
+				sWordTest sMinorPause == sWordPreviousRef sWordPreviousTest == sWordNextRef sWordNextTest == && && if
+					nMinorCorr ++=;													# Increment the Correct
+					goto L7;                                            			# Jump to label L7 (Exit from loop)
+				else
+				#sWordPreviousRef sWordTest == sWordNextRef sWordNextTest == && if
+				sWordPreviousRef sWordPreviousTest == sWordNextRef sWordTest == && if
+					nMinorDel ++=;													# Increment the Deletion
+					goto L7;                                            			# Jump to label L7 (Exit from loop)
+				end
+				end
+
+				j ++=;                                              				# Increment loop counter j
+  				goto L6;                                            				# Jump to label L6
+			end                                                 					# End of conditional branch
+		end																		# <<
+		label L7;                                             						# Define a jump label named L7
+		i ++=;                                              						# Increment loop counter i
+  		goto L5;                                            						# Jump to label L5
+	end                                                 							# End of conditional branch
+
+
+  	## Evaluation of Minor symbols (Insertion)                						# -------------------------------------
+	# Loop for every word in the test file											#   - - - - - - - - - - - - - - - - - -
+	1 i =; 																			# Init a loop counter i
+	label L8;                                             							# Define a jump label named L8
+	i nNumWordsSentTest < if                                   						# If loop counter < (number of records)
+		:idProsoTest[0,i]: sWordTest =;												# Read one word in the Test sentence
+		:idProsoTest[0,i-1]: sWordPreviousTest =;									# Previous word in Test sentence
+		:idProsoTest[0,i+1]: sWordNextTest =;										# Next word in Test sentence
+
+		sWordTest sMinorPause == if													# The word in Test sentence is a minor symbol >>
+			# Loop for every word in the reference file								#   - - - - - - - - - - - - - - - - - -
+			1 j =; 																	# Init a loop counter j
+			label L9;                                             					# Define a jump label named L9
+			j nNumWordsSentRef < if                                   				# If loop counter < (number of records)
+				:idProsoRef[0,j]: sWordRef =;										# Read one word in the Reference sentence
+				:idProsoRef[0,j-1]: sWordPreviousRef =;								# Previous word in Reference sentence
+				:idProsoRef[0,j+1]: sWordNextRef =;									# Next word in Reference sentence
+				#sWordPreviousTest sWordRef == sWordNextTest sWordNextRef == && if
+				sWordPreviousTest sWordPreviousRef == sWordNextTest sWordRef == && if
+					nMinorIns ++=;													# Increment the Insertion
+					goto L10;                                            			# Jump to label L10 (Exit from loop)
+				end
+
+				j ++=;                                              				# Increment loop counter j
+  				goto L9;                                            				# Jump to label L9
+			end                                                 					# End of conditional branch
+		end																		# <<
+		label L10;                                             						# Define a jump label named L10
+		i ++=;                                              						# Increment loop counter i
+  		goto L8;                                            						# Jump to label L8
+	end                                                 							# End of conditional branch
+
+
+	## Test if the values are correct                  								# -------------------------------------	
+	nMinorCorr nMinorDel + i =;
+	i nMinorRef != if
+		4747 break;
+	end	
+
+
+	nMinorCorr nMinorIns + i =;
+	i nMinorTest != if
+		4949 break;
+	end	
+
+
+	## Save the values in output data object                  						# -------------------------------------
+	:idLab[0,1] = nMinorRef;
+	:idLab[1,1] = nMinorTest;
+	:idLab[2,1] = nMinorCorr;
+	:idLab[3,1] = nMinorDel;
+	:idLab[4,1] = nMinorIns;
+	
+	
+#100 break;
+
+}
+
+
+
+
+
+
+## EOF

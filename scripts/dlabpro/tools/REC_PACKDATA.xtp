@@ -1,0 +1,601 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Data packaging tool for dLabPro recognizer
+##
+## AUTHOR : Frank Duckhorn, Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/tools
+##
+## ARGUMENTS:
+##   $1: Command or 'help'
+##   $2: Configuration file or, if 1st arg. is 'help', command
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"../util/cfg.itp"  include;
+"../util/fst.itp"  include;
+"../util/lab.itp"  include;
+"../util/lm.itp"   include;
+"../util/lx.itp"   include;
+"../util/os.itp"   include;
+"../util/uasr.itp" include;
+"../util/var.itp"  include;
+
+## Prints help on usage
+function -usage(sCmd)
+{
+  sCmd "dlg" == if
+    "\n\n   SYNOPSIS:"                                                    -MSG;
+      "\n     Pack recognition data (dialog)"                             -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp $[sCmd] <cfgfile> [options]"         -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR config. file of the HMM training that" -MSG;
+      "\n                     was used to create the phoneme models"      -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -c              use colors for screen protocol"             -MSG;
+      "\n     -n              do not write any files"                     -MSG;
+      "\n     -v<n>           verbose level (-v0: silent mode)"           -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+    "\n\n   REMARKS:"                                                     -MSG;
+      "\n     Special <key>s for $__SFILE__.xtp:"                         -MSG;
+      "\n       dlg.fsg       finite state dialog file"                   -MSG;
+      "\n       export        One of the following (default: no)"         -MSG;
+      "\n                       openFST - export openFST grammar files"   -MSG;
+      "\n       out           output folder (default: current folder)"    -MSG;
+      "\n       out.feainfo   output file (default: <out>/feainfo.object)"-MSG; 
+      "\n       out.gmm       output file (default: <out>/<am.model>.gmm)"-MSG; 
+      "\n       out.sesinfo   output file (default: <out>/sesinfo.object)"-MSG; 
+      "\n       render        yes/no: render dialog and grammar FSTs "    -MSG;
+                              "(default: no)"                             -MSG;
+      "\n       skip          Combination of the following letters"       -MSG;
+      "\n                       F - skip creating feature info file"      -MSG;
+      "\n                       G - skip creating GMM file"               -MSG;
+      "\n                       S - skip creating session info file"      -MSG;
+      "\n     Important common <key>s for $__SFILE__.xtp:"                -MSG;
+      "\n       am.model      acoustic model (HMM) ID"                    -MSG;
+    "\n\n   EXAMPLES:"                                                    -MSG;
+      "\n     $__SFILE__.xtp $[sCmd] VMX.cfg -Pam.model=3_10 "
+              "-Pdlg.fsg=mydialog.dlg.txt -Pout=myfolder"               + -MSG;
+      "\n"                                                                -MSG;
+    leave;
+  end
+  sCmd "rec" == if
+    "\n\n   SYNOPSIS:"                                                    -MSG;
+      "\n     Pack recognition data (simple grammar)"                     -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp $[sCmd] <cfgfile> [options]"         -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR config. file of the HMM training that" -MSG;
+      "\n                     was used to create the phoneme models"      -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -c              use colors for screen protocol"             -MSG;
+      "\n     -n              do not write any files"                     -MSG;
+      "\n     -v<n>           verbose level (-v0: silent mode)"           -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+    "\n\n   REMARKS:"                                                     -MSG;
+      "\n     Special <key>s for $__SFILE__.xtp:"                         -MSG;
+      "\n       export        One of the following (default: no)"         -MSG;
+      "\n                       openFST - export openFST grammar files"   -MSG;
+      "\n       out           output folder (default: current folder)"    -MSG;
+      "\n       out.feainfo   output file (default: <out>/feainfo.object)"-MSG; 
+      "\n       out.gmm       output file (default: <out>/<am.model>.gmm)"-MSG; 
+      "\n       out.sesinfo   output file (default: <out>/sesinfo.object)"-MSG; 
+      "\n       render        yes/no: render dialog and grammar FSTs "    -MSG;
+                              "(default: no)"                             -MSG;
+      "\n       skip          Combination of the following letters"       -MSG;
+      "\n                       F - skip creating feature info file"      -MSG;
+      "\n                       G - skip creating GMM file"               -MSG;
+      "\n                       S - skip creating session info file"      -MSG;
+      "\n     Important common <key>s for $__SFILE__.xtp:"                -MSG;
+      "\n       am.model      acoustic model (HMM) ID"                    -MSG;
+      "\n       lm.fsg        finite state grammar file (default: none)"  -MSG;
+    "\n\n   EXAMPLES:"                                                    -MSG;
+      "\n     $__SFILE__.xtp $[sCmd] VMX.cfg -Pout=myfolder"              -MSG;
+      "\n     $__SFILE__.xtp $[sCmd] VMX.cfg -Pam.model=3_10 "
+              "-Plm.fsg=mygrammar.grm.txt -Pout=myfolder"               + -MSG;
+      "\n"                                                                -MSG;
+    leave;
+  end
+  sCmd "vad" == if
+    "\n\n   SYNOPSIS:"                                                    -MSG;
+      "\n     Pack voice activity detection data"                         -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp $[sCmd] <cfgfile> [options]"         -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR config. file of the HMM training that" -MSG;
+      "\n                     was used to create the VAD models"          -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -c              use colors for screen protocol"             -MSG;
+      "\n     -n              do not write any files"                     -MSG;
+      "\n     -v<n>           verbose level (-v0: silent mode)"           -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+    "\n\n   REMARKS:"                                                     -MSG;
+      "\n     Special <key>s for $__SFILE__.xtp:"                         -MSG;
+      "\n       out           output folder (default: current folder)"    -MSG;
+      "\n       out.vad       output file (default: <out>/<am.model>.vad)"-MSG; 
+      "\n"                                                                -MSG;
+    leave;
+  end
+  "\n\n   SYNOPSIS:"                                                      -MSG;
+    "\n     Data packaging tool for the dLabPro speech recognizer"        -MSG;
+  "\n\n     The recognizer requires data files to operate. You must"      -MSG;   
+    "\n     create GMM and grammar files (command 'rec') AND a voice"     -MSG;   
+    "\n     activity detection info file (command 'vad')."                -MSG;   
+  "\n\n   USAGE:"                                                         -MSG;
+    "\n     dlabpro $__SFILE__.xtp <command> <cfgfile> [options]"         -MSG;
+  "\n\n   COMMANDS:"                                                      -MSG;
+    "\n     dlg - Pack recognition data (dialog)"                         -MSG;
+    "\n     rec - Pack recognition data (simple grammar)"                 -MSG;
+    "\n     vad - Pack voice activity detection data"                     -MSG;
+  "\n\n  Type 'dlabpro $__SFILE__.xtp help <command>' for help on a "     -MSG;
+         "specific command.\n"                                            -MSG;
+}
+
+## Checks if the specified file exists and echoes a message.
+##
+## @param sFile string
+##          the file name
+## @param sMsg string
+##          a string indicating the file type
+## @return <code>TRUE</code> if the file exists or is not idicated as required,
+##         <code>FALSE</code> otherwise
+function -FCHK(sFile,sMsg,bRequired)
+{
+  "\n   - " ( sMsg -14 -MSG_pad ) + ": "                                + -MSG; # Protocol
+  sFile not if                                                                  # No or empty file name >>
+    bRequired if                                                                #   File ist required >>
+      "NOT SPECIFIED" -COLOR_red                                          -MSG; #     Protocol
+      FALSE return;                                                             #     Not good
+    else                                                                        #   << File is not required >>
+      "not specified" -COLOR_yellow " (acceptable)"                     + -MSG; #     Protocol
+      TRUE return;                                                              #     Acceptable
+    end                                                                         #   <<
+  end                                                                           # <<
+  "$[sFile] ("                                                            -MSG; # Protocol
+  sFile stdfile -exists if                                                      # File exist
+    "exists)" -MSG;                                                             #   Tell it
+    TRUE return;                                                                #   Very good
+  end                                                                           # << (file does not exist)
+  "NOT FOUND" -COLOR_red ")" + -MSG;                                            # Tell it
+  FALSE return;                                ´                                # Not good
+}
+
+## EXPERIMENTAL: Guesses the terminal input symols from grammer rules.
+##
+## @param idRules data
+##          The rule set (as obtained by <code>-FSG_load</code>).
+## @param idTrmTab data
+##          Filled with the list of terminal input symbols.
+## @return void 
+function -FSG_get_trm_tab(idRules,idTrmTab)
+{
+  data idAux;                                                                   # Auxiliary data instance
+  idRules 0 1 idTrmTab -delete;                                                 # Remove left side of rules
+  idTrmTab ${idTrmTab.dim*idTrmTab.nrec} 1 idTrmTab -reshape;                   # Get all symbols in one component
+  idTrmTab "(" "search" idAux -strop; :idAux[0].==0: idTrmTab -dmark;           # Mark symbols starting with "("
+  idTrmTab 0 0 idTrmTab /mark -delete;                                          # Delete marked symbols
+  idTrmTab 0 idTrmTab -sortup;                                                  # Sort symbol table
+  idTrmTab 0 idTrmTab -compress; idTrmTab 0 1 idTrmTab -select;                 # Compress
+}
+
+## EXPERIMENTAL: Loads a finite state dialog model from a file.
+##
+## @param sFile string
+##          The path of text file to be loaded.
+## @param sFilter string
+##          The line filter (consider only lines starting with the given string),
+##          use "" to read all lines.
+## @param itDlg fst
+##          Filled with the dialog FST.
+## @return <code>TRUE</code> if successful, <code>FALSE</code> otherwise.
+function -FSG_load_dialog(sFile,sFilter,itDlg)
+{
+  data idRules;                                                                 # The rule set
+  data idTrmTab;                                                                # The table of terminal input symbols
+  sFile sFilter idRules -FSG_load not if FALSE return; end                      # Load rule set
+  idRules idTrmTab -FSG_get_trm_tab;                                            # Guess terminal input symols
+  idRules idTrmTab NULL itDlg -FSG_compile;                                     # Compile dialog FST
+  itDlg.td ( "~TOS" itDlg.td -find_comp ) 1 itDlg.td -delete;                   # Remove output symbols
+  itDlg.td ( "~LSR" itDlg.td -find_comp ) 1 itDlg.td -delete;                   # Remove weights
+  0 1 itDlg.sd -mark; 1 0 itDlg.sd /mark -fill; itDlg.sd -unmark;               # Make all states final
+  0 0 itDlg -trim;                                                              # Remove unused states
+  .bRender if                                                                   # Rendering grammar? Yes >>
+    var s; "$[.sDirOut]/" ( sFilter "#:#.svg" "replace" -VAR_strop ) + s =;     #   Make file name
+    s itDlg.is itDlg.os -1 itDlg -FST_render;                        "." -MSG2; #   Protocol
+  end                                                                           # <<
+  TRUE return;
+}
+
+## Adds a unit to the recognition network
+##
+## @param sFile string
+##          The path of text file to be loaded.
+## @param sFilter string
+##          The line filter (consider only lines starting with the given string),
+##          use "" to read all lines.
+## @param iSI object
+##          The pre-initialized session info object to continue. The function
+##          relies on the following fields:
+##          <ul>
+##            <li><code>iSI.itLX</code> (lexicon FST)</li>
+##            <li><code>iSI.itRNr</code> (reference recognition network)</li>
+##          </ul>
+function -RN_add_unit(sFile,sFilter,iSI)
+{
+  fst  itAM;                                                                    # The HMAs (union and closed)
+  fst  itLX;                                                                    # The lexicon FST
+  fst  itLM;                                                                    # The grammar FST
+  fst  itRN;                                                                    # The recognition network
+  fst  itAux;                                                                   # Auxiliary FST
+  data idFsg;                                                                   # The grammar rule set
+  data idFsg2;                                                                  # The common grammar rule set
+  var  s; 
+
+  "\n   - Loading grammar from \"$[.sFsgFile]\" [$[sFilter]] ..."        -MSG2; # Protocol
+  sFile sFilter idFsg -FSG_load                                                 # Load grammar rules
+  not if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."        -MSG; # Check for errors
+  sFilter "GRM:" != if                                                          # Not loading the common grammar >>
+    "\n   - Loading common grammar from \"$[.sFsgFile]\" [GRM:] ..."     -MSG2; #   Protocol
+    sFile "GRM:" idFsg2 -FSG_load                                               #   Load grammar rules
+    not if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2;                #   Check for errors
+    idFsg2.dim idFsg.dim > if                                                   #   Concatenate rule sets
+      idFsg idFsg2 -cat; idFsg2 idFsg -copy;                                    #   ...
+    else                                                                        #   ...
+      idFsg2 idFsg -cat;                                                        #   ...
+    end                                                               "." -MSG; #   ...
+  end                                                                           # <<
+
+  "\n   - Compiling grammar ."                                           -MSG2; # Protocol
+  1 .__UTL_nElevel =;                                                           # Switch unused rules warnings off
+  idFsg iSI.itLX.os NULL itLM -FSG_compile;                          "." -MSG2; # Compile grammar (string -> FST)
+  #itLM -1 itLM /lazy -minimize;                                                # Lazily minimize
+  #itLM.sd ( "~NAM" itLM.sd -find_comp ) 1 itLM.sd -delete;                      # Remove state names
+  .bExpOfst if                                                                  # Export openFST? Yes >>
+    "$[.sDirOut]/" ( sFilter "#:#.txt" "replace" -VAR_strop ) + s =;            #   Make file name
+    "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
+    s "fsm-t" itLM stdfile /noerror -export                                     #   Export openFST
+    ?error if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."   -MSG; #   Check for errors
+  end                                                                           # <<
+  .bRender if                                                                   # Rendering grammar? Yes >>
+    "$[.sDirOut]/" ( sFilter "#:#.svg" "replace" -VAR_strop ) + s =;            #   Make file name
+    "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
+    s itLM.is itLM.os -1 itLM -FST_render;                           "." -MSG2; #   Protocol
+  end                                                                           # <<
+  iSI.itLX itLX -LX_close;                                                      # Kleene-closure of lexicon FST
+  0 0 0 itLX -addtrans { -1 -1 0 };                                             # Prepare lexicon for composition
+  0 itLM /noerror -loops { -1 -1 0 };                                "." -MSG2; # Prepare grammar for composition
+  itLX itLM 0 0 itAux /noeps /noint -compose;                        "." -MSG2; # Compose: lex o grm
+  " done" -MSG2 "."                                                       -MSG; # Protocol
+
+  "\n   - Compiling recognition network "                                -MSG2; # Protocol
+  iSI.itRNr itAM -copy;                                                         # Get phoneme loop
+  0 0 0 itAM -addtrans { -1 -1 0 };                                             # Prepare HMAs for composition
+  0 itAux /noerror -loops { -1 -1 0 };                               "." -MSG2; # Prepare (lex o grm) for composition
+  itAM itAux 0 0 itRN /noeps /noint -compose;                        "." -MSG2; # Compose: hma o (lex o grm)
+  itRN 0 itRN /lazy -minimize;                                       "." -MSG2; # Minimize result ->recognition network
+  "~STK" itRN.td -find_comp 0 < if                                              # No stack token component >>
+    "~STK" ( 2 itRN.td -get_comp_type ) itRN.td -addcomp;                       #   Add comp. (of input symbol type)
+  end                                                                           # <<
+  :itRN.td["~TOS"]=itRN.td["~TOS"]+((itRN.td["~TOS"].>=0)*iSI.itRN.os.nrec);    # Adjust non-epsilon output symbols
+  itRN.os iSI.itRN.os -cat;                                                     # Append output symbol table
+  itRN iSI.itRN -cat;                                                           # Append to recognition network
+  " done (${itRN.sd.nrec} states, ${itRN.td.nrec} transitions)" -MSG2 "." -MSG; # Protocol
+}
+
+## Pack the feature info file
+function -PACK_feainfo()
+{
+  object iFI;                                                                   # The feature info object
+  var    sOutFile; "$[.sDirOut]/feainfo.object" sOutFile =;                     # Get default output file name
+  ( "out.feainfo" sOutFile "S" -CFG_get_ex )    sOutFile =;                     # Get configured output file name
+  "\n   Packing feature info file ."                                      -MSG; # Protocol
+  "\n   - Reading \"$[.sFiFile]\" ..."                                   -MSG2; # Protocol
+  .sFiFile iFI /noerror -restore                                                # Read feature info file
+  ?error if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."     -MSG; # Check for errors
+  "\n   - Writing \"$[sOutFile]\" ..."                                   -MSG2; # Protocol
+  .__CFG_bNwr not if                                                            # Not write-protected >>
+    sOutFile iFI /noerror /zip -save                                            #   Save feature info file
+    ?error if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."   -MSG; #   Check for errors
+  else                                                                          # << Write protected >>
+    " SKIPPED (write protection on!)" -COLOR_yellow                      -MSG2; #   Protocol
+  end "\n  " -MSG2; " ok" -MSG;                                                 # <<
+  1 return;                                                                     # All right
+}
+
+## Pack the acoustic model file
+function -PACK_gmm()
+{
+  hmm  itHMM;                                                                   # The HMM
+  gmm  itGm;
+  data idM;
+  data idC;
+  vmap iVM;
+  var  sOutFile; "$[.sDirOut]/$[.sAm].gmm" sOutFile =;                          # Get default output file name
+  ( "out.gmm" sOutFile "S" -CFG_get_ex )   sOutFile =;                          # Get configured output file name
+
+  "\n   Packing Gaussian mixture model file ."                            -MSG; # Protocol
+  "\n   - Reading \"$[.sAmFile]\" ..."                                   -MSG2; # Protocol
+  .sAmFile itHMM /noerror -restore                                              # Read acoustic model file
+  ?error if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."     -MSG; # Check for errors
+
+  "\n   - Extracting Gaussian mixture models ..."                        -MSG2;
+  itHMM -gmm_mix;
+  itHMM.os -is_empty if :itHMM.ud["~NAM"]: itHMM.os = end;
+  idM idC itHMM.gm -extract;
+  itHMM.gm.mmap.tmx "lsadd" "add" INF iVM /float -setup;
+  idM idC iVM itGm /float /icov -setup;
+  " done" -MSG2 "."                                                       -MSG;
+
+  "\n   - Writing \"$[sOutFile]\" ..."                                   -MSG2; # Protocol
+  .__CFG_bNwr not if                                                            # Not write-protected >>
+    sOutFile itGm /noerror /zip -save                                           #   Save GMM file
+    ?error if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."   -MSG; #   Check for errors
+  else                                                                          # << Write protected >>
+    " SKIPPED (write protection on!)" -COLOR_yellow                      -MSG2; #   Protocol
+  end "\n  " -MSG2; " ok" -MSG;                                                 # <<
+  1 return;                                                                     # All right
+}
+
+## Pack the acoustic model file. [CURRENTLY NOT USED]
+function -PACK_hmm()
+{
+  hmm itHMM;                                                                    # The HMM
+  var sOutFile; "$[.sDirOut]/$[.sAm].hmm" sOutFile =;                           # Get default output file name
+  ( "out.hmm" sOutFile "S" -CFG_get_ex )  sOutFile =;                           # Get configured output file name
+  "\n   Packing acoustic model file ."                                    -MSG; # Protocol
+  "\n   - Reading \"$[.sAmFile]\" ..."                                   -MSG2; # Protocol
+  .sAmFile itHMM /noerror -restore                                              # Read acoustic model file
+  ?error if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."     -MSG; # Check for errors
+  "\n   - Writing \"$[sOutFile]\" ..."                                   -MSG2; # Protocol
+  .__CFG_bNwr not if                                                            # Not write-protected >>
+    sOutFile itHMM /noerror /zip -save                                          #   Save acoustic model file
+    ?error if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."   -MSG; #   Check for errors
+  else                                                                          # << Write protected >>
+    " SKIPPED (write protection on!)" -COLOR_yellow                      -MSG2; #   Protocol
+  end "\n  " -MSG2; " ok" -MSG;                                                 # <<
+  1 return;                                                                     # All right
+}
+
+## Pack the session info file
+function -PACK_sesinfo()
+{
+  "\n   Packing session info file ."                                      -MSG; # Protocol
+  ( .sFsgFile not ) ( .sCmd "rec" == ) && if                                    # No grammar file specified >>
+    " SKIPPED (no grammar file specified through key <uasr.lm.fsg>!)"           #   |
+    -COLOR_yellow                                                         -MSG; #   Protocol
+    1 return;                                                                   #   No service!
+  end                                                                           # <<
+  ( .sDlgFile not ) ( .sCmd "dlg" == ) && if                                    # No dialog file specified >>
+    " SKIPPED (no dialog file specified through key <uasr.dlg.fsg>!)"           #   |
+    -COLOR_yellow                                                         -MSG; #   Protocol
+    1 return;                                                                   #   No service!
+  end                                                                           # <<
+
+  object iSI;                                                                   # The session info file
+  fst    iSI.itLX;                                                              # - The lexicon FST
+  fst    iSI.itRN;                                                              # - The recognition network
+  fst    iSI.itRNr;                                                             # - The reference reognition network
+  fst    iSI.itGP;                                                              # - The labelling transducer
+  data   iSI.idLMtos;                                                           # - The grammar's output symbols 
+  hmm    itHMM;                                                                 # The HMAs
+  data   idLX;                                                                  # The lexicon entries
+  fst    itDlg;                                                                 # The dialog FST
+  fst    itAM;                                                                  # The preprocessed HMAs
+  var    nRet;    1 nRet =;                                                     # The return value
+  var    sSiFile; "$[.sDirOut]/sesinfo.object" sSiFile  =;                      # Get default output file name
+  ( "out.sesinfo" sSiFile "S" -CFG_get_ex )    sSiFile  =;                      # Get configured output file name
+  var    sDlgFile; "$[.sDirOut]/dialog.fst"    sDlgFile =;                      # Get default dialog file name
+  ( "out.dialog" sDlgFile "S" -CFG_get_ex )    sDlgFile =;                      # Get configured dialog file name
+
+  "\n   - Reading \"$[.sAmFile]\" ..."                                   -MSG2; # Protocol
+  .sAmFile itHMM /noerror -restore                                              # Load HMMs
+  ?error if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."     -MSG; # Check for errors
+  "dlg" .sCmd == if                                                             # Dialog mode >>
+    .sDlgFile .sFsgFile =;                                                      #   Use dialog file
+    "\n   - Loading dialog from \"$[.sFsgFile]\" [DLG:] ..."             -MSG2; #   Protocol
+    .sFsgFile "DLG:" itDlg -FSG_load_dialog                                     #   Load grammar rules
+    not if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."      -MSG; #   Check for errors
+  end                                                                           # <<
+  "\n   - Loading lexicon from \"$[.sFsgFile]\" [LEX:] ..."              -MSG2; # Protocol
+  .sFsgFile "LEX:" idLX  -LX_load                                               # Load lexicon entries
+  not if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."        -MSG; # Check for errors
+
+  "\n   - Preparing HMMs "                                               -MSG2; # Protocol
+  itHMM -gmm_mix;                                                    "." -MSG2; # Mix Gaussians
+  itHMM.os -is_empty if :itHMM.ud["~NAM"]: itHMM.os = end;                      # Check/create HMM name table
+  itHMM /index itAM -union; itAM 0 itAM -close;                      "." -MSG2; # Sum and close HMAs
+  itAM.td ( "~RC" itAM.td -find_comp ) 1 itAM.td -delete;                       # Remove reference counter component
+  itAM iSI.itRNr =;                                                             # Copy closes HMAs
+  ". done" -MSG2 "."                                                      -MSG; # Protocol
+
+  "\n   - Preparing lexicon ..."                                         -MSG2; # Protocol
+  "<PAU>" itHMM.os idLX -LX_ladd_pause;                                         # Add pause word (as string)
+  itHMM.os idLX iSI.itLX -LX_compile;                                           # Compile lexicon (string -> FST)
+  "<OOV>" iSI.itLX.is.nrec iSI.itLX -LX_add_filler;                             # Add filler word (as FST)
+  " done" -MSG2 "."                                                       -MSG; # Protocol
+
+  .sCmd "dlg" == if                                                             # Dialog mode >>
+    var nS;                                                                     #   The dialog state index
+    var nC; ( "~NAM" itDlg.sd -find_comp ) nC =;                                #   The state name component index
+    0 nS =; nS itDlg.sd.nrec < while                                            #   Loop over dialog states >>
+      .sFsgFile "GRM.${itDlg.sd[nS,nC]}:" iSI -RN_add_unit;                     #     Add recognition network
+      nS ++=;                                                                   #     Next dialog state
+    end                                                                         #   <<
+  else                                                                          # << Simple grammar mode >>
+    .sFsgFile "GRM:" iSI -RN_add_unit;                                          #   Add recognition network
+  end                                                                           # <<
+
+  "\n   - Compiling labelling transducer ..."                            -MSG2; # Protocol
+  itHMM iSI.itGP -LAB_get_fst;                                                  # Create labelling transducer
+  " done" -MSG2 "."                                                       -MSG; # Procotol
+
+  iSI.itRN.os iSI.idLMtos =;                                                    # Copy grammar output symbols
+
+  ## Write output files
+  "\n   - Writing \"$[sSiFile]\" ..."                                    -MSG2; # Protocol
+  .__CFG_bNwr not if                                                            # Not write-protected >>
+    sSiFile iSI /zip -save                                                      #   Save session info file
+    ?error if " FAILED" -COLOR_red -MSG; 0 nRet =; end " ok" -MSG2; "."   -MSG; #   Check for errors
+  else                                                                          # << Write protected >>
+    " SKIPPED (write protection on!)" -COLOR_yellow                      -MSG2; #   Protocol
+  end                                                                           # <<
+  
+  .sCmd "dlg" == if                                                             # Dialog mode >>
+    "\n   - Writing \"$[sDlgFile]\" ..."                                 -MSG2; #   Protocol
+    .__CFG_bNwr not if                                                          #   Not write-protected >>
+      sDlgFile itDlg /zip -save                                                 #     Save session info file
+      ?error if " FAILED" -COLOR_red -MSG; 0 nRet =; end " ok" -MSG2; "." -MSG; #     Check for errors
+    else                                                                        #   << Write protected >>
+      " SKIPPED (write protection on!)" -COLOR_yellow                    -MSG2; #     Protocol
+    end                                                                         #   <<
+  end                                                                           # <<
+
+  "\n  " -MSG2; " ok"                                                     -MSG; # Protocol
+  nRet return;                                                                  # All right
+}
+
+## Pack the VAD info file
+function -PACK_vadinfo()
+{
+  "IMPLEMENTATION INCOMPLETE!" -ERROR;                                          # !!! NOT USABLE
+  0 return;                                                                     # !!!
+
+  object iFI;
+  hmm    itHMM;
+  gmm    iGm;
+  object iVAD;
+  data   iVAD.idX;
+  data   iVAD.idW;
+  gmm    iVAD.itGm;
+  var    sOutFile;  "$[.sDirOut]/$[.sAm].vad" sOutFile =;                       # Get default output file name
+  ( "out.vad" sOutFile "S" -CFG_get_ex )      sOutFile =;                       # Get configured output file name
+  "\n   Packing voice activity detection info file ."                     -MSG; # Protocol
+  "\n   - Reading \"$[.sFiFile]\" ..."                                   -MSG2; # Protocol
+  .sFiFile iFI /noerror -restore                                                # Read feature info file
+  ?error if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."     -MSG; # Check for errors
+  "\n   - Reading \"$[.sAmFile]\" ..."                                   -MSG2; # Protocol
+  .sAmFile itHMM /noerror -restore                                              # Read acoustic model file
+  ?error if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."     -MSG; # Check for errors
+
+  "\n   - Compiling VAD info ."                                          -MSG2;
+  itHMM -gmm_mix;                                                    "." -MSG2;
+  iFI.idX  iVAD.idX  =;
+  iFI.idW  iVAD.idW  =;
+  itHMM.gm iVAD.itGm =;                                              "." -MSG2;
+  " done" -MSG2 "."                                                       -MSG;
+
+  "\n   - Writing \"$[sOutFile]\" ..."                                   -MSG2; # Protocol
+  .__CFG_bNwr not if                                                            # Not write-protected >>
+    sOutFile iVAD /zip -save                                                    #   Save VAD info file
+    ?error if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."   -MSG; #   Check for errors
+  else                                                                          # << Write protected >>
+    " SKIPPED (write protection on!)" -COLOR_yellow                      -MSG2; #   Protocol
+  end "\n  " -MSG2; " ok" -MSG;                                                 # <<
+
+  1 return;                                                                     # All right
+}
+
+## == MAIN PROGRAM ==                                                           # =====================================
+
+-UASR_silence;                                                                  # Detect silent mode
+"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
+"\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
+"\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
+"\n// dLabPro VID     : " -version +                                      -MSG; # Protocol
+"\n// UASR VID        : " -UASR_version +                                 -MSG; # Protocol
+( "$1" "help" == ) -UASR_help || if "$2" -usage; 0 return; end                  # Print help
+"$1" var sCmd;                                                                  # Get command
+sCmd "dlg" ==                                                                   # | Pack dialog recognition data
+sCmd "rec" == ||                                                                # | Pack simple recognition data
+sCmd "vad" == ||                                                                # | Pack VAD data
+not ( $$ 2 < ) || if                                                            # Bad command or less than 2 args. >> 
+  $$ 2 < if "Too few arguments" else "unknown command '$1'"  end   -ERROR;      #   Error
+  "\nType '$__SFILE__.xtp help' for usage\n" -echo;                             #   Give a little help
+  1 return;                                                                     #   Terminate with error code
+end                                                                             # <<
+"\n// Configuration   : $2"                                               -MSG; # Protocol
+"$2" TRUE -CFG_init;                                                            # Configure session
+
+## Start up                                                                     # -------------------------------------
+"\n\n// RECOGNIZER DATA PACKAGING: "                                      -MSG; # Protocol
+sCmd "dlg" == if "RECOGNITION (DIALOG)"         -MSG; end                       # Protocol
+sCmd "rec" == if "RECOGNITION (SIMPLE GRAMMAR)" -MSG; end                       # Protocol
+sCmd "vad" == if "VOICE ACTIVITY DETECTION"     -MSG; end                       # Protocol
+.__CFG_bNwr if "\n   - Write protect : " "ON" -COLOR_yellow + -MSG; end         # Protocol
+var sDirMod;  ( "model" "S"       -CFG_get_path ) sDirMod  =;                   # Get UASR model directory
+var sFiFile;  "$[sDirMod]/feainfo.object"         sFiFile  =;                   # Feature info object file
+var sAm;      ( "am.model" "3_10" -CFG_get      ) sAm      =;                   # Get acoustic model ID
+var sAmFile   "$[sDirMod]/$[sAm].hmm"             sAmFile  =;                   # Acoustic model file
+var sFsgFile; ( "lm.fsg"  ""  "S"  -CFG_get_ex  ) sFsgFile =;                   # Grammar file
+var sDlgFile; ( "dlg.fsg" ""  "S"  -CFG_get_ex  ) sDlgFile =;                   # Dialog file
+var sDirOut;  ( "out"     "." "S"  -CFG_get_ex  ) sDirOut  =;                   # Output directory
+var bRender;  ( ( "render" "" "S"  -CFG_get_ex  ) "yes"     == ) bRender  =;    # FST rendering flag 
+var bExpOfst; ( ( "export" "" "S"  -CFG_get_ex  ) "openFST" == ) bExpOfst =;    # Export openFST flag 
+var sSkip;    ( "skip"    ""  "S"  -CFG_get_ex  ) sSkip    =;                   # Skip flags
+var bOk; TRUE bOk =;                                                            # OK flag
+( sFiFile  "Feature info"   TRUE  -FCHK ) bOk && bOk =;                         # Info on feature info file
+( sAmFile  "Acoustic model" TRUE  -FCHK ) bOk && bOk =;                         # Info on acoustic model file
+sCmd "dlg" == if                                                                # Command 'dlg' >>
+  ( sDlgFile "Dialog"       TRUE  -FCHK ) bOk && bOk =;                         #   Info on dialog file
+end                                                                             # <<
+sCmd "rec" == if                                                                # Command 'rec' >>
+  ( sFsgFile "Grammar"      FALSE -FCHK ) bOk && bOk =;                         #   Info on grammar file
+end                                                                             # <<
+bOk not if                                                                      # One or several files not found >>
+  "Input file(s) not found. Check protocol above." -ERROR;                      #   Error message
+  goto L_EXCEPTION;                                                             #   No go!
+end                                                                             # <<
+"\n   - Output folder : $[sDirOut]"                                       -MSG; # Protocol
+"\n   - SVG rendering : " ( bRender  if "yes" else "no" end ) +           -MSG; # Protocol
+"\n   - openFST export: " ( bExpOfst if "yes" else "no" end ) +           -MSG; # Protocol
+
+## Pack data                                                                    # -------------------------------------
+( sCmd "dlg" == ) ( sCmd "rec" == ) || if                                       # Commands 'dlg' and 'rec' >>
+  sSkip if                                                                      #   Skipping something >>
+    "\n   - Skip          :"                                              -MSG; #     Protocol
+    ( sSkip "F" "search" -VAR_strop ) 0 >= if " feainfo" -MSG; end              #     Protocol
+    ( sSkip "G" "search" -VAR_strop ) 0 >= if " GMM"     -MSG; end              #     Protocol
+    ( sSkip "S" "search" -VAR_strop ) 0 >= if " sesinfo" -MSG; end              #     Protocol
+  end                                                                           #   <<
+  "\n"                                                                    -MSG; #     Protocol
+  ( sSkip "F" "search" -VAR_strop ) 0 < if -PACK_feainfo; end                   #   Pack feature info file
+  ( sSkip "G" "search" -VAR_strop ) 0 < if -PACK_gmm;     end                   #   Pack Gaussian mixture model file
+  ( sSkip "S" "search" -VAR_strop ) 0 < if -PACK_sesinfo; end                   #   Pack ession info file
+  goto L_END;                                                                   #   --> End
+end                                                                             # <<
+sCmd "vad" == if                                                                # Command 'vad' >>
+  "\n\n"                                                                  -MSG; #   Protocol
+  -PACK_vadinfo;                                                                #   Pack VAD info file
+  goto L_END;                                                                   #   --> End
+end                                                                             # <<
+
+## Finish                                                                       # -------------------------------------
+label L_END;                                                                    # :END
+"\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors)."             -MSG; # Protocol
+.__CFG_bNwr if "Write protection on. No files written!" 1 -WARNING; end         # Write-protected-warning
+"\n\n"                                                                    -MSG; # Protocol
+0 return;                                                                       # Indicate success
+
+label L_EXCEPTION;                                                              # :EXCEPTION
+"\n\n// $__SFILE__.xtp FAILED (${.__UTL_nErrors} errors)."                -MSG; # Protocol
+"\n\n**  Try '$__SFILE__.xtp help $[sCmd]' or see manual! **\n\n"         -MSG; # Protocol
+1 return;                                                                       # Indicate failure
+
+## EOF

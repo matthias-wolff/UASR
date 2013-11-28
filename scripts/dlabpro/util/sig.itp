@@ -1,0 +1,473 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: Signals
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Obtains the signal and label(s) for one turn and sensor. The turn is defined by the current position of the file
+## list <code>iF</code>. The function is provided for conveniently iterating data sets.
+##
+## <h4>Example</h4>
+## <pre class="code">&nbsp;
+##  file iF;
+##  data idSig;
+##  ( "test" "" <a href="cfg.itp.html#clp_-CFG_get_flist" class="code">-CFG_get_flist</a> ) iF -set flist;
+##    <span class="c-key">label</span> L_F; iF -next <span class="c-key">if</span>
+##    iF NULL idSig -SIG_get;
+##    ...
+##    <span class="c-key">goto</span> L_F;
+##  <span class="c-key">end</span>
+## </pre> 
+##
+## <h4>Remarks</h4>
+## <ul>
+##   <li>First the function tries to load the signal file stored in <a href="cfg.itp.html#index:cfgk"
+##     class="code">&lt;uasr.dir.sig&gt;</a> by calling <a href="#clp_-SIG_import" class="code">-SIG_import</a>. If
+##     no such file exists the function will return <code>FALSE</code></li>
+##   <li>Then it tries to obtain labels for the signal data.<ul>
+##     <li>If the file list contains labels (i.e. if <code>iF.recfile.dim</code> contains more than one component),
+##       the function uses the one label stored in component 1 (zero-based!) of <code>iF.recfile.dim</code> for the
+##       entire signal.</li>
+##     <li>If the file list does not contain labels (i.e. if <code>iF.recfile.dim</code> contains exactly one
+##       component), the function calls <a href="lab.itp.html#clp_-LAB_import" class="code">-LAB_import</a> in order
+##       to obtain a label sequence for the signal from a label file.</li>
+##     </ul></li>
+##    <li>If labels were obtained either way, the function maps those by calling <a href="lab.itp.html#clp_-LAB_map"
+##       class="code">-LAB_map</a> and, finally, appends them as last component to <code>idSig</code> by calling
+##       <a href="#clp_-SIG_label" class="code">-SIG_label</a>.</li>
+## </ul>
+##
+## @cgen:index
+## @param iF file
+##          File list instance
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings 
+##          (typical case for speech recognition)
+## @param idSig data
+##          Will be filled with the signal
+## @return <code>TRUE</code> if successful, <code>FALSE</code> otherwise.
+## @global .__sDirLab            CRW
+## @global .__sDirSig            CRW
+## @global &lt;uasr.dir.lab.&gt; R
+## @global &lt;uasr.dir.sig.&gt; R
+function -SIG_get(iF,sSns,idSig)
+{
+  ## Check/create session persistent variables                                  # -------------------------------------
+  ".__sDirSig" "var" ?instance not if                                           # Is there a global __sDirSig? No >>
+    var .__sDirSig;                                                             #   Create one
+    ( "sig" "S" -CFG_get_path ) .__sDirSig -sset;                               #   Silently get signal files path
+  end                                                                           # <<
+  ".__sDirLab" "var" ?instance not if                                           # Is there a global __sDirLab? No >>
+    var .__sDirLab;                                                             #   Create one
+    ( "lab" "S" -CFG_get_path ) .__sDirLab -sset;                               #   Silently get label files path
+  end                                                                           # <<
+
+  ## Local variables                                                            # -------------------------------------
+  data idLab;                                                                   # Label(s)
+  var  sF;                                                                      # Naked file name
+
+  ## Initialize                                                                 # -------------------------------------
+  idSig -reset;                                                                 # Clear destination object
+  ( sSns -SNS_get_ext ) sSns =;                                                 # Make extension out of sensor name
+  "$[iF.sfile]$[sSns]" sF =;                                                    # Make naked signal file name
+  
+  ## Try loading signal file                                                    # -------------------------------------
+  "\n     - loading: $[.__sDirSig]/$[sF].* ..."                        3 -MSGX; # Protocol
+  .__sDirSig sF idSig -SIG_import;                                              # Import signal file
+  idSig -is_empty if                                                            # Signal empty >>
+    " FAILED (or empty)\n     "                                        3 -MSGX; #   Protocol
+    FALSE return;                                                               #   Return "not ok"
+  else                                                                          # << Signal ok >>
+    " ok"                                                              3 -MSGX; #   Protocol
+  end                                                                           # <<
+
+  ## Obtain labels                                                              # -------------------------------------
+  "\n     - labeling: "                                                3 -MSGX; # Protocol
+  iF.recfile.dim 1 > if                                                         # If labels are in file list >>
+    "from file list \"${iF.recfile[0,1]}\" ."                          3 -MSGX; # Protocol
+    1 1 iF.recfile -xfetch idLab =;                                             #   Label with label from file list
+  else                                                                          # << else >>
+    "from file $[.__sDirLab]/$[sF].* ."                                3 -MSGX; #   Protocol
+    .__sDirLab sF idLab -LAB_import;                                            #   Load label data
+  end                                                                "." -MSG2; # <<
+  idLab idLab -LAB_map;                                              "." -MSG2; # Map labels
+  idLab TRUE idSig -SIG_label;                                       "." -MSG2; # Label signal
+  idLab -is_empty if " NO LABELS\n     " else " ok\n     " end         3 -MSGX; # Protocol
+
+  ## Preprocessing signal file                                                  # -------------------------------------
+  "\n     - preprocessing: $[.__sDirSig]/$[sF].* ..."                  3 -MSGX; # Protocol
+  idSig -SIG_preproc;                                                           # Preprocessing signal file
+  idSig -is_empty if                                                            # Signal empty >>
+    " FAILED (or empty)\n     "                                        3 -MSGX; #   Protocol
+    FALSE return;                                                               #   Return "not ok"
+  else                                                                          # << Preprocessing alleged ok >>
+    " ok"                                                              3 -MSGX; #   Protocol
+  end                                                                           # <<
+
+  ## All done                                                                   # -------------------------------------
+  TRUE return;                                                                  # Return "ok"
+}
+
+## Abstract function to import one signal file. The function must be
+## overwritten depending on the database.
+## <h4>Example</h4>
+## <pre class="code">&nbsp;
+##  /disarm <a href="#clp_-SIG_import_wav"><code class="link">-SIG_import_wav</code></a> /disarm -SIG_import =;
+## </pre>
+##
+## @cgen:index
+## @param sDir string
+##          Path to signal files
+## @param sTid string
+##          Data base dependent signal file identifier
+## @param idSig data
+##          Data instance to be filled with signal
+function -SIG_import(sDir,sTid,idSig)
+{
+  idSig -reset;                                                                 # Clear destination instance
+  "Abstract function -SIG_import not configured." -ERROR;                       # Error message
+}
+
+## Import MS-wave signal file. This function may overwrite <a
+## href="#clp_-SIG_import"><code class="link">-SIG_import</code></a>:
+## <pre class="code">&nbsp;
+##  /disarm -SIG_import_wav /disarm <a href="#clp_-SIG_import"><code class="link">-SIG_import</code></a> =;
+## </pre>
+## <h4>Remarks</h4>
+## <ul>
+##   <li>The amplitude quantization resultion must be specified through the <a
+##       href="cfg.itp.html#index:cfgk" class="code">sig.aquant</a> (default is 16 bits).</li>
+##   <li>On verbose level 3 and higher (global variable <a href="uasr.itp.html" class="code">.__UTL_nVlevel</a>) the
+##       function displays a message including the sampling frequency and signal peak amplitude.</li>
+## </ul>
+##
+## @cgen:index
+## @param sDir string
+##          Path to signal files
+## @param sTid string
+##          Data base dependent signal file identifier
+## @param idSig data
+##          Data instance to be filled with signal
+## @global &lt;sig.aquant&gt;
+## @global .__UTL_nVlevel
+function -SIG_import_wav(sDir,sTid,idSig)
+{
+  var nAquant; "sig.aquant" 16 -CFG_get nAquant =;                              # Get quantization resolution
+  var nSrate;  "sig.srate"   0 -CFG_get nSrate  =;                              # Get sampling rate
+
+  idSig -reset;                                                                 # Reset destination instance
+  "${sDir}/${sTid}.wav" "wav" idSig stdfile -import;                            # Import wav file
+## FIX: Do not forcibly change sample rate, care for mismatch later! -->
+#  nSrate if ( 1000 nSrate / ) idSig -set rinc; end                              # Correct sampling rate if configured
+## <--
+  idSig :2^(nAquant-1): scale idSig =;                                          # Convert amplitude to -1<=s(k)<=1
+  .__UTL_nVlevel 3 >= if                                                        # On verbose level 3 >>
+    data idAux;                                                                 #   Auxilary data instance
+    idSig abs NULL 0 "max" idAux /rec -aggregate;                               #   Get signal peak
+    " (*.wav, ${ent(100/idSig.rinc)/100} kHz"                          3 -MSGX; #   Protocol
+    ", ${ent(10*idSig.nrec*idSig.rinc)/10} ms"                         3 -MSGX; #   Protocol
+    ", ${ent(200*log(idAux[0,0]))/10} dB)"                             3 -MSGX; #   Protocol
+  end                                                                           # <<
+}
+
+## Export MS-wave signal file. This function may overwrite <a
+## href="#clp_-SIG_export"><code class="link">-SIG_export</code></a>:
+## <pre class="code">&nbsp;
+##  /disarm -SIG_export_wav /disarm <a href="#clp_-SIG_export"><code class="link">-SIG_export</code></a> =;
+## </pre>
+## <h4>Remarks</h4>
+## <ul>
+##   <li>On verbose level 3 and higher (global variable
+##     <code>.__UTL_nVlevel</code>) the function displays a message including
+##     the sampling frequency and signal peak amplitude.</li>
+## </ul>
+##
+## @cgen:index
+## @param sDir string
+##          Path to signal files
+## @param sTid string
+##          Data base dependent signal file identifier
+## @param idSig data
+##          Data instance to be containing the signal
+function -SIG_export_wav(sDir,sTid,idSig)
+{
+  idSig.nScale ?error if
+    var nAquant; "sig.aquant" 16 -CFG_get nAquant -vset;                        # Get quantization resolution
+    idSig :2^(nAquant-1): * idSig =;                                            # Scale up
+    idSig -type short idSig -tconvert;                                          # Convert to shorts
+  else
+    idSig descale idSig =;                                                      # Descale to former scale value and convert to former type
+  end
+  .__UTL_nVlevel 3 >= if                                                        # On verbose level 3 >>
+    data idAux;                                                                 #   Auxilary data instance
+    idSig abs NULL 0 "max" idAux /rec -aggregate;                               #   Get signal peak
+    " done (${ent(100/idSig.rinc)/100} kHz"                               -MSG; #   Protocol
+    ", ${ent(200*log(idAux[0,0]))/10} dB)\n     "                         -MSG; #   Protocol
+  end                                                                           # <<
+  "\n     - Saving ${sDir}/${sTid}.wav ..."                            3 -MSGX; # Protocol
+  "${sDir}/${sTid}.wav" "wav" idSig stdfile -export;                            # Export wav file
+}
+
+## Import raw signal file. This function may overwrite <a
+## href="../util/sig.itp.html#clp_-SIG_import"><code class="link">-SIG_import</code></a>:
+## <pre class="code">&nbsp;
+##    /disarm -SIG_import_raw /disarm <a href="../util/sig.itp.html#clp_-SIG_import" class="code">-SIG_import</a> =;
+##
+## </pre>
+## <h4>Remarks</h4>
+## <ul>
+##   <li>The following data must be provided through <a href="../util/cfg.itp.html#index:cfgk">configuration keys</a>:
+##       <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+##         <tr>
+##           <th>Information</th>
+##           <th>Configuration Key</th>
+##           <th>Default</th>
+##         </tr>
+##         <tr>
+##           <td>Byte order</td>
+##           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.byteorder</a></td>
+##           <td>"" (meaning: "do not change")</td>
+##         </tr>
+##         <tr>
+##           <td>Raw header size [bytes]</td>
+##           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.header</a></td>
+##           <td>0</td>
+##         </tr>
+##         <tr>
+##           <td>Number of samples to import</td>
+##           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.nrec</a></td>
+##           <td>-1 (meaning "all")</td>
+##         </tr>
+##         <tr>
+##           <td>Sample data type</td>
+##           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.dtype</a></td>
+##           <td>n/a</td>
+##         </tr>
+##         <tr>
+##           <td>Amplitude quantization resultion [bit]</td>
+##           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">sig.aquant</a></td>
+##           <td>n/a</td>
+##         </tr>
+##         <tr>
+##           <td>Sampling rate [Hz]</td>
+##           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">sig.srate</a></td>
+##           <td>n/a</td>
+##         </tr>
+##         <tr>
+##           <td>Gain factor</td>
+##           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">sig.gain</a></td>
+##           <td>1.0</td>
+##         </tr>
+##       </table></li>
+##   <li>The default file name extension is ".raw". Another one may be specified through the <a
+##       href="../util/cfg.itp.html#index:cfgk">configuration key <code>sig.ext</code></a></li>
+##   <li>On verbose level 3 and higher (global variable <a href="uasr.itp.html" class="code">.__UTL_nVlevel</a>) the
+##       function displays a message including the sampling frequency and signal peak amplitude.</li>
+## </ul>
+##
+## @cgen:index
+## @param sDir string
+##          Path to signal files
+## @param sTid string
+##          Data base dependent signal file identifier
+## @param idSig data
+##          Data instance to be filled with signal
+## @global &lt;import.raw.byteorder&gt; R
+## @global &lt;import.raw.header&gt;    R
+## @global &lt;import.raw.dtype&gt;     R
+## @global &lt;import.raw.nrec&gt;      R
+## @global &lt;sig.aquant&gt;           R
+## @global &lt;sig.ext&gt;              R
+## @global &lt;sig.gain&gt;             R
+## @global &lt;sig.srate&gt;            R
+## @global .__UTL_nVlevel               R
+function -SIG_import_raw(sDir,sTid,idSig)
+{
+  file iF;                                                                      # File import filter
+  var  nAquant;    "sig.aquant"           16         -CFG_get    nAquant    =;  # Get quantization resolution
+  var  nSrate;     "sig.srate"            250000     -CFG_get    nSrate     =;  # Get sampling rate
+  var  nGain;      "sig.gain"             1.0    "S" -CFG_get_ex nGain      =;  # Silently get signal gain
+  var  sExt;       "sig.ext"              "raw"      -CFG_get    sExt       =;  # Get file extension
+  var  sByteorder; "import.raw.byteorder" ""     "S" -CFG_get_ex sByteorder =;  # Silently get signal byte order
+  var  sStype;     "import.raw.dtype"     "short"    -CFG_get    sStype     =;  # Get sample data type
+  var  nNrec;      "import.raw.nrec"      -1     "S" -CFG_get_ex nNrec      =;  # Silently get number of records
+
+  "\n     - Loading ${sDir}/${sTid}.${sExt} ..."                       3 -MSGX; # Protocol
+  idSig -reset; "sig" -type $[sStype] idSig -addcomp;                           # Prepare destination instance
+  sByteorder "" == not if "/$[sByteorder]" sByteorder =; end                    # Make an option out of sByteorder
+  "import.raw.header" 0 "S" -CFG_get_ex iF -set raw_head;                       # Silently get header size
+  "${sDir}/${sTid}.${sExt}" "raw" idSig iF $[sByteorder] -import;               # Import raw data
+  idSig 0 nNrec idSig /rec -select;                                             # Trim raw data
+  idSig -type double idSig -tconvert;                                           # Convert to double (UASR standard!)
+  :idSig = scale(idSig,(2^(nAquant-1))/nGain);                                  # Normalize amplitude (UASR standard!)
+  :1000/nSrate: idSig -set rinc;                                                # Set sampling rate
+  .__UTL_nVlevel 3 >= if                                                        # On verbose level 3 >>
+    data idAux;                                                                 #   Auxilary data instance
+    idSig abs NULL 0 "max" idAux /rec -aggregate;                               #   Get signal peak
+    " done (${ent(100/idSig.rinc)/100} kHz"                               -MSG; #   Protocol
+    ", ${ent(200*log(idAux[0,0]))/10} dB)\n     "                         -MSG; #   Protocol
+  end                                                                           # <<
+}
+
+## Applies preprocessing to input signal.
+## <h4>Remarks</h4>
+## <ul>
+##   <li>If successful, the function overrides the input signal instance by
+##     desired preprocessing given by configuration key <code>uasr.spp</code>.
+##     See documentation of configuration key <code>uasr.ssp</code> for accptable
+##     values.</li>
+##   <li>If more than one preprocessing algorithm is given by komma separated strings
+##     of configuration key <code>uasr.spp</code>, they are applied according to the
+##     order defined in <code>uasr.spp</code>.
+##   <li>Applications <em>do not</em> need to call this function. It is
+##     automatically called by the <code>-SIG_get</code> function between
+##     <code>-SIG_import</code> and <code>-LAB_import</code>.</li>
+## </ul>
+## @cgen:index
+## @param idSig data
+##          Data instance of input signal to be overwritten with preprocessed signal
+function -SIG_preproc(idSig)
+{
+  var i;
+  { "" } data idType =;
+  "spp" "none" -CFG_get 0 0 idType -store;
+  idType "," "splitall" idType -strop;
+  0 i =;label L; i idType.dim < if
+    "${idType[0,i]}."                                                  3 -MSGX; # Protocol
+    "${idType[0,i]}" "none" == not if idSig -SPP_${idType[0,i]}; end
+    i ++=;goto L;
+  end
+}
+
+## Exports a signal data instance as MS-wave file and an ESPS label file. The
+## exported files may be viewed with WaveSurfer (transcription configuration).
+##
+## @cgen:index
+## @param sDir string
+##          Path to export file to
+## @param sTid string
+##          File name, may include a relative path, should <em>not</em>
+##          include a file extension
+## @param idSig data
+##          Signal data instance to be exported
+function -SIG_export(sDir,sTid,idSig)
+{
+  data idAux;                                                                   # Copy of signal
+  :idAux = descale(idSig);                                                      # Convert amplitude
+  "${sDir}/${sTid}.wav" "wav" idAux stdfile -export;                            # Export wav file
+  idSig.dim 1 > if                                                              # Has labels >>
+    "${sDir}/${sTid}.lab" "esps_lab" idSig stdfile -export;                     #   Export ESPS label file
+  end                                                                           # <<
+}
+
+## Labels signal data with a label sequence.
+##
+## @cgen:index
+## @param idLab data
+##          Label sequence
+## @param bCmpr boolean
+##          <b><code>bCompr</code>=<code>TRUE</code>:</b><br>
+##          The label sequence in <code>idLab</code> is RLE compressed.
+##          <code>idLab</code> is expected to have the following component
+##          structure:<br>
+##          <table class="indent">
+##            <tr><th colspan="2">Component</th><th>Description</th></tr>
+##            <tr><th>No.</th><th>Type</th><th> </th></tr>
+##            <tr><td>0</td><td><code>string</code></td><td>Label name</td></tr>
+##            <tr><td>1</td><td><code>long</code></td><td>Label position (samples)</td></tr>
+##            <tr><td>2</td><td><code>long</code></td><td>Label length (samples)</td></tr>
+##          </table><br>
+##          <code>idLab</code> may also have only one string component and
+##          one record. In this case, the entire signal is labelled with the
+##          label <code>idLab[0,0]</code>.<br>
+##          <b><code>bCompr</code>=<code>FALSE</code>:</b><br>
+##          <code>idLab</code> will simply be joined to <code>idSig</code>.
+## @param idSig
+##          Signal data to be labelled
+## @return <code>1</code> if successful, a negative error code otherwise
+## @global .__bLabIdx            CRW
+## @global &lt;uasr.fea.labidx&gt; R
+function -SIG_label(idLab,bCmpr,idSig)
+{
+  data idLabD;                                                                  # Decompressed label sequence
+  data idAux;                                                                   # Auxilary data instance
+  var  nErr;   1 nErr =;                                                        # Error code
+
+  ## Check/create session persistent variables                                  # -------------------------------------
+  ".__bLabIdx" "var" ?instance not if                                           # Is there a global __bLabIdx? No >>
+    var .__bLabIdx;                                                             #   Create one
+    ( "fea.labidx" FALSE "S" -CFG_get_ex ) .__bLabIdx =;                        #   Silently get label index switch
+  end                                                                           # <<
+
+  ## Validate                                                                   # -------------------------------------
+  idSig.nrec 0 == if "[NO SIGNAL]" -MSG2; -1 return; end                        # Need signal
+  idLab.nrec 0 == if "[NO LABELS]" -MSG2; -1 return; end                        # Need labels
+
+  ## Decompress labels                                                          # -------------------------------------
+  bCmpr if                                                                      # Labels RLE compressed >>
+    .__bLabIdx if;                                                              #   Add index to labels >>
+      :idLab[0]: idLabD =;                                                      #     Copy label name
+      { { "[" 0 $[idLab.nrec] } } 0 1 2 idAux -expand; idAux idLabD -join;      #     Add "["
+      "~IDX" idLabD.dim idLabD -rindex;                                         #     Add label index
+      { { "]" 0 $[idLab.nrec] } } 0 1 2 idAux -expand; idAux idLabD -join;      #     Add "]"
+      idLabD "" "ccat" idLabD -strop;                                           #     Combine new label name
+      0 idLabD -LAB_shrink;                                                     #      
+      1 idLab.dim -- idLab -xfetch idLabD -join;                                #     Join other components
+    else                                                                        #   << else >>
+      idLab idLabD =;                                                           #     Copy label table
+    end                                                                         #   <<
+    idLab.dim 1 == if                                                           #   No RLE components present >>
+      idLabD 0 1 idLabD /rec -select; { { 0  ${idSig.nrec} } } idLabD -join;    #     Fake RLE for only one label
+      idLabD 0 1 2 idLabD -expand;                                              #     Expand label stream
+    else                                                                        #   << RLE components present >>
+      :idLab[0,1]==0: not if                                                    #     Labels don't start with signal >>
+        "Labels do not start at sample 0" -ERROR;                               #       Error
+        -1 nErr =;                                                              #       Remember error
+      end                                                                       #     <<
+      :idLabD[idLab.nrec-1,2]<=0: if                                            #     Last label has zero length >>
+        :idLabD[idLab.nrec-1,2]=idSig.nrec-idLabD[idLab.nrec-1,1];              #       Extend to end of signal
+      end                                                                       #     <<
+      idLabD 0 1 2 idLabD -expand;                                              #     RLE decompression of labels
+    end
+  else                                                                          # << Labes not compressed >>
+    idLab idLabD -copy;                                                         #   Copy
+  end                                                                           # <<
+
+  ## Clip signal or label stream (whichever is shorter)                         # -------------------------------------
+
+  idSig.nrec idLabD.nrec > if                                                   # Signal longer than label stream >>
+    "[S -${idSig.nrec-idLabD.nrec} samples"                              -MSG2; #   Protocol
+    " = ${ent((idSig.nrec-idLabD.nrec)*idSig.rinc)} ms]"                 -MSG2; #   Protocol
+    idLabD.nrec idSig -reallocate;                                              #   Clip signal
+  end                                                                           # <<
+  idSig.nrec idLabD.nrec < if                                                   # Label stream longer than signal >>
+    "[L -${idLabD.nrec-idSig.nrec} samples"                              -MSG2; #   Protocol
+    " = ${ent((idLabD.nrec-idSig.nrec)*idSig.rinc)} ms]"                 -MSG2; #   Protocol
+    idSig.nrec idLabD -reallocate;                                              #   Clip label stream
+  end                                                                           # <<
+  
+  ## Label signal                                                               # -------------------------------------
+  idLabD idSig -join;                                                           # Join labels to signal
+  nErr return;                                                                  # Return error code
+}
+
+## EOF

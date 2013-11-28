@@ -1,0 +1,3360 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<
+<    AUTHOR : n/a
+<    PACKAGE: manual
+<
+<    Copyright 2013 UASR contributors (see COPYRIGHT file)
+<    - Chair of System Theory and Speech Technology, TU Dresden
+<    - Chair of Communications Engineering, BTU Cottbus
+<
+<    This file is part of UASR.
+<
+<    UASR is free software: you can redistribute it and/or modify it under the
+<    terms of the GNU Lesser General Public License as published by the Free
+<    Software Foundation, either version 3 of the License, or (at your option)
+<    any later version.
+<
+<    UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+<    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+<    FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+<    more details.
+<
+<    You should have received a copy of the GNU Lesser General Public License
+<    along with UASR. If not, see [http://www.gnu.org/licenses/].
+-->
+<html>
+<head>
+  <meta http-equiv="Content-Type" content= "text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta name="description" content=   "UASR documentation - UASR script util/fea.itp">
+  <meta name="author" content="">
+  <meta name="generator" content="UASR_DOC">
+  <title>UASR script util/fea.itp</title>
+  <link rel=stylesheet type="text/css" href="../../default.css">
+</head>
+<script type="text/javascript" src="../../default.js"></script>
+<script type="text/javascript">__sRootPath="../../..";</script>
+<body>
+
+  <div id="clp_util/fea.itp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        UASR script <span class="mid">util/fea.itp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('','util/fea.itp','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden">General</td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><nobr><b>fea</b> </nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Author</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Matthias Wolff
+</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Synopsis</h3>
+    <p>Utility functions: Primary and secondary feature analysis and synthesis
+ </p>
+  <!--{{ CUSTOM_DOC -->
+  <h3>Description</h3>
+  <p>Computing feature vectors from a signal is a two stage process comprising
+  a primary and a secondary analysis (Fig. 1 shows an outline). Reconstructing
+  the signal from the features is, in principle, the inverse operation. However,
+  as the analysis may reduce the feature dimensionality, additional information
+  may be required for signal (re)synthesis.</p>
+  <p class="figure"><nobr>
+    <object data="../../resources/figures/FeaAnalysis.svg" type="image/svg+xml" width="406" height="539">
+      <param name="src" value="../../resources/figures/FeaAnalysis.svg">
+      <img src="../../resources/figures/FeaAnalysis.png" alt="Figure 1: Overview of UASR's feature analysis" width="406" height="539">
+    </object>&nbsp;<a href="../../resources/figures/FeaAnalysis.svg" target="_blank"><img src="../../resources/zoom.gif" width="17"
+    height="17" border="0" alt="Enlarge image"></a></nobr></p>
+   <p class="figure">Figure 1: Overview of UASR's feature analysis</p>
+  
+  <a name="index:sfa" title="Feature analysis/synthesis | primary"></a>
+  <h4>Primary Feature Analysis and Synthesis</h4>
+  <p>UASR uses short-term signal transforms and their inverses for primary
+  feature analysis and synthesis. See documentation of configuration key
+  <a href="cfg.itp.html#cfgk-pfa"><code class="link">&lt;uasr.pfa&gt;</code></a>
+  for a list of available short-term transforms. Analysis and synthesis are
+  implemented by the functions <a href="#clp_-FEA_pfa">-FEA_pfa</a> and
+  <a href="#clp_-FEA_ipfa">-FEA_ipfa</a> respectively.</p>
+
+  <a name="index:sfa" title="Feature analysis/synthesis | secondary"></a>
+  <h4>Secondary Feature Analysis and Synthesis</h4>
+  <p>The secondary feature analysis performs some or all of the following
+  functions:</p>
+  <ul>
+    <li>vector standardization</li>
+    <li>computation of delta, delta-delta, and context features</li>
+    <li>FIR filtering</li>
+    <li>linear transforms and dimension reduction</li>
+  </ul>
+  <p>See documentation of configuration key
+  <a href="cfg.itp.html#cfgk-sfa"><code class="link">&lt;uasr.sfa&gt;</code></a>
+  for a list of available options. Analysis and synthesis are implemented by the
+  functions <a href="#clp_-FEA_sfa">-FEA_sfa</a> and
+  <a href="#clp_-FEA_isfa">-FEA_isfa</a> respectively.</p>
+  
+  <!--}} CUSTOM_DOC -->
+  <a name="functions"></a><h3>Functions</h3>
+  <table cellSpacing="0" cellPadding="4" border="0">
+    <tr>
+      <td class="rowgroup" colSpan="2">Functions</td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_info"><code class="link">-FEA_info</code></a></td>
+      <td><code><b>-FEA_info</b>(sFile,iFI)</code><br>&nbsp;<br> Loads a feature information object or creates an initial one.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_delta_tab"><code class="link">-FEA_delta_tab</code></a></td>
+      <td><code><b>-FEA_delta_tab</b></code><br>&nbsp;<br> Creates a delta computation table.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_save"><code class="link">-FEA_save</code></a></td>
+      <td><code><b>-FEA_save</b>(sFile,idSrc)</code><br>&nbsp;<br> Saves one feature file.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_get"><code class="link">-FEA_get</code></a></td>
+      <td><code><b>-FEA_get</b>(iF,sSns,sMode,idFea)</code><br>&nbsp;<br> Obtains the primary feature vector sequence for one turn and sensor.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_import"><code class="link">-FEA_import</code></a></td>
+      <td><code><b>-FEA_import</b>(sFile,idFea)</code><br>&nbsp;<br> Abstract function to import one external primary feature file.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_import_raw"><code class="link">-FEA_import_raw</code></a></td>
+      <td><code><b>-FEA_import_raw</b>(sFile,idFea)</code><br>&nbsp;<br> Imports and compresses a raw spectrogram file.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FBA_set_field"><code class="link">-FBA_set_field</code></a></td>
+      <td><code><b>-FBA_set_field</b>(sField,value,bNoError)</code><br>&nbsp;<br> Sets one field in the session's global FBAproc.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FBA_configure"><code class="link">-FBA_configure</code></a></td>
+      <td><code><b>-FBA_configure</b>(sKey)</code><br>&nbsp;<br> Scans the configuration for primary analysis keys and configures the current
+ analysis processor with the respective values.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_pfa_init"><code class="link">-FEA_pfa_init</code></a></td>
+      <td><code><b>-FEA_pfa_init</b>(sType)</code><br>&nbsp;<br> Creates a primary feature analysis/synthesis processor instance.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_pfa"><code class="link">-FEA_pfa</code></a></td>
+      <td><code><b>-FEA_pfa</b>(idSig,idPM,idFea)</code><br>&nbsp;<br> Primary feature analysis.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_ipfa"><code class="link">-FEA_ipfa</code></a></td>
+      <td><code><b>-FEA_ipfa</b>(idFea,idPM,idSig)</code><br>&nbsp;<br> Primary feature synthesis.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_pfa_ext"><code class="link">-FEA_pfa_ext</code></a></td>
+      <td><code><b>-FEA_pfa_ext</b>(idSig,idPM,idFea)</code><br>&nbsp;<br> Dummy primary feature analysis if primary features are imported rather than
+ computed by a signal anaylsis.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_ipfa_ext"><code class="link">-FEA_ipfa_ext</code></a></td>
+      <td><code><b>-FEA_ipfa_ext</b>(idSig,idPM,idFea)</code><br>&nbsp;<br> Dummy primary feature synthesis if primary features are imported rather than
+ computed by a signal anaylsis.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_pfa_none"><code class="link">-FEA_pfa_none</code></a></td>
+      <td><code><b>-FEA_pfa_none</b>(idSig,idPM,idFea)</code><br>&nbsp;<br> Dummy primary feature analysis if no primary features analysis is done an the
+ signal is used as "features".
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_ipfa_none"><code class="link">-FEA_ipfa_none</code></a></td>
+      <td><code><b>-FEA_ipfa_none</b>(idSig,idPM,idFea)</code><br>&nbsp;<br> Dummy primary feature analysis if no primary features analysis is done an the
+ signal is used as "features".
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_pfa_lmag"><code class="link">-FEA_pfa_lmag</code></a></td>
+      <td><code><b>-FEA_pfa_lmag</b>(idSig,idPM,idFea)</code><br>&nbsp;<br> Primary feature analysis through short-term log-magnitude spectrum.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_ipfa_lmag"><code class="link">-FEA_ipfa_lmag</code></a></td>
+      <td><code><b>-FEA_ipfa_lmag</b>(idSig,idPM,idFea)</code><br>&nbsp;<br> Place holder for primary feature synthesis from short-term log-magnitude
+ spectrum.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_pfa_FWT"><code class="link">-FEA_pfa_FWT</code></a></td>
+      <td><code><b>-FEA_pfa_FWT</b>(idSig,idPM,idFea)</code><br>&nbsp;<br> Primary feature analysis through fast Wavelet transform.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_ipfa_FWT"><code class="link">-FEA_ipfa_FWT</code></a></td>
+      <td><code><b>-FEA_ipfa_FWT</b>(idFea,idPM,idSig)</code><br>&nbsp;<br> Place holder for FWT primary feature synthesis.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FTT_check"><code class="link">-FTT_check</code></a></td>
+      <td><code><b>-FTT_check</b></code><br>&nbsp;<br> Checks the FTTproc
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_sfa"><code class="link">-FEA_sfa</code></a></td>
+      <td><code><b>-FEA_sfa</b>(idFea,iFI,nMsf,idMsf,idLsf)</code><br>&nbsp;<br> Secondary feature analysis.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_isfa"><code class="link">-FEA_isfa</code></a></td>
+      <td><code><b>-FEA_isfa</b>(idMsf,idLsf,nDim,iFI,idFea)</code><br>&nbsp;<br> Inverse secondary feature analysis.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_pca"><code class="link">-FEA_pca</code></a></td>
+      <td><code><b>-FEA_pca</b>(iF,sSns,idLtb,nMsf,iFI)</code><br>&nbsp;<br> Computes a PCA feature transformation matrix from a data set.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_priorize"><code class="link">-FEA_priorize</code></a></td>
+      <td><code><b>-FEA_priorize</b>(iF,sSns,iFI,idXca,idNent)</code><br>&nbsp;<br> Permutates a linear feature transformation (PCA or ICA) matrix such that
+ applying the transformation will yield components ordered by descending
+ negative entropy.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_stat"><code class="link">-FEA_stat</code></a></td>
+      <td><code><b>-FEA_stat</b>(iF,sSns,idLtb,iFI,iS)</code><br>&nbsp;<br> Gather feature statistics.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_vad_genlab"><code class="link">-FEA_vad_genlab</code></a></td>
+      <td><code><b>-FEA_vad_genlab</b>(itHMM)</code><br>&nbsp;<br> Internal function for generation of label map from HMMs
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_vad_init"><code class="link">-FEA_vad_init</code></a></td>
+      <td><code><b>-FEA_vad_init</b></code><br>&nbsp;<br> Internal function for initialization of VADproc instance
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_vad"><code class="link">-FEA_vad</code></a></td>
+      <td><code><b>-FEA_vad</b>(idFrames,nMode)</code><br>&nbsp;<br> Write voice activity information for every frame in idFrames to
+ a new component named VAD.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_cavg"><code class="link">-FEA_cavg</code></a></td>
+      <td><code><b>-FEA_cavg</b>(idSrc,idDst)</code><br>&nbsp;<br> Spectral resampling according to <code>&lt;pfa&#x002E;cavg&gt;</code>.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_quantize"><code class="link">-FEA_quantize</code></a></td>
+      <td><code><b>-FEA_quantize</b>(idSrc,nS,nC,sPfa,nB)</code><br>&nbsp;<br> Feature dependent quantization and conversion to type short
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-FEA_dequantize"><code class="link">-FEA_dequantize</code></a></td>
+      <td><code><b>-FEA_dequantize</b>(idSrc,nS,nC,sPfa,nB)</code><br>&nbsp;<br> Feature dependent quantization and conversion to type short
+.
+      </td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_info">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_info</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_info','-FEA_info','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_info</b>(sFile,iFI)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(96)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Loads a feature information object or creates an initial one. The feature
+ information object controls the secondary feature transformation (see
+ function <a href="../util/fea.itp.html#clp_-FEA_sfa"><code
+ class="link">-FEA_sfa</code></a>).
+ <a name="index:iFI" title="Feature information object"></a>
+ <p>The feature information object is structured as follows:</p>
+ <table class="indent">
+   <tr>
+     <th><code><b>iFI</b></code></th>
+     <th>Symbol&nbsp;</th>
+     <th>Description</th>
+   </tr>
+   <tr>
+     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt04l.gif"> <code>var <b>nDim</b></code></nobr></td>
+     <td class="hidden">&nbsp;<i>N</i></td>
+     <td class="hidden">Feature space dimension, sum of most and least
+       significant dimensions</td>
+   </tr>
+   <tr>
+     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt04l.gif"> <code>data <b>idDlt</b></code></nobr></td>
+     <td class="hidden">&nbsp;<b><i>&Delta;</i></b></td>
+     <td class="hidden">Delta computation table (dimension <i>N</i>&times;2,
+       neutral: zero-matrix)</td>
+   </tr>
+   <tr>
+     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt04l.gif"> <code>data <b>idX</b></code></nobr></td>
+     <td class="hidden">&nbsp;<i><b>x</b><sub>0</sub></i></td>
+     <td class="hidden">Feature offset vector (dimension <i>N</i>, neutral:
+       zero-vector)</td>
+   </tr>
+   <tr>
+     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt04l.gif"> <code>data <b>idW</b></code></nobr></td>
+     <td class="hidden">&nbsp;<b><i>W</i></b></td>
+     <td class="hidden">Linear transformation matrix (dimension
+        <i>N</i>&times;<i>N</i>, neutral: identity matrix)</td>
+   </tr>
+   <tr>
+     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt03l.gif"> <code>data <b>idPrz</b></code></nobr></td>
+     <td class="hidden">&nbsp;</td>
+     <td class="hidden">Feature vector component priorization info, e.g.
+       Eigenvalues in case of PCA or neg. entropies in case of ICA</td>
+   </tr>
+ </table>
+ <p>If <code>sFile</code> is <code>NULL</code> or an empty string, the
+ function creates a neutral feature information object, i.e. passig it to <a
+ href="../util/fea.itp.html#clp_-FEA_sfa"><code class="link">-FEA_sfa</code
+ ></a> will leave the input feature vectors unchanged.</p>
+ <h4>Remarks</h4>
+ <ul>
+   <li>The standard secondary feature transformation is <i><b>y</b></i> =
+   <i><b>W</b></i> &middot; (delta(<i><b>x</b></i>,<i><b>&Delta;</b></i>) +
+   <i><b>x</b><sub>0</sub></i>), where <i><b>x</b></i> denotes the original
+   and <i><b>y</b></i> the transformed feature vector.</li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFile</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          File name of feature information object to be restored. If
+          <code>NULL</code> or empty, a neutral feature information object
+          will be created
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">object&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iFI</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          An <em>empty</em> object to be initialized
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_delta_tab">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_delta_tab</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_delta_tab','-FEA_delta_tab','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_delta_tab</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(164)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> <p>Creates a delta computation table. Non-zero values in the first(second)
+ record of the table define feature vector components for which
+ delta(delta-delta) features shall be computed. For details see documentation
+ of dLabPro method <code>FBAproc -delta</code>.</p>
+ <p>The function is entirely controlled by the session configuration. In any
+ case it returns a table with &lt;uasr.fea.pfa.dim&gt; components (i.e. the
+ dimension of the primary feature vector) and 2 records. The following types
+ of delta tables are supported.</p>
+ <h4>&lt;uasr.sfa.delta&gt;="none"</h4>
+ <p>No delta/delta-delta features will be computed. In this case the function
+ returns a blank table.</p>
+ <h4>&lt;uasr.sfa.delta&gt;="pattern"</h4>
+ <p>The delta table will be built repeating patterns for deltas and
+ delta-deltas. The following configuration values are used (all may be
+ omitted):</p>
+ <table cellpadding="3">
+   <tr><th>Key</th><th>Type</th><th>Default</th><th>Description</th></tr>
+   <tr><td><code>uasr.sfa.delta.dpat</code></td><td>string</td><td>"1 0"</td>
+     <td>Delta pattern, white space sepatated list of ones and zeros</td></tr>
+   <tr><td><code>uasr.sda.delta.dofs</code></td><td>number</td><td>0</td>
+     <td>Offset of delta pattern (component index to start pattern at)</td></tr>
+   <tr><td><code>uasr.sfa.delta.drep</code></td><td>number</td><td>0</td>
+     <td>Number of repetitions of delta pattern (0 for infinite repetition)</td></tr>
+   <tr><td><code>uasr.sfa.delta.ddpat</code></td><td>string</td><td>"1 0"</td>
+     <td>Delta-delta pattern, white space sepatated list of ones and zeros</td></tr>
+   <tr><td><code>uasr.sfa.delta.ddofs</code></td><td>number</td><td>0</td>
+     <td>Offset of delta-delta pattern (component index to start pattern at)</td></tr>
+   <tr><td><code>uasr.sfa.delta.ddrep</code></td><td>number</td><td>0</td>
+     <td>Number of repetitions of delta-delta pattern (0 for infinite repetition)</td></tr>
+ </table>
+ 
+
+    <h3>Return value</h3> The delta computation table
+
+  </div>
+  </div>
+  <div id="clp_-FEA_save">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_save</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_save','-FEA_save','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_save</b>(sFile,idSrc)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(218)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Saves one feature file. The function evaluates the
+ <code>uasr.fea.savecompressed</code> configuration key. If this key exists
+ and its value is <code>TRUE</code>, the feature vectors will be compressed
+ from floating to fixed point type before saving.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFile</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Path name of feature file
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSrc</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to save
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> TRUE if successful, FALSE otherwise
+
+  </div>
+  </div>
+  <div id="clp_-FEA_get">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_get</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_get','-FEA_get','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_get</b>(iF,sSns,sMode,idFea)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(296)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Obtains the primary feature vector sequence for one turn and sensor. The turn is defined by the current position of
+ the file list <code>iF</code>. The function is provided for conveniently iterating data sets.
+ <h4>Example</h4>
+ <pre class="code">
+  &nbsp;
+  file iF;
+  data idFea;
+  ( "test" "" <a href="cfg.itp.html#clp_-CFG_get_flist" class="code">-CFG_get_flist</a> ) iF -set flist;
+    <span class="c-key">label</span> L_F; iF -next <span class="c-key">if</span>
+    iF NULL "" idFea -FEA_get;
+    ...
+    <span class="c-key">goto</span> L_F;
+  <span class="c-key">end</span>
+ </pre>
+ <h4>Remarks</h4>
+ <p>In the (default) automatic mode (<code>sMode</code>="A"), the function proceeds as follows:</p>
+ <ul>
+   <li>Try to load the feature vector file stored in <a href="cfg.itp.html#index:cfgk"
+     class="code">&lt;uasr.dir.fea&gt;</a>.</li>
+   <li>If no such file exists:<ul>
+     <li>Call <a href="sig.itp.html#clp_-SIG_get" class="code">-SIG_get</a>, </li>
+     <li><em>Only</em> if <a href="xfg.itp.html#index:cfgk" class="code">&lt;uasr.fea.pm&gt;</a> is
+      <code>TRUE</code>: load the pitch mark file stored in <a href="cfg.itp.html#index:cfgk"
+     class="code">&lt;uasr.dir.sig&gt;</a> or, if no such file exists, computes pitchmarks,
+     <li>Perform the primary feature analysis by calling <a href="fea.itp.html#clp_-FEA_pfa"
+       class="code">-FEA_pfa</a>, and</li>
+     <li><em>Only</em> if <a href="xfg.itp.html#index:cfgk" class="code">&lt;uasr.fea.f0&gt;</a> is
+      <code>TRUE</code>: append the mean fundamental frequency as additional feature vector component.</li>
+     </ul></li>
+   <li>If neither a feature vector nor a signal file exists: clear <code>idFea</code> and return <code>FALSE</code>,
+       otherwise return <code>TRUE</code>.</li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">file&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iF</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          File list instance
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Sensor ID, <code>NULL</code> or empty for one-channel recordings (typical case for speech recognition)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sMode</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Exactly one of the following characters
+          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+            <tr><th>Character     </th><th>Description</th></tr>
+            <tr><td><code>A</code></td><td>Default behavior (see above)</td></tr>
+            <tr><td><code>F</code></td><td>Load feature file</td></tr>
+            <tr><td><code>S</code></td><td>Load signal file and perform primary feature analysis</td></tr>
+          </table>
+          If empty or invalid, "A" is assumed.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFea</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Will be filled with the feature vector sequence
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> <code>TRUE</code> if successful, <code>FALSE</code> otherwise.
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__bCprFea</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#008000">read</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__bDirFea</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#008000">read</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__bDirSig</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#008000">read</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__bF0Fea</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#008000">read</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__bExtFea</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#008000">read</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__bPmFea</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#008000">read</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.dir.fea.&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.dir.sig.&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.fea.ext&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.fea.f0&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.fea.pm&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.fea.pm.level&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.fea.savecompressed&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.sig.srate&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_import">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_import</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_import','-FEA_import','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_import</b>(sFile,idFea)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(419)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Abstract function to import one external primary feature file.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFile</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Path name of external feature file
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFea</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with feature vector sequence
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_import_raw">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_import_raw</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_import_raw','-FEA_import_raw','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_import_raw</b>(sFile,idFea)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(512)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Imports and compresses a raw spectrogram file. The raw file is expected to
+ contain a sequence of <a href="../util/cfg.itp.html#index:cfgk" class="code">&lt;import.raw.dim&gt;</a>-dimensional
+ vectors. The file starts with the values of the first vector, continues with the values of the second vector and do
+ forth. This function may overwrite
+ <a href="#clp_-FEA_import"><code class="link">-FEA_import</code></a>:
+ <pre class="code">&nbsp;
+  /disarm -FEA_import_raw /disarm <a href="#clp_-FEA_import" class="code">-FEA_import</a> =;
+ </pre>
+ <h4>Remarks</h4>
+ <ul>
+   <li>The following data must be provided through <a href="../util/cfg.itp.html#index:cfgk">configuration keys</a>:
+       <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+         <tr>
+           <th>Information</th>
+           <th>Configuration Key</th>
+           <th>Default</th>
+         </tr>
+         <tr>
+           <td>Byte order</td>
+           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.byteorder</a></td>
+           <td>"" (meaning "do not change")</td>
+         </tr>
+         <tr>
+           <td>Increment between two channels (spectral lines), default 1</td>
+           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.cinc</a></td>
+           <td>1</td>
+         </tr>
+         <tr>
+           <td>Physical unit of channel (spectral, component) axis; default: "kHz"</td>
+           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.cunit</a></td>
+           <td>"kHz"</td>
+         </tr>
+         <tr>
+           <td>Number of channels in raw file</td>
+           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.dim</a></td>
+           <td><code>&lt;uasr.pfa.dim&gt;</code></td>
+         </tr>
+         <tr>
+           <td>Number of records to import</td>
+           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.nrec</a></td>
+           <td>-1 (meaning "all")</td>
+         </tr>
+         <tr>
+           <td>Raw data values' type</td>
+           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.dtype</a></td>
+           <td>n/a</td>
+         </tr>
+         <tr>
+           <td>Raw header size [bytes]</td>
+           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.header</a></td>
+           <td>0</td>
+         </tr>
+         <tr>
+           <td>Time increment between two feature vectors [ms], default 10</td>
+           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">import.raw.rinc</a></td>
+           <td>10</td>
+         </tr>
+         <tr>
+           <td>Output feature vector dimension</td>
+           <td><a href="../util/cfg.itp.html#index:cfgk" class="code">pfa.dim</a></td>
+           <td>n/a</td>
+         </tr>
+       </table></li>
+   <li>On verbose level 3 and higher (global variable <a href="uasr.itp.html" class="code">.__UTL_nVlevel</a>) the
+       function displays a message including length of the imported feature vector sequence in milliseconds.</li>
+   <li>The function reduces the spectral dimension from <a href="../util/cfg.itp.html#index:cfgk"
+       class="code">&lt;import.raw.dim&gt;</a> to <a href="../util/cfg.itp.html#index:cfgk"
+       class="code">&lt;pfa.dim&gt;</a> by averaging adjacent spectral lines.</li>
+   <li><a href="../util/cfg.itp.html#index:cfgk" class="code">&lt;import.raw.dim&gt;</a> must be an integer multiple
+       of <a href="../util/cfg.itp.html#index:cfgk" class="code">&lt;pfa.dim&gt;</a>.</li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFile</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Path name of external feature file
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFea</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with feature vector sequence
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;import.raw.byteorder&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;import.raw.cinc&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;import.raw.cunit&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;import.raw.dim&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;import.raw.dtype&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;import.raw.header&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;import.raw.rinc&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;import.raw.nrec&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;import.raw.dim&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__UTL_nVlevel</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FBA_set_field">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FBA_set_field</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FBA_set_field','-FBA_set_field','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FBA_set_field</b>(sField,value,bNoError)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(552)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Sets one field in the session's global FBAproc.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sField</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          the field name
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">any&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>value</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          the new value
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">boolean&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>bNoError</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Allow or disallow error messages when setting the field
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FBA_configure">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FBA_configure</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FBA_configure','-FBA_configure','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FBA_configure</b>(sKey)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(573)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Scans the configuration for primary analysis keys and configures the current
+ analysis processor with the respective values.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sKey</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          the fully qualified parent key of the keys to set
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_pfa_init">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_pfa_init</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_pfa_init','-FEA_pfa_init','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_pfa_init</b>(sType)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(617)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Creates a primary feature analysis/synthesis processor instance.
+ <h4>Remarks</h4>
+ <ul>
+   <li>If successful, the function creates an instance
+     <code>.__FEA_iPfa</code> in the global scope.</li>
+   <li>Applications <em>do not</em> need to call this function. It is
+     automatically called by the <code>-FEA_[i]pfa</code> functions.</li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sType</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The analysis type, see documentation of configuration key
+          <code>uasr.pfa</code> for accptable values.
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__FEA_iPfa</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__FEA_nPfaDim</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__FEA_sAnaOpt</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__FEA_sSynOpt</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.pfa.dim&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.pfa.crate&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.pfa.len&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.pfa.wlen&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.pfa.FBA.*&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.pfa.&lt;sType&gt;.*&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.pfa.anaoptions&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.pfa.synoptions&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_pfa">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_pfa</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_pfa','-FEA_pfa','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_pfa</b>(idSig,idPM,idFea)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(679)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Primary feature analysis. This is a standard implementation; the function may
+ be overwritten:
+ <pre class="code">
+  /disarm <a href="#clp_-FEA_pfa_ext"><code class="link">-FEA_pfa_ext</code></a> /disarm -FEA_pfa =;</pre>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSig</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Signal to be analyzed, must contain exactly one numeric component,
+          may contain one label component.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idPM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Pitch marks for pitch synchronous analysis, may be NULL
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFea</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Will be filled with the Melfilter output vectors. Labels will be
+          copied from <code>idSig</code>.
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__FEA_iPfa</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__FEA_sAnaOpt</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  <h3>See also</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><a href="#clp_-FEA_ipfa">-FEA_ipfa</a>
+    </td>
+  </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><a href="#clp_-FEA_pfa_init">-FEA_pfa_init</a>
+    </td>
+  </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_ipfa">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_ipfa</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_ipfa','-FEA_ipfa','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_ipfa</b>(idFea,idPM,idSig)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(714)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Primary feature synthesis. This is a standard implementation; the function
+ may be overwritten:
+ <pre class="code">&nbsp;
+  /disarm <a href="#clp_-FEA_ipfa_CP"><code class="link">-FEA_ipfa_CP</code></a> /disarm -FEA_ipfa =;
+ </pre>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFea</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The features
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idPM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSig</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with the signal
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__FEA_iPfa</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__FEA_sSynOpt</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_pfa_ext">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_pfa_ext</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_pfa_ext','-FEA_pfa_ext','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_pfa_ext</b>(idSig,idPM,idFea)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(750)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Dummy primary feature analysis if primary features are imported rather than
+ computed by a signal anaylsis. This function may
+ overwrite <a href="#clp_-FEA_pfa"><code class="link">-FEA_pfa</code></a>:
+ <pre class="code">&nbsp;
+  /disarm -FEA_pfa_ext /disarm <a href="#clp_-FEA_pfa"><code class="link">-FEA_pfa</code></a> =;
+ </pre>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSig</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Signal to be analyzed, must contain exactly one numeric component,
+          may contain one label component.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idPM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Not used
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFea</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Will be filled with a copy of <code>idSig</code>.
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_ipfa_ext">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_ipfa_ext</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_ipfa_ext','-FEA_ipfa_ext','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_ipfa_ext</b>(idSig,idPM,idFea)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(758)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Dummy primary feature synthesis if primary features are imported rather than
+ computed by a signal anaylsis. This function may overwrite <a
+ href="#clp_-FEA_ipfa"><code class="link">-FEA_ipfa</code></a>.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSig</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idPM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFea</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_pfa_none">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_pfa_none</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_pfa_none','-FEA_pfa_none','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_pfa_none</b>(idSig,idPM,idFea)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(766)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Dummy primary feature analysis if no primary features analysis is done an the
+ signal is used as "features". This function may overwrite <a
+ href="#clp_-FEA_pfa"><code class="link">-FEA_pfa</code></a>.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSig</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idPM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFea</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_ipfa_none">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_ipfa_none</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_ipfa_none','-FEA_ipfa_none','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_ipfa_none</b>(idSig,idPM,idFea)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(774)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Dummy primary feature analysis if no primary features analysis is done an the
+ signal is used as "features". This function may overwrite <a
+ href="#clp_-FEA_ipfa"><code class="link">-FEA_ipfa</code></a>.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSig</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idPM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFea</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_pfa_lmag">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_pfa_lmag</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_pfa_lmag','-FEA_pfa_lmag','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_pfa_lmag</b>(idSig,idPM,idFea)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(825)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Primary feature analysis through short-term log-magnitude spectrum. Figure 1
+ shows what the function does in detail.
+ <p class="figure"><nobr>
+   <object data="../../resources/figures/FeaAnalysisLmag.svg" type="image/svg+xml" width="567" height="754">
+     <param name="src" value="../../resources/figures/FeaAnalysisLmag.svg">
+     <img src="../../resources/figures/FeaAnalysisLmag.png" alt="Figure 1: Computation of short term (log-) magnitude spectrum" width="567" height="754">
+   </object><a href="../../resources/figures/FeaAnalysisLmag.svg" target="_blank"><img src="../../resources/zoom.gif" width="17"
+   height="17" border="0" alt="Enlarge image"></a></nobr></p>
+ <p class="figure">Figure 1: Computation of short term (log-) magnitude spectrum</p>
+ <p>This function may overwrite <a href="#clp_-FEA_pfa" class="code">-FEA_pfa</a>:</p>
+ <pre class="code">&nbsp;
+ /disarm -FEA_pfa_lmag /disarm <a href="#clp_-FEA_pfa"><code class="link">-FEA_pfa</code></a> =;</pre>
+ <h4>Remarks</h4>
+ <ul>
+   <li>When used for the first time in a session, the function calls <a href="#clp_-FEA_pfa_init"
+     class="code">-FEA_pfa_init</a><code>("FFT")</code> in order to initialize the underlying <code>FFTproc</code>.
+     Most of the configuration values and global variables listed below are accessed from <a
+     href="#clp_-FEA_pfa_init" class="code">-FEA_pfa_init</a> rather than from <code>-FEA_pfa_lmag</code>.</li>
+   <li>The output dimension is clipped to 2<sup><a href="cfg.itp.html#index:cfgk"
+     class="code">&lt;uasr.pfa.FFT.order&gt;</a>-1</sup> or &lt;uasr.pfa.dim&gt;, whichever is smaller.</li>
+   <li>The trailing (<a href="cfg.itp.html#index:cfgk" class="code">&lt;uasr.pfa.wlen&gt;</a> / <a
+     href="cfg.itp.html#index:cfgk" class="code">&lt;uasr.pfa.crate&gt;</a>) -1 vectors will be trimmed (as their
+     zero padding distorts the spectrum).</li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSig</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Signal to be analyzed, must contain exactly one numeric component,
+          may contain one label component.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idPM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Pitch marks for pitch synchronous analysis, may be <code>NULL</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFea</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Will be filled with the primary output vectors. Labels will be
+          copied from <code>idSig</code>.
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__FEA_iPfa</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#008000">read</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__FEA_nPfaDim</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#008000">read</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__FEA_nPfaCavg</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#008000">read</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.pfa.cavg&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.pfa.dim&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.pfa.crate&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.pfa.FFT.order&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.pfa.preem&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.pfa.window&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.pfa.wlen&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_ipfa_lmag">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_ipfa_lmag</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_ipfa_lmag','-FEA_ipfa_lmag','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_ipfa_lmag</b>(idSig,idPM,idFea)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(863)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Place holder for primary feature synthesis from short-term log-magnitude
+ spectrum. This function may overwrite <a href="#clp_-FEA_ipfa"><code
+ class="link">-FEA_ipfa</code></a>.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSig</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with the signal
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idPM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFea</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The features
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_pfa_FWT">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_pfa_FWT</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_pfa_FWT','-FEA_pfa_FWT','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_pfa_FWT</b>(idSig,idPM,idFea)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(890)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Primary feature analysis through fast Wavelet transform. This function may
+ overwrite <a href="#clp_-FEA_pfa"><code class="link">-FEA_pfa</code></a>.
+ <h4>Developers' Notes</h4>
+ <ul>
+   <li>This function does special post-processing of the FWT features which
+     should either be removed or applied to <em>all</em> feature extractions.
+     </li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSig</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Signal to be analyzed, must contain exactly one numeric component,
+          may contain one label component.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idPM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Pitch marks for pitch synchronous analysis, may be NULL
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFea</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Will be filled with the Melfilter output vectors. Labels will be
+          copied from <code>idSig</code>.
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__FEA_iPfa</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__FEA_sAnaOpt</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_ipfa_FWT">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_ipfa_FWT</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_ipfa_FWT','-FEA_ipfa_FWT','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_ipfa_FWT</b>(idFea,idPM,idSig)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(923)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Place holder for FWT primary feature synthesis. This function may overwrite
+ <a href="#clp_-FEA_ipfa"><code class="link">-FEA_ipfa</code></a>.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFea</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The features
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idPM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSig</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with the signal
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FTT_check">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FTT_check</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FTT_check','-FTT_check','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FTT_check</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(930)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Checks the FTTproc
+
+  </div>
+  </div>
+  <div id="clp_-FEA_sfa">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_sfa</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_sfa','-FEA_sfa','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_sfa</b>(idFea,iFI,nMsf,idMsf,idLsf)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(967)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Secondary feature analysis.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFea</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The primary feature vectors
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">object&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iFI</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Feature information object
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nMsf</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Number of most significant secondary features (MSF) or -1 to
+          indicate all features are "most" significant
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idMsf</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with the most significant secondary
+          features, may be <code>NULL</code>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLsf</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with the least significant secondary
+          features, may be <code>NULL</code>
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_isfa">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_isfa</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_isfa','-FEA_isfa','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_isfa</b>(idMsf,idLsf,nDim,iFI,idFea)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(1012)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Inverse secondary feature analysis.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idMsf</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The most significant secondary features
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLsf</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The least significant secondary features
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nDim</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">object&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iFI</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Feature information object
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFea</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with the primary feature vectors
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_pca">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_pca</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_pca','-FEA_pca','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_pca</b>(iF,sSns,idLtb,nMsf,iFI)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(1042)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Computes a PCA feature transformation matrix from a data set.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">file&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iF</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          File list defining a set of feature files to gather the PCA
+          statistics from
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+          (typical case for speech recognition)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLtb</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Label table
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nMsf</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Number of most significant secondary features (MSF) or -1 to
+          indicate all features are "most" significant
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">object&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iFI</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Feature information object, the function will modify the fields
+          <code>iFI.idW</code> and <code>iFI.idPrz</code>
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_priorize">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_priorize</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_priorize','-FEA_priorize','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_priorize</b>(iF,sSns,iFI,idXca,idNent)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(1128)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Permutates a linear feature transformation (PCA or ICA) matrix such that
+ applying the transformation will yield components ordered by descending
+ negative entropy. The function estimates the skewness and excess of the
+ feature vectors transformed through <code>idXca</code> from the specified
+ file list. Before transforming the features through <code>idXca</code>, all
+ transformations specified by <code>iFI</code> (i.e. delta computation,
+ normalization, PCA and ICA) will be applied.
+ <h4>Remarks</h4>
+ <ul>
+   <li>If you use the function to priorize the PCA or ICA transformation
+     matrices in <code>iFI</code> make sure to reset the respective instance
+     in <code>iFI</code> prior to calling the function and pass its contents
+     separately as <code>idXca</code>. Otherwise the feature vectors will be
+     multiplied with the transformation matrix twice!</li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">file&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iF</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          File list defining a set of feature files to gather statistics from
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+          (typical case for speech recognition)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">object&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iFI</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Feature information object
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idXca</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Linear feature transformation matrix, will be permutated
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idNent</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Will be filled with the negative entropies of the vector components
+          after permutation, may be <code>NULL</code>
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_stat">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_stat</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_stat','-FEA_stat','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_stat</b>(iF,sSns,idLtb,iFI,iS)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(1190)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Gather feature statistics.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">file&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iF</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          File list defining a set of feature files to gather statistics from
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+          (typical case for speech recognition)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLtb</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Label table of multiclass statistics, may be NULL to gather a single
+          class ("pool") statistics
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">object&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iFI</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Feature information object
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">statistics&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iS</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Statistics instance to be gatherd
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> nothing
+
+  </div>
+  </div>
+  <div id="clp_-FEA_vad_genlab">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_vad_genlab</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_vad_genlab','-FEA_vad_genlab','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_vad_genlab</b>(itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(1232)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Internal function for generation of label map from HMMs
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Hidden-Markov-Models
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_vad_init">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_vad_init</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_vad_init','-FEA_vad_init','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_vad_init</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(1263)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Internal function for initialization of VADproc instance
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__VADproc</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#008000">read</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.vad&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.vad.presp&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.vad.postsp&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.vad.minsp&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.vad.minsi&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.vad.maxsp&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.vad.pow.thr&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.vad.gmm.model&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.vad.gmm.feainfo&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_vad">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_vad</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_vad','-FEA_vad','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_vad</b>(idFrames,nMode)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(1314)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Write voice activity information for every frame in idFrames to
+ a new component named VAD.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFrames</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">The          If there is only one frame, that frame is analyzed and the voice activity of the
+          frame that is .__VADproc -get_delay in the past is returned.
+          If there is more than one frame, all frames are analyzed and the voice activity
+          is written to a new component named "VAD" in <code>idFrames</code>.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nMode</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          A number that specifies the input data type committed through <code>idFrames</code>.
+          <table cellpadding="3">
+            <tr><th>Num.</th><th>Description</th></tr>
+            <tr><td>0</td><td>Signal (one numeric component)</td></tr>
+            <tr><td>1</td><td>Primary feature vector sequence</td></tr>
+            <tr><td>2</td><td>Secondary feature vector sequence</td></tr>
+          </table>
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__VADproc</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_cavg">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_cavg</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_cavg','-FEA_cavg','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_cavg</b>(idSrc,idDst)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(1345)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Spectral resampling according to <code>&lt;pfa&#x002E;cavg&gt;</code>.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSrc</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Data          sfd
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idDst</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Spectral          label will be removed
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__FEA_nPfaCavg</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>.__FEA_nPfaCavgOutDim</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;pfag&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;pfa.cavg&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;pfa.dim&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-FEA_quantize">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_quantize</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_quantize','-FEA_quantize','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_quantize</b>(idSrc,nS,nC,sPfa,nB)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(1411)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Feature dependent quantization and conversion to type short
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSrc</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Data
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nS</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nC</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sPfa</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nB</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> data Converted data
+
+  </div>
+  </div>
+  <div id="clp_-FEA_dequantize">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FEA_dequantize</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FEA_dequantize','-FEA_dequantize','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FEA_dequantize</b>(idSrc,nS,nC,sPfa,nB)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fea.itp(1431)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Feature dependent quantization and conversion to type short
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSrc</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Data
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nS</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nC</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sPfa</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nB</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> data Converted data
+
+  </div>
+  </div>
+<div class="footer">End of page</div>
+</body>
+</html>
+

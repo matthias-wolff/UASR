@@ -1,0 +1,809 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<
+<    AUTHOR : n/a
+<    PACKAGE: manual
+<
+<    Copyright 2013 UASR contributors (see COPYRIGHT file)
+<    - Chair of System Theory and Speech Technology, TU Dresden
+<    - Chair of Communications Engineering, BTU Cottbus
+<
+<    This file is part of UASR.
+<
+<    UASR is free software: you can redistribute it and/or modify it under the
+<    terms of the GNU Lesser General Public License as published by the Free
+<    Software Foundation, either version 3 of the License, or (at your option)
+<    any later version.
+<
+<    UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+<    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+<    FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+<    more details.
+<
+<    You should have received a copy of the GNU Lesser General Public License
+<    along with UASR. If not, see [http://www.gnu.org/licenses/].
+-->
+<html>
+<head>
+  <meta http-equiv="Content-Type" content= "text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta name="description" content=   "UASR documentation - UASR script FEA.xtp">
+  <meta name="author" content="">
+  <meta name="generator" content="UASR_DOC">
+  <title>UASR script FEA.xtp</title>
+  <link rel=stylesheet type="text/css" href="../default.css">
+</head>
+<script type="text/javascript" src="../default.js"></script>
+<script type="text/javascript">__sRootPath="../..";</script>
+<body>
+
+  <div id="clp_FEA.xtp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        UASR script <span class="mid">FEA.xtp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('','FEA.xtp','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden">General</td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><nobr><b>FEA</b> $1 $2</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Author</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Matthias Wolff
+</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Synopsis</h3>
+    <p>Primary feature analysis and import
+ </p>
+  <h3>Arguments</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>$1</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Command or 'help'
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>$2</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Setup file or, if 1st arg. is 'help', command
+
+      </td>
+    </tr>  </table>
+  <!--{{ CUSTOM_DOC -->
+	<a name="usage"></a><h3>Contents</h3>
+  <div class="indent"><ul class="linklist">
+    <li class="linklist"><a class="linklist" href="#usage">Usage</a></li>
+    <li class="linklist"><a class="linklist" href="#configuration">Configuration</a></li>
+    <li class="linklist"><a class="linklist" href="#reference">Reference</a></li>
+  </ul></div>
+  
+	<a name="usage"></a><h3>Usage</h3>
+	<pre class="code">    
+FEA.xtp &lt;command&gt; &lt;cfgfile&gt; [options]
+FEA.xtp help [&lt;command&gt;]</pre>
+
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td><b>$1</b>: command</td>
+			<td>Command, one of the following:<br>&nbsp;
+				<table class="indent" cellpadding="3" cellspacing="0">
+					<tr>
+						<td class="hidden"><a href="#clp_ana" class="code"><b>ana</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">Primary feature analysis</td>
+					</tr>
+					<tr>
+						<td class="hidden"><a href="#clp_cpy" class="code"><b>cpy</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">Copying of feature files</td>
+					</tr>
+					<tr>
+						<td class="hidden"><a href="#clp_imp" class="code"><b>imp</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">Import of external feature files</td>
+					</tr>
+				</table><br>
+				or "help"
+			</td>
+		</tr>
+		<tr>
+			<td><b>$2</b>: cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+
+	  <tr><td class="rowgroup" colspan="2">Options</td></tr>
+		<tr>
+			<td><b>-h</b>, <b>--help</b></td>
+			<td>Display help and exit</td>
+		</tr>
+		<tr>
+			<td><b>-n</b></td>
+			<td>Do not write output files</td>
+		</tr>
+		<tr>
+			<td><b>-P</b>&lt;key&gt;=&lt;value&gt;</td>
+			<td>Define or override <a href="util/cfg.itp.html#index:cfgk">configuration key-value pairs</a></td>
+		</tr>
+		<tr>
+			<td><b>-v</b>&lt;n&gt;</td>
+  		<td>Verbose level
+  			<table>
+  				<tr><td class="hidden">-v1&nbsp;&nbsp;&nbsp;</td><td class="hidden">minimal screen protocol (default)</td></tr>
+  				<tr><td class="hidden">-v2</td><td class="hidden">extended screen protocol</td></tr>
+  				<tr><td class="hidden">-v3</td><td class="hidden">even more screen protocol, program may break</td></tr>
+  			</table>
+  		</td>
+		</tr>
+	  <tr><td class="hidden" colspan="2"><span class="small">There are further, individual options to the commands.</span></td></tr>
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+	</table>
+
+  <a name="configuration"></a><h3>Configuration</h3>
+	<p><code>FEA.xtp</code> is configured through a <a href="util/cfg.itp.html#index:cfgf">UASR configuration
+  file</a> (parameter <code>$2</code>). The configuration file is a Java properties file containing key-value-pairs.
+  The common configuration keys are described with the utility script <a class="code"
+  href="util/cfg.itp.html#index:cfgk">cfg.itp</a> (see there). Some commands use dedicated configuration keys which are
+  described with the command. Dedicated keys may be placed in the configuration file just like all other keys. Any key
+  (common and dedicated) may be specified or overwritten through the command line using
+  <nobr><code><b>-P</b>&lt;key&gt;=&lt;value&gt;</code></nobr> options:</p>
+  <pre class="code">
+  
+  FEA.xtp ana $UASR_HOME/config/vm/VMV.cfg -Pflist.all=myfilelist.txt
+  </pre>
+  <p><code>-P</code> options <em>always</em> overwrite the configuration file. The heading "<code>uasr.</code>" of the
+	keys may be omitted in <code>-P</code> options.</p>
+  <p>For further information</p>
+  <ul>
+  	<li class="indent">see documentation of <a href="util/cfg.itp.html#index:datadirs"
+  		class="code">util/cfg.itp</a> to learn more about UASR's organization of databases.</li>
+  	<li class="indent">see documentation of <a href="util/cfg.itp.html#clp_-CFG_get_path"
+			class="code">-CFG_get_path</a> to learn how UASR determines paths to the various data sets.</li>
+  	<li class="indent">see documentation of <a href="util/cfg.itp.html#clp_-CFG_get_flist"
+			class="code">-CFG_get_flist</a> to learn how UASR obtains file lists of the various data sets.</li>
+  </ul>
+	
+  <a name="description"></a><h3>Description</h3>
+	<p><code>FEA.xtp</code> is part of the UASR acoustic model training outlined in figure 1. It creates a set of
+  <a href="HMM.xtp.html#clp_trn">HMMs</a> or <a href="SVM.xtp.html#clp_trn">SVMs</a> from either</p>
+  <ol>
+    <li>a database consisting of labelled primary feature vector files <em>or</em></li>
+    <li>a database consisting of signal files and labels.</li>
+  </ol>
+  <p>(See documentation of <a href="util/cfg.itp.html#index:datadirs" class="code">util/cfg.itp</a> for details on the
+  organization of databases in UASR.)</p>
+  <p>The first first method requires more disk space but is quicker if there is more than one training procedure and/or
+  iteration. The primary feature vector files database must be created <em>before</em> the actual model training</p>
+  <ul>
+  	<li>using <code>FEA.xtp</code> <a href="#clp_ana" class="code"><b>ana</b></a> (primary feature analsis of signal
+			files) <em>or</em></li>
+  	<li>using <code>FEA.xtp</code> <a href="#clp_imp" class="code"><b>imp</b></a> (import of external feature files).</li>
+  </ul>
+  <p>The second method saves the disk space for storing the primary feature vectors but it requires to compute these
+  for <em>each</em> training procedure/iteration anew.</p>
+  <p class="figure"><nobr>
+    <object data="../resources/figures/UasrModelTraining.svg" type="image/svg+xml" width="463" height="386">
+      <param name="src" value="../resources/figures/UasrModelTraining.svg">
+      <img src="../resources/figures/UasrModelTraining.png" alt="Figure 1: UASR model training" width="463" height="385">
+    </object><a href="../resources/figures/UasrModelTraining.svg" target="_blank"><img src="../resources/zoom.gif" width="17"
+    height="17" border="0" alt="Enlarge image"></a></nobr></p>
+  <p class="figure">Figure 1: UASR model training</p>
+
+  </div>
+  </div>
+
+  <!-- == FEA.xtp ana ====================================================== -->
+  <div id="clp_ana" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        FEA.xtp <span class="mid">ana</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_ana','FEA.xtp ana','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>FEA.xtp <b>ana</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Primary feature analysis</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+
+  <div class="indent"><ul class="linklist">
+  	<li class="linklist"><a href="#ana_description" class="linklist">Description</a></li>
+  </ul></div>
+
+  <a name="ana_description"></a><h3>Description</h3>
+	<p>Computes labelled primary feature vector files from the databases signal files. For details on the UASR model
+	training scheme see section <a href="#description">Description</a> above.</p>
+
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+  
+  FEA.xtp ana &lt;cfgfile&gt; [options]
+  </pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see section <a href="#usage">Usage</a> above).</p>
+	
+  <a name="index:cfgFeaa" title="Configuration Keys | FEA.xtp ana"></a>
+  <h4>Configuration</h4>
+  <p>The following table lists dedicated configuration keys and some important common keys (see section <a 
+  href="#configuration">Configuration</a> above). There are many more common keys. See documentation of <a
+  href="util/cfg.itp.html#index:cfgk" class="code">util/cfg.itp</a> for a complete list.</p>
+  <table cellpadding="3" class="indent" summary="">
+  	<tr><th>Key</th><th>Type</th><th>Default</th><th>Value</th></tr>
+  	<tr><td class="rowgroup" colspan="4">Dedicated keys to <code>FEA.xtp ana</code></td></tr>
+  	<tr>
+  		<td nowrap><code>uasr.sigexp</code></td><td>string</td><td> </td>
+  		<td>Export signal files into <a href="util/cfg.itp.html#index:datadirs">log folder</a>, one of the following:<pre>
+  wav - as wave files (extension .wav)
+  dn3 - as DNorm3 files (extension .dn3)</pre></td>
+  	</tr>
+  	<tr>
+  		<td nowrap><code>uasr.sensor</code></td><td>string</td><td>""</td>
+  		<td>Name of sensor whose signals are to be processed <em>only</em> (does typically not apply to speech recognition).
+  		    Append "..." to process the specified and all following sensors.</td>
+  	</tr>
+
+  	<tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+  	<tr><td class="rowgroup" colspan="4">Important common keys</td></tr>
+    <tr>
+    	<td><code>uasr.customize</code></td><td>string</td><td> </td>
+    	<td>Custom include script (path absolute or relative to script accessing the key)</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.db</code></td><td>string</td><td>"vm"</td>
+    	<td>Data base name</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.db.include</code></td><td>string</td><td>"db/&lt;uasr.db&gt;.itp"</td>
+    	<td>Database dependent include script (path absolute or relative to script accessing the key)</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.exp</code></td><td>string</td><td>""</td>
+    	<td>Experiment code</td>
+    </tr>
+    <caption>Dedicated and important common configuration keys</caption>
+  </table>
+
+  <h4>Verbose Levels</h4>
+	<p>The verbose level is defined by the command line option <code><b>-v</b>&lt;n&gt;</code>.</p>
+	<table cellpadding="3" class="indent" summary="">
+		<tr><th>n</th><th>Description      </th></tr>
+		<tr><td>1</td><td>Show progress bar (default)</td></tr>
+		<tr><td>2</td><td>Show file details</td></tr>
+		<tr><td>3</td><td>Add details on signal and label files, report on the initialization of the analysis processor</td></tr>
+		<tr><td>3</td><td>Additionally show all settings of the analysis processor</td></tr>
+	</table>
+
+	</div>
+	</div>
+
+  <!-- == FEA.xtp cpy ====================================================== -->
+  <div id="clp_cpy" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        FEA.xtp <span class="mid">cpy</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_cpy','FEA.xtp cpy','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>FEA.xtp <b>cpy</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Copying of feature files</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+
+  <div class="indent"><ul class="linklist">
+  	<li class="linklist"><a href="#cpy_description" class="linklist">Description</a></li>
+  </ul></div>
+
+  <a name="cpy_description"></a><h3>Description</h3>
+	<p>Copies feature files created by <a href="#clp_ana" class="code">FEA.xtp ana</a> 
+	or <a href="#clp_imp" class="code">FEA.xtp imp</a> to the directory specified by
+	the <a href="util/cfg.itp.html#index:cfgk">configuration key</a> <code>uasr.dir.out</code>.
+	The program copies the files belonging to the data set specified by the cofiguration
+	key <code>uasr.dataset</code>. If this key is not specified, the files of the data set
+	named "all" will be copied. See the documentaion of <a
+  href="util/cfg.itp.html#clp_-CFG_get_flist" class="code">-GFG_get_flist</a> for a list
+	of valid data set identifiers.</p>
+
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+  
+  FEA.xtp cpy &lt;cfgfile&gt; [options]
+  </pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see section <a href="#usage">Usage</a> above).</p>
+	
+  <h4>Configuration</h4>
+  <p>The following table lists dedicated configuration keys and some important common keys (see section <a 
+  href="#configuration">Configuration</a> above). There are many more common keys. See documentation of <a
+  href="util/cfg.itp.html#index:cfgk" class="code">util/cfg.itp</a> for a complete list.</p>
+  <table cellpadding="3" class="indent" summary="">
+  	<tr><th>Key</th><th>Type</th><th>Default</th><th>Value</th></tr>
+  	<tr><td class="rowgroup" colspan="4">Dedicated keys to <code>FEA.xtp cpy</code></td></tr>
+  	<tr>
+  		<td nowrap><code>uasr.dataset</code></td><td>string</td><td>all</td>
+  		<td>Data set idendifier (see description above)</td>
+  	</tr>
+
+  	<tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+  	<tr><td class="rowgroup" colspan="4">Important common keys</td></tr>
+    <tr>
+    	<td><code>uasr.dir.out</code></td><td>string</td><td><code>&lt;uasr.dir.log&gt;</code></td>
+    	<td>The target folder</td>
+    </tr>
+    <caption>Dedicated and important common configuration keys</caption>
+  </table>
+
+  <h4>Examples</h4>
+  <pre class="code">
+  
+  FEA.xtp cpy myconfig.cfg -Pdir.out=mydir                 # Copy all files to mydir
+  FEA.xtp cpy myconfig.cfg -Pdir.out=mydir -Pdataset=train # Copy the training set only 
+  FEA.xtp cpy myconfig.cfg -Pdir.out=mydir -n -v2          # Say what to do but do not copy any files
+  </pre>
+
+  <h4>Verbose Levels</h4>
+	<p>The verbose level is defined by the command line option <code><b>-v</b>&lt;n&gt;</code>.</p>
+	<table cellpadding="3" class="indent" summary="">
+		<tr><th>n</th><th>Description      </th></tr>
+		<tr><td>1</td><td>Show progress bar (default)</td></tr>
+		<tr><td>2</td><td>Show file details</td></tr>
+	</table>
+
+	</div>
+	</div>
+
+  <!-- == FEA.xtp imp ====================================================== -->
+  <div id="clp_imp" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        FEA.xtp <span class="mid">imp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_imp','FEA.xtp imp','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>FEA.xtp <b>imp</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Import of external feature files</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+
+  <div class="indent"><ul class="linklist">
+  	<li class="linklist"><a href="#imp_description" class="linklist">Description</a></li>
+  </ul></div>
+
+  <a name="imp_description"></a><h3>Description</h3>
+	<p>Imports and labels primary feature vector files stored in the database in a third-party format. For this program to
+	do something useful you must overwrite the UASR functions <a href="util/fea.itp.html#clp_-FEA_import"
+  class="code">-FEA_import</a> and, occasionally, <a href="util/lab.itp.html#clp_-LAB_import">-LAB_import</a> to provide
+  appropriate import filters. Place the overwrites in the <a href="util/cfg.itp.html#index:dbinclude">database dependent
+  include file</a> or use the configuration key &lt;<a href="util/cfg.itp.html#index:cfgk"
+  class="code">uasr.customize</a>&gt; in order to load a customization script which contains the overwrites.</p>
+  <p>For details on the UASR model training scheme see section <a href="#description">Description</a> above.</p>
+
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+  
+  FEA.xtp imp &lt;cfgfile&gt; [options]
+  </pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see section <a href="#usage">Usage</a> above).</p>
+	
+  <a name="index:cfgFeai" title="Configuration Keys | FEA.xtp imp"></a>
+  <h4>Configuration</h4>
+  <p>The following table lists dedicated configuration keys and some important common keys (see section <a 
+  href="#configuration">Configuration</a> above). There are many more common keys. See documentation of <a
+  href="util/cfg.itp.html#index:cfgk" class="code">util/cfg.itp</a> for a complete list.</p>
+  <table cellpadding="3" class="indent" summary="">
+  	<tr><th>Key</th><th>Type</th><th>Default</th><th>Value</th></tr>
+  	<tr><td class="rowgroup" colspan="4">Dedicated keys to <code>FEA.xtp imp</code></td></tr>
+  	<tr>
+  		<td nowrap><code>uasr.sensor</code></td><td>string</td><td>""</td>
+  		<td>Name of sensor whose signals are to be processed <em>only</em> (does typically not apply to speech recognition).
+  		    Append "..." to process the specified and all following sensors.</td>
+  	</tr>
+  	<tr>
+  		<td nowrap><code>uasr.import.pfa.dir</code></td><td>string</td><td>""</td>
+  		<td>Path to import external feature files from (absolute or relative to current working directory).</td>
+  	</tr>
+  	<tr>
+  		<td nowrap><code>uasr.import.pfa.ext</code></td><td>string</td><td>""</td>
+  		<td>File extension of external feature files to import.</td>
+  	</tr>
+  	<tr>
+  		<td nowrap><span class="TODO">...</span></td><td> </td><td> </td><td> </td>
+  	</tr>
+
+  	<tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+  	<tr><td class="rowgroup" colspan="4">Important common keys</td></tr>
+    <tr>
+    	<td><code>uasr.customize</code></td><td>string</td><td> </td>
+    	<td>Custom include script (path absolute or relative to script accessing the key)</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.db</code></td><td>string</td><td>"vm"</td>
+    	<td>Data base name</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.db.include</code></td><td>string</td><td>"db/&lt;uasr.db&gt;.itp"</td>
+    	<td>Database dependent include script (path absolute or relative to script accessing the key)</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.exp</code></td><td>string</td><td>""</td>
+    	<td>Experiment code</td>
+    </tr>
+    <caption>Dedicated and important common configuration keys</caption>
+  </table>
+
+	</div>
+	</div>
+
+  <!-- ===================================================================== -->
+  <div class="footer">End of user documentation.</div>
+  <div id="reference" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar"><b>Reference</b>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('reference','Reference','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe2">
+
+  <!--}} CUSTOM_DOC -->
+  <a name="functions"></a><h3>Functions</h3>
+  <table cellSpacing="0" cellPadding="4" border="0">
+    <tr>
+      <td class="rowgroup" colSpan="2">Functions</td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-usage"><code class="link">-usage</code></a></td>
+      <td><code><b>-usage</b>(sCmd)</code><br>&nbsp;<br> Prints help on usage
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_ana"><code class="link">-CMD_ana</code></a></td>
+      <td><code><b>-CMD_ana</b></code><br>&nbsp;<br> Primary feature analysis
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_imp"><code class="link">-CMD_imp</code></a></td>
+      <td><code><b>-CMD_imp</b></code><br>&nbsp;<br> Import of external feature files
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_cpy"><code class="link">-CMD_cpy</code></a></td>
+      <td><code><b>-CMD_cpy</b></code><br>&nbsp;<br> Copying of feature files
+.
+      </td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <div id="clp_-usage">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-usage</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-usage','-usage','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-usage</b>(sCmd)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">FEA.xtp(41)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Prints help on usage
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sCmd</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-CMD_ana">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_ana</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_ana','-CMD_ana','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_ana</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">FEA.xtp(123)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Primary feature analysis
+
+  </div>
+  </div>
+  <div id="clp_-CMD_imp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_imp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_imp','-CMD_imp','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_imp</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">FEA.xtp(219)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Import of external feature files
+
+  </div>
+  </div>
+  <div id="clp_-CMD_cpy">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_cpy</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_cpy','-CMD_cpy','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_cpy</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">FEA.xtp(299)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Copying of feature files
+
+  </div>
+  </div>
+<div class="footer">End of page</div>
+</body>
+</html>
+

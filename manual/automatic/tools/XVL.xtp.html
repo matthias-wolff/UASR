@@ -1,0 +1,684 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<
+<    AUTHOR : n/a
+<    PACKAGE: manual
+<
+<    Copyright 2013 UASR contributors (see COPYRIGHT file)
+<    - Chair of System Theory and Speech Technology, TU Dresden
+<    - Chair of Communications Engineering, BTU Cottbus
+<
+<    This file is part of UASR.
+<
+<    UASR is free software: you can redistribute it and/or modify it under the
+<    terms of the GNU Lesser General Public License as published by the Free
+<    Software Foundation, either version 3 of the License, or (at your option)
+<    any later version.
+<
+<    UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+<    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+<    FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+<    more details.
+<
+<    You should have received a copy of the GNU Lesser General Public License
+<    along with UASR. If not, see [http://www.gnu.org/licenses/].
+-->
+<html>
+<head>
+  <meta http-equiv="Content-Type" content= "text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta name="description" content=   "UASR documentation - UASR script tools/XVL.xtp">
+  <meta name="author" content="">
+  <meta name="generator" content="UASR_DOC">
+  <title>UASR script tools/XVL.xtp</title>
+  <link rel=stylesheet type="text/css" href="../../default.css">
+</head>
+<script type="text/javascript" src="../../default.js"></script>
+<script type="text/javascript">__sRootPath="../../..";</script>
+<body>
+
+  <div id="clp_tools/XVL.xtp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        UASR script <span class="mid">tools/XVL.xtp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('','tools/XVL.xtp','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden">General</td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><nobr><b>XVL</b> $1 $2</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Author</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Matthias Wolff
+</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Synopsis</h3>
+    <p>Cross validation tool
+ </p>
+  <h3>Arguments</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>$1</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Command or 'help'
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>$2</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Configuration file or command (if $1 is 'help')
+
+      </td>
+    </tr>  </table>
+  <!--{{ CUSTOM_DOC -->
+	<a name="usage"></a><h3>Contents</h3>
+  <div class="indent"><ul class="linklist">
+    <li class="linklist"><a class="linklist" href="#usage">Usage</a></li>
+    <li class="linklist"><a class="linklist" href="#operation">Operation</a></li>
+    <li class="linklist"><a class="linklist" href="#configuration">Configuration</a></li>
+    <li class="linklist"><a class="linklist" href="#reference">Reference</a></li>
+  </ul></div>
+  
+	<a name="usage"></a><h3>Usage</h3>
+	<pre class="code">
+ dlabpro XVL.xtp &lt;command&gt; &lt;cfgfile&gt; [options]
+ dlabpro XVL.xtp help [&lt;command&gt;]</pre>
+
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td><b>$1</b>: command</td>
+			<td>Command, one of the following:<br>&nbsp;
+				<table class="indent" cellpadding="3" cellspacing="0">
+					<tr>
+						<td class="hidden"><a href="#clp_hmm" class="code"><b>hmm</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">HMM cross validation (see <a class="code" href="../HMM.xtp.html">HMM.xtp</a>)</td>
+					</tr>
+					<tr>
+						<td class="hidden"><a href="#clp_svm" class="code"><b>svm</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">SVM cross validation (see <a class="code" href="../SVM.xtp.html">SVM.xtp</a>)</td>
+					</tr>
+          <tr>
+            <td class="hidden"><a href="#clp_ccc" class="code"><b>ccc</b></a></td>
+            <td class="hidden">-</td>
+            <td class="hidden">CCC cross validation (see <a class="code" href="../CCC.xtp.html">CCC.xtp</a>)</td>
+          </tr>
+					<tr>
+						<td class="hidden"><a href="#clp_cln" class="code"><b>cln</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden"><em>reserved</em> Clean up</td>
+					</tr>
+				</table><br>
+				or "help"
+			</td>
+		</tr>
+		<tr>
+			<td><b>$2</b>: cfgfile</td>
+			<td>UASR <a href="../util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+
+	  <tr><td class="rowgroup" colspan="2">Options</td></tr>
+		<tr>
+			<td><b>-h</b>, <b>--help</b></td>
+			<td>Display help and exit</td>
+		</tr>
+		<tr>
+			<td><b>-n</b></td>
+  		<td>Do no actual model training, just say what do</td>
+		</tr>
+		<tr>
+			<td><b>-P</b>&lt;key&gt;=&lt;value&gt;</td>
+			<td>Define or override <a href="../util/cfg.itp.html#index:cfgk">configuration key-value pairs</a></td>
+		</tr>
+		<tr>
+			<td><b>-v</b>&lt;n&gt;</td>
+  		<td>Verbose level
+  			<table>
+  				<tr><td class="hidden">-v1&nbsp;&nbsp;&nbsp;</td><td class="hidden">minimal screen protocol (default)</td></tr>
+  				<tr><td class="hidden">-v2</td><td class="hidden">extended screen protocol</td></tr>
+  				<tr><td class="hidden">-v3</td><td class="hidden">even more screen protocol, program may break</td></tr>
+  			</table>
+  		</td>
+		</tr>
+	  <tr><td class="hidden" colspan="2"><span class="small">There are further, individual options to the commands.</span></td></tr>
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+	</table>
+
+  <a name="operation"></a><h3>Operation</h3>
+  <p>Depending on the command (argument <code>$1</code>), <code>XVL.xtp</code> sequentially runs multiple instances of
+  the <a class="code" href="../HMM.xtp.html">HMM.xtp</a>, <a class="code" href="../SVM.xtp.html">SVM.xtp</a> or
+  <a class="code" href="../CCC.xtp.html">CCC.xtp</a>, each time with different, disjoint training and test sets.
+  These sets are drawn from a special cross validation <a href="../util/cfg.itp.html#index:flists">file list</a>
+  according to the following scheme:</p>
+  <p><table class="indent">
+    <tr><td class="hidden">Partition 1:</td>                                                     <th>test</th><td colspan="4" style="text-align:center">train.</td></tr>
+    <tr><td class="hidden">Partition 2:</td><td colspan="1" style="text-align:center">train.</td><th>test</th><td colspan="3" style="text-align:center">train.</td></tr>
+    <tr><td class="hidden">Partition 3:</td><td colspan="2" style="text-align:center">train.</td><th>test</th><td colspan="2" style="text-align:center">train.</td></tr>
+    <tr><td class="hidden">Partition 4:</td><td colspan="3" style="text-align:center">train.</td><th>test</th><td colspan="1" style="text-align:center">train.</td></tr>
+    <tr><td class="hidden">Partition 5:</td><td colspan="4" style="text-align:center">train.</td><th>test</th>                                                     </tr>
+  </table></p>
+  <p>If no cross validation file list is provided, the complete data set (<code>all.flst</code>) will be used instead.</p>
+  <p>Applications may overwrite <a class="code" href="../train/am.itp.html#clp_-XVL_partition">-XVL_partition</a> in order
+  to implement custom cross validation schemes.</p>
+
+  <a name="configuration"></a><h3>Configuration</h3>
+	<p><code>XVL.xtp</code> is configured through a <a href="../util/cfg.itp.html#index:cfgf">UASR configuration
+  file</a> (argument <code>$2</code>). The configuration file is a Java properties file containing key-value-pairs.
+  The common configuration keys are described with the utility script <a class="code"
+  href="../util/cfg.itp.html#index:cfgk">cfg.itp</a> (see there). There are some dedicated configuration keys which are
+  listed below. Dedicated keys may be placed in the configuration file just like all other keys. Any key
+  (common and dedicated) may be specified or overwritten through the command line using
+  <nobr><code><b>-P</b>&lt;key&gt;=&lt;value&gt;</code></nobr> options:</p>
+  <pre class="code">
+ dlabpro XVL.xtp hmm $UASR_HOME/config/vm/VMV.cfg -P&lt;key&gt;=&lt;value&gt;</pre>
+  <p><code>-P</code> options <em>always</em> overwrite the configuration file. The heading "<code>uasr.</code>" of the
+	keys may be omitted in <code>-P</code> options.</p>
+
+  <table cellpadding="3" class="indent">
+  	<tr><th>Key</th><th>Type</th><th>Default</th><th>Value</th></tr>
+  	<tr><td class="rowgroup" colspan="4">Dedicated keys to <code>XVL.xtp</code></td></tr>
+  	<tr>
+  		<td nowrap><code>uasr.xvl.test</code></td><td>number</td><td>&nbsp;</td>
+  		<td>Size of test sets to be draw from the cross validation file list (the remaining files form the training set)</td>
+  	</tr>
+    <tr>
+      <td nowrap><code>uasr.xvl.flist.stat</code></td><td>String</td><td>&nbsp;</td>
+      <td>Common statistics set for all cross validation parts (individual training sets of parts will be used if omitted)</td>
+    </tr>
+    <tr>
+      <td nowrap><code>uasr.xvl.flist.stat_t</code></td><td>String</td><td>&nbsp;</td>
+      <td>Common linear feature transformation statistics set for all cross validation parts (individual training sets of parts will be used if omitted)</td>
+    </tr>
+    <tr>
+      <td nowrap><code>uasr.part</code></td><td>number</td><td>&nbsp;</td>
+      <td>Only process one single partition (omit to process all partitions)</td>
+    </tr>
+    <tr>
+      <td nowrap><code>uasr.dlabpro</code></td><td>string</td><td>"dlabpro"</td>
+      <td>dLabPro executable to call</td>
+    </tr>
+
+    <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+    <tr><td class="rowgroup" colspan="4">Important common keys</td></tr>
+    <tr>
+      <td><code>uasr.flist.xval</code></td><td>string</td><td></td>
+      <td>Cross validation <a href="../util/cfg.itp.html#index:flists">file list</a></td>
+    </tr>
+    <tr>
+      <td><code>uasr.flist.sep</code></td><td>string</td><td>"\t "</td>
+      <td>File list column separator characters</td>
+    </tr>
+  </table>
+ 
+  <!-- <h3>Description</h3> -->
+
+  </div>
+  </div>
+
+  <!-- == XVL.xtp hmm ====================================================== -->
+  <div id="clp_hmm" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        XVL.xtp <span class="mid">hmm</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_hmm','XVL.xtp hmm','..');"><img src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>XVL.xtp <b>hmm</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">HMM cross validation</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <span class="TODO">[<b>TODO:</b> Write manual]</span>
+	</div>
+	</div>
+
+  <!-- == XVL.xtp svm ====================================================== -->
+  <div id="clp_svm" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        XVL.xtp <span class="mid">svm</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_svm','XVL.xtp svm','..');"><img src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>XVL.xtp <b>svm</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">SVM cross validation</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <span class="TODO">[<b>TODO:</b> Write manual]</span>
+	</div>
+	</div>
+
+  <!-- ===================================================================== -->
+  <div class="footer">End of user documentation.</div>
+  <div id="reference" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar"><b>Reference</b>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('reference','Reference','../..');"><img src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe2">
+
+  <!--}} CUSTOM_DOC -->
+  <a name="functions"></a><h3>Functions</h3>
+  <table cellSpacing="0" cellPadding="4" border="0">
+    <tr>
+      <td class="rowgroup" colSpan="2">Functions</td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-usage"><code class="link">-usage</code></a></td>
+      <td><code><b>-usage</b>(sCmd)</code><br>&nbsp;<br> Prints help on usage
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-XVL"><code class="link">-XVL</code></a></td>
+      <td><code><b>-XVL</b>(sMode)</code><br>&nbsp;<br> Cross validation
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_hmm"><code class="link">-CMD_hmm</code></a></td>
+      <td><code><b>-CMD_hmm</b></code><br>&nbsp;<br> HMM cross validation
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_svm"><code class="link">-CMD_svm</code></a></td>
+      <td><code><b>-CMD_svm</b></code><br>&nbsp;<br> SVM cross validation
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_ccc"><code class="link">-CMD_ccc</code></a></td>
+      <td><code><b>-CMD_ccc</b></code><br>&nbsp;<br> CCC cross validation
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_rmt"><code class="link">-CMD_rmt</code></a></td>
+      <td><code><b>-CMD_rmt</b></code><br>&nbsp;<br> CCC cross validation
+.
+      </td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <div id="clp_-usage">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-usage</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-usage','-usage','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-usage</b>(sCmd)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/XVL.xtp(43)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Prints help on usage
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sCmd</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-XVL">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-XVL</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-XVL','-XVL','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-XVL</b>(sMode)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/XVL.xtp(101)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Cross validation
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sMode</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          "hmm", "svm", or "ccc"
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> 0
+
+  </div>
+  </div>
+  <div id="clp_-CMD_hmm">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_hmm</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_hmm','-CMD_hmm','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_hmm</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/XVL.xtp(215)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> HMM cross validation
+
+  </div>
+  </div>
+  <div id="clp_-CMD_svm">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_svm</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_svm','-CMD_svm','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_svm</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/XVL.xtp(221)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> SVM cross validation
+
+  </div>
+  </div>
+  <div id="clp_-CMD_ccc">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_ccc</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_ccc','-CMD_ccc','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_ccc</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/XVL.xtp(227)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> CCC cross validation
+
+  </div>
+  </div>
+  <div id="clp_-CMD_rmt">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_rmt</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_rmt','-CMD_rmt','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_rmt</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/XVL.xtp(233)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> CCC cross validation
+
+  </div>
+  </div>
+<div class="footer">End of page</div>
+</body>
+</html>
+

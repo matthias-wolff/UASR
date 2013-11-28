@@ -1,0 +1,355 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: For dLabPro class fst
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Returns the index of the weight component in the transition table or -1 if
+## no such component exists.
+##
+## @cgen:index
+## @param itSrc fst
+##          FST instance to seek weight component in
+## @return number
+##          The component index
+function -FST_get_icw(itSrc)
+{
+  var nIcW;
+  itSrc.NC_TD_PSR itSrc.td -find_comp nIcW =; nIcW 0 >= if nIcW return; end
+  itSrc.NC_TD_LSR itSrc.td -find_comp nIcW =; nIcW 0 >= if nIcW return; end
+  itSrc.NC_TD_TSR itSrc.td -find_comp nIcW =; nIcW 0 >= if nIcW return; end
+  -1 return;
+}
+
+## Computes the Levenshtein distance between two finite state machines.
+##
+## @cgen:index
+## @param itSrc1 fst
+##          Automaton 1
+## @param itSrc2 fst
+##          Automaton 2
+## @param nUnit1 number
+##          Unit index of automaton 1
+## @param nUnit2 number
+##          Unit index of automaton 2
+## @param idCost data
+##          Symbol match cost matrix. May be <code>NULL</code> in order to use
+##          the standard costs (3 for insertions/deletions and 4 for
+##          subsitutions). Otherwise <code>idCost</code> is expected to be a
+##          <i>N</i>-by-<i>N</i> matrix (where <i>N</i> is the size of the
+##          transducer input alphabet excluding the epsilon symbol) specifying
+##          the symbol match costs. <code>idCost.descr0</code> must contain the
+##          insertion and deletion cost.
+## @param idConf data
+##          Symbol confusion matrix (may be <code>NULL</code>). 
+##          The matrix is expected to contain at least <i>X<sub></i>1</sub>+1
+##          records and <i>X</i><sub>2</sub>+1 components (all numeric), where
+##          <i>X</i><sub>1</sub> denotes the size of the input alphabet of
+##          <code>itSrc1</code> and <i>X</i><sub>2</sub> the size of the
+##          input alphabet of <code>itSrc2</code>, respectively. The values in
+##          record <i>i</i> count the input symbols from <code>itSrc2</code>
+##          which where matched on the input symbol <i>x<sub>i</sub></i> from
+##          <code>itSrc2</code>. The values in component <i>j</i> count the
+##          input symbols from <code>itSrc1</code> which where matched on the
+##          input symbol <i>x<sub>j</sub></i> from <code>itSrc1</code>. The
+##          last record/component counts symbols matched on the epsilon symbol,
+##          i.e. which where deleted.
+## @param idDst data
+##          Data instance to be filled with detailed result (may be
+##          <code>NULL</code>).
+## @return number
+##          The Levenshtein distance or a negative number in case of errors.
+function -FST_lvnstn(itSrc1,itSrc2,nUnit1,nUnit2,idCost,idConf,idDst)
+{
+  fst  itA;                                                                     # Left unit
+  fst  itB;                                                                     # Right unit
+  fst  itAxB;                                                                   # Cartesian product A x B
+  data idC;                                                                     # Symbol distance matrix
+  data idAux;                                                                   # Auxilary data instance #1
+  var  nT;                                                                      # Current transition
+  var  nTisA;                                                                   # Current left input symbol
+  var  nTisB;                                                                   # Current right input symbol
+  var  I;                                                                       # No. insertions (for legibility)
+  var  D;                                                                       # No. deletions (for legibility)
+  var  S;                                                                       # No. substitutions (for legibility)
+  var  N;                                                                       # No. ref. symbols (for legibility)
+  var  M;                                                                       # No. symbols (for legibility)
+  
+  ## Initialize - Prepare result instance                                       # -------------------------------------
+  idDst.dim 7 != if                                                             # Not continuing output table >>
+    "I" -type long   idDst -addcomp;                                            #   Insertions
+    "D" -type long   idDst -addcomp;                                            #   Deletions
+    "S" -type long   idDst -addcomp;                                            #   Substitutions
+    "N" -type long   idDst -addcomp;                                            #   Number of symbols (reference)
+    "C" -type double idDst -addcomp;                                            #   Correctness
+    "A" -type double idDst -addcomp;                                            #   Accuracy
+    "L" -type double idDst -addcomp;                                            #   Lattice density
+  end                                                                           # <<
+  idDst.nrec ++ idDst -reallocate;                                              # Add one new record
+
+  ## Copy desired unit from left operand and remove all quali except TIS        # -------------------------------------
+  itSrc1 NULL nUnit1 itA -copy_ui;                                              # Copy unit from left operand
+  0 0 itA -trim;                                                                # Remove unconnected states
+  itA.td.nrec 0 == if                                                           # Nothing left after trimming >>
+    "unit $[nUnit1] of $[itSrc1] is empty or invalid" -ERROR;                   #   Error
+    INF return;                                                                 #   Infinite Levenshtein distance
+  end                                                                           # <<
+  itA.td itA.NC_TD_TIS itA.td -find_comp 1 idAux -select;                       # Find and copy input symbol component
+  itA.td 0 itA.IC_TD_DATA itA.td -select;                                       # Remove all transition qualifications
+  idAux -1 max 1 + idAux =;                                                     # Limit TIS index to -1 and add 1
+  idAux itA.td -join;                                                           # Restore input symbols
+  itA.td.nrec N =; N idDst.nrec -- 3 idDst -dstore;                             # Store no. of symbols (reference, N)
+  0 itA -loops { 0 };                                                           # Add epsilon loops for comparison
+
+  ## Copy desired unit from right operand and remove all quali except TIS       # -------------------------------------
+  itSrc2 NULL nUnit2 itB -copy_ui;                                              # Copy unit from right operand
+  0 0 itB /noerror -trim;                                                       # Remove unconnected states
+  itB.td.nrec 0 == if                                                           # Nothing left after trimming >>
+    "unit $[nUnit2] of $[itSrc2] is empty or invalid" -ERROR;                   #   Error
+    INF return;                                                                 #   Infinite Levenshtein distance
+  end                                                                           # <<
+  itB.td itB.NC_TD_TIS itB.td -find_comp 1 idAux -select;                       # Find and copy input symbol component
+  itB.td 0 itB.IC_TD_DATA itB.td -select;                                       # Remove all transition qualifications
+  idAux -1 max 1 + idAux =;                                                     # Limit TIS index to -1 and add 1
+  idAux itB.td -join;                                                           # Restore input symbols
+  0 itB -loops { 0 };                                                           # Add epsilon loops for comparison
+
+  ## Make symbol match cost matrix                                              # -------------------------------------
+  idCost NULL != if                                                             # Cost matrix committed? YES >>
+		:idCost[0,0]: -1 != if;                                                     #   Cost matrix not on the fly ? >>
+	    idCost idC -copy;                                                         #     Copy it
+  	  idC.nrec ++ idC -reallocate; idC 1 idC /rec -shift;                       #     Insert heading record (insertion)
+    	"" 0 idC -get_comp_type 0 idC -insertcomp;                                #     Insert heading component (deletion)
+		else                                                                        #   << Else (on the fly) >>
+			idC -reset;                                                               #     Clear idC
+    	3 idC -set descr0;                                                        #     Set insertion/deltion cost
+		end                                                                         #   <<
+  else                                                                          # << NO >> (make one)
+    itA.td idAux -copy; itB.td idAux -cat;                                      #   Cat transition tables of operands
+    idAux NULL 0 "max" idAux /rec -aggregate;                                   #   Get componentwise maximum
+    idAux [ 0 2 ] ++ unit idC =;                                                #   Create unit matrix
+    idC -4 * 4 + idC =;                                                         #   Fill with 4 (except main diagonal)
+    3 idC -set descr0;                                                          #   Set insertion/deletion cost
+  end                                                                           # <<
+	idC -is_empty not if;                                                         # Costs not on the fly ? >>
+	  0 1 idC      -mark; idC.descr0 0 idC /mark -fill; idC -unmark;              #   Fill component #0 with insertion cost
+  	0 1 idC /rec -mark; idC.descr0 0 idC /mark -fill; idC -unmark;              #   Fill record #0 with deletion cost
+	end                                                                           # <<
+  
+  ## Do DP                                                                      # -------------------------------------
+  itA itB 0 0 itAxB /noloops -product;                                          # Cartesian product A x B
+  0 0 itAxB -trim;                                                              # (not essential)
+	idC -is_empty if;                                                             # Costs on the fly ? >>
+		data idTIS1; itAxB.td 2 1 idTIS1 -select;                                   #   Get input symbols #1
+		data idTIS2; itAxB.td 3 1 idTIS2 -select;                                   #   Get input symbols #2
+		idTIS1 0 .> idTIS2 0 .> .&& idTIS1 idTIS2 .!= .&& 4 .* idAux =;             #   Substition costs
+		idTIS1 0 .== idTIS2 0 .== .|| idC.descr0 .* idAux + idAux =;                #   Insertion/deletion costs
+		idAux -type double idAux -tconvert;                                         #   Convert to wtype of fst
+	else                                                                          # << Else (not on the fly) >>
+	  itAxB.td 2 itAxB.td 3 idC idAux -lookup_2;                                  #   Lookup transition weights ...
+	end                                                                           # <<
+	0 itAxB.NC_TD_TSR idAux -set_cname;                                           # ... which are tropical
+  idAux itAxB.td -join;                                                         # Join weights to transition list
+  0 "~W" idAux -set_cname; idAux itAxB.td -join;                                # Again for subsitution detection
+  fstsearch iS;                                                                 # Create and initialize search processor
+  "as"   iS -set algo;                                                          # |
+  "none" iS -set as_aheutype;                                                   # |
+  "t"    iS -set bt;                                                            # |
+  itAxB 0 NULL itAxB iS -search;                                                # Find best path
+
+  ## Continue confusion matrix                                                  # -------------------------------------
+  idConf NULL != if                                                             # Have confusion matrix ? >> (YES)
+    idConf -is_empty not if                                                     #   Which has been prepated ? >> (YES)
+      0 nT =; label L_T; nT itAxB.td.nrec < if                                  #     Loop over result transitions >>
+        nT 2 itAxB.td -dfetch nTisA =;                                          #       Record = left input symbol
+        nT 3 itAxB.td -dfetch nTisB =;                                          #       Component = right input symbol
+        nTisA 0 == if idConf.nrec -- nTisA =; else nTisA --=; end               #       Epsilon is last record
+        nTisB 0 == if idConf.dim  -- nTisB =; else nTisB --=; end               #       Epsilon is last component
+        nTisA nTisB idConf -dfetch ++ nTisA nTisB idConf -dstore;               #       idConf[nTisA,nTisB]++
+        nT ++=; goto L_T;                                                       #       End of loop
+      end                                                                       #     <<
+    end                                                                         #   <<
+  end                                                                           # <<
+  
+  ## Aftermath - Count insertions, deletions and substitutions                  # -------------------------------------
+  itAxB.td 0 "==" idAux -scalop;                                                # Mark epsilon symbols (here index 0!!)
+  :itAxB.td["~W"].>idC.descr0: idAux -join;                                     # Mark subsitutions (missmatch and !=0)
+  idAux NULL 0 "sum" idAux /rec -aggregate;                                     # Count 'em
+  idAux [ 0 2 ] I =; I idDst.nrec -- 0 idDst -dstore;                           # Store insertions
+  idAux [ 0 3 ] D =; D idDst.nrec -- 1 idDst -dstore;                           # Store deletions
+  idAux [ 0 6 ] S =; S idDst.nrec -- 2 idDst -dstore;                           # Store substitutions
+
+  ## Aftermath - Compute correctness, accuracy and lattice density              # -------------------------------------
+  N D - I +         M =;                                                        # No. of rec. symbols
+  N D - S -     N / idDst.nrec -- 4 idDst -dstore;                              # Correctness
+  N D - S - I - N / idDst.nrec -- 5 idDst -dstore;                              # Accuracy
+  M             N / idDst.nrec -- 6 idDst -dstore;                              # Lattice density
+
+  ## Aftermath - Compute Levenshtein distance                                   # -------------------------------------
+  itAxB.td NULL 0 "sum" idAux /rec -aggregate;                                  # Aggregate local distances
+  idAux [ 0 4 ] return;                                                         # Return global distance
+}
+
+## <p>Renders an FST as SVG graphic.</p>
+## <h4>Remarks</h4>
+## <ul>
+##   <li>The function requires the <code>dot</code> utility by AT&T. The path
+##      environment variable should include the location of this program.</li>
+##   <li>The function will not render other transition qualifications than
+##     input symbols, output symbols and weights!</li>
+##   <li>The function will order the transition qualifications as follows:
+##     1. input symbols, 2. output symbols, 3. Weights. If one or serveral of
+##     these are not present, the function will omit them.</li>
+## </ul>
+##
+## @cgen:index
+## @param sFname string
+##          Name of output file (relative or full path)
+## @param idTisTab data
+##          Lookup table of transducer input symols, may be <code>NULL</code>.
+##          Function will replace the input symbol indices by symbols looked up
+##          from the first component of <code>idTisTab</code> for rendering.
+## @param idTosTab data
+##          Lookup table of transducer output symols, may be <code>NULL</code>.
+##          Function will replace the output symbol indices by symbols looked
+##          up from the first component of <code>idTosTab</code> for rendering.
+## @param nUnit number
+##          Zero-based index of FST-unit to be rendered.
+## @param itSrc fst
+##          FST to be rendered.
+## @return void
+function -FST_render(sFname,idTisTab,idTosTab,nUnit,itSrc)
+{
+  sFname idTisTab idTosTab nUnit "svg" itSrc -FST_render_ex;
+}
+
+## <p>Renders an FST as graphic.</p>
+## <h4>Remarks</h4>
+## <ul>
+##   <li>The function requires the <code>dot</code> utility by AT&T. The path
+##      environment variable should include the location of this program.</li>
+##   <li>The function will not render other transition qualifications than
+##     input symbols, output symbols and weights!</li>
+##   <li>The function will order the transition qualifications as follows:
+##     1. input symbols, 2. output symbols, 3. Weights. If one or serveral of
+##     these are not present, the function will omit them.</li>
+## </ul>
+##
+## @cgen:index
+## @param sFname string
+##          Name of output file (relative or full path)
+## @param idTisTab data
+##          Lookup table of transducer input symols, may be <code>NULL</code>.
+##          Function will replace the input symbol indices by symbols looked up
+##          from the first component of <code>idTisTab</code> for rendering.
+##          If it is <code>NULL</code> the input symbol table of <code>itSrc</code> is used.
+## @param idTosTab data
+##          Lookup table of transducer output symols, may be <code>NULL</code>.
+##          Function will replace the output symbol indices by symbols looked
+##          up from the first component of <code>idTosTab</code> for rendering.
+##          If it is <code>NULL</code> the output symbol table of <code>itSrc</code> is used.
+## @param nUnit number
+##          Zero-based index of FST-unit to be rendered.
+## @param sFormat string
+##          One of the following<br>
+##          <table class="indent" cellpadding="2">
+##            <tr><th><code>sFormat</code></th><th>Description</th></tr>
+##            <tr><td><code>"png"  </code></td><td>Portable Network Graphics (pixel) </td></tr>
+##            <tr><td><code>"ps"   </code></td><td>Postscript Graphics (EPSF, vector)</td></tr>
+##            <tr><td><code>"svg"  </code></td><td>Scalable Vector Graphics (vector) </td></tr>
+##          </table>
+## @param itSrc fst
+##          FST to be rendered.
+## @return void
+function -FST_render_ex(sFname,idTisTab,idTosTab,nUnit,sFormat,itSrc)
+{
+  function -sym_lookup(idS,idSTab,itAux)
+  {
+    data idRet;
+    idSTab -is_empty if
+      idS idRet =;
+    else
+      idSTab.dim itAux.ud.dim == if
+        itAux.ud itAux.IC_UD_NAME itAux.IC_UD_FT itAux.IC_UD_XT idRet -expand;
+        idS 0 idRet 0 itAux.is idRet -lookup_2 { "-" };
+      else
+        idS 0 idSTab 0 1 idRet -lookup { "-" };
+      end
+    end
+    idRet return;
+  }
+  fst  itAux;                                                                   # Auxilary automaton instance #1
+  data idTd;                                                                    # Revamped transition table
+  data idAux;                                                                   # Auxilary data instance #1
+  var  nIcTis;                                                                  # Input symbol comp. in transition tab.
+  var  nIcTos;                                                                  # Output symbol comp.in transition tab.
+  var  nIcW;                                                                    # Weight component in transition table
+  var  nIcStk;                                                                  # Stack token component in trans. table
+  
+  ## Copy unit to render and get some component indices                         # -------------------------------------
+  nUnit 0 >= if                                                                 # Render particulat unit ? (Yes) >>
+    itSrc NULL nUnit itAux -copy_ui;                                            #   Copy unit
+  else                                                                          # << (No) >>
+    itSrc itAux -copy;                                                          #   Copy all units
+  end                                                                           # <<
+  itAux.NC_TD_TIS itAux.td -find_comp nIcTis =;                                 # Find input symbol component
+  itAux.NC_TD_TOS itAux.td -find_comp nIcTos =;                                 # Find output symbol component
+  itAux -FST_get_icw                  nIcW   =;                                 # Find weight component
+  "~STK" itAux.td -find_comp          nIcStk =;                                 # Find stack token component
+  
+  ## Replace symols and rearrange transition table components                   # -------------------------------------
+  nIcTis 0 >= if
+    idTisTab NULL != if idTisTab itAux.is = end;
+    :itAux.td[nIcTis]: itAux.is itAux -sym_lookup idTd -join;
+  end  
+  nIcTos 0 >= if
+    nIcTis 0 >= if
+      2 1 itAux.td.nrec idAux -array;
+      idAux 0 NULL 0 1 idAux -lookup { ":" };
+      idAux idTd -join;
+    end
+    idTosTab NULL != if idTosTab itAux.os = end;
+    :itAux.td[nIcTos]: itAux.os itAux -sym_lookup idTd -join;
+  end  
+  nIcStk 0 >= if                                                                # Have stack tokens >>
+    :sign(itAux.td[nIcStk])+1: 0 { ":-" "" ":+" } ' 0 1 idAux -lookup { "" };   #   Make pop, no-op, or push prefix
+    idAux idTd -join;                                                           #   Join to transition description
+    :abs(itAux.td[nIcStk]): itAux.stk itAux -sym_lookup idTd -join;             #   Look up stack token name
+  end                                                                           # <<
+  nIcW 0 >= if                                                                  # Weighted automaton? Yes >>
+    nIcTis 0 >= nIcTos 0 >= || nIcStk 0 >= || if                                #   Have any symbols? Yes >>
+      2 1 itAux.td.nrec idAux -array;                                           #     Create add'tl trans. quali.
+      idAux 0 NULL 0 1 idAux -lookup { "|" };                                   #     Fill with "|" (UNDOC'ED FEATURE!)
+      idAux idTd -join;                                                         #     Append to new trans. quali. inst.
+    end                                                                         #   <<
+    itAux.td nIcW 1 idAux -select;                                              #   Copy weights
+    :idAux=ent(idAux*1000+0.5)/1000;                                            #   Limit precision
+    idAux idTd -join;                                                           #   Append to new trans. quali. inst.
+  end                                                                           # <<
+  itAux.td 2 itAux.td.dim 2 - itAux.td -delete;                                 # Clear trans.quali. except adj.states
+  idTd itAux.td -join;                                                          # Join vamped up transition quali.
+
+  ## Render                                                                     # -------------------------------------
+  sFname sFormat itAux stdfile -export;                                         # Export in specified format
+}
+
+## EOF

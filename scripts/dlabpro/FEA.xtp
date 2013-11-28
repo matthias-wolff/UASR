@@ -1,0 +1,368 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Primary feature analysis and import
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro
+##
+## ARGUMENTS:
+##   $1: Command or 'help'
+##   $2: Setup file or, if 1st arg. is 'help', command
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"util/cfg.itp"  include;                                                        # Include configuration utilities
+"util/fea.itp"  include;                                                        # Include feature utilities
+"util/lab.itp"  include;                                                        # Include label utilities
+"util/os.itp"   include;                                                        # Include OS utilities
+"util/sig.itp"  include;                                                        # Include signal utilities
+"util/spp.itp"  include;                                                        # Include signal preprocessing utilities
+"util/uasr.itp" include;                                                        # Include UASR utilities
+"util/var.itp"  include;                                                        # Include variables' utilities
+
+## Prints help on usage
+function -usage(sCmd)
+{
+  "\n"                                                                    -MSG;
+  sCmd "ana" == if
+      "\n   ana: Primary feature analysis"                                -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp ana <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -n              do not write output files"                  -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+    "\n\n   REMARKS:"                                                     -MSG;
+      "\n     Special <key>s for $__SFILE__:"                             -MSG;
+      "\n       sigexp: \"wav\" export signals as wave-files"             -MSG;
+      "\n               \"dn3\" export signals as DNorm-3-files"          -MSG;
+      "\n               (exported files go into log folder)"              -MSG;
+      "\n       sensor: Name of sensor whose signals are to be processed" -MSG;
+      "\n               only. Append '...' to process from start sensor." -MSG;
+      "\n               (does typically not apply to speech recognition)" -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp ana $UASR_HOME/config/vm/VM.cfg"             -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "cpy" == if
+      "\n   cpy: Copying of feature files"                                -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp cpy <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -n              do not write output files"                  -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+    "\n\n   REMARKS:"                                                     -MSG;
+      "\n     Special <key>s for $__SFILE__ cpy:"                         -MSG;
+      "\n       dataset: data set to copy, e. g. all, train, test, etc."  -MSG;
+                         " (default: all)"                                -MSG;
+      "\n     Important common <key>s for $__SFILE__ cpy:"                -MSG;
+      "\n       dir.out: target directory to copy the feature files to"   -MSG;
+                         " (default: dir.log)"                            -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp cpy default.cfg -Pdir.out=myhome/mydir"      -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "imp" == if
+      "\n   imp: Import of external feature files"                        -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp imp <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -n              do not write output files"                  -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+    "\n\n   REMARKS:"                                                     -MSG;
+      "\n     Special <key>s for $__SFILE__:"                             -MSG;
+      "\n       sensor: Name of sensor whose signals are to be processed" -MSG;
+      "\n               only. Append '...' to process from start sensor." -MSG;
+      "\n               (does typically not apply to speech recognition)" -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp imp mydatabase/common/info/default.cfg"      -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+    "\n   SYNOPSIS:"                                                      -MSG;
+    "\n     FEA: Primary feature analysis and import"                     -MSG;
+  "\n\n   USAGE:"                                                         -MSG;
+    "\n     dlabpro $__SFILE__.xtp <command> [arguments] [options]"       -MSG;
+  "\n\n   COMMANDS:"                                                      -MSG;
+    "\n     ana - Primary feature analysis"                               -MSG;
+    "\n     imp - Import of external feature files"                       -MSG;
+  "\n\n  Type 'dlabpro $__SFILE__.xtp help <command>' for help on a "     -MSG;
+         "specific command."                                              -MSG;
+    "\n"                                                                  -MSG;
+  0 return;
+}
+
+## Primary feature analysis
+function -CMD_ana()
+{
+  ## Variables                                                                  # -------------------------------------
+  file iF;                                                                      # File list for signal analysis
+  data idSig;                                                                   # Signal data (for WAV export)
+  data idFea;                                                                   # Feature data
+  data idSns;   -SNS_get_tab                   idSns   =;                       # Get sensor table
+  var  sSigExp; "sigexp" ""    "S" -CFG_get_ex sSigExp =;                       # Export signal files format
+  var  bPm;     "fea.pm" FALSE     -CFG_get    bPm     =;                       # Pitch sync. feature analysis?
+  var  bF0;     "fea.f0" FALSE     -CFG_get    bF0     =;                       # Use fundamental frequency as feature?
+  var  nE;                                                                      # Number of skipped files
+  var  nSns;                                                                    # Current sensor index
+  var  nCst;                                                                    # Current sample time [s]
+  var  nTst;                                                                    # Total sample time [s]
+  var  sF;                                                                      # File name
+  var  sSns;                                                                    # Current sensor name
+
+  ## Initialize                                                                 # -------------------------------------
+  "\n\n// PRIMARY FEATURE ANALYSIS"                                       -MSG; # Protocol
+  "sig" "" -CFG_get_path;                                                       # Echo signal files path
+  "lab" "" -CFG_get_path;                                                       # Echo label files path
+  "fea" "" -CFG_get_path;                                                       # Echo feature files path
+  ( "flist.sep" "\t " "S" -CFG_get_ex ) iF set sep;                             # Set file list separator(s)  
+  "all" "" -CFG_get_flist iF set flist;                                         # Signal files list
+  "\n   - Use pitchmarks: " bPm         if "yes"   else "no"  end +       -MSG; # Protocol
+  "\n   - Use f0        : " bF0         if "yes"   else "no"  end +       -MSG; # Protocol
+  "\n   - Export signals: " sSigExp     if sSigExp else "no"  end +       -MSG; # Protocol
+  "\n   - Write features: " .__CFG_bNwr if "no"    else "yes" end +       -MSG; # Protocol
+
+  ## Sensor loop                                                                # -------------------------------------
+  :idSns[0,0]: if "\n// No. of sensors  : $[idSns.nrec]" -MSG; end              # Protocol
+  label L_SNS;                                                                  # Loop over sensors
+
+    ## File loop                                                                #   - - - - - - - - - - - - - - - - - -
+    0 nE =;                                                                     #   Reset error counter
+    "\n" -MSG; :idSns[nSns,0]: if "\n   Sensor ${idSns[nSns,0]}" -MSG; end      #   Protocol
+    "\n   Feature analysis of $[iF.len] signal files ..."                 -MSG; #   Protocol
+    0 1 -PBAR;                                                                  #   Begin progress bar
+    iF -reset; label L_FILE; iF -next if                                        #   Loop over files >>
+
+      "\n"                                                             3 -MSGX; #     Protocol
+      "\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "                 -MSG2; #     Protocol
+      :(iF.nfile+1)/iF.len: 1 -PBAR;                                            #     Display progress
+
+      ## Get primary feature vectors                                            #     . . . . . . . . . . . . . . . . .
+      stdprof -begin_timer;                                                     #     Start measuring time
+      iF "${idSns[nSns,0]}" "S" idFea -FEA_get not if nE ++=; goto L_FILE; end  #     Get primary feature vectors
+      "" stdprof -end_timer;                                                    #     Stop measuring time
+      "." -MSG2;                                                                #     Protocol
+
+      ## Save primary feature file                                              #     . . . . . . . . . . . . . . . . .
+      .__CFG_bNwr not if                                                        #     Saving feature vector file >>
+         "${idSns[nSns,0]}" sSns =; sSns if ".$[sSns]" sSns =; end              #       Make ext. out of sensor name
+         "$[__sDirFea]/$[iF.sfile]$[sSns].$[__sExtFea]" sF =;                   #       Make path name of feature file
+         "\n     - storing: $[sF] ..."                                 3 -MSGX; #       Protocol
+        sF idFea -FEA_save if                                                   #       Save feature file, ok >>
+          " ok\n       "                                               3 -MSGX; #         Protocol
+        else                                                                    #       << failed >>
+          " FAILED\n       "                                           3 -MSGX; #         Protocol
+          nE ++=;                                                               #         Count errors
+        end                                                                     #       <<
+        "." -MSG2;                                                              #       Protocol
+      end;                                                                      #     <<
+
+      ## Export wav file                                                        #     . . . . . . . . . . . . . . . . .
+      sSigExp if                                                                #     Exporting signal file >>
+        ".__sDirLog" "var" ?instance not if                                     #       No global __sDirLog >>
+          var .__sDirLog;                                                       #         Create one
+          ( "log" "S" -CFG_get_path ) .__sDirLog =;                             #         Silently get log files path
+         end                                                                    #       <<
+        iF "${idSns[nSns,0]}" idSig -SIG_get;                                   #       Get labelled signal
+        sSigExp "wav" == if                                                     #       Export as wav >>
+          "$[__sDirLog]/$[sSigExp]" "$[iF.sfile]$[sSns]" idSig -SIG_export_wav; #         Export
+        else                                                                    #       << otherwise export as DN3 >>
+          "$[__sDirLog]/$[sSigExp]/$[iF.sfile]$[sSns].dn3" idSig /zip -save;    #         Save
+        end                                                                     #       <<
+      end                                                                       #     <<
+
+      ## Aftermath                                                              #     . . . . . . . . . . . . . . . . .
+      idFea.nrec idFea.rinc * 1000 / nCst =;                                    #     Compute sample time
+      nCst nTst +=;                                                             #     Compute total sample time
+      " ok (RTF $[stdprof.time nCst / ent 1000 /] @ $[nCst] s)"          -MSG2; #     Protocol
+      goto L_FILE;                                                              #     End of file loop
+    end                                                                         #   <<
+    "\n   " -MSG2; "done\n"                                               -MSG; #   Protocol
+    "\n   Total sample time: $[nTst 60 /] min"                           -MSG2; #   Protocol
+    nE if "$[nE]/$[iF.len] turns defective!" 1 -WARNING; end                    #   Warn for defective turns
+
+    ## End of sensor loop                                                       #   - - - - - - - - - - - - - - - - - -
+    nSns ++=; nSns idSns.nrec < if goto L_SNS; end                              #   End of loop
+
+  "\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n"           -MSG; # Protocol
+  0 return;                                                                     # Return "OK"
+}
+
+## Import of external feature files
+function -CMD_imp()
+{
+  ## Variables                                                                  # -------------------------------------
+  file iF;                                                                      # File list for signal analysis
+  var  nN;                                                                      # Current sensor index
+  var  sN;                                                                      # Current sensor name
+  data idFea;                                                                   # Feature data
+  data idLab;                                                                   # Label data
+  data idSns;  -SNS_get_tab idSns =;                                            # Get sensor table
+  data idAux;                                                                   # Auxiliary data instance
+
+  ## Initialize                                                                 # -------------------------------------
+  "\n\n// PRIMARY FEATURE IMPORT"                                         -MSG; # Protocol
+  var  sIPath; "import.pfa.dir" "" -CFG_get sIPath =;                           # External feature files path
+  "\n   - Import dir    : $[sIPath]"                                      -MSG; # Protocol
+  var  sIExt;  "import.pfa.ext" "" -CFG_get sIExt =;                            # External feature files extension
+  var  sLPath; "lab"            "" -CFG_get_path sLPath =;                      # Label files path
+  var  nCrate; "pfa.crate" 160 -CFG_get nCrate =;                               # Get frame rate (in samples)
+  var  nWlen;  "pfa.wlen" 400 -CFG_get nWlen =;                                 # Get frame length (in samples)
+  "flist.sep" "\t " "S" -CFG_get_ex    iF set sep;                              # Adjust file list separator
+  "fea"     ""          -CFG_get_path  iF set path;                             # Feature file path
+  "all"     ""          -CFG_get_flist iF set flist;                            # Signal files list
+  "fea.ext" ""          -CFG_get       iF set ext;                              # Feature file extension
+  "\n   - Write features: " .__CFG_bNwr if "no"  else "yes" end +       -MSG; # Protocol
+  .__UTL_nVlevel 3 >= if "\n" -echo; "Check settings and paths!" 0 break; end;# Protocol
+
+  ## Sensor loop                                                                # -------------------------------------
+  label L_SNS;                                                                  # Loop over sensors
+    :idSns[nN,0]: if ".${idSns[nN,0]}" else "" end sN =;                        #   Normalize sensor ID
+    "$[sN]." ( "fea.ext" "" -CFG_get ) + iF -set ext;                           #   Set feature files extension
+
+    ## File loop                                                                #   - - - - - - - - - - - - - - - - - -
+    "\n" -MSG; :idSns[nN,0]: if "\n   Sensor ${idSns[nN,0]}" -MSG; end          #   Protocol
+    "\n   Importing $[iF.len] external feature files ..."                 -MSG; #   Protocol
+    0 1 -PBAR;                                                                  #   Begin progress bar
+    iF -reset; label L_F; iF -next if                                           #   Loop over files >>
+
+      "\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "                 -MSG2; #     Protocol
+      :(iF.nfile+1)/iF.len: 1 -PBAR;                                            #     Display progress
+
+      ## Import feature file and load labels                                    #     . . . . . . . . . . . . . . . . .
+      "$[sIPath]/$[iF.sfile]$[sN].$[sIExt]" idFea -FEA_import;                  #     Import external feature file
+      "pfa" "" "S" -CFG_get_ex "ext"  == if                                     #     if: remapping on external data?
+        idFea idFea -FEA_cavg;                                                  #       Spectral remap. can be applied 
+      end;                                                                      #     end
+      iF.recfile.dim 1 > if                                                     #     If labels are in file list >>
+        1 1 iF.recfile -xfetch idLab =;                                         #       Label with label from file list
+      else                                                                      #     << else >>
+        sLPath iF.sfile idLab -LAB_import;                                      #       Load label data
+        idLab.dim 0 > if
+          :idLab[1]=ent((idLab[1]-nWlen/2)/nCrate);
+          :idLab[1].*=(idLab[1].>=0);
+          idLab.dim 1 > if
+            :idLab[1]: idAux =; idAux -1 idAux /rec -shift;
+            :idLab[2]=idAux-idLab[1];
+            :idLab[idLab.nrec-1,2]=idFea.nrec-idLab[idLab.nrec-1,1];
+          end
+        end
+      end                                                            "." -MSG2; #     <<
+      idLab idLab -LAB_map;                                          "." -MSG2; #     Map labels
+      idLab TRUE idFea -SIG_label;                                   "." -MSG2; #     Label features
+
+      ## Save primary feature file                                              #     . . . . . . . . . . . . . . . . .
+      .__CFG_bNwr not if iF.sfile_fq idFea -FEA_save; end;           "." -MSG2; #     Save feature file
+      " ok"                                                              -MSG2; #     Protocol
+      .__UTL_nVlevel 3 >= if "\n" -echo; "Feature file imported" 0 break; end;  #     Protocol
+      goto L_F;                                                                 #     End of file loop
+
+    end                                                                         #   <<
+    "\n  "                                                               -MSG2; #   Protocol
+    "done\n"                                                              -MSG; #   Protocol
+
+    ## End of sensor loop                                                       #   - - - - - - - - - - - - - - - - - -
+    nN ++=; nN idSns.nrec < if goto L_SNS; end                                  #   End of loop
+
+  "\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n"           -MSG; # Protocol
+  0 return;                                                                     # Return "OK"
+}
+
+## Copying of feature files
+function -CMD_cpy()
+{
+  "\n\n// COPYING FEATURE FILES"                                          -MSG; # Protocol
+
+  var  sDset;   ( "dataset"   "all" "S" -CFG_get_ex    ) sDset  -sset;          # Data set 
+  file iF;      ( "flist.sep" "\t " "S" -CFG_get_ex    ) iF     -set sep;       # Feature file list
+                ( sDset        ""       -CFG_get_flist ) iF     -set flist;     # ...
+  data idSns;   ( -SNS_get_tab                         ) idSns   =;             # Get sensor table
+  data idFea;                                                                   # Feature data
+  var  sDirFea; ( "fea"        ""       -CFG_get_path  ) sDirFea -sset;         # Just for the protocol!
+  var  sDirOut; ( "out"        ""       -CFG_get_path  ) sDirOut -sset;         # Output directory
+  var  nSns;                                                                    # Sensor index
+  var  sSns;                                                                    # Normalized sensor name
+  var  sSnsExt;                                                                 # Sensor file extension
+  var  sF;                                                                      # Output file name
+  "\n   - Data set      : $[sDset]"                                       -MSG; # Protocol
+  .__CFG_bNwr if "\n   - Write protect : " "ON" -COLOR_yellow + -MSG; end       # Protocol
+  "\n"                                                                    -MSG; # Protocol
+
+  :idSns[0,0]: if "\n// No. of sensors  : $[idSns.nrec]" -MSG; end              # Protocol
+  0 nSns =; nSns idSns.nrec < while                                             # Loop over sensors >>
+    "" sSns =; :idSns[nSns,0]: if "${idSns[nSns,0]}" sSns =; end                #   Normalize sensor name
+    ( sSns -SNS_get_ext ) sSnsExt =;                                            #   Get sensor file extension
+    "\n" -MSG; sSns if "\n   Sensor $[sSns]" -MSG; end                          #   Protocol
+    "\n   Copying $[iF.len] feature files ..." -MSG; 0 1 -PBAR;                 #   Begin progress bar
+    iF -reset; iF -next while                                                   #   Loop over files >>
+      "\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "                 -MSG2; #     Protocol
+      :(iF.nfile+1)/iF.len: 1 -PBAR;                                            #     Display progress
+      iF sSns "A" idFea -FEA_get not if continue; end                "." -MSG2; #     Get primary feature vectors
+      "$[sDirOut]/$[iF.sfile]$[sSnsExt].$[.__sExtFea]" sF =;                    #     Make path name of feature file
+			" -> $[sF]"                                                        -MSG2; #     Protocol     
+      .__CFG_bNwr not if                                                        #     Not write protected >>     
+        sF idFea -FEA_save if " ... ok" else " ... FAILED" end -MSG2;           #       Save feature file
+      end                                                                       #     <<
+    end                                                                         #   <<
+    "\n  " -MSG2; "done\n"                                                -MSG; #   Protocol
+    nSns ++=;                                                                   #   Next sensor
+  end                                                                           # <<
+
+  "\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n"           -MSG; # Protocol
+  0 return;                                                                     # Ok
+}
+
+## == MAIN PROGRAM ==                                                           # =====================================
+
+"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
+"\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
+"\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
+"\n// dLabPro VID     : " -version +                                      -MSG; # Protocol
+"\n// UASR VID        : " -UASR_version +                                 -MSG; # Protocol
+( "$1" "help" == ) -UASR_help || if "$2" -usage; 0 return; end                  # Print help
+"$1" var sCmd;                                                                  # Get command
+sCmd "ana" ==                                                                   # | Primary feature analysis
+sCmd "cpy" == ||                                                                # | Feature copying
+sCmd "imp" == ||                                                                # | Feature import
+not ( $$ 2 < ) || if                                                            # Bad command or less than 2 args. >> 
+  $$ 2 < if "Too few arguments" else "unknown command '$1'"  end -ERROR;        #   Error
+  "\nType '$__SFILE__.xtp help' for usage\n" -echo;                             #   Give a little help
+  1 return;                                                                     #   Terminate with error code
+end                                                                             # <<
+
+## Initialize session                                                           # -------------------------------------
+"\n// Configuration   : $2"                                               -MSG; # Protocol
+"$2" TRUE -CFG_init;                                                            # Configure session
+"util/uasr_session.itp" include;                                                # Include UASR session startup script
+
+## Execute commands                                                             # -------------------------------------
+-CMD_$[sCmd] return;                                                            # Call command handler function
+
+## EOF

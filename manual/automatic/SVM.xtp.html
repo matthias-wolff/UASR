@@ -1,0 +1,1158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<
+<    AUTHOR : n/a
+<    PACKAGE: manual
+<
+<    Copyright 2013 UASR contributors (see COPYRIGHT file)
+<    - Chair of System Theory and Speech Technology, TU Dresden
+<    - Chair of Communications Engineering, BTU Cottbus
+<
+<    This file is part of UASR.
+<
+<    UASR is free software: you can redistribute it and/or modify it under the
+<    terms of the GNU Lesser General Public License as published by the Free
+<    Software Foundation, either version 3 of the License, or (at your option)
+<    any later version.
+<
+<    UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+<    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+<    FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+<    more details.
+<
+<    You should have received a copy of the GNU Lesser General Public License
+<    along with UASR. If not, see [http://www.gnu.org/licenses/].
+-->
+<html>
+<head>
+  <meta http-equiv="Content-Type" content= "text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta name="description" content=   "UASR documentation - UASR script SVM.xtp">
+  <meta name="author" content="">
+  <meta name="generator" content="UASR_DOC">
+  <title>UASR script SVM.xtp</title>
+  <link rel=stylesheet type="text/css" href="../default.css">
+</head>
+<script type="text/javascript" src="../default.js"></script>
+<script type="text/javascript">__sRootPath="../..";</script>
+<body>
+
+  <div id="clp_SVM.xtp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        UASR script <span class="mid">SVM.xtp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('','SVM.xtp','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden">General</td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><nobr><b>SVM</b> $1 $2</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Author</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Steffen Werner, Matthias Wolff
+</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Synopsis</h3>
+    <p>Support vector machine classifier
+ </p>
+  <h3>Arguments</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>$1</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Command or 'help'
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>$2</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Setup file or, if 1st arg. is 'help', command
+
+      </td>
+    </tr>  </table>
+  <!--{{ CUSTOM_DOC -->
+	<a name="usage"></a><h3>Contents</h3>
+  <div class="indent"><ul class="linklist">
+    <li class="linklist"><a class="linklist" href="#usage">Usage</a></li>
+    <li class="linklist"><a class="linklist" href="#configuration">Configuration</a></li>
+    <li class="linklist"><a class="linklist" href="#reference">Reference</a></li>
+  </ul></div>
+  
+	<a name="usage"></a><h3>Usage</h3>
+	<pre class="code">   
+ dlabpro SVM.xtp &lt;command&gt; &lt;cfgfile&gt; [options]
+ dlabpro SVM.xtp help [&lt;command&gt;]</pre>
+
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td><b>$1</b>: command</td>
+			<td>Command, one of the following:<br>&nbsp;
+				<table class="indent" cellpadding="3" cellspacing="0">
+					<tr>
+						<td class="hidden"><a href="#clp_trn" class="code"><b>trn</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">SVM training</td>
+					</tr>
+          <tr>
+            <td class="hidden"><a href="#clp_fpar" class="code"><b>fpar</b></a></td>
+            <td class="hidden">-</td>
+            <td class="hidden">SVM training</td>
+          </tr>
+				</table><br>
+				or "help"
+			</td>
+		</tr>
+		<tr>
+			<td><b>$2</b>: cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+
+	  <tr><td class="rowgroup" colspan="2">Options</td></tr>
+  	<tr><th>Option</th><th>Description</th></tr>
+		<tr>
+			<td><b>-h</b>, <b>--help</b></td>
+			<td>Display help and exit</td>
+		</tr>
+		<tr>
+			<td><b>-P</b>&lt;key&gt;=&lt;value&gt;</td>
+			<td>Define or override <a href="util/cfg.itp.html#index:cfgk">configuration key-value pairs</a></td>
+		</tr>
+		<tr>
+			<td><b>-v</b>&lt;n&gt;</td>
+  		<td>Verbose level
+  			<table>
+  				<tr><td class="hidden">-v1&nbsp;&nbsp;&nbsp;</td><td class="hidden">minimal screen protocol (default)</td></tr>
+  				<tr><td class="hidden">-v2</td><td class="hidden">extended screen protocol</td></tr>
+  				<tr><td class="hidden">-v3</td><td class="hidden">even more screen protocol, program may break</td></tr>
+  			</table>
+  		</td>
+		</tr>
+	  <tr><td class="hidden" colspan="2"><span class="small">There are further, individual options to the commands.</span></td></tr>
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+	</table>
+
+  <a name="configuration"></a><h3>Configuration</h3>
+	<p><code>SVM.xtp</code> is configured through a <a href="util/cfg.itp.html#index:cfgf">UASR configuration
+  file</a> (parameter <code>$2</code>). The configuration file is a Java properties file containing key-value-pairs.
+  The common configuration keys are described with the utility script <a class="code"
+  href="util/cfg.itp.html#index:cfgk">cfg.itp</a> (see there). Some commands use dedicated configuration keys which are
+  described with the command. Dedicated keys may be placed in the configuration file just like all other keys. Any key
+  (common and dedicated) may be specified or overwritten through the command line using
+  <nobr><code><b>-P</b>&lt;key&gt;=&lt;value&gt;</code></nobr> options:</p>
+  <pre class="code">
+ dlabpro SVM.xtp trn $UASR_HOME/config/vm/VMV.cfg -P<span class="TODO">...</span></pre>
+  <p><code>-P</code> options <em>always</em> overwrite the configuration file. The heading "<code>uasr.</code>" of the
+	keys may be omitted in <code>-P</code> options.</p>
+  <p>For further information</p>
+  <ul>
+  	<li class="indent">see documentation of <a href="util/cfg.itp.html#index:datadirs"
+  		class="code">util/cfg.itp</a> to learn more about UASR's organization of databases.</li>
+  	<li class="indent">see documentation of <a href="util/cfg.itp.html#clp_-CFG_get_path"
+			class="code">-CFG_get_path</a> to learn how UASR determines paths to the various data sets.</li>
+  	<li class="indent">see documentation of <a href="util/cfg.itp.html#clp_-CFG_get_flist"
+			class="code">-CFG_get_flist</a> to learn how UASR obtains file lists of the various data sets.</li>
+  </ul>
+	
+  <!-- <h3>Description</h3> -->
+
+  </div>
+  </div>
+
+  <!-- == SVM.xtp trn ====================================================== -->
+  <div id="clp_trn" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        SVM.xtp <span class="mid">trn</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_trn','SVM.xtp trn','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>SVM.xtp <b>trn</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">SVM training</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  <div class="indent"><ul class="linklist">
+  	<li class="linklist"><a href="#description" class="linklist">Description</a></li>
+  	<li class="linklist"><a href="#flowchart" class="linklist">Program Flow Chart</a></li>
+  	<li class="linklist"><a href="#remark" class="linklist">Remark on Incremental SVM Training</a></li>
+    <li class="linklist"><a href="#functions" class="linklist">Functions</a></li>
+  </ul></div>
+
+  <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+  <a name="description"></a><h3>Description</h3>
+	<p><code>SVM.xtp trn</code> is part of the UASR acoustic model training outlined in figure 1. It creates a set of
+  SVMs from either</p>
+  <ol>
+    <li>a database consisting of labelled primary feature vector files <em>or</em></li>
+    <li>a database consisting of signal files and labels.</li>
+  </ol>
+  <p>(See documentation of <a href="util/cfg.itp.html#index:datadirs" class="code">util/cfg.itp</a> for details on the
+  organization of databases in UASR.)</p>
+  <p>The first first method requires more disk space but is quicker if there is more than one HMM training iteration.
+  The primary feature vector files database must be created <em>before</em> the actual model training</p>
+  <ul>
+  	<li>using <a href="FEA.xtp.html#clp_ana" class="code">FEA.xtp ana</a> (primary feature analsis of signal
+			files) <em>or</em></li>
+  	<li>using <a href="FEA.xtp.html#clp_imp" class="code">FEA.xtp imp</a> (import of external feature files).</li>
+  </ul>
+  <p>The second method saves the disk space for storing the primary feature vectors but it requires to compute these
+  for <em>each</em> SVM training anew.</p>
+  <p class="figure"><nobr>
+    <object data="../resources/figures/UasrModelTraining-svm.svg" type="image/svg+xml" width="463" height="386">
+      <param name="src" value="../resources/figures/UasrModelTraining-svm.svg">
+      <img src="../resources/figures/UasrModelTraining-svm.png" alt="Figure 1: UASR model training" width="463" height="385">
+    </object><a href="../resources/figures/UasrModelTraining-svm.svg" target="_blank"><img src="../resources/zoom.gif" width="17"
+    height="17" border="0" alt="Enlarge image"></a></nobr></p>
+  <p class="figure">Figure 1: UASR model training</p>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+ dlabpro SVM.xtp trn &lt;cfgfile&gt; [Options]</pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see <a href="#usage">Usage</a>).</p>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <a name="index:cfgSvmt" title="Configuration Keys | SVM_training.xtp"></a>
+  <h4>Configuration</h4>
+  <p>The following table lists dedicated configuration keys and some important common keys (see section <a 
+  href="#configuration">Configuration</a> above). There are many more common keys. See documentation of <a
+  href="util/cfg.itp.html#index:cfgk" class="code">util/cfg.itp</a> for a complete list.</p>
+  <table cellpadding="3" class="indent">
+  	<tr><th>Key</th><th>Type</th><th>Default</th><th>Value</th></tr>
+  	<tr><td class="rowgroup" colspan="4">Dedicated keys to <code>SVM_training.xtp</code></td></tr>
+  	<tr>
+  		<td nowrap><code>uasr.svm.sig</code></td><td>boolean</td><td>FALSE</td>
+  		<td><code>FALSE</code>: use primary feature vectors, <code>TRUE</code>: use signals as "vectors"</td>
+  	</tr>
+  	<tr>
+      <td nowrap><code>uasr.svm.sv</code></td><td>boolean</td><td>TRUE</td>
+      <td> TRUE: use super vector (concatenate feature vectors), FALSE: use every feature vector (option if bSig=FALSE)</td>
+    </tr>
+  	<tr>
+      <td nowrap><code>uasr.svm.incr</code></td><td>integer</td><td>0</td>
+      <td>Size of incremental training partition, 0 for conventional (non-incremental) training (default)</td>
+    </tr>
+  	<tr>
+  		<td nowrap><code>uasr.svm.kernel</code></td><td>integer</td><td>0</td>
+  		<td>SVM kernel function, one of the following:<pre>
+  0 - linear
+  1 - polynomial
+  2 - radial basis function (RBF)
+  3 - sigmoid</pre>
+	      See documentation of field <a href="../../../dLabPro/manual/automatic/svm.html#fld_param_knl_type"
+				class="code">svm param_knl_type</a> for details.
+		  </td>
+  	</tr>
+  	<tr>
+  		<td nowrap><code>uasr.svm.grad</code></td><td>number</td><td>0</td>
+  		<td>Factor parameter in polynomial, RBF, and sigmoid kernels. See documentation of field <a
+        href="../../../dLabPro/manual/automatic/svm.html#fld_param_knl_gradient"
+				class="code">svm param_knl_gradient</a> for details.
+		  </td>
+  	</tr>
+  	<tr>
+  		<td nowrap><code>uasr.svm.C</code></td><td>number</td><td>1000</td>
+  		<td>Soft margin regularization parameter. See documentation of field <a
+        href="../../../dLabPro/manual/automatic/svm.html#fld_param_C"
+				class="code">svm param_C</a> for details.
+		  </td>
+  	</tr>
+  	<tr>
+  		<td nowrap><code>uasr.svm.eps</code></td><td>number</td><td>0.01</td>
+  		<td>Termination criterion. See documentation of field <a
+        href="../../../dLabPro/manual/automatic/svm.html#fld_param_epsilon"
+				class="code">svm fld_param_epsilon</a> for details.
+		  </td>
+  	</tr>
+  	<tr>
+      <td nowrap><code>uasr.svm.ec</code></td><td>boolean</td><td>FALSE</td>
+      <td> TRUE: use equal amount of vectors of both classes for training (by ignoring orphan vectors)</td>
+    </tr>
+  	<tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+  	<tr><td class="rowgroup" colspan="4">Important common keys</td></tr>
+  	<tr>
+  		<td nowrap><code>uasr.sensor</code></td><td>string</td><td>""</td>
+  		<td>Name of sensor whose signals are to be processed <em>only</em> (does typically not apply to speech recognition).
+  		    Append "..." to process the specified and all following sensors.</td>
+  	</tr>
+    <tr><td><code>uasr.customize </code></td><td>string</td><td> </td><td>Custom include script (path absolute or relative to script accessing the key)</td></tr>
+    <tr><td><code>uasr.db        </code></td><td>string</td><td>"vm"</td><td>Data base name</td></tr>
+    <tr><td><code>uasr.db.include</code></td><td>string</td><td>"db/&lt;uasr.db&gt;.itp"</td><td>Database dependent include script (path absolute or relative to script accessing the key)</td></tr>
+    <tr><td><code>uasr.exp</code></td><td>string</td><td>""</td><td>Experiment code</td></tr>
+    <tr><td><code>uasr.pfa          </code></td><td>string</td><td>"MEL"     </td><td>Primary feature analysis type<pre>
+  "none" - No primary feature extraction
+  "CP"   - Cepstrum (including MFCC)
+  "LCQ"  - Line cepstral quefrencies
+  "lmag" - log. magnitude spectrum
+  "LPC"  - Linear prediction coding
+  "LSF"  - Line spectral frequencies
+  "mag"  - magnitude spectrum
+  "MEL"  - Melfilter</pre> There are more <a href="util/cfg.itp.html#index:cfgk"
+		class="code">&lt;uasr.pfa.*&gt;</a>-keys!</td></tr>
+    <tr><td><code>uasr.sfa            </code></td><td>string</td><td>"std,delta,pca"</td><td>Secondary feature analysis type(s),
+      one or a comma separated list of the following strings:<pre>
+  std   - feature standardization (mean &rarr; 0, std. dev. &rarr; 1)
+  delta - compute dynamic features
+  pca   - principal component analysis
+  ica   - independent component analysis
+  red   - reduce linear feature trafo. matrix to &lt;uasr.sfa.dim&gt;</pre> There are more <a
+		href="util/cfg.itp.html#index:cfgk" class="code">&lt;uasr.sfa.*&gt;</a>-keys!</td></tr>
+    <tr><td><code>uasr.am.eval.assess    </code></td><td>string</td><td>"cmx,hist"</td><td>Assessment mode (only if <code>&lt;uasr.am.eval&gt;</code> is "assess"),
+    comma separated list of the following strings:<pre>
+  cmx     - compute class confusion matrices
+  hist    - compute NLL x class histograms
+  loghist - compute NLL x class histograms with logarithmic counts</pre></td></tr>
+    <caption>Dedicated and important common configuration keys!</caption>
+  </table>
+  
+  <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+  <a name="flowchart"></a><h3>Program Flow Chart</h3>
+  <p class="figure"><nobr>
+    <object data="../resources/figures/SvmTraining.svg" type="image/svg+xml" width="709" height="961">
+      <param name="src" value="../resources/figures/SvmTraining.svg">
+      <img src="../resources/figures/SvmTraining.png" alt="Figure 2: Flowchart of SVM training" width="708" height="960">
+    </object><a href="../resources/figures/SvmTraining.svg" target="_blank"><img src="../resources/zoom.gif" width="17"
+    height="17" border="0" alt="Enlarge image"></a></nobr></p>
+  <p class="figure">Figure 2: Flowchart of SVM_training</p>
+  
+  <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+  <a name="remark"></a><h3>Remark on Incremental SVM Training</h3>
+  <p>The current incremental training creates a random partitioning of the training set before training. This
+	partitioning will be <em>different</em> each time <code>SVM_training.xtp</code> is executed. Hence the results
+	of the incremental SVM training are <em>not</em> reproducible. Results of the conventional training are, however,
+	reproducible. The incremental training is activated by specifying a maximal training partition size through the
+	<a href="util/cfg.itp.html#index:cfgk">configuration key <code>uasr.svm.incr</code></a>.</p>
+	<p>This flaw is to be fixed!</p>
+
+	</div>
+	</div>
+
+     <!-- == SVM.xtp fpar ====================================================== -->
+  <div id="clp_fpar" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        SVM.xtp <span class="mid">fpar</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_trn','SVM.xtp findparam','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>SVM.xtp <b>fpar</b> &lt;cfgfile&gt; </code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">SVM findparam</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+ 
+  <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+  <a name="description"></a><h3>Description</h3>
+	<p><code>SVM.xtp fpar</code> implements the method to find optimal parameters for a SVM given a
+	specific dataset. The procedure is prosed from the authors of libsvm and explained in the guide
+  to libsvm section 3.2: <a href="http://www.csie.ntu.edu.tw/~cjlin/papers/guide/guide.pdf"
+  target="_blank">Guide.pdf</a>.</p>
+  <p>The procedure is implemented for the RBF-Kernel. The parameters to find are C and gradient.
+  Other parameters for other kernels could be find the same way, but are not yet considered here.</p>
+  <p>There es a loop for every parameter, thus a beginning, ending and stepwidth for every
+  parameter is needed. For every parametercombination a crossvalidation on the hole dataset (all.flst)
+	is calculated finding an accuracy. Best parameters are those with the highest accuracy. Logfile
+  <em>findparam.dn3</em> is written or continued.</p>
+  
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+ dlabpro SVM.xtp fpar &lt;cfgfile&gt;</pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see <a href="#usage">Usage</a>).</p>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <a name="index:cfgSvmt" title="Configuration Keys | SVM_training.xtp"></a>
+  <h4>Configuration</h4>
+  <p>The following table lists dedicated configuration keys and some important common keys (see section <a 
+  href="#configuration">Configuration</a> above). There are many more common keys. See documentation of <a
+  href="util/cfg.itp.html#index:cfgk" class="code">util/cfg.itp</a> for a complete list.</p>
+  <table cellpadding="3" class="indent">
+  	<tr><th>Key</th><th>Type</th><th>Default</th><th>Value</th></tr>
+  	<tr><td class="rowgroup" colspan="4">Dedicated keys to <code>SVM.xtp fpar</code></td></tr>
+  	<tr>
+  		<td nowrap><code>uasr.svm.sig</code></td><td>boolean</td><td>FALSE</td>
+  		<td><code>FALSE</code>: use primary feature vectors, <code>TRUE</code>: use signals as "vectors"</td>
+  	</tr>
+  	<tr>
+      <td nowrap><code>uasr.svm.sv</code></td><td>boolean</td><td>TRUE</td>
+      <td> TRUE: use supervector, FALSE: use every featurvector (option if bSig=FALSE)</td>
+    </tr>
+  	<tr>
+  		<td nowrap><code>uasr.sensor</code></td><td>string</td><td>""</td>
+  		<td>Name of sensor whose signals are to be processed <em>only</em> (does typically not apply to speech recognition).
+  		    Append "..." to process the specified and all following sensors.</td>
+  	</tr>
+    	<tr>
+  		<td nowrap><code>uasr.svm.log2cb</code></td><td>number</td><td>"-5"</td>
+  		<td>Beginning of log2c for Parameter C (C=log2C)</td>
+  	</tr>
+    	<tr>
+  		<td nowrap><code>uasr.svm.log2ce</code></td><td>number</td><td>"15"</td>
+  		<td>End of log2c for Parameter C (C=log2C)</td>
+  	</tr>
+    	<tr>
+  		<td nowrap><code>uasr.svm.log2cs</code></td><td>number</td><td>"2"</td>
+  		<td>Stepwidth of log2c for Parameter C (C=log2c)</td>
+  	</tr>
+    	<tr>
+  		<td nowrap><code>uasr.svm.log2gb</code></td><td>number</td><td>"-15"</td>
+  		<td>Beginning of log2gb for Parameter gradient (grad=log2g)</td>
+  	</tr>
+    <tr>
+  		<td nowrap><code>uasr.svm.log2ge</code></td><td>number</td><td>"3"</td>
+  		<td>End of log2g for Parameter gradient (grad=log2g)</td>
+  	</tr>
+    <tr>
+  		<td nowrap><code>uasr.svm.log2gs</code></td><td>number</td><td>"2"</td>
+  		<td>Step of log2g for Parameter gradient (grad=log2g)</td>
+  	</tr>
+     <tr>
+  		<td nowrap><code>uasr.svm.nfold</code></td><td>number</td><td>"10"</td>
+  		<td>Number of crossfolds</td>
+  	</tr>    
+    <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+  	<tr><td class="rowgroup" colspan="4">Important common keys</td></tr>
+    <tr><td><code>uasr.customize </code></td><td>string</td><td> </td><td>Custom include script (path absolute or relative to script accessing the key)</td></tr>
+    <tr><td><code>uasr.db        </code></td><td>string</td><td>"vm"</td><td>Data base name</td></tr>
+    <tr><td><code>uasr.db.include</code></td><td>string</td><td>"db/&lt;uasr.db&gt;.itp"</td><td>Database dependent include script (path absolute or relative to script accessing the key)</td></tr>
+    <tr><td><code>uasr.exp</code></td><td>string</td><td>""</td><td>Experiment code</td></tr>
+    <tr><td><code>uasr.pfa          </code></td><td>string</td><td>"MEL"     </td><td>Primary feature analysis type<pre>
+  "none" - No primary feature extraction
+  "CP"   - Cepstrum (including MFCC)
+  "LCQ"  - Line cepstral quefrencies
+  "lmag" - log. magnitude spectrum
+  "LPC"  - Linear prediction coding
+  "LSF"  - Line spectral frequencies
+  "mag"  - magnitude spectrum
+  "MEL"  - Melfilter</pre> There are more <a href="util/cfg.itp.html#index:cfgk"
+		class="code">&lt;uasr.pfa.*&gt;</a>-keys!</td></tr>
+    <tr><td><code>uasr.sfa            </code></td><td>string</td><td>"std,delta,pca"</td><td>Secondary feature analysis type(s),
+      one or a comma separated list of the following strings:<pre>
+  std   - feature standardization (mean -> 0, std. dev. -> 1)
+  delta - compute dynamic features
+  pca   - principal component analysis
+  ica   - independent component analysis
+  red   - reduce linear feature trafo. matrix to &lt;uasr.sfa.dim&gt;</pre> There are more <a href="util/cfg.itp.html#index:cfgk" class="code">&lt;uasr.sfa.*&gt;</a>-keys!</td></tr>
+   
+    <caption>Dedicated and important common configuration keys!</caption>
+  </table>
+  </div>
+	</div>
+
+  <!-- ===================================================================== -->
+  <div class="footer">End of user documentation.</div>
+  <div id="reference" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar"><b>Reference</b>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('reference','Reference','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe2">
+
+  <!--}} CUSTOM_DOC -->
+  <a name="functions"></a><h3>Functions</h3>
+  <table cellSpacing="0" cellPadding="4" border="0">
+    <tr>
+      <td class="rowgroup" colSpan="2">Functions</td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-usage"><code class="link">-usage</code></a></td>
+      <td><code><b>-usage</b>(sCmd)</code><br>&nbsp;<br> Prints help on usage
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-SVM_load_dataset"><code class="link">-SVM_load_dataset</code></a></td>
+      <td><code><b>-SVM_load_dataset</b>(sDts,bShf,idF)</code><br>&nbsp;<br> Gets the sample listing of a data set.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-SVM_cpl_dataset"><code class="link">-SVM_cpl_dataset</code></a></td>
+      <td><code><b>-SVM_cpl_dataset</b>(idF,sSns,sSfa,bSig,bSv,idLtb,idDts)</code><br>&nbsp;<br> Compiles a data set for SVM training or classification.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-SVM_sort_res"><code class="link">-SVM_sort_res</code></a></td>
+      <td><code><b>-SVM_sort_res</b>(idRes)</code><br>&nbsp;<br> SVM -classify returns a result table with arbitrary arrangement of components
+ (classes); this functions get's 'em right.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-SVM_labeval_log"><code class="link">-SVM_labeval_log</code></a></td>
+      <td><code><b>-SVM_labeval_log</b>(sFilePref,idF,idLtb,idDts,idResLab)</code><br>&nbsp;<br> Needed for evaluation if no supervector or signal mode ist used.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_trn"><code class="link">-CMD_trn</code></a></td>
+      <td><code><b>-CMD_trn</b></code>
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_fpar"><code class="link">-CMD_fpar</code></a></td>
+      <td><code><b>-CMD_fpar</b></code>
+      </td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <div id="clp_-usage">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-usage</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-usage','-usage','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-usage</b>(sCmd)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">SVM.xtp(35)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Prints help on usage
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sCmd</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-SVM_load_dataset">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-SVM_load_dataset</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-SVM_load_dataset','-SVM_load_dataset','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-SVM_load_dataset</b>(sDts,bShf,idF)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">SVM.xtp(88)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Gets the sample listing of a data set.
+ <h4>Remarks</h4>
+ <ul>
+   <li>When shuffeling is enabled (parameter <code>bShf</code>), the function will come up with differently ordered
+     file lists each time it is called. Hence training and recognition are <em>not</em> reproducible. To be fixed!
+     </li>
+ </ul>
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sDts</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data set name ("train", "test" or "dev")
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">boolean&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>bShf</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          <code>TRUE</code> to shuffle data set (for incremental training)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idF</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Will be filled with the sample listing ("file" list)
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-SVM_cpl_dataset">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-SVM_cpl_dataset</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-SVM_cpl_dataset','-SVM_cpl_dataset','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-SVM_cpl_dataset</b>(idF,sSns,sSfa,bSig,bSv,idLtb,idDts)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">SVM.xtp(130)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Compiles a data set for SVM training or classification.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idF</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Turn list
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Sensor ID, <code>NULL</code> or empty for one-channel recordings (typical case for speech recognition)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSfa</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Secondary feature analysis, empty if not specified
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">bool&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>bSig</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          <code>TRUE</code> to use signal data as vectors, <code>FALSE</code> to use primary feature vectors
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">bool&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>bSv</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          <code>TRUE</code> use supervector, <code>FALSE</code> no supervector, every feature vector is taken
+          (makes sense when bSig=FALSE)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLtb</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Label table
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idDts</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The compiled data set where each item of the data set is handled as
+          <ul>
+            <li>bSig=<code>TRUE</code>:<br/>
+              one vector containing the signal data <em>or</em></li>
+            <li>bSig=<code>FALSE</code>:<br/>
+              one supervector made by concatenating the feature vectors</li>
+            <li>bSv=<code>FALSE</code>:<br>
+              each feature vector ist taken </li>
+          </ul>
+         followed by a numeric label for each item (or feature vector) of the data set.
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> <code>TRUE</code> if successful, <code>FALSE</code> otherwise
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.dir.model&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.dir.sig&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.fea.ext&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.flist.&lt;sDts&gt;&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-SVM_sort_res">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-SVM_sort_res</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-SVM_sort_res','-SVM_sort_res','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-SVM_sort_res</b>(idRes)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">SVM.xtp(225)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> SVM -classify returns a result table with arbitrary arrangement of components
+ (classes); this functions get's 'em right.
+ <h4>Remarks</h4>
+ <ul>
+   <li><code>svm</code> should return a correctly ordered result!</li>
+ </ul>
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idRes</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-SVM_labeval_log">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-SVM_labeval_log</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-SVM_labeval_log','-SVM_labeval_log','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-SVM_labeval_log</b>(sFilePref,idF,idLtb,idDts,idResLab)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">SVM.xtp(279)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Needed for evaluation if no supervector or signal mode ist used. Correctness is
+ calculated over each vector of all datafiles
+ <h4>Remarks</h4>
+ The assigned label of every vector ist compared with reference in the data
+ <ul>
+   <li>logfile written or continued
+   <li>confusionmatrix is written or continued if am.eval.assess="cmx"
+ </ul>
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">var&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFilePref</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Fileprefix for log and confusionmatrix
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idF</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Current filelist(not used here but in overwriting function - needed to make a decision for hole file)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLtb</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Label table
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idDts</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Training or evaluation data set with reference label (last component)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idResLab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The labeval result object with assigned labels (last component)
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> Overall Correctness of assigned labels
+
+  </div>
+  </div>
+  <div id="clp_-CMD_trn">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_trn</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_trn','-CMD_trn','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_trn</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">SVM.xtp(345)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  </div>
+  </div>
+  <div id="clp_-CMD_fpar">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_fpar</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_fpar','-CMD_fpar','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_fpar</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">SVM.xtp(504)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  </div>
+  </div>
+<div class="footer">End of page</div>
+</body>
+</html>
+

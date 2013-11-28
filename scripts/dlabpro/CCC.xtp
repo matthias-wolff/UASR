@@ -1,0 +1,537 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Correlation coefficient classifier
+##
+## AUTHOR : Constanze Tschoepe, Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro
+##
+## ARGUMENTS:
+##   $1: Command ('cls') or 'help'
+##   $2: Setup file or, if 1st arg. is 'help', command
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"$UASR_HOME/scripts/dlabpro/util/cfg.itp"  include;                             # Include configuration utilities
+"$UASR_HOME/scripts/dlabpro/util/fea.itp"  include;                             # Include feature utilities
+"$UASR_HOME/scripts/dlabpro/util/lab.itp"  include;                             # Include label utilities
+"$UASR_HOME/scripts/dlabpro/util/os.itp"   include;                             # Include OS utilities
+"$UASR_HOME/scripts/dlabpro/util/uasr.itp" include;                             # Include UASR utilities
+"$UASR_HOME/scripts/dlabpro/util/var.itp"  include;                             # Include variables' utilities
+"$UASR_HOME/scripts/dlabpro/train/am.itp"  include;                             # Include AM training tools
+
+## == FUNCTIONS ==                                                              # =====================================
+
+## Prints help on usage
+function -usage(sCmd)
+{
+  "\n"                                                                    -MSG;
+  sCmd "cls" == if
+      "\n   cls: Classification"                                          -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp cls <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "trn" == if
+      "\n   trn: Training"                                                -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp trn <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+    "\n   SYNOPSIS:"                                                      -MSG;
+    "\n     CCC: Correlation coefficient classifier"                      -MSG;
+  "\n\n   USAGE:"                                                         -MSG;
+    "\n     dlabpro $__SFILE__.xtp <command> [arguments] [options]"       -MSG;
+  "\n\n   COMMANDS:"                                                      -MSG;
+    "\n     cls - Classification"                                         -MSG;
+    "\n     trn - Training"                                               -MSG;
+    "\n     ren - Auxiliary: Render spectral windows"                     -MSG;
+  "\n\n  Type 'dlabpro $__SFILE__.xtp help <command>' for help on a "     -MSG;
+         "specific command."                                              -MSG;
+    "\n"                                                                  -MSG;
+  0 return;
+}
+
+## Computes a fuzzy membership function (to the "good part" class) from
+## correlation coefficients.
+##
+## @param dCorc number
+##          ...
+## @param dMean number
+##          ...
+## @param dSdev number
+##          ...
+## @return ...
+function -get_fuzzy(dCorc,dMean,dSdev)
+{
+  var dFuzzy;  
+  var dn;          
+  
+  #"\n dCorc=$[dCorc], dMean=$[dMean], dSdev=$[dSdev]"                      -MSG;
+  :dFuzzy=dSdev*3;
+  :dFuzzy=1/dFuzzy;
+  :dn=dFuzzy*(dMean-dSdev)-1;
+  dn 0 > if 
+    :dn=0; 
+    :dFuzzy=dMean-dSdev;
+    :dFuzzy=1/dFuzzy;
+  end
+  :dFuzzy=dFuzzy*dCorc+dn;
+  dFuzzy 0 < if
+    :dFuzzy=0;
+  end  
+  dFuzzy 1 > if
+    :dFuzzy=1;
+  end    
+  #"$dFuzzy: $[dFuzzy] ..." -echo;
+  { { $[dFuzzy] } } return;
+}
+
+## Loads the spectral windows' definition from the configuration
+##
+## @param idRef data
+##          Spectrogram instance (may be empty, used to obtain default window
+##          dimensions)
+## @param sSensor string
+##          Name of sensor to obtain the windows for
+## @return a data instance describing the windows
+## @global &lt;uasr.ccc.windows.[sSensor]&gt;     R
+## @global &lt;uasr.ccc.window1.[sSensor].[n]&gt; R
+## @global &lt;uasr.ccc.windows.&gt;              R
+## @global &lt;uasr.ccc.window1.[n]&gt;           R
+function -CFG_get_windows(idRef,sSensor)
+{
+  data idWin;                                                                   # Window list (to be returned)
+  data idR;   idRef NULL idR -LAB_strip;                                        # Reference w/o labels
+  data idAux;                                                                   # Auxiliary data instance
+  var  nXW;                                                                     # Number of windows
+  var  nW;                                                                      # Current window index
+  var  sW;                                                                      # Current window specifier
+  var  nWeight;                                                                 # Total weight
+
+  ( "ccc.windows.$[sSensor]" -1 "S" -CFG_get_ex ) nXW =;                        # Get number of windows
+  nXW -1 == if ( "ccc.windows" 0 "S" -CFG_get_ex ) nXW =; end                   # Get default number of windows
+  :nW=1; :nW<=nXW: while                                                        # Loop over windows >>
+    ( "ccc.window.$[sSensor]$[nW]" "#" "S" -CFG_get_ex ) sW =;                  #   Get window specifier from config.
+    sW "#" == if ( "ccc.window.$[nW]" "0,0,0,0,10" "S" -CFG_get_ex ) sW =; end  #   Get default window
+    { { "$[sW]" } } "," "split" idAux -strop;                                   #   Parse window specifier
+    idAux ( -type double ) idAux /force -tconvert;                              #   Convert strings to numbers
+    :idAux[0,0]/=idRef.rinc; :idAux[0,1]/=idRef.rinc;                           #   Convert time axis
+    :idAux[0,2]/=idRef.cinc; :idAux[0,3]/=idRef.cinc;                           #   Convert frequency axis
+    :idAux=ent(idAux+0.5);                                                      #   Round
+    :idAux[0,1]<=0: if :idAux[0,1]=idR.nrec; end                                #   Entire time axis
+    :idAux[0,3]<=0: if :idAux[0,3]=idR.dim;  end                                #   Entire frequency axis
+    :idAux[0,1]=idAux[0,1]-idAux[0,0];                                          #   Time end point --> length
+    :idAux[0,3]=idAux[0,3]-idAux[0,2];                                          #   High freq. --> band width
+    :nWeight+=idAux[0,4];                                                       #   Aggregate total weight 
+    idAux idWin -cat;                                                           #   Append to window list
+    nW ++=;                                                                     #   Next window
+  end                                                                           # <<
+  ( idWin -is_empty not ) ( idWin.dim 4 >= ) && if                              # Got windows >>
+    :idWin = max(idWin,0);                                                      #   Clip to non-negative values
+    idWin.dim 5 < if                                                            #   No weights specified >>
+      "No window weights specified. Using equal weights." 1 -WARNING;           #     Warning
+      ( -type double ) 1 idWin.nrec idAux -array; 1 0 idAux -fill;              #     Add weights
+      idAux idWin -join;                                                        #     ...
+    end                                                                         #   <<
+    :idWin[4]: NULL 0 "sum" idAux /rec -aggregate;                              #   Get sum of weights;
+    :idAux[0,0]==0: if :idAux[0,0]=1; end                                       #   Make non-zero sum of weights
+    :idWin[4]/=idAux[0,0];                                                      #   Normalize window weights
+  else                                                                          # << Got no windows >>
+    "No (valid) spetral windows defined. Using entire spectrum." 1 -WARNING;    #   Warning 
+    { 0 $[idRef.nrec] 0 $[idRef.dim] 1 } idWin =;                               #   Use default window
+  end                                                                           # <<
+  idWin return;                                                                 # Return window list
+}
+
+## Auxiliary function rendering a window on a spectrogram for display.
+function -FEA_render_win(idSrc,nR,nXR,nC,nXC,idDst)
+{
+  data idAux;                                                                   # Auxiliary data instance
+  var  m;                                                                       # Data maximum
+  var  n;                                                                       # Loop counter
+
+  idSrc NULL 0 "max" idAux -aggregate; idAux NULL 0 "max" idAux /rec -aggregate;# Get data maximum
+  :m=idAux[0,0];                                                                # ...
+  idSrc idDst -copy;                                                            # Copy source to destination
+
+  :n=nR; :n<nR+nXR: while :idDst[n,nC]=m; :idDst[n,nC+nXC-1]=m; :idDst[n,nC+1]=m; :idDst[n,nC+nXC]=m; n ++=; end      # Render frequency boundaries
+  :n=nC; :n<nC+nXC: while :idDst[nR,n]=m; :idDst[nR+nXR-1,n]=m; n ++=; end      # Render time boundaries
+}
+
+## Computes the correlation coefficient between two spectrogram windows.
+##
+## @param idFeaR data 
+##          Reference spectrogram (should not contain labels)
+## @param idW data
+##          Spectral window definition as returned by {@link -CFG_get_windows}
+## @param nW number
+##          Zero-based index of window to apply
+## @param idFeaT data 
+##          Test spectrogram (should not contain labels)
+## @return A data instance containing exactly one component and one record 
+##         filled with the correlation coefficient between the windows 
+function -FEA_corc(idFeaR,idW,nW,idFeaT)
+{
+  statistics iS;                                                                # Statistic object
+  data       idCorc;                                                            # Correlation matrix
+  data       idR;                                                               # Copy of reference data
+  data       idT;                                                               # Copy of test data
+  var        nR;     :idW[nW,0]: nR  =;                                         # First record of window
+  var        nXR;    :idW[nW,1]: nXR =;                                         # Number of records
+  var        nC;     :idW[nW,2]: nC  =;                                         # First component of window
+  var        nXC;    :idW[nW,3]: nXC =;                                         # Number of components
+
+  idFeaR nR nXR idR /rec -select; idR nC nXC idR -select;                       # Time windowing 
+  idFeaT nR nXR idT /rec -select; idT nC nXC idT -select;                       # Frequency windowing
+  idR :idR.dim*idR.nrec: 1 idR -reshape;                                        # Reshape reference data
+  idT :idT.dim*idT.nrec: 1 idT -reshape;                                        # Reshape test data
+  idR idT -join;                                                                # Join 'em
+  2 2 1 NULL -1 iS -setup;                                                      # Setup statistics
+  idT -1 NULL iS -update;                                                       # Gather statistics
+  idCorc iS -corc;                                                              # Compute correlation matrix
+  { { ${idCorc[0,1]} } } return;                                                # Return correlation coefficients
+}
+
+## Training
+function -CCC_train()
+{
+  function -get_label(idLtb,idLab)                                              # Obtain unique label index
+  {                                                                             # >>
+    idLab 0 idLab -compress; idLab idLtb 0 0 idLab -gen_index;                  #   Get (compressed) label indices
+    idLab.nrec 1 > if "No unique label. Using first one." 1 -WARNING; end       #   More than one label found :(
+    :idLab[0,0]: return;                                                        #   Return label index
+  }                                                                             # <<
+
+  "\n// CCC model training"                                               -MSG; # Protocol
+
+  # Local instances                                                             # -------------------------------------
+  file iF;                                                                      # File list
+  data idFea;                                                                   # Feature vector sequence
+  data idLab;                                                                   # Label sequence
+  data idCtr;                                                                   # Label counters
+  data idLtb;                                                                   # Label table
+  data idSns;                                                                   # Sensor list
+  data idW;                                                                     # Window list
+  data idM;                                                                     # Mean spectrograms (model)
+  data idC;                                                                     # Window correlation coefficients
+  data idSdev;                                                                  # Standard deviation of coefficients
+  var  sDirModel;                                                               # UASR model directory
+  var  sExtS;                                                                   # Sensor file extension (e. g. ".AH")
+  var  nL;                                                                      # Label index
+  var  nS;                                                                      # Sensor index
+  var  nW;                                                                      # Window index
+  statistics iS;                                                                # statistics object
+
+  # Initialize                                                                  # -------------------------------------
+  -SNS_get_tab idSns =;                                                         # Get sensor list
+  -LAB_get_tab idLtb =;                                                         # Get label table
+  "model"   "" -CFG_get_path sDirModel =;                                       # Get model directory
+  "fea"     "" -CFG_get_path;                                                   # Echo feature files directory
+  ( "flist.sep" "\t " "S" -CFG_get_ex ) iF set sep;                             # Set file list separator(s)  
+  "train"   "" -CFG_get_flist iF -set flist;                                    # Set training file list
+  0 nL =; nL idLtb.nrec < while data idMean$[nL]; nL ++=; end                   # Create averaging buffers
+
+  # Loop over sensors                                                           # -------------------------------------
+  nS idSns.nrec < while                                                         # Loop over sensors >>
+    ( "${idSns[nS,0]}" -SNS_get_ext ) sExtS =;                                  #   Get sensor file extension
+    "\n\n   SENSOR \"${idSns[nS,0]}\":"                                   -MSG; #   Protocol
+    
+    # Average training spectrograms                                             #   - - - - - - - - - - - - - - - - - -
+    "\n   Averaging $[iF.len] spectrograms (K=$[idLtb.nrec]) ..."         -MSG; #   Protocol
+    0 1 -PBAR;                                                                  #   Begin progress bar
+    0 nL =; nL idLtb.nrec < while idMean$[nL] -reset; nL ++=; end idM -reset;   #   Clear averaging buffers
+    ( -type double ) idLtb.nrec 1 idCtr -array;                                 #   Create/reset label counters
+    iF -reset; iF -next while                                                   #   Loop over training files >>
+      :(iF.nfile+1)/iF.len: 1 -PBAR;                                            #     Display progress
+      "\n   - $[iF.sfile]: ..."                                          -MSG2; #     Protocol (verbose level 2)
+      iF "${idSns[nS,0]}" "" idFea -FEA_get;                                    #     Get feature vectors
+      idFea idLab idFea -LAB_strip;                                             #     Remove labels from features data
+      ( idLtb idLab -get_label ) nL =;                                          #     Get unique label index
+      :idMean$[nL]=idMean$[nL]+idFea;                                           #     Sum up spectrograms
+      :idCtr[0,nL]=idCtr[0,nL]+1;                                               #     Count spectrograms
+      " ok"                                                              -MSG2; #     Protocol (verbose level 2)
+    end                                                                         #   <<
+    0 nL =; nL idLtb.nrec < while                                               #   Loop over labels >>
+      :idMean$[nL]=idMean$[nL]/idCtr[0,nL];                                     #     Compute average spectrogram
+      idMean$[nL] idM -cat                                                      #     Append to model
+      nL ++=;                                                                   #     Next label
+    end                                                                         #   <<
+    idFea.cofs  idM -set cofs;                                                  #   HACK: copy component axis info
+    idFea.cinc  idM -set cinc;                                                  #   ...
+    idFea.cunit idM -set cunit;                                                 #   ...
+    idLtb.nrec idM -set nblock;                                                 #   Set block number
+    "\n  " -MSG2; "done\n"                                                -MSG; #   Protocol
+
+    # Compute correlation coefficients                                          #   - - - - - - - - - - - - - - - - - -
+    "\n   Loading spectral windows ..."                                   -MSG; #   Protocol
+    ( idMean0 "${idSns[nS,0]}" -CFG_get_windows ) idW =;         " done." -MSG; #   Get windows
+    "\n   Gathering correlation coefficient statistics ..."               -MSG; #   Protocol
+    2 idW.nrec idLtb.nrec NULL -1 iS -setup;                                    #   Create corr. coeff. statistics
+    0 1 -PBAR;                                                                  #   Begin progress bar
+    iF -reset; iF -next while                                                   #   For all training files >>
+      :(iF.nfile+1)/iF.len: 1 -PBAR;                                            #     Display progress
+      "\n   - $[iF.sfile]: ..."                                          -MSG2; #     Protocol (verbose level 2)
+      iF "${idSns[nS,0]}" "" idFea -FEA_get;                                    #     Get feature vectors
+      idFea idLab idFea -LAB_strip;                                             #     Remove labels from features data
+      ( idLtb idLab -get_label ) nL =;                                          #     Get unique label index
+      idC -reset;                                                               #     Reset correlation coefficients
+      :nW=0; :nW<idW.nrec: while                                                #     Loop over windows >>
+        ( idMean$[nL] idW nW idFea -FEA_corc ) idC -join;                       #       Compute correlation coefficient
+        nW ++=;                                                                 #       Next window
+      end                                                                       #     <<
+      { { $[nL] } } idC -join;                                                  #     Join label
+      idC :idC.dim-1: NULL iS -update;                                          #     Update corr. coeff. statistics
+      " ok"                                                              -MSG2; #     Protocol (verbose level 2)
+    end                                                                         #   <<
+    "\n  " -MSG2; "done\n"                                                -MSG; #   Protocol
+   
+    ## Save model (mean spectrograms and corr. coeff. statistics)               #   - - - - - - - - - - - - - - - - - -
+    "$[sDirModel]/ccc$[sExtS].dn3"  idM -save;                                  #   Save mean spectrogram
+    "$[sDirModel]/ccc$[sExtS].stat" iS  -save;                                  #   Save corr. coeff. statistics
+    
+    ## Next sensor                                                              #   - - - - - - - - - - - - - - - - - -
+    nS ++=;                                                                     #   Next sensor
+  end                                                                           # <<
+
+  0 return;                                                                     # That's it folks ...
+}
+
+## Classification (assesssment mode)
+function -CCC_assess()
+{
+  "\n// CCC assessment"                                                   -MSG; # Protocol
+
+  # Local instances                                                             # -------------------------------------
+  file iF;
+  data idLtb;
+  data idFea;
+  data idSns;                                                                   # Sensor list
+  data idF;                                                                     # File list
+  data idM;                                                                     # Sensor/label mean spectrogram
+  data idS;                                                                     # Sensor/label corr. coeff. stats.
+  data idC;                                                                     # Window correlation coefficients
+  data idFzz;                                                                   # Fuzzy memberships
+  data idDsc;                                                                   # Label discriminative function values
+  data idH;
+  data idAsc;                                                                   # Assessment logs
+  data idAux;                                                                   # Auxiliary data instance
+  var  sDirModel;
+  var  sExtS;                                                                   # Sensor file extension (e. g. ".AH")
+  var  nL;                                                                      # Label index
+  var  nS;                                                                      # Sensor index
+  var  nW;                                                                      # Window index
+  var  sS;                                                                      # Sensor name
+  var  nFzz;                                                                    # Interpolated fuzzy membership
+  var  nCor;                                                                    # Correctness
+
+  # Initialize                                                                  # -------------------------------------
+  -SNS_get_tab idSns =;                                                         # Get sensor list
+  -LAB_get_tab idLtb =;                                                         # Load label table
+  "model"   "" -CFG_get_path sDirModel =;                                       # Get model directory
+  "fea"     "" -CFG_get_path;                                                   # Echo feature files directory
+  ( "flist.sep" "\t " "S" -CFG_get_ex ) iF set sep;                             # Set file list separator(s)  
+  "test"   "" -CFG_get_flist iF -set flist;                                     # Set test file list
+
+  # Restore all models                                                          # -------------------------------------
+  "\n\n   Loading models ..."                                             -MSG; # Protocol
+  nS idSns.nrec < while                                                         # Loop over sensors >>
+    "${idSns[nS,0]}" sS =; ( sS -SNS_get_ext ) sExtS =;                         #   Get sensor name and file extension
+    data       idM$[sS];                                                        #   Mean spectrogram
+    data       idSm$[sS];                                                       #   Correlation coeff. means
+    data       idSs$[sS];                                                       #   Correlation coeff. std. devs.
+    statistics iS$[sS];                                                         #   Correlation coeff. statistics
+    "$[sDirModel]/ccc$[sExtS].dn3"  idM$[sS] -restore ?error if 1 return; end   #   Restore mean spectrogram
+    "$[sDirModel]/ccc$[sExtS].stat" iS$[sS]  -restore ?error if 1 return; end   #   Restore corr. coeff. statistics
+    idSm$[sS] iS$[sS] -mean; idSs$[sS] iS$[sS] /sn -sdev;                       #   Compute means and std. devs.
+    nS ++=;                                                                     #   Next sensor
+  end                                                                           # <<
+  " done"                                                                 -MSG; # Protocol
+
+  # Computing correlation coefficients                                          # -------------------------------------
+  "\n   Classifying $[iF.len] files ..."                                  -MSG; # Protocol
+  0 1 -PBAR;                                                                    # Begin progress bar
+  iF -reset; iF -next while                                                     # For all training files >> 
+    :(iF.nfile+1)/iF.len: 1 -PBAR;                                              #   Display progress
+    "\n   - ${iF.nfile+1}/$[iF.len] $[iF.sfile]: "                       -MSG2; #   Protocol (verbose level 2)
+    "(\"${iF.recfile[0,1]}\") ..."                                       -MSG2; #   Protocol (verbose level 2)
+    
+    # Loop over sensors                                                         #   - - - - - - - - - - - - - - - - - -
+    ( -type double ) idLtb.nrec 1 idDsc -array;                                 #   Clear discriminative fnc. values
+    0 nS =; nS idSns.nrec < while                                               #   Loop over sensors >>
+      "${idSns[nS,0]}" sS =; ( sS -SNS_get_ext ) sExtS =;                       #     Get sensor name and file ext.
+      iF sS "" idFea -FEA_get;                                                  #     Get feature vectors
+      idFea NULL idFea -LAB_strip;                                              #     Remove labels from features data
+      "idW$[sS]" "data" ?instance not if                                        #     Have windows for sensor? NO >> 
+        data idW$[sS];                                                          #       Create window instance
+        ( idFea sS -CFG_get_windows ) idW$[sS] =;                               #       Load windows
+      end                                                                       #     <<
+      
+      ## Loop over classes                                                      #     - - - - - - - - - - - - - - - - -
+      0 nL =; nL idLtb.nrec < while                                             #     Loop over classes >>
+        "(\"${idLtb[nL,0]}\""                                          3 -MSGX; #       Protocol (verbose level 3)
+        idM$[sS] nL 1 idM /block -select;                                       #       Get mean spect.for sensor/label
+        idFzz -reset; idC -reset;                                               #       Reset buffers
+        :nW=0; :nW<idW$[sS].nrec: while                                         #       Loop over windows >>
+          ( idM idW$[sS] nW idFea -FEA_corc ) idC -join;                        #         Compute correlation coeff.
+          ( :idC[0,nW]: :idSm$[sS][nL,nW]: :idSs$[sS][nL,nW]: -get_fuzzy )      #         |
+            idFzz -join;                                                        #         Compute fuzzy membership
+          " ${idC[0,nW]}"                                              4 -MSGX; #         Protocol (verbose level 4)
+          nW ++=;                                                               #         Next window
+        end                                                                     #       <<
+        ( 0 0 :idW$[sS][4]*idFzz: -dfetch ) nFzz =;     " -> $[nFzz])" 3 -MSGX; #       Interpolate fuzzy memberships 
+        :idDsc[0,nL] = idDsc[0,nL] + nFzz;                            "." -MSG2 #       Aggregate discriminative fnc.
+        nL ++=;                                                                 #       Next class
+      end                                                                       #     <<
+      nS ++=;                                                                   #     Next sensor
+    end                                                                         #   <<
+    :idDsc/=idSns.nrec;                                                         #   Compute discriminative fnc. values
+    .__UTL_nVlevel 1 > if                                                       #   On verbose level 2 and up >>
+      idDsc NULL 0 "imax" idAux -aggregate; idAux 0 idLtb 0 1 idAux -lookup;    #     Compute classification result
+      "\n    - " 3 -MSGX; " done (\"${idAux[0,0]}\")."                   -MSG2; #     And talk about it
+    end                                                                         #   <<
+    idDsc idAsc -cat;                                                           #   Continue assessment log
+  end                                                                           # <<
+  "\n  "                                                                 -MSG2; # Protocol
+  "done\n"                                                                -MSG; # Protocol
+
+  ## Aftermath                                                                  # -------------------------------------
+  :idAsc= -.ln(idAsc); idLtb 0 idAsc -set_cnames;                               # Compute neg. log. memberships
+  iF -reset;                                                                    # Rewind file list
+  :iF.flist_data[0]: idF =; 0 "FILE" idF -set_cname;                            # Get file names
+  iF.flist_data.dim 1 > if                                                      # File list contains labels >>
+    :iF.flist_data[1]: idAux =;                                                 #   Get 'em
+    idAux idAux -LAB_map;                                                       #   Map them to UASR labels
+    0 "LAB" idAux -set_cname;                                                   #   Rename label component
+    idAux idF -join;                                                            #   Join to file list
+  end                                                                           # <<
+  "ccc-" "" idLtb idF idAsc -XXM_assess_log nCor =;                             # Create/continue log file
+  "ccc-" "" idLtb idF idAsc -XXM_assess_hist;                                   # Create/continue assmnt. histrograms
+
+  nCor 0 >= if                                                                  # Have computed correctness >>
+    "\n\n   Evaluation result:"                                           -MSG; #   Protocol
+    "\n   - Label corr.    : ${ent(nCor*1000+0.5)/10} %"                  -MSG; #   Protocol (label correctness)
+  end                                                                           # <<
+  nCor 0 >= if nCor else 1. end return;                                         # Return label correctness or 1
+}
+
+## Training command
+function -CMD_trn()
+{
+  -CCC_train;                                                                   # Do training
+  -CCC_assess;                                                                  # Do assessment
+}
+
+## Classification command
+function -CMD_cls()
+{
+  -CCC_assess;                                                                  # Do assessment
+}
+
+## Window rendering command
+function -CMD_ren()
+{
+  # Local instances                                                             # -------------------------------------
+  data idL;       -LAB_get_tab idL =;                                           # Label table
+  data idS;       -SNS_get_tab idS =;                                           # Sensor list
+  data idMean;                                                                  # Mean spectrograms
+  data idM;                                                                     # Mean spectrogram of label (class)
+  data idW;                                                                     # Spectral windows
+  var  sDirModel; ( "model" "" -CFG_get_path ) sDirModel =;                     # Model directory
+  var  sDirLog;   ( "log"   "" -CFG_get_path ) sDirLog   =;                     # Log directory
+  var  sExtS;                                                                   # Sensor file extension (e. g. ".AH")
+  var  nL;                                                                      # Label index
+  var  nS;                                                                      # Sensor index
+  var  nW;                                                                      # Window index
+  var  sS;                                                                      # Sensor name
+
+  # Restore all models                                                          # -------------------------------------
+  "\n\n   Rendering windows ..."                                          -MSG; # Protocol
+  nS idS.nrec < while                                                           # Loop over sensors >>
+    "${idS[nS,0]}" sS =; ( sS -SNS_get_ext ) sExtS =; "\n   Sensor $[sS]" -MSG; #   Get sensor name and file extension
+    idMean -reset; "$[sDirModel]/ccc$[sExtS].dn3" idMean -restore;              #   Load mean spectrogram
+    0 nL =; nL idL.nrec < while                                                 #   Loop over labels (classes)
+      idMean nL 1 idM /block -select;                                           #     Get label's mean spectrogram
+      ( idM sS -CFG_get_windows ) idW =;                                        #     Get spectral windows  
+      0 nW =; nW idW.nrec < while                                               #       Loop over windows >>
+        nL 0 == if                                                              #       For first label >>
+          "\n     Window ${nW+1}: "                                       -MSG; #         Print out window dimensions
+          "rec. ${idW[nW,0]}...${idW[nW,0]+idW[nW,1]}, "                  -MSG; #         ...
+          "comp. ${idW[nW,2]}...${idW[nW,2]+idW[nW,3]}, "                 -MSG; #         ...
+          "weight ${idW[nW,4]}"                                           -MSG; #         ...
+        end                                                                     #       <<
+        idM :idW[nW,0]: :idW[nW,1]: :idW[nW,2]: :idW[nW,3]: idM -FEA_render_win;#       Render window
+        nW ++=;                                                                 #       Next window
+      end                                                                       #     <<
+      .__CFG_bNwr not if                                                        #     Option -n NOT specified >>
+        "$[sDirLog]/ccc$[sExtS].${idL[nL,0]}.dn3" idM -save;                    #       Save rendered windows
+      end                                                                       #     <<
+      nL ++=;                                                                   #     Next label
+    end                                                                         #   <<
+    nS ++=;                                                                     #   Next sensor
+  end                                                                           # <<
+  "\n   done"                                                             -MSG; # Protocol
+  0 return;                                                                     # Well ...
+}
+
+## == MAIN PROGRAM ==                                                           # =====================================
+
+"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
+"\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
+"\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
+"\n// dLabPro VID     : " -version +                                      -MSG; # Protocol
+"\n// UASR VID        : " -UASR_version +                                 -MSG; # Protocol
+( "$1" "help" == ) -UASR_help || if "$2" -usage; 0 return; end                  # Print help
+$$ 2 < if "Type '$__SFILE__.xtp help' for usage\n" -echo; 1 return; end         # No arguments, no service
+"$1" var sCmd;                                                                  # Get command
+sCmd "cls" ==                                                                   # | Correlation coeff. classifier
+sCmd "ren" == ||                                                                # | Rendering of spectral windows
+sCmd "trn" == ||                                                                # | Corr. coeff. classifier training
+not ( $$ 2 < ) || if                                                            # Bad command or less than 2 args. >> 
+  $$ 2 < if "Too few arguments" else "unknown command '$1'"  end -ERROR;        #   Error
+  "\nType '$__SFILE__.xtp help' for usage\n" -echo;                             #   Give a little help
+  1 return;                                                                     #   Terminate with error code
+end                                                                             # <<
+
+## Initialize session                                                           # -------------------------------------
+"\n// Configuration   : $2"                                               -MSG; # Protocol
+"$2" TRUE -CFG_init;                                                            # Configure session
+"$UASR_HOME/scripts/dlabpro/util/uasr_session.itp" include;                     # Include UASR session startup script
+"\n"                                                                      -MSG; # Protocol
+
+## Execute commands                                                             # -------------------------------------
+var nRes; -CMD_$[sCmd] nRes =;                                                  # Call command handler function
+
+## The End                                                                      # -------------------------------------
+"\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors)."             -MSG; # Protocol
+nRes return;                                                                    # Return result
+
+## EOF

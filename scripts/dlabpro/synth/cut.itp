@@ -1,0 +1,158 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Code fragment: Cut diphones and generate diphone state sequence inventory
+##
+## AUTHOR : Guntram Strecha
+## PACKAGE: uasr/scripts/dlabpro/synth
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"\n//                   Inventory generation extesion" -MSG;
+
+/disarm -result#(itDC,itDCr)
+{
+  data idDiphList;
+  data idSeq;
+  data idSeqDiph;
+  data idLab;
+  data idCut;
+  data idLabDiph;
+  data idAux1;
+  data idAux2;
+  var sAmId;     "am.model"           "0_0"     -CFG_get      sAmId     =;      # Acoustic model ID
+  var nSrate;    "sig.srate"          16000     -CFG_get      nSrate    =;      # Sampling rate
+  var nCrate;    "pfa.crate"            160     -CFG_get      nCrate    =;      # Continuous rate
+  var sDirLog;   "log"                   "S"    -CFG_get_path sDirLog   =;      # Log directory
+  var sDirLab;   "lab"                   "S"    -CFG_get_path sDirLab   =;      # Lab dir
+  var sDirModel; "model"                 "S"    -CFG_get_path sDirModel =;      # Model path
+  var sFnCut;    "file.cut"              ""     -CFG_get      sFnCut    =;      # Schneidliste
+  var sExp;      "exp"                  "." "S" -CFG_get_ex   sExp      =;      # Experiment name
+  var sSrcSpk;   "syn.sourcespeaker"   sExp "S" -CFG_get_ex   sSrcSpk   =;      # Get source speaker
+  var sFn;
+  var sFnDiph;
+  var sFnDiphList;
+  var i;
+  var j;
+  var nIdx1;
+  var nIdx2;
+  var nC;
+
+  .sFn "/.wav/" "replace" -VAR_strop sFn =;
+  
+  { "$[sFn]" } NULL "splitp" idAux1 -strop;
+  0 1 idAux1 -sfetch sFn =;
+
+  ## Save Gaussian and word sequences
+  :itDC.td["~TIS"]: idSeq =;
+
+  "$[sDirLab]/$[sFn].lab" "esps_lab" idLab stdfile -import;
+  
+  32 3 idCut -addncomps;
+  -type long 2 idCut -addncomps;
+  "$[sFnCut]" "ascii" idCut stdfile -import;
+
+  idCut { "$[sFn]" } 2 0 idAux1 /noerror -gen_index;
+  :idAux1[0].==0: idCut -dmark;
+  idCut 0 0 idAux1 /mark -select;
+  idCut -unmark;
+  
+  idAux1.nrec 0 == if
+    "File (\"$[sFn]\") not found in cut-list." -MSG;
+  end
+
+  .__CFG_bFce if
+    "$[sDirModel]/$[sSrcSpk]/diph_forced.$[sAmId].$[nCrate].list" sFnDiphList =;
+  else
+    "$[sDirModel]/$[sSrcSpk]/diph.$[sAmId].$[nCrate].list" sFnDiphList =;
+  end
+    
+  i 0 =;
+  label CUT_DIPH; i idAux1.nrec < if
+    i 0 idAux1 -sfetch i 1 idAux1 -sfetch + sFnDiph =;
+#    "\nProcessing " sFnDiph + -MSG2;
+
+    :itDC.td["~TIS"].!=-1: itDC.td -dmark;
+    itDC.td -1 -1 itDC.td /mark -select;
+
+    .__CFG_bFce if
+      itDC.td "~PHN" itDC.td -find_comp idAux2 -compress;
+      idAux2 i 3 idAux1 -fetch i 4 idAux1 -fetch 1 + idAux2 /rec -select;
+      :ent((idAux2[0,1]+idAux2[1,1])/2+0.5): nIdx1 =;
+      idAux2.nrec 3 < if
+        :ent((idSeq.nrec+idAux2[1,1])/2+0.5)-nIdx1: nC =;
+      else
+        :ent((idAux2[2,1]+idAux2[1,1])/2+0.5)-nIdx1: nC =;
+      end
+      1 1 idAux2 -fetch nIdx1 - nIdx2 =;
+    else
+      idLab i 3 idAux1 -dfetch i 4 idAux1 -dfetch 1 + idLabDiph /rec -select;
+      :ent((idLabDiph[0,0]+idLabDiph[1,0])*500/idSeq.rinc+0.5): nIdx1 =;
+      idLabDiph.nrec 3 < if
+        :(idSeq.nrec+ent(idLabDiph[1,0]*1000/idSeq.rinc+0.5))/2-nIdx1: nC =;
+      else
+        :ent((idLabDiph[1,0]+idLabDiph[2,0])*500/idSeq.rinc+0.5)-nIdx1: nC =;
+      end
+      :ent(idLabDiph[1,0]*1000/idSeq.rinc+0.5): nIdx1 - nIdx2 =;
+    end
+    
+    nC 1 <= if "Only $[nC] frames found for diphon." -WARNING; end
+
+    sFnDiphList idDiphList /noerror -restore ?error if
+       "~DIPH" 16 idDiphList -addcomp;
+       "ind_" -type long idDiphList -addcomp;
+       "n___" -type long idDiphList -addcomp;
+     end
+    idDiphList.nrec 1 + idDiphList -reallocate;
+    sFnDiph idDiphList.nrec 1 - 0 idDiphList -sstore;
+    nIdx1 idDiphList.nrec 1 - 1 idDiphList -store;
+    nC idDiphList.nrec 1 - 2 idDiphList -store;
+    sFnDiphList idDiphList -save;
+    
+    idSeq nIdx1 nC idSeqDiph /rec -select;
+
+    "~PHO" 8 idSeqDiph -addcomp;
+    0 j =;
+    label L_FRAME; j idSeqDiph.nrec < if
+      j nIdx2 < if
+        i 0 idAux1 -sfetch j 1 idSeqDiph -sstore;
+      else
+        i 1 idAux1 -sfetch j 1 idSeqDiph -sstore;
+      end
+      j ++=;
+      goto L_FRAME
+    end
+
+    .__CFG_bFce if
+      sFnDiph "_forced" + sFnDiph =;
+    end
+
+    "$[sDirModel]/$[sSrcSpk]/$[sFnDiph].$[sAmId].$[nCrate].gss" stdfile -exists if
+      "\nFile \"$[sDirModel]/$[sSrcSpk]/$[sFnDiph].$[sAmId].$[nCrate].gss\" exists, overwriting..." -MSG;
+    end
+    "$[sDirModel]/$[sSrcSpk]/$[sFnDiph].$[sAmId].$[nCrate].gss" idSeqDiph -save;
+
+    i 1 + i =;
+    goto CUT_DIPH;
+  end;
+  
+#  "$[sDirModel]/$[sSrcSpk]/$[sFn].gss" idSeq -save;
+}
+
+## EOF

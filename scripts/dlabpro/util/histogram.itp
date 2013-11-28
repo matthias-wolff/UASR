@@ -1,0 +1,87 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: For dLabPro class histogram
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Store histogram instance in data instance. Can be used to display a histogram.
+##
+## @cgen:index
+## @param iH histogram
+##          Histogram instance to store
+## @param sUnit string
+##          Physical unit of histogram values
+## @param idH data
+##          Data instance to store histogram in
+## @global &lt;uasr.am.eval.assess&gt; R
+function -HIST_to_data(iH,sUnit,idH)
+{
+  idH -reset;                                                                   # Clear output
+  iH.hdim 1 != if "Vector histograms not supported." -ERROR; leave; end         # Only scalar histograms!
+  var sAssess; ( "am.eval.assess" "cmx,hist" "S" -CFG_get_ex    ) sAssess =;    # Get assessment mode
+  var bLog;    ( ( sAssess "loghist" "search" -VAR_strop ) 0 >= ) bLog =;       # Logarithmic counts
+
+  iH.hist idH -copy;                                                            # Copy histogram data
+  1 idH -set nblock;                                                            # Get all in one block
+  idH iH.bins iH.nhist idH -reshape;                                            # Former blocks now components :)
+  bLog if :idH=max(.log(idH),-1)+1; end                                         # Log histogram counts
+
+  iH.labtab 0 idH -set_cnames;                                                  # Give 'em the model names
+  sUnit                           idH -set runit;                               # Physical unit : sUnit
+  iH.min                          idH -set rofs;                                # Axis offset   : histogram minimum
+  :(iH.max-iH.min)/iH.bins:       idH -set rinc;                                # Axis increment: bin width
+  bLog if "log h +1" else "h" end idH -set vunit;                               # Value unit
+  "0,BarDiagram\n0,BarDiagram\n"  idH -set rtext;                               # Top secret: display options
+}
+
+## Initialize histogram instance from data instance.
+##
+## @cgen:index
+## @param idH data
+##          Data instance to initialize histogram from. Must have been created
+##          with <a class="code" href="#clp_-HIST_to_data">-HIST_to_data</a>!
+## @param iH histogram
+##          The histogram instance to initialize
+## @global &lt;uasr.am.eval.assess&gt; R
+function -HIST_from_data(idH,iH)
+{
+  var nC;                                                                       # Component index
+  var sAssess; ( "am.eval.assess" "cmx,hist" "S" -CFG_get_ex    ) sAssess =;    # Get assessment mode
+  var bLog;    ( ( sAssess "loghist" "search" -VAR_strop ) 0 >= ) bLog =;       # Logarithmic counts
+  
+  iH -reset; -INF iH -set min; INF iH -set max;                                 # Initialize histogram
+  idH.rofs                     iH -set min;
+  :idH.rofs+idH.nrec*idH.rinc: iH -set max;
+  idH.nrec                     iH -set bins;
+
+  255 1 idH.dim iH.labtab -array;
+  nC idH.dim < while ( nC idH -get_cname ) nC 0 iH.labtab -store; nC ++=; end
+  iH.labtab " " "trim" iH.labtab -strop;
+  idH :idH.nrec*idH.dim: 1 iH.hist -reshape;
+  bLog if :iH.hist=ent(.pow(10.,iH.hist-1)+0.25); end                           # De-log histogram counts
+  idH.dim  iH.hist -set nblock;                                                 # Set number of histogram blocks
+  1        iH.hist -set descr1;                                                 # Internally: histogram mode 
+  idH.nrec iH.hist -set descr2;                                                 # Internally: number of bins
+  idH.dim  iH -set nhist;                                                       # Set number of histograms
+}
+
+## EOF

@@ -1,0 +1,63 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: Signal pre-processing
+##
+## AUTHOR : Guntram Strecha
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## No preprocessing. This function is intentionally left blank.
+## @cgen:index
+## @param idSig data
+##          Input and output signal data instance
+function -SPP_none(idSig)
+{
+}
+
+## Applies preemphasis to signal.
+## @cgen:index
+## @param idSig data
+##          Input and output signal data instance
+function -SPP_preemph(idSig)
+{
+  var nPreemph; "uasr.preemph.factor" "1.0" "S" -CFG_get_ex nPreemph =;
+  data a; { 1 $[0 nPreemph -] } 2 ./ a =;
+  
+  NULL a idSig NULL 0.0 idSig matrix -filter;
+}
+
+## Replaces input signal by its residual signal.
+## @cgen:index
+## @param idSig data
+##          Input and output signal data instance
+function -SPP_residual(idSig)
+{
+  data idA;
+  data idG;
+  var  nOrder;  "uasr.spp.residual.order"   24    "S" -CFG_get_ex nOrder  -vset;
+  var  nLambda; "uasr.spp.residual.lambda"  0.0   "S" -CFG_get_ex nLambda -vset;
+  var  sMethod; "uasr.spp.residual.method" "burg" "S" -CFG_get_ex sMethod -sset;
+  var  sType;
+
+  idSig ' idSig =;
+  idSig nOrder nLambda sMethod mlpc idA = idG =;
+  idSig idA idG NULL filter ' idSig =;
+}
+

@@ -1,0 +1,234 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Configuration management tool
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/tools
+##
+## ARGUMENTS:
+##   $1: Command or 'help'
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"$UASR_HOME/scripts/dlabpro/util/@.itp"  include;
+
+## Prints help on usage
+function -usage(sCmd)
+{
+  sCmd "dmp" == if
+    "\n\n   dmp: Dump a configuration to stdout"                          -MSG; 
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp cmp <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+    "\n\n     'dlabpro $__SFILE__.xtp dmp default.cfg'"                   -MSG;
+      "\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "inf" == if
+    "\n\n   inf: Display information about a configuration"               -MSG; 
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp cmp <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+    "\n\n     'dlabpro $__SFILE__.xtp inf default.cfg'"                   -MSG;
+      "\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "ref" == if
+    "\n\n   ref: Create reference recognition results entries"            -MSG; 
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp ref <evalfile> [outfile] [options]"  -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <evalfile>  HMM/SVM evaluation result file"                 -MSG;
+      "\n     <outfile>   Output file (ASCII, key-value pairs); if "      -MSG;
+      "\n                 omitted the output goes to stdout"              -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+    "\n\n     'dlabpro $__SFILE__.xtp ref all.flst'"                      -MSG;
+      "\n"                                                                -MSG;
+    0 return;
+  end
+  "\n\n   SYNOPSIS:"                                                      -MSG;
+    "\n     Configuration management tool"                                -MSG;
+  "\n\n   USAGE:"                                                         -MSG;
+    "\n     dlabpro $__SFILE__.xtp <command> [arguments] [options]"       -MSG;
+  "\n\n   ARGUMENTS:"                                                     -MSG;
+    "\n     command   dmp - Dump a configuration to stdout"               -MSG;
+    "\n               inf - Display information about a configuration"    -MSG;
+    "\n               ref - Create reference recognition results entries" -MSG;
+  "\n\n   OPTIONS:"                                                       -MSG;
+    "\n     -v<n>           verbose level"                                -MSG;
+    "\n     -P<key>=<value> override config. key-value-pairs"             -MSG;
+  "\n\n  Type 'dlabpro $__SFILE__.xtp help <command>' for help on a "     -MSG;
+         "specific command."                                              -MSG;
+    "\n"                                                                  -MSG;
+  0 return;
+}
+
+## Dumps a configuration
+function -CMD_dmp()
+{
+  $$ 2 < if                                                                     # Need at least two arguments >>
+    "Too few arguments" -ERROR;                                                 #   Error message
+    "\nType 'dlabpro $__SFILE__.xtp help dmp' for help" -MSG;                   #   Give a little help
+    1 return;                                                                   #   Terminate program
+  end                                                                           # <<
+  "$2" TRUE -CFG_init;                                                          # Initialize configuration
+
+	var  i;
+	data idCfg;
+
+	idCfg -CFG_dump;
+	label L_I; i idCfg.nrec < if
+	  "\n" ( i 0 idCfg -sfetch ) + -echo;
+	  i ++=; goto L_I;
+	end
+
+  0 return;
+}
+
+## Displays information about a configuration
+function -CMD_inf()
+{
+  ## Tell paths
+  "\n\n// CONFIGURATION INFO"                                             -MSG; # Protocol
+  "\n// Paths:"                                                           -MSG;
+  "data"   "" -CFG_get_path;
+  "f0"     "" -CFG_get_path;
+  "fea"    "" -CFG_get_path;
+  "flists" "" -CFG_get_path;
+  "info"   "" -CFG_get_path;
+  "lab"    "" -CFG_get_path;
+  "log"    "" -CFG_get_path;
+  "model"  "" -CFG_get_path;
+  "pm"     "" -CFG_get_path;
+  "sig"    "" -CFG_get_path;
+
+  ## Tell file lists
+  "\n\n// File lists:"                                                    -MSG;
+  "\n   all"    -MSG; "all"    "" -CFG_get_flist;
+  "\n   xval"   -MSG; "xval"   "" -CFG_get_flist;
+  "\n   train"  -MSG; "train"  "" -CFG_get_flist;
+  "\n   dev"    -MSG; "dev"    "" -CFG_get_flist;
+  "\n   test"   -MSG; "test"   "" -CFG_get_flist;
+  "\n   stat"   -MSG; "stat"   "" -CFG_get_flist;
+  "\n   stat_t" -MSG; "stat_t" "" -CFG_get_flist;
+
+  "\n\n// Further information:"                                           -MSG;
+  "\n   - Type 'dlabpro CHK.xtp fls $2' to check file list integrity."    -MSG;
+  "\n   - Type 'dlabpro CHK.xtp sig $2' to check the signal files."       -MSG;
+  "\n   - Type 'dlabpro CHK.xtp fea $2' to check the feature files."      -MSG;
+  "\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n"         -MSG; # Protocol
+  0 return;
+}
+
+## Creates reference recognition results entries.
+function -CMD_ref()
+{
+  $$ 2 < if                                                                     # Need at least two arguments >>
+    "Too few arguments" -ERROR;                                                 #   Error message
+    "\nType 'dlabpro $__SFILE__.xtp help ref' for help\n" -MSG;                 #   Give a little help
+    1 return;                                                                   #   Terminate program
+  end                                                                           # <<
+
+  DGen iDG;
+	data idIte;
+	data idEvl;
+	data idAux;
+	var  nR;
+	
+	"$2" idAux /noerror -restore ?error if
+	  "Cannot read evaluation log file \"$2\"." -ERROR;
+    "\nType 'dlabpro $__SFILE__.xtp help ref' for help\n" -MSG;                 #   Give a little help
+    1 return;
+  end
+  "LC" idAux -find_comp 0 < if "Missing component 'LC'" -ERROR; 1 return; end
+  "LA" idAux -find_comp 0 < if "Missing component 'LA'" -ERROR; 1 return; end
+  "LL" idAux -find_comp 0 < if "Missing component 'LL'" -ERROR; 1 return; end
+
+  :idAux["HMM"]: idIte -copy;
+  idIte -is_empty if :idAux["SVM"]: idIte -copy; end
+  idIte -is_empty if "Missing model name component" -ERROR; 1 return; end
+  
+  :idAux["LC"]: idEvl -copy;
+  :idAux["LA"]: idEvl -join;
+  :idAux["LL"]: idEvl -join;
+  idEvl "\"" "," "\"\n" iDG -table;
+  iDG.gen idIte /noerror -join;                                                 # Join idIte (ignore blank line at end)
+
+  iDG -reset;
+  idIte "uasr.am.eval.ite" "=" ";\n" iDG -table;
+
+  $$ 3 >= if
+    "$3" "ascii" iDG.gen stdfile -export;
+  else
+    label L_REC; nR iDG.gen.nrec < if
+      "\n" :iDG.gen[nR,0]: + -echo;
+      nR ++=; goto L_REC;
+    end;
+  end
+  
+  0 return;
+}
+
+
+## == MAIN PROGRAM ==                                                           # =====================================
+
+"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
+"\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
+"\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
+"\n// dLabPro VID     : " -version +                                      -MSG; # Protocol
+"\n// UASR VID        : " -UASR_version +                                 -MSG; # Protocol
+( "$1" "help" == ) -UASR_help || if "$2" -usage; 0 return; end                  # Print help
+"$1" var sCmd;                                                                  # Get command
+sCmd "dmp" ==                                                                   # | Dump configuration
+sCmd "inf" == ||                                                                # | Display information
+sCmd "ref" == ||                                                                # | Create ref. rec. result entries
+not ( $$ 2 < ) || if                                                            # Bad command or less than 2 args. >> 
+  $$ 2 < if "Too few arguments" else "unknown command '$1'"  end -ERROR;        #   Error
+  "\nType '$__SFILE__.xtp help' for usage\n" -echo;                             #   Give a little help
+  1 return;                                                                     #   Terminate with error code
+end                                                                             # <<
+
+## Commands without config                                                      # -------------------------------------
+sCmd "ref" == if -CMD_ref return; end                                           # Create ref. rec. result entries
+
+## Initialize session                                                           # -------------------------------------
+"\n// Configuration   : $2"                                               -MSG; # Protocol
+"$2" TRUE -CFG_init;                                                            # Configure session
+
+"\n// Includes        : ..."                                              -MSG; # Protocol
+sCmd "inf" == if                                                                # HMM analysis >>
+  "$UASR_HOME/scripts/dlabpro/train/am.itp" include;                            #   Include AM training utilities
+end                                                                             # <<
+" done"                                                                   -MSG; # Protocol
+
+"../util/uasr_session.itp" include;                                             # Include UASR session startup script
+
+## Execute commands                                                             # -------------------------------------
+-CMD_$[sCmd] return;                                                            # Call command handler function
+
+## EOF

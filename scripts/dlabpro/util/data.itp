@@ -1,0 +1,324 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: For dLabPro class data
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Compact printing of a data instance.
+## 
+## @cgen:index
+## @param nDecimals number
+##          The maximal decimal precision
+## @param idSrc data
+##          The data instance to be printed
+function -DATA_cprint(nDecimals,idSrc)
+{
+  data idAux;
+  :idAux=ent(idSrc*10^nDecimals+0.5)/10^nDecimals;
+  idAux -print;
+}
+
+## Plots a function into a data instance.
+##
+## @cgen:index
+## @param nXs number
+##          Abscissa start value
+## @param nXe number
+##          Abscissa end value
+## @param nPts number
+##          Number of data points
+## @param sX string
+##          Identifier of function parameter, e.g. "x"
+## @param sFnc string
+##          The function to plot, e.g. "2*x^2-3*x+5"
+## @return A data instance containing one numeric component and
+##         <code>nPts</code> records which is filled with the values of
+##         <code>sFnc</code> 
+function -DATA_plot_y(nXs,nXe,nPts,sX,sFnc)
+{
+  data idY;
+  var  $[sX];
+  var  nR;
+  var  nInc; :(nXe-nXs)/nPts: nInc =;
+  
+  -type double 1 nPts idY -array;
+  nXs  idY -set rofs;
+  nInc idY -set rinc;
+  ""   idY -set runit;
+  
+  nXs $[sX] =; 0 nR =; label L; nR idY.nrec < if
+    :${sFnc}: nR 0 idY -dstore;
+    nR ++=; nInc $[sX] +=; goto L;
+  end
+  
+  idY return;
+}
+
+## Plots a function into a data instance.
+##
+## @cgen:index
+## @param nXs number
+##          Abscissa start value
+## @param nXe number
+##          Abscissa end value
+## @param nYs number
+##          Ordinate start value
+## @param nYe number
+##          Ordinate end value
+## @param nPtsX number
+##          Number of abscissa data points
+## @param nPtsY number
+##          Number of ordinate data points
+## @param sX string
+##          Identifier of function parameter, e.g. "x"
+## @param sY string
+##          Identifier of function parameter, e.g. "y"
+## @param sFnc string
+##          The function to plot, e.g. "(x-5)^2+(y-4)^2"
+## @return A data instance containing <code>nPtsY</code> numeric components and
+##         <code>nPtsX</code> records filled with the values of <code>sFnc</code> 
+function -DATA_plot_xy(nXs,nXe,nYs,nYe,nPtsX,nPtsY,sX,sY,sFnc)
+{
+  data idZ;
+  var  $[sX];
+  var  $[sY];
+  var  nC;
+  var  nR;
+  var  nIncX; :(nXe-nXs)/nPtsX: nIncX =;
+  var  nIncY; :(nYe-nYs)/nPtsY: nIncY =;
+  
+  -type double nPtsY nPtsX idZ -array;
+  nXs   idZ -set rofs;
+  nIncX idZ -set rinc;
+  ""    idZ -set runit;
+  nYs   idZ -set cofs;
+  nIncY idZ -set cinc;
+
+  nYs $[sY] =; 0 nC =; nC nPtsY < while
+    nXs $[sX] =; 0 nR =; nR nPtsX < while
+      :${sFnc}: nR nC idZ -dstore;
+      nR ++=; nIncX $[sX] +=;
+    end
+    nC ++=; nIncY $[sY] +=;
+  end
+
+  idZ return;
+}
+
+## Moves components from one data table to another.
+##
+## @cgen:index
+## @param idSrc data
+##          The source table
+## @param nFirst number
+##          Zero-based index of first component to move
+## @param nCount number
+##          Number of components to move
+## @param idDst data
+##          The destination table (may be identical with idSrc)
+## @param sOption string
+##          "", "/rec" or "/block"
+## @return The number of components actually moved
+##
+function -DATA_slice(idSrc,nFirst,nCount,idDst,sOption)
+{
+  idDst not if 0 return; end                                                    # No destination, no service!
+  idSrc nFirst nCount idDst $[sOption] -select;                                 # Copy elements from source to dest.
+  idSrc idDst == not if                                                         # If src. and dest. are no identical >>
+    idSrc nFirst nCount idSrc $[sOption] -delete;                               #   Delete elements in source
+  end                                                                           # <<
+  sOption "/rec"   == if idDst.nrec   return; end                               # Record mode: return no.recs. in dest.
+  sOption "/block" == if idDst.nblock return; end                               # Block mode : return no.blocks in dst.
+  idDst.dim return;                                                             # Comp. mode : return no.comps. in dst.
+}
+
+## Compares two data tables and returns the normalized absolute difference. The
+## function computes the sum over abs(idX[i,k]-idRef[i,k])/abs(idRef[i,k]) for
+## all 0&lt;=i&lt;idRef.dim and 0&lt;=k&lt;idRef.nrec.
+## 
+## @cgen:index
+## @param idX data
+##          Test table
+## @param idRef data
+##          Reference table
+## @return The normalized absolute difference
+function -DATA_diff(idX,idRef)
+{
+  data idCmp;                                                                   # Create a temporary data table
+  data idDiv;                                                                   # Normalization matrix
+  idRef abs 1e-300 max idDiv =;                                                 # Prevent division by zero
+  idX idRef - abs idDiv ./ idCmp =;                                             # Compute normalized abs. difference
+  idCmp NULL 0 "sum" idCmp /rec -aggregate;                                     # Sum up records
+  idCmp NULL 0 "sum" idCmp -aggregate;                                          # Sum up components
+  0 0 idCmp -dfetch return;                                                     # Return total difference
+}
+
+## Componentwise sum.
+##
+## @cgen:index
+## @param idSrc data
+##          Source data instance
+## @return Data instance with exactly one record containing the componentwise
+##         sums of <code>idSrc</code>
+function -DATA_sum(idSrc)
+{
+	data idDst;
+	idSrc NULL 0 "sum" idDst /rec -aggregate;
+	idDst return;
+}
+
+## Componentwise mean.
+##
+## @cgen:index
+## @param idSrc data
+##          Source data instance
+## @return Data instance with exactly one record containing the componentwise
+##         means of <code>idSrc</code>
+function -DATA_mean(idSrc)
+{
+	data idDst;
+	idSrc NULL 0 "mean" idDst /rec -aggregate;
+	idDst return;
+}
+
+## Determines if two sets are equal, i.e. they contain the same elements
+## (possibly in a different order).
+##
+## @cgen:index
+## @param A data
+##          First set
+## @param B data
+##          Second set
+## @return <code>TRUE</code> if the sets are equal, <code>FALSE</code>
+##         otherwise
+function -SET_equal(A,B)
+{
+  data idAux;
+  A.nrec B.nrec == not if FALSE return; end
+  A B idAux -SET_minus;
+  idAux.nrec 0 == if TRUE return; else FALSE return; end
+}
+
+## Determines if a set is unique, i.e. it does not contain duplicate elements.
+##
+## @cgen:index
+## @param A data
+##          A set
+## @return <code>TRUE</code> if the set is unique, <code>FALSE</code> otherwise
+function -SET_is_unique(A)
+{
+  A -is_empty if TRUE return; end;
+  data idAux;
+  A 0 idAux -sortup;
+  idAux 0 idAux -compress;
+  A.nrec idAux.nrec == if TRUE return; else FALSE return; end
+}
+
+## Set union.
+##
+## @cgen:index
+## @param A data
+##          First set
+## @param B data
+##          Second set
+## @param Z data
+##          Destionation set <code>Z=A&cup;B</code>, may be identical with
+##          <code>A</code> or <code>B</code>
+function -SET_union(A,B,Z)
+{
+  data AmB;
+  A B AmB -SET_minus;
+  B Z -copy;
+  AmB Z -cat;
+}
+
+## Set intersection.
+##
+## @cgen:index
+## @param A data
+##          First set
+## @param B data
+##          Second set
+## @param Z data
+##          Destionation set <code>Z=A&cap;B</code>, may be identical with
+##          <code>A</code> or <code>B</code>
+function -SET_intersect(A,B,Z)
+{
+  data idAux;
+  A B 0 0 idAux /noerror -gen_index;
+  idAux 0 .>= idAux =;
+  idAux A -dmark;
+  A -1 -1 Z /mark /noerror -select ?error if Z -reset; end;
+  A -unmark;
+}
+
+## Set minus.
+##
+## @cgen:index
+## @param A data
+##          First set
+## @param B data
+##          Second set
+## @param Z data
+##          Destionation set <code>Z=A\B</code>, may be identical with
+##          <code>A</code> or <code>B</code>
+function -SET_minus(A,B,Z)
+{
+  data idAux;
+  A B 0 0 idAux /noerror -gen_index;
+  idAux 0 .>= idAux =;
+  idAux A -dmark;
+  A -1 -1 Z /mark /noerror -delete ?error if A Z -copy; end
+  A -unmark;
+}
+
+## Select random subset.
+##
+## @cgen:index
+## @param A data
+##          A set
+## @param nCnt number
+##          Number of elements to be selected
+## @param Z data
+##          Destination set, may be identical with <code>A</code>
+function -SET_rss(A,nCnt,Z)
+{
+  var  nRnd;                                                                    # Random intervall
+  var  nR;                                                                      # Current record
+  data idSet;                                                                   # Copy of source set
+  data idRss;                                                                   # Random subset
+  data idAux;                                                                   # Auxilary data instance
+  
+  nCnt A.nrec > if A.nrec nCnt =; end                                           # Limit subset size
+  A idSet -copy;                                                                # Copy original set
+  0 idSet.nrec -- 1 nRnd -intv;                                                 # Create a random variable
+  label L; idRss.nrec nCnt < if                                                 # While subset not complete >>
+    nRnd nR =; nR idSet.nrec >= if goto L; end;                                 #   Pick one (valid!) set element
+    idSet nR 1 idAux /rec -select;                                              #   Move it
+    idSet nR 1 idSet /rec -delete;                                              #   ...
+    idAux idRss -cat;                                                           #   ...
+    goto L;                                                                     #   End of loop
+  end                                                                           # <<
+  idRss Z -copy;                                                                # Copy to destination
+}
+
+## EOF

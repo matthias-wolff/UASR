@@ -1,0 +1,1208 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - INCUBATING - Prosodic information analysis and prosodic feature synthesis
+##
+## AUTHOR : Hussein Hussein
+## PACKAGE: uasr/scripts/dlabpro
+##
+## ARGUMENTS:
+##   $1: Command or 'help'
+##   $2: Setup file or, if 1st arg. is 'help', command
+##
+## TODO: Check copyrights on required package uasr/scripts/dlabpro/prosody!
+##
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"util/cfg.itp"  include;                                                        # Include configuration utilities
+"util/lab.itp"  include;                                                        # Include label utilities
+"util/os.itp"   include;                                                        # Include OS utilities
+"util/sig.itp"  include;                                                        # Include signal utilities
+"util/uasr.itp" include;                                                        # Include UASR utilities
+"util/var.itp"  include;                                                        # Include variables' utilities
+"$UASR_HOME/scripts/dlabpro/db/vm.itp" include;
+"$UASR_HOME/scripts/dlabpro/prosody/label.itp" include;
+"$UASR_HOME/scripts/dlabpro/prosody/pau.itp" include;
+"$UASR_HOME/scripts/dlabpro/prosody/acc_phr.itp" include;
+"$UASR_HOME/scripts/dlabpro/prosody/f0level.itp" include;
+"$UASR_HOME/scripts/dlabpro/prosody/pm.itp" include;
+"$UASR_HOME/scripts/dlabpro/prosody/que.itp" include;
+
+
+
+## Prints help on usage
+function -usage(sCmd)
+{
+  sCmd "acc" == if
+      "\n   acc: Accent marking"			  							  -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp acc <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp acc $UASR_HOME/config/vm/VM.cfg"             -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "phr" == if
+      "\n   phr: Phrase marking"                        				  -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp phr <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp phr $UASR_HOME/config/vm/VM.cfg"      		  -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "pau" == if
+      "\n   pau: Pause marking"                        				  -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp pau <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp pau $UASR_HOME/config/vm/VM.cfg"      		  -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "que" == if
+      "\n   que: Sentence mood (question or statement)"                   -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp que <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp que $UASR_HOME/config/vm/VM.cfg"      		  -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "par" == if
+      "\n   par: F0 parameter"                        				  	  -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp par <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp par $UASR_HOME/config/vm/VM.cfg"      		  -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end  
+    "\n   SYNOPSIS:"                                                      -MSG;
+    "\n     Prosodic information analysis and prosodic feature synthesis" -MSG;
+  "\n\n   USAGE:"                                                         -MSG;
+    "\n     dlabpro $__SFILE__.xtp <command> [arguments] [options]"       -MSG;
+  "\n\n   COMMANDS:"                                                      -MSG;
+    "\n     acc - Accent marking"                               		  -MSG;
+    "\n     phr - Phrase marking"                       				  -MSG;
+    "\n     pau - Pause marking"                       				  	  -MSG;
+    "\n     que - Sentence mood"                       				  	  -MSG;
+    "\n     par - F0 parameter"                       				  	  -MSG;
+  "\n\n  Type 'dlabpro $__SFILE__.xtp help <command>' for help on a "     -MSG;
+         "specific command."                                              -MSG;
+    "\n"                                                                  -MSG;
+  0 return;
+}
+
+## Accent marking
+function -CMD_acc()
+{
+## Variables                                                                    # -------------------------------------
+data idSig;                                       								# Data buffer for signal
+data idSigOrig;																	# Data buffer for signal (ORIGINAL WAV-File) (short values)
+data idSigDouble;																# Data buffer for signal (Original DOUBLE values)
+data idSigNorm;																	# Data buffer for signal (Original Double NORMING values)
+data idLabWord;										  							# Data buffer for Word Label
+data idAux;                                       								# Auxilary data instance
+data idTurnID;																	# Turn identification
+data idSns;       -SNS_get_tab idSns =;                         				# Get sensor table
+data idWords;																	# Data buffer for Words (Orthographic, Original or Kanonic)
+data idSentence;																# Sentence (Concatenated words without prosodic annotation)
+data idProsAccSent;																# Sentence with prosodic information (Concatenated words with accent annotation)
+data idLabWordNoPause;															# Label word without pause
+data idPM;                             											# Pitch Mark data instance
+data idF0;                             											# Fundamental frequency contour instance
+data idF0rms;                                                                   # F0 with RMS
+data idPAC;                                                                   	# Data buffer for Fujisaki parameters (PAC file)
+data idWordsAccAnno;															# Data buffer for Words with Accents
+data idFujisakiParameterAccent;													# Fujisaki Parameter for accented word (onset time and offset time of accented word, Aa, beta)
+data idFujisakiParameterPhrase;													# Fujisaki Parameter for phrase (phrase time, Ap, alpha)
+data idNewPAC;                                                                  # Data buffer for new Fujisaki parameters (NewPAC file)
+data idPartiturProsSent;														# Data buffer for prosodic annotated sentence as BAS Partitur Format
+
+PMproc iPM;                            											# Pitch mark instance processor
+Prosody iProsody;					   											# Prosody instance processor
+
+file iF;                                        								# File list for signal analysis
+file iFascii;																	# Import/Export of ASCII files  
+
+var  nE;                                                                        # Number of skipped files
+var  nSns;                                                                      # Current sensor index
+var  sF;                                                                        # File name
+var  sSns;                                                                      # Current sensor name
+var  nCst;                                                                      # Current sample time [sec]
+var  nTst;                                                                      # Total sample time [sec]
+var nSrate;                            											# Sample Rate (SR) 
+var nSampRateF0; 																# Sampling rate for F0 contour
+var	nMeasureTime;	    0 nMeasureTime =;										# Create/Init instance (Number of current file)
+var sWord;
+var sFileName;
+var sCDId;
+var sDialogId;
+
+
+var nTimeMinorPause;															# Minimum time of Minor Pause (Neben Phrase)
+var nTimeMajorPause;															# Minimum time of Major Pause (Haupt Phrase)
+var nFirstPause;																# Default first Pause at the beginning of speech signal
+var nAccentLevel;																# Accent Level (1 for accent, 2 for two accents: Major and Minor accent)
+var nNumRecNewPAC;																# Number of records of new PAC
+
+var sDirCurr;		                              								# Path to the current working directory of the dLabPro session
+var sDirWAV;		                              								# Path to ORIGINAL WAV-Files
+var sDirTemp;		                              								# Path to temporary files
+var sDirAnnotation;                              								# Path to OUTPUT-Files
+"$UASR_HOME/scripts/dlabpro/prosody" sDirCurr =;
+"$UASR_HOME/data/vm/common/sig-wav" sDirWAV =;									# Path to the ORIGINAL WAV-Files 
+"$UASR_HOME/data/vm/common/temporary" sDirTemp =; 
+"$UASR_HOME/data/vm/common/acc" sDirAnnotation =; 
+
+
+
+## Tell paths                                                                   # -------------------------------------
+"\n\n   Paths:"                                                           -MSG; # Protocol
+"sig" "" -CFG_get_path;                                                         # Echo signal files path
+"lab" "" -CFG_get_path;                                                         # Echo label files path
+"all"  "" -CFG_get_flist iF -set flist;                                         # Signal files list
+
+
+## Check/create session persistent variables                                  	# -------------------------------------
+## Get signal files path
+".__sDirSig" "var" ?instance not if                                           	# Is there a global __sDirSig? No >>
+  var .__sDirSig;                                                             	#   Create one
+  ( "sig" "S" -CFG_get_path ) .__sDirSig =;                                   	#   Silently get signal files path
+end                                                                         	# <<
+
+## Get label files path
+".__sDirLab" "var" ?instance not if                                           	# Is there a global __sDirLab? No >>
+  var .__sDirLab;                                                             	#   Create one
+  ( "lab" "S" -CFG_get_path ) .__sDirLab =;                                   	#   Silently get label files path
+end;                                                                        	# <<
+
+
+### Sensor loop                                                                 # -------------------------------------
+:idSns[0,0]: if "\n// No. of sensors  : $[idSns.nrec]" -MSG; end              # Protocol
+label L_SNS;                                                                    # Loop over sensors
+
+  	### File loop                                                               #   - - - - - - - - - - - - - - - - - -
+  	0 nE =;                                                                     # Reset error counter
+  	"\n" -MSG; :idSns[nSns,0]: if "\n   Sensor ${idSns[nSns,0]}" -MSG; end    # Protocol
+  	"\n   Accent Annotation."   				 						  -MSG; # Protocol
+  	0 1 -PBAR;                                                                  # Begin progress bar
+	iF -reset;
+
+	label L_FILE;                                                        		# Loop over files
+	iF -next if                                                          		# >>
+
+		stdprof -begin_timer;                                                   # Start measuring time
+
+    	"\n"                                                           3 -MSGX; # Protocol
+    	"\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "               -MSG2; # Protocol (verbose level 2)
+    	:(iF.nfile+1)/iF.len: 1 -PBAR;                                          # Display progress
+
+		### Reset data instances                                  				#   - - - - - - - - - - - - - - - - - -
+		idAux -reset;
+		idTurnID -reset;
+		idSig -reset;
+		idSigOrig -reset;
+		idSigDouble -reset;
+		idSigNorm -reset;
+		idLabWord -reset;
+		idWords -reset;
+		idSentence -reset;
+		idProsAccSent -reset;				
+		idLabWordNoPause -reset;
+		idPM 0 idPM.dim idPM -delete;  		  									# Reset idPM instance
+		idF0 -reset;                          									# Reset idF0 instance
+		iPM -reset;                           									# Reset iPM instance
+		iProsody -reset;                           								# Reset iProsody instance
+		idF0rms -reset;
+		idPAC -reset;
+		idWordsAccAnno -reset;
+		idNewPAC -reset;
+		idFujisakiParameterAccent -reset;
+		idFujisakiParameterPhrase -reset;
+		idPartiturProsSent -reset;
+		iFascii -reset;
+
+
+		### Import data			                                 				#   - - - - - - - - - - - - - - - - - -
+		## Import Original WAV-File (FileName.wav)
+		"$[sDirWAV]/$[iF.sfile].wav" "wav" idSigOrig stdfile -import;			# Import Original WAV-File
+		idSigOrig -type double idSigDouble -tconvert; 							# Convert data from (short) to (double) {ORIGINAL DOUBLE FOR (-add_rms)}
+		idSigDouble :2^(15): / idSigNorm =;        								# (Norming) Convert amplitude to -1<= s(k) <=1
+
+		.__sDirLab iF.sfile idLabWord -LAB_WORD_extract_vm;						# Extract Word-Label from Phoneme-Label
+		.__sDirLab iF.sfile idWords -Ortho_WORD_import_vm;						# Import Orthographic words
+
+
+		### Delete pauses and extra orthographic words							#   - - - - - - - - - - - - - - - - - -
+		idLabWord idLabWordNoPause -Delete_Pauses_LAB_WORD;						#Delete pauses <p:> from Word-Label
+
+		idWords.nrec idLabWordNoPause.nrec !=  if								# Extra orthographic words ( [d] or [T]) >>
+			idWords idLabWordNoPause idWords -Delete_Extra_Ortho_Word_LAB_WORD;	# Delete the extra orthographic words (d or T)
+		end																	# <<
+
+		idWords idSentence -Concatenate_Words2Sentence;							# Concatenate orthographic words to sentence
+
+		### Compute Pitch Mark              									#   - - - - - - - - - - - - - - - - - -
+		"\n\nCompute Pitch Marks (PM):"               					  -MSG; # Protocol
+		idSigNorm idPM iPM /hybrid -analyze; 									# HYBRID-FSM-PMA
+
+
+		### Compute F0		            										#   - - - - - - - - - - - - - - - - - -
+		1000 idSigNorm.rinc / nSrate =;          								# Sample Rate (SR)
+		100 nSampRateF0 =;
+		"\n\nCompute Fundamental Frequency (F0):"               		  -MSG; # Protocol
+		idPM nSrate nSampRateF0 idF0 iProsody -pm_fo; 							# Convert PM to F0
+
+
+		## Parse the turn identification to {"CD" "PATH" "TID" "FILE" "TURN" "SPKR" "LANG"}
+		iF.sfile idTurnID -VM_parse_turn_id;                                    # Parse turn identifier 
+		:idTurnID[0,0]: sCDId =; 												
+		:idTurnID[0,1]: sDialogId =; 		
+		:idTurnID[0,2]: sFileName =; 
+		
+	
+		### Add RMS-Energy            											#   - - - - - - - - - - - - - - - - - -
+		iProsody -reset;                           								# Reset iProsody instance
+		idSigDouble idF0 nSrate nSampRateF0 idF0rms iProsody -add_rms;			# Add RMS-Energy
+
+
+		### Copy executable programs											#   - - - - - - - - - - - - - - - - - -
+		# "cp $[sSrcFile] $[sDestFile]" -system;
+		"cp ${sDirCurr}/smoothf0.exe ${sDirTemp}/smoothf0.exe" -system;			# Copy smoothf0
+		"cp ${sDirCurr}/getfuji.exe ${sDirTemp}/getfuji.exe" -system;			# Copy getfuji
+		"cp ${sDirCurr}/fujies.exe ${sDirTemp}/fujies.exe" -system;				# Copy fujies
+
+		## Export (F0 with RMS) data
+		"${sDirTemp}" -cd;														# Change directory (to save temporary files)
+		"${sFileName}.F0Rms" "ascii" idF0rms stdfile -export;					# Export data object (F0 with RMS)
+
+
+		### Smooth F0 Contour            										#   - - - - - - - - - - - - - - - - - -
+		"smoothf0.exe ${sFileName}.F0Rms ${sFileName}.F0Smooth 100 -min 50 -max 500 -rmscorr 0.09 -derive 14 -elim 3 -amaf 2 -hermite 20 -interpol 280 360" -system;  # smoothf0.exe is in sDirTemp)
+
+		### Read only the first column of F0Smooth (4 columns)					#   - - - - - - - - - - - - - - - - - -
+		#"gawk '{print \$1}' ${sFileName}.F0Smooth > ${sFileName}.F0new" -system;
+		"${sFileName}.F0Smooth" "ascii" idAux stdfile -import;
+		idAux 1 3 idAux -delete;												# Delete the last (3) columns
+		"${sFileName}.F0new" "ascii" idAux stdfile -export;
+
+
+		### Calculate Fujisaki Parameter										#   - - - - - - - - - - - - - - - - - -
+		"getfuji.exe ${sFileName}.F0new 0 5" -system;
+
+
+		### Import Fujisaki Parameter (PAC file)								#   - - - - - - - - - - - - - - - - - -
+		type double 4 idPAC -addncomps;											# Add (4) components to data object (Define a PAC data object)
+		"${sFileName}.pac" stdfile -exists if
+			"${sFileName}.pac" "ascii" idPAC stdfile -import;
+		else
+			idPAC -reset;
+		end
+			
+		### Remove a temporary files during Fujisaki Extraction					#   - - - - - - - - - - - - - - - - - -
+		"rm -f *.*" -system;                                  					# Remove all files
+
+		### Delete the first record of PAC file (file name or path)       		#   - - - - - - - - - - - - - - - - - -
+		idPAC.nrec 0 > :idPAC[0,0]: 0 == && if									# The first record is equal to (0) as the definition as double >>
+			idPAC 0 1 idPAC /rec -delete;										# Delete the first record
+		end																	# <<
+
+
+		### Accent Annotation (Accent Marking)            						#   - - - - - - - - - - - - - - - - - -
+		"prosody.accentlevel" 1 "S" -CFG_get_ex nAccentLevel =;
+		#1 nAccentLevel =;														# One level of Accent (#) (Major and Minor accent TOGETHER)
+		#2 nAccentLevel =;														# Two levels of Accent (## for Major and # for Minor accent)
+		
+		idPAC.nrec 0 == if														# No Accent and Phrase >>
+			idSentence 0 idSentence.dim idProsAccSent -select;
+		else																	# There are Accents and Phrases >>
+			idPAC idWords idLabWord nSrate nAccentLevel idWordsAccAnno -Accent_Annotation;
+			idWordsAccAnno idProsAccSent -Concatenate_Words2Sentence;			# Concatenate orthographic words to sentence
+		end																	# <<
+
+
+  		## Convert a prosodic annotated sentence to a BAS Partitur Format		#   - - - - - - - - - - - - - - - - - -
+		idProsAccSent idPartiturProsSent -Convert_AccAnnoSent2Partitur;
+
+
+		### Export data from instance to non-native file formats          		#   - - - - - - - - - - - - - - - - - -
+		" " iFascii -set sep;   												# Set the separator (Space character) for export of ASCII files 
+																				# (Default separator is Tab)
+		### Export prosodic annotated words as BAS Partitur Format 				#   - - - - - - - - - - - - - - - - - -
+		"${sDirAnnotation}/${iF.sfile}.acc" "ascii" idPartiturProsSent stdfile -export;
+
+    	### Aftermath                                                           # . . . . . . . . . . . . . . . . .
+    	idSigNorm.nrec idSigNorm.rinc * 1000 / nCst =;                          # Compute current sample time [sec]
+    	nCst nTst +=;                                                           # Compute total sample time [sec]
+
+		"" stdprof -end_timer;                                                  #   Stop measuring time
+
+		nMeasureTime stdprof.time + nMeasureTime =;
+
+
+		goto L_FILE;                                                            # End of file loop
+	end                                                                       # <<
+
+
+
+  	"\n  "                                                               -MSG2; # Protocol (verbose level 2)
+  	"done\n"                                                              -MSG; # Protocol
+  	"\n   Total sample time: $[nTst 60 /] [min]"                          -MSG; # Protocol
+  	"  = $[nTst 60 / 60 /] [hour]"                          			  -MSG; # Protocol
+
+  	nE if "$[nE]/$[iF.len] turns defective!" 1 -WARNING; end                  # Warn for defective turns
+
+	"\n\n   Total Accumulated Time for measuring the running time: "	  -MSG; # Protocol
+	"$[nMeasureTime 1000 / 60 /] [min]" 								  -MSG; # Protocol
+	"\t		$[nMeasureTime 1000 / 60 / 60 /] [hour]" 					  -MSG; # Protocol	
+
+  	### End of sensor loop                                                      # - - - - - - - - - - - - - - - - - -
+  	nSns ++=; nSns idSns.nrec < if goto L_SNS; end                            # End of loop
+
+	"\n\n $__SFILE__ completed (${__UTL_nErrors} errors).\n"                  -MSG; # Protocol
+
+  0 return;                                                                     # Return "OK"
+}
+
+
+## Phrase marking
+function -CMD_phr()
+{
+## Variables                                                                    # -------------------------------------
+data idSig;                                       								# Data buffer for signal
+data idSigOrig;																	# Data buffer for signal (ORIGINAL WAV-File) (short values)
+data idSigDouble;																# Data buffer for signal (Original DOUBLE values)
+data idSigNorm;																	# Data buffer for signal (Original Double NORMING values)
+data idLabPhoneme;				    			  								# Data buffer for Phonetic Label
+data idLabWord;										  							# Data buffer for Word Label
+data idAux;                                       								# Auxilary data instance
+data idTurnID;																	# Turn identification
+data idSns;       -SNS_get_tab idSns =;                         				# Get sensor table
+data idWords;																	# Data buffer for Words (Orthographic, Original or Kanonic)
+data idSentence;																# Sentence (Concatenated words without prosodic annotation)
+data idProsPhrSent;																# Sentence with prosodic information (Concatenated words with phrase annotation)
+data idLabWordNoPause;
+data idPM;                             											# Pitch Mark data instance
+data idF0;                             											# Fundamental frequency contour instance
+data idF0rms;                                                                   # F0 with RMS
+data idPAC;                                                                   	# Data buffer for Fujisaki parameters (PAC file)
+data idWordsPhrAnno;															# Data buffer for Words with Phrases
+data idPartiturProsSent;														# Data buffer for prosodic annotated sentence as BAS Partitur Format
+
+PMproc iPM;                            											# Pitch mark instance processor
+Prosody iProsody;					   											# Prosody instance processor
+
+file   iF;                                        								# File list for signal analysis
+file iFascii;																	# Import/Export of ASCII files  
+
+var  nE;                                                                        # Number of skipped files
+var  nSns;                                                                      # Current sensor index
+var  sF;                                                                        # File name
+var  sSns;                                                                      # Current sensor name
+var  nCst;                                                                      # Current sample time [sec]
+var  nTst;                                                                      # Total sample time [sec]
+var nSrate;                            											# Sample Rate (SR) 
+var nSampRateF0; 																# Sampling rate for F0 contour
+var	 nMeasureTime;	    0 nMeasureTime =;										# Create/Init instance (Number of current file)
+var sWord;
+var sFileName;
+var sCDId;
+var sDialogId;
+
+var k;
+0 k =;
+
+var nTimeMinorPause;															# Minimum time of Minor Pause (Neben Phrase)
+var nTimeMajorPause;															# Minimum time of Major Pause (Haupt Phrase)
+var nPhraseLevel;																# Phrase Level (1 for phrase, 2 for two phrases: Major and Minor phrase)
+
+
+var sDirCurr;		                              								# Path to the current working directory of the dLabPro session
+var sDirWAV;		                              								# Path to ORIGINAL WAV-Files
+var sDirTemp;		                              								# Path to temporary files
+var sDirAnnotation;                              								# Path to OUTPUT-Files
+var sDirPAC;																	# Path to PAC-Files
+
+
+"$UASR_HOME/scripts/dlabpro/prosody" sDirCurr =;
+"$UASR_HOME/data/vm/common/sig-wav" sDirWAV =;									# Path to the ORIGINAL WAV-Files 
+"$UASR_HOME/data/vm/common/temporary" sDirTemp =; 
+"$UASR_HOME/data/vm/common/phr" sDirAnnotation =; 
+
+
+
+## Tell paths                                                                   # -------------------------------------
+"\n\n   Paths:"                                                           -MSG; # Protocol
+"sig" "" -CFG_get_path;                                                         # Echo signal files path
+"lab" "" -CFG_get_path;                                                         # Echo label files path
+"all"  "" -CFG_get_flist iF -set flist;                                         # Signal files list
+
+
+
+## Check/create session persistent variables                                  	# -------------------------------------
+## Get signal files path
+".__sDirSig" "var" ?instance not if                                           	# Is there a global __sDirSig? No >>
+  var .__sDirSig;                                                             	#   Create one
+  ( "sig" "S" -CFG_get_path ) .__sDirSig =;                                   	#   Silently get signal files path
+end                                                                         	# <<
+
+## Get label files path
+".__sDirLab" "var" ?instance not if                                           	# Is there a global __sDirLab? No >>
+  var .__sDirLab;                                                             	#   Create one
+  ( "lab" "S" -CFG_get_path ) .__sDirLab =;                                   	#   Silently get label files path
+end;                                                                        	# <<
+
+
+    
+### Sensor loop                                                                 # -------------------------------------
+:idSns[0,0]: if "\n// No. of sensors  : $[idSns.nrec]" -MSG; end              # Protocol
+label L_SNS;                                                                    # Loop over sensors
+
+  	### File loop                                                               #   - - - - - - - - - - - - - - - - - -
+  	0 nE =;                                                                     # Reset error counter
+  	"\n" -MSG; :idSns[nSns,0]: if "\n   Sensor ${idSns[nSns,0]}" -MSG; end    # Protocol
+  	"\n   Phrase Annotation."   				  						  -MSG; # Protocol
+  	0 1 -PBAR;                                                                  # Begin progress bar
+	iF -reset;
+
+	
+    
+	label L_FILE;                                                        		# Loop over files
+	iF -next if                                                          		# >>
+
+		stdprof -begin_timer;                                                   #   Start measuring time
+
+    	"\n"                                                           3 -MSGX; # Protocol
+    	"\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "               -MSG2; # Protocol (verbose level 2)
+    	"\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "               -MSG;  # Protocol
+    	:(iF.nfile+1)/iF.len: 1 -PBAR;                                          #   Display progress
+
+
+
+		### Reset data instances                                  				#   - - - - - - - - - - - - - - - - - -
+		idAux -reset;
+		idTurnID -reset;
+		idSig -reset;
+		idSigOrig -reset;
+		idSigDouble -reset;
+		idSigNorm -reset;
+		idLabPhoneme -reset;
+		idLabWord -reset;
+		idWords -reset;
+		idSentence -reset;
+		idProsPhrSent -reset;
+		idLabWordNoPause -reset;
+		idPM 0 idPM.dim idPM -delete;  		  									# Reset idPM instance
+		idF0 -reset;                          									# Reset idF0 instance
+		iPM -reset;                           									# Reset iPM instance
+		iProsody -reset;                           								# Reset iProsody instance
+		idF0rms -reset;
+		idPAC -reset;
+		idWordsPhrAnno -reset;
+		idPartiturProsSent -reset;
+
+		iFascii -reset;
+
+
+		### Import data			                                 				#   - - - - - - - - - - - - - - - - - -
+		## Import Original WAV-File (FileName.wav)
+		"$[sDirWAV]/$[iF.sfile].wav" "wav" idSigOrig stdfile -import;			# Import Original WAV-File
+		idSigOrig -type double idSigDouble -tconvert; 							# Convert data from (short) to (double) {ORIGINAL DOUBLE FOR (-add_rms)}
+		idSigDouble :2^(15): / idSigNorm =;        								# (Norming) Convert amplitude to -1<= s(k) <=1
+
+		.__sDirLab iF.sfile idLabWord -LAB_WORD_extract_vm;						# Extract Word-Label from Phoneme-Label
+		.__sDirLab iF.sfile idWords -Ortho_WORD_import_vm;						# Import Orthographic words
+
+
+		### Delete pauses and extra orthographic words							#   - - - - - - - - - - - - - - - - - -
+		idLabWord idLabWordNoPause -Delete_Pauses_LAB_WORD;						#Delete pauses <p:> from Word-Label
+
+		idWords.nrec idLabWordNoPause.nrec !=  if								# Extra orthographic words ( [d] or [T]) >>
+			idWords idLabWordNoPause idWords -Delete_Extra_Ortho_Word_LAB_WORD;	# Delete the extra orthographic words (d or T)
+		end																	# <<
+
+		### Concatenate words to sentence                         				#   - - - - - - - - - - - - - - - - - -
+		idWords idSentence -Concatenate_Words2Sentence;							# Concatenate words (Orthographic, Original or Kanonic) to sentence
+
+
+		### Compute Pitch Mark              									#   - - - - - - - - - - - - - - - - - -
+		"\nCompute Pitch Marks (PM):\n"               					  -MSG; # Protocol (Short values for Pitch Mark, every line 4 Byte)
+		idSigNorm idPM iPM /hybrid -analyze; 									# HYBRID-FSM-PMA
+
+
+		### Compute F0		            										#   - - - - - - - - - - - - - - - - - -
+		1000 idSigNorm.rinc / nSrate =;          								# Sample Rate (SR){Distance between two sample = ${idSigNorm.rinc} [msec]}
+		100 nSampRateF0 =;
+		"Compute Fundamental Frequency (F0):\n\n"               		  -MSG; # Protocol
+		idPM nSrate nSampRateF0 idF0 iProsody -pm_fo; 							# -PmFo from (prosody class)
+
+
+		## Parse the turn identification to {"CD" "PATH" "TID" "FILE" "TURN" "SPKR" "LANG"}
+		iF.sfile idTurnID -VM_parse_turn_id;                                    # Parse turn identifier 
+		:idTurnID[0,0]: sCDId =; 												
+		:idTurnID[0,1]: sDialogId =; 		
+		:idTurnID[0,2]: sFileName =; 
+		
+	
+		### Add RMS-Energy            											#   - - - - - - - - - - - - - - - - - -
+		iProsody -reset;                           								# Reset iProsody instance
+		idSigDouble idF0 nSrate nSampRateF0 idF0rms iProsody -add_rms;
+
+
+		### Copy the executable programs										#   - - - - - - - - - - - - - - - - - -
+		# "cp $[sSrcFile] $[sDestFile]" -system;
+		"cp ${sDirCurr}/smoothf0.exe ${sDirTemp}/smoothf0.exe" -system;
+		"cp ${sDirCurr}/getfuji.exe ${sDirTemp}/getfuji.exe" -system;
+		"cp ${sDirCurr}/fujies.exe ${sDirTemp}/fujies.exe" -system;
+
+
+		## Export (F0 with RMS) data
+		"${sDirTemp}" -cd;														# Change directory (to save temporary files)
+		"${sFileName}.F0Rms" "ascii" idF0rms stdfile -export;
+
+
+		### Smooth F0 Contour            										#   - - - - - - - - - - - - - - - - - -
+		"smoothf0.exe ${sFileName}.F0Rms ${sFileName}.F0Smooth 100 -min 50 -max 500 -rmscorr 0.09 -derive 14 -elim 3 -amaf 2 -hermite 20 -interpol 280 360" -system;  # The Program (smoothf0.exe muss be in sDirTemp)
+
+
+		### Read only the first column of F0Smooth (4 columns)					#   - - - - - - - - - - - - - - - - - -
+		#"gawk '{print \$1}' ${sFileName}.F0Smooth > ${sFileName}.F0new" -system;
+		"${sFileName}.F0Smooth" "ascii" idAux stdfile -import;
+		idAux 1 3 idAux -delete;												# Delete the last (3) columns
+		"${sFileName}.F0new" "ascii" idAux stdfile -export;
+
+
+		### Calculate Fujisaki Parameter										#   - - - - - - - - - - - - - - - - - -
+		"getfuji.exe ${sFileName}.F0new 0 5" -system;
+
+
+		### Import Fujisaki Parameter (PAC file)								#   - - - - - - - - - - - - - - - - - -
+		type double 4 idPAC -addncomps;											# Add (4) components to data object (Define a PAC data object)
+		"${sFileName}.pac" stdfile -exists if
+			"${sFileName}.pac" "ascii" idPAC stdfile -import;
+		else
+			idPAC -reset;
+		end
+			
+		### Remove a temporary files during Fujisaki Extraction					#   - - - - - - - - - - - - - - - - - -
+		"rm -f *.*" -system;                                  					# Remove all files
+
+
+		### Delete the first record of PAC file (file name or path)       		#   - - - - - - - - - - - - - - - - - -
+		idPAC.nrec 0 > :idPAC[0,0]: 0 == && if									# The first record is equal to (0) as the definition as double >>
+			idPAC 0 1 idPAC /rec -delete;										# Delete the first record
+		end																	# <<
+
+
+		### Phrase Annotation (Phrase Marking)            						#   - - - - - - - - - - - - - - - - - -
+		"prosody.phraselevel" 1 "S" -CFG_get_ex nPhraseLevel =;
+		#1 nPhraseLevel =;														# One level of Phrase (#) (Major and Minor phrase TOGETHER)
+		#2 nPhraseLevel =;														# Two levels of Phrase (## for Major and # for Minor phrase)
+		
+		idPAC.nrec 0 == if														# No Accent and Phrase
+			idSentence 0 idSentence.dim idProsPhrSent -select;
+		else																	# There are Phrases
+			idPAC idWords idLabWord nSrate nPhraseLevel idWordsPhrAnno -Phrase_Annotation_Pause_Alignment; # Phrase annotation with alignment to corresponded pause
+			idWordsPhrAnno idProsPhrSent -Concatenate_Words2Sentence;			# Concatenate words (Orthographic, Original or Kanonic) to sentence
+		end
+
+
+
+  		## Convert a prosodic annotated sentence to a BAS Partitur Format		#   - - - - - - - - - - - - - - - - - -
+		idProsPhrSent idPartiturProsSent -Convert_PhrAnnoSent2Partitur;
+
+
+		### Export data from instance to non-native file formats          		#   - - - - - - - - - - - - - - - - - -
+		" " iFascii -set sep;   												# Set the separator (Space character) for export of ASCII files 
+
+		### Export prosodic annotated words as BAS Partitur Format 				#   - - - - - - - - - - - - - - - - - -
+		"${sDirAnnotation}/${iF.sfile}.phr" "ascii" idPartiturProsSent stdfile -export;
+
+
+    	### Aftermath                                                           # . . . . . . . . . . . . . . . . .
+    	idSigNorm.nrec idSigNorm.rinc * 1000 / nCst =;                          # Compute current sample time [sec]
+    	nCst nTst +=;                                                           # Compute total sample time [sec]
+
+		"" stdprof -end_timer;                                                  #   Stop measuring time
+
+		nMeasureTime stdprof.time + nMeasureTime =;
+	
+		goto L_FILE;                                                            # End of file loop
+	end                                                                       # <<
+
+	
+	
+  	"\n  "                                                               -MSG2; # Protocol (verbose level 2)
+  	"done\n"                                                              -MSG; # Protocol
+  	"\n   Total sample time: $[nTst 60 /] [min]"                          -MSG; # Protocol
+  	"  = $[nTst 60 / 60 /] [hour]"                          			  -MSG; # Protocol
+
+  	nE if "$[nE]/$[iF.len] turns defective!" 1 -WARNING; end                  # Warn for defective turns
+
+	"\n\n   Total Accumulated Time for measuring the running time: "	  -MSG; # Protocol
+	"$[nMeasureTime 1000 / 60 /] [min]" 								  -MSG; # Protocol
+	"\t		$[nMeasureTime 1000 / 60 / 60 /] [hour]" 					  -MSG; # Protocol	
+
+  	### End of sensor loop                                                      # - - - - - - - - - - - - - - - - - -
+  	nSns ++=; nSns idSns.nrec < if goto L_SNS; end                            # End of loop
+
+	"\n\n $__SFILE__ completed (${__UTL_nErrors} errors).\n"                  -MSG; # Protocol
+
+
+  0 return;                                                                     # Return "OK"
+}
+
+
+## Pause marking
+function -CMD_pau()
+{
+## Variables                                                                    # -------------------------------------
+data idSig;                                       								# Data buffer for signal
+data idSigOrig;																	# Data buffer for signal (ORIGINAL WAV-File) (short values)
+data idSigDouble;																# Data buffer for signal (Original DOUBLE values)
+data idSigNorm;																	# Data buffer for signal (Original Double NORMING values)
+data idLabPhoneme;				    			  								# Data buffer for Phonetic Label
+data idLabWord;										  							# Data buffer for Word Label
+data idAux;                                       								# Auxilary data instance
+data idSns;       -SNS_get_tab idSns =;                         				# Get sensor table
+data idWords;																	# Data buffer for Words
+data idSentence;																# Sentence (Concatenated words without prosodic annotation)
+data idPauseSent;																# Sentence with pauses (Concatenated words with pause annotation)
+data idPause;																	# Data buffer for pauses
+data idLabWordNoPause;
+data idWordsPauAnno;															# Data buffer for sentence with pause annotaton
+data idPartiturProsSent;														# Data buffer for prosodic annotated sentence as BAS Partitur Format
+
+Prosody iPros;																	# Instance of Prosody class
+
+file   iF;                                        								# File list for signal analysis
+file iFascii;																	# Import/Export of ASCII files  
+
+var  nE;                                                                        # Number of skipped files
+var  nSns;                                                                      # Current sensor index
+var  sF;                                                                        # File name
+var  sSns;                                                                      # Current sensor name
+var  nCst;                                                                      # Current sample time [sec]
+var  nTst;                                                                      # Total sample time [sec]
+var nSrate;                            											# Sample Rate (SR) 
+var	 nMeasureTime;	    0 nMeasureTime =;										# Create/Init instance (Number of current file)
+var sWord;
+var i;
+var j;
+var jj;
+0 i =;
+0 j =;
+0 jj =;
+
+
+var nTimeMinorPause;															# Minimum time of Minor Pause (Neben Phrase)
+var nTimeMajorPause;															# Minimum time of Major Pause (Haupt Phrase)
+var nFirstPause;																# Default first Pause at the beginning of speech signal
+
+var sDirWAV;		                              								# Path to ORIGINAL WAV-Files
+var sDirAnnotation;                              								# Path to OUTPUT-Files
+
+
+"$UASR_HOME/data/vm/common/sig-wav" sDirWAV =;									# Path to the ORIGINAL WAV-Files 
+"$UASR_HOME/data/vm/common/pau" sDirAnnotation =; 
+
+
+## Tell paths                                                                   # -------------------------------------
+"\n\n   Paths:"                                                           -MSG; # Protocol
+"sig" "" -CFG_get_path;                                                         # Echo signal files path
+"lab" "" -CFG_get_path;                                                         # Echo label files path
+"all"  "" -CFG_get_flist iF -set flist;                                         # Signal files list
+
+
+
+
+
+## Check/create session persistent variables                                  	# -------------------------------------
+## Get signal files path
+".__sDirSig" "var" ?instance not if                                           	# Is there a global __sDirSig? No >>
+  var .__sDirSig;                                                             	#   Create one
+  ( "sig" "S" -CFG_get_path ) .__sDirSig =;                                   	#   Silently get signal files path
+end                                                                         	# <<
+
+## Get label files path
+".__sDirLab" "var" ?instance not if                                           	# Is there a global __sDirLab? No >>
+  var .__sDirLab;                                                             	#   Create one
+  ( "lab" "S" -CFG_get_path ) .__sDirLab =;                                   	#   Silently get label files path
+end;                                                                        	# <<
+
+
+    
+### Sensor loop                                                                 # -------------------------------------
+:idSns[0,0]: if "\n// No. of sensors  : $[idSns.nrec]" -MSG; end              # Protocol
+label L_SNS;                                                                    # Loop over sensors
+
+  	### File loop                                                               #   - - - - - - - - - - - - - - - - - -
+  	0 nE =;                                                                     # Reset error counter
+  	"\n" -MSG; :idSns[nSns,0]: if "\n   Sensor ${idSns[nSns,0]}" -MSG; end    # Protocol
+  	"\n   Pause Annotation."   				  							  -MSG; # Protocol
+  	0 1 -PBAR;                                                                  # Begin progress bar
+	iF -reset;
+
+	
+    
+	label L_FILE;                                                        		# Loop over files
+	iF -next if                                                          		# >>
+
+		stdprof -begin_timer;                                                   #   Start measuring time
+
+    	"\n"                                                           3 -MSGX; # Protocol
+    	"\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "               -MSG2; # Protocol (verbose level 2)
+    	"\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "               -MSG;  # Protocol
+    	:(iF.nfile+1)/iF.len: 1 -PBAR;                                          #   Display progress
+
+
+
+		### Reset data instances                                  				#   - - - - - - - - - - - - - - - - - -
+		idAux -reset;
+		idSig -reset;
+		idSigOrig -reset;
+		idSigDouble -reset;
+		idSigNorm -reset;
+		idLabPhoneme -reset;
+		idLabWord -reset;
+		idWords -reset;
+		idSentence -reset;
+		idPauseSent -reset;
+		idPause -reset;						
+		idLabWordNoPause -reset;
+		idWordsPauAnno -reset;
+		idPartiturProsSent -reset;
+		
+		iFascii -reset;
+		
+
+		### Import data			                                 				#   - - - - - - - - - - - - - - - - - -
+		## Import Original WAV-File (FileName.wav)
+		"$[sDirWAV]/$[iF.sfile].wav" "wav" idSigOrig stdfile -import;			# Import Original WAV-File
+		idSigOrig -type double idSigDouble -tconvert; 							# Convert data from (short) to (double) {ORIGINAL DOUBLE FOR (-add_rms)}
+		idSigDouble :2^(15): / idSigNorm =;        								# (Norming) Convert amplitude to -1<= s(k) <=1
+
+
+		.__sDirLab iF.sfile idLabWord -LAB_WORD_extract_vm;						# Extract Word-Label from Phoneme-Label
+		.__sDirLab iF.sfile idWords -Ortho_WORD_import_vm;						# Import Orthographic words
+
+
+		### Delete pauses and extra orthographic words							#   - - - - - - - - - - - - - - - - - -
+		idLabWord idLabWordNoPause -Delete_Pauses_LAB_WORD;						#Delete pauses <p:> from Word-Label
+
+		idWords.nrec idLabWordNoPause.nrec !=  if								# Extra orthographic words ( [d] or [T]) >>
+			idWords idLabWordNoPause idWords -Delete_Extra_Ortho_Word_LAB_WORD;	# Delete the extra orthographic words (d or T)
+		end																	# <<
+		
+		
+		### Concatenate words to sentence                         				#   - - - - - - - - - - - - - - - - - -
+		idWords idSentence -Concatenate_Words2Sentence;							# Concatenate words (Orthographic, Original or Kanonic) to sentence
+
+
+		### Calculate pauses from speech signal                                 #   - - - - - - - - - - - - - - - - - -
+		1000 idSigNorm.rinc / nSrate =;          								# Sample Rate (SR){Distance between two sample = ${idSigNorm.rinc} [msec]}
+		idSigNorm idPause iPros -pause_detect;									# Calculate pauses in speech signal
+
+		
+		
+		### Delete the first pause, if it is in the beginning of signal         #   - - - - - - - - - - - - - - - - - -
+		:idLabWordNoPause[0,1]: nFirstPause =;									# Begin-Time of First Pause is smaller than Begin-Time of first word
+
+		idPause.nrec 0 > :idPause[0,0]: nFirstPause < && if						# The beginning of first pause is smaller than 160 samples >>
+			idPause 0 1 idPause /rec -delete;									# Delete the first pause
+		end																	# <<
+
+
+		### Pause Annotation (Pause Marking)                                  	#   - - - - - - - - - - - - - - - - - -
+		## Define the minimal length of minor and major pause
+		nSrate 10 / nTimeMinorPause =; 											# Minimal length of Minor Pause is (100 msec = 1600 samples for 16kHz)
+		nTimeMinorPause 7 * nTimeMajorPause =;  								# Minimal length of Major Pause is (700 msec = 11200 sample for 16kHz)
+
+
+		idPause.nrec 0 == if													# No Pause
+			idSentence 0 idSentence.dim idPauseSent -select;
+		else																	# There are pauses
+			idPause idWords idLabWordNoPause nTimeMinorPause nTimeMajorPause idWordsPauAnno -Pause_Annotation;	
+			idWordsPauAnno idPauseSent -Concatenate_Words2Sentence;				# Concatenate words (Orthographic, Original or Kanonic) to sentence
+		end
+
+
+  		## Convert a prosodic annotated sentence to a BAS Partitur Format		#   - - - - - - - - - - - - - - - - - -
+		idPauseSent idPartiturProsSent -Convert_PauAnnoSent2Partitur;
+
+
+		### Export data from instance to non-native file formats          		#   - - - - - - - - - - - - - - - - - -
+		" " iFascii -set sep;   												# Set the separator (Space character) for export of ASCII files 
+
+		### Export prosodic annotated words as BAS Partitur Format 				#   - - - - - - - - - - - - - - - - - -
+		"${sDirAnnotation}/${iF.sfile}.pau" "ascii" idPartiturProsSent stdfile -export;
+
+
+
+    	### Aftermath                                                           # . . . . . . . . . . . . . . . . .
+    	idSigNorm.nrec idSigNorm.rinc * 1000 / nCst =;                          # Compute current sample time [sec]
+    	nCst nTst +=;                                                           # Compute total sample time [sec]
+
+		"" stdprof -end_timer;                                                  #   Stop measuring time
+
+
+		nMeasureTime stdprof.time + nMeasureTime =;
+
+		
+		goto L_FILE;                                                            # End of file loop
+	end                                                                       # <<
+
+  	"\n  "                                                               -MSG2; # Protocol (verbose level 2)
+  	"done\n"                                                              -MSG; # Protocol
+  	"\n   Total sample time: $[nTst 60 /] [min]"                          -MSG; # Protocol
+  	"  = $[nTst 60 / 60 /] [hour]"                          			  -MSG; # Protocol
+
+  	nE if "$[nE]/$[iF.len] turns defective!" 1 -WARNING; end                  # Warn for defective turns
+
+	"\n\n   Total Accumulated Time for measuring the running time: "	  -MSG; # Protocol
+	"$[nMeasureTime 1000 / 60 /] [min]" 								  -MSG; # Protocol
+	"\t		$[nMeasureTime 1000 / 60 / 60 /] [hour]" 					  -MSG; # Protocol
+
+	
+
+  	### End of sensor loop                                                      # - - - - - - - - - - - - - - - - - -
+  	nSns ++=; nSns idSns.nrec < if goto L_SNS; end                            # End of loop
+
+	"\n\n $__SFILE__ completed (${__UTL_nErrors} errors).\n"                  -MSG; # Protocol
+
+
+  0 return;                                                                     # Return "OK"
+}
+
+
+
+## Detection of sentence mood (question or statement)
+function -CMD_que()
+{
+## Variables                                                                    # -------------------------------------
+data idSig;                                       								# Data buffer for signal
+data idSigOrig;																	# Data buffer for signal (ORIGINAL WAV-File) (short values)
+data idSigDouble;																# Data buffer for signal (Original DOUBLE values)
+data idSigNorm;																	# Data buffer for signal (Original Double NORMING values)
+data idLabPhoneme;				    			  								# Data buffer for Phonetic Label
+data idLabWord;										  							# Data buffer for Word Label
+data idAux;                                       								# Auxilary data instance
+data idTurnID;																	# Turn identification
+data idSns;       -SNS_get_tab idSns =;                         				# Get sensor table
+data idWords;																	# Data buffer for Words (Orthographic, Original or Kanonic)
+data idSentence;																# Sentence (Concatenated words without prosodic annotation)
+data idLabWordNoPause;															# Label words without pause
+data idPM;                             											# Pitch Mark data instance
+data idF0;                             											# Fundamental frequency contour instance
+data idF0rms;                                                                   # F0 with RMS
+data idF0Smooth;                             									# Smoothed fundamental frequency contour instance
+data idPause;																	# Pauses in a speech signal
+data idWordsSentMoodAnno;														# Data buffer for orthographic words with question symbols
+data idSentenceMoodSent;														# Data buffer for sentence with sentence mood
+data idPartiturProsSent;														# Data buffer for prosodic annotated sentence as BAS Partitur Format
+
+PMproc iPM;                            											# Pitch mark instance processor
+Prosody iProsody;					   											# Prosody instance processor
+
+file   iF;                                        								# File list for signal analysis
+file iFascii;																	# Import/Export of ASCII files  
+
+var  nE;                                                                        # Number of skipped files
+var  nSns;                                                                      # Current sensor index
+var  sF;                                                                        # File name
+var  sSns;                                                                      # Current sensor name
+var  nCst;                                                                      # Current sample time [sec]
+var  nTst;                                                                      # Total sample time [sec]
+var nSrate;                            											# Sample Rate (SR) 
+var nSampRateF0; 																# Sampling rate for F0 contour
+var	 nMeasureTime;	    0 nMeasureTime =;										# Create/Init instance (Number of current file)
+var sFileName;
+var sCDId;
+var sDialogId;
+var nFirstPause;																# Default first Pause at the beginning of speech signal
+var nRecF0Smooth;
+var i;
+var j;
+
+0 nRecF0Smooth =;
+0 i =;
+0 j =;
+
+var sDirCurr;		                              								# Path to the current working directory of the dLabPro session
+var sDirWAV;		                              								# Path to ORIGINAL WAV-Files
+var sDirTemp;		                              								# Path to temporary files
+var sDirSentenceMood;                              								# Path to OUTPUT-Files (Parameter of F0)
+
+"$UASR_HOME/scripts/dlabpro/prosody" sDirCurr =;
+"$UASR_HOME/data/vm/common/sig-wav" sDirWAV =;									# Path to the ORIGINAL WAV-Files 
+"$UASR_HOME/data/vm/common/temporary" sDirTemp =; 
+"$UASR_HOME/data/vm/common/que" sDirSentenceMood =; 
+
+
+
+## Tell paths                                                                   # -------------------------------------
+"\n\n   Paths:"                                                           -MSG; # Protocol
+"sig" "" -CFG_get_path;                                                         # Echo signal files path
+"all"  "" -CFG_get_flist iF -set flist;                                        	# Signal files list
+
+
+
+
+## Check/create session persistent variables                                  	# -------------------------------------
+## Get signal files path
+".__sDirSig" "var" ?instance not if                                           	# Is there a global __sDirSig? No >>
+  var .__sDirSig;                                                             	#   Create one
+  ( "sig" "S" -CFG_get_path ) .__sDirSig =;                                   	#   Silently get signal files path
+end                                                                         	# <<
+
+## Get label files path
+".__sDirLab" "var" ?instance not if                                           	# Is there a global __sDirLab? No >>
+  var .__sDirLab;                                                             	#   Create one
+  ( "lab" "S" -CFG_get_path ) .__sDirLab =;                                   	#   Silently get label files path
+end;                                                                        	# <<
+
+
+    
+### Sensor loop                                                                 # -------------------------------------
+:idSns[0,0]: if "\n// No. of sensors  : $[idSns.nrec]" -MSG; end              # Protocol
+label L_SNS;                                                                    # Loop over sensors
+
+  	### File loop                                                               #   - - - - - - - - - - - - - - - - - -
+  	0 nE =;                                                                     # Reset error counter
+  	"\n" -MSG; :idSns[nSns,0]: if "\n   Sensor ${idSns[nSns,0]}" -MSG; end    # Protocol
+  	"\n   Detect sentence mood."   				 					 	  -MSG; # Protocol
+  	0 1 -PBAR;                                                                  # Begin progress bar
+	iF -reset;
+
+	
+    
+	label L_FILE;                                                        		# Loop over files
+	iF -next if                                                          		# >>
+
+		stdprof -begin_timer;                                                   #   Start measuring time
+
+    	"\n"                                                           3 -MSGX; # Protocol
+    	"\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "               -MSG2; # Protocol (verbose level 2)
+    	"\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "               -MSG;  # Protocol
+    	:(iF.nfile+1)/iF.len: 1 -PBAR;                                          #   Display progress
+
+
+
+		### Reset data instances                                  				#   - - - - - - - - - - - - - - - - - -
+		idAux -reset;
+		idTurnID -reset;
+		idSig -reset;
+		idSigOrig -reset;
+		idSigDouble -reset;
+		idSigNorm -reset;
+		idLabPhoneme -reset;
+		idLabWord -reset;
+		idWords -reset;
+		idSentence -reset;
+		idLabWordNoPause -reset;
+		idPM 0 idPM.dim idPM -delete;  		  									# Reset idPM instance
+		idF0 -reset;                          									# Reset idF0 instance
+		idF0rms -reset;
+		idF0Smooth -reset;														# Reset idF0Smooth instance
+		idPause -reset;
+		idWordsSentMoodAnno -reset;
+		idSentenceMoodSent -reset;												# Reset idSentenceMoodSent (output data object)
+		idPartiturProsSent -reset;
+		
+		iPM -reset;                           									# Reset iPM instance
+		iProsody -reset;                           								# Reset iProsody instance
+
+		iFascii -reset;
+
+
+		## Parse the turn identification to {"CD" "PATH" "TID" "FILE" "TURN" "SPKR" "LANG"}
+		iF.sfile idTurnID -VM_parse_turn_id;                                    # Parse turn identifier 
+		:idTurnID[0,0]: sCDId =; 												
+		:idTurnID[0,1]: sDialogId =; 		
+		:idTurnID[0,2]: sFileName =; 
+
+
+		### Import data			                                 				#   - - - - - - - - - - - - - - - - - -
+		## Import Original WAV-File (FileName.wav)
+		"$[sDirWAV]/$[iF.sfile].wav" "wav" idSigOrig stdfile -import;			# Import Original WAV-File
+		idSigOrig -type double idSigDouble -tconvert; 							# Convert data from (short) to (double) {ORIGINAL DOUBLE FOR (-add_rms)}
+		idSigDouble :2^(15): / idSigNorm =;        								# (Norming) Convert amplitude to -1<= s(k) <=1
+
+
+		.__sDirLab iF.sfile idLabWord -LAB_WORD_extract_vm;						# Extract Word-Label from Phoneme-Label
+		.__sDirLab iF.sfile idWords -Ortho_WORD_import_vm;						# Import Orthographic words
+
+
+		### Delete pauses and extra orthographic words							#   - - - - - - - - - - - - - - - - - -
+		idLabWord idLabWordNoPause -Delete_Pauses_LAB_WORD;						#Delete pauses <p:> from Word-Label
+
+		idWords.nrec idLabWordNoPause.nrec !=  if								# Extra orthographic words ( [d] or [T]) >>
+			idWords idLabWordNoPause idWords -Delete_Extra_Ortho_Word_LAB_WORD;	# Delete the extra orthographic words (d or T)
+		end																	# <<
+		
+		
+		### Concatenate words to sentence                         				#   - - - - - - - - - - - - - - - - - -
+		idWords idSentence -Concatenate_Words2Sentence;							# Concatenate words (Orthographic, Original or Kanonic) to sentence
+
+
+		### Compute Pitch Mark              									#   - - - - - - - - - - - - - - - - - -
+		"\nCompute Pitch Marks (PM):\n"               					  -MSG; # Protocol (Short values for Pitch Mark, every line 4 Byte)
+		idSigNorm idPM iPM /hybrid -analyze; 									# HYBRID-FSM-PMA
+
+
+		### Compute F0		            										#   - - - - - - - - - - - - - - - - - -
+		1000 idSigNorm.rinc / nSrate =;          								# Sample Rate (SR){Distance between two sample = ${idSigNorm.rinc} [msec]}
+		100 nSampRateF0 =;
+		"Compute Fundamental Frequency (F0):\n\n"               		  -MSG; # Protocol
+		idPM nSrate nSampRateF0 idF0 iProsody -pm_fo; 							# -PmFo from (prosody class)
+
+
+		### Add RMS-Energy            											#   - - - - - - - - - - - - - - - - - -
+		iProsody -reset;                           								# Reset iProsody instance
+		idSigDouble idF0 nSrate nSampRateF0 idF0rms iProsody -add_rms;
+
+
+		## Export (F0 with RMS) data
+		"${sDirTemp}" -cd;														# Change directory
+		"${sFileName}.F0Rms" "ascii" idF0rms stdfile -export;
+
+		### Smooth F0 Contour            										#   - - - - - - - - - - - - - - - - - -
+		"${sDirCurr}/smoothf0.exe ${sFileName}.F0Rms ${sFileName}.F0Smooth 100 -min 50 -max 500 -rmscorr 0.09 -derive 14 -elim 3 -amaf 2 -hermite 20 -interpol 280 360" -system;
+
+		### Read only the first column of F0Smooth (4 columns)					#   - - - - - - - - - - - - - - - - - -
+		"${sFileName}.F0Smooth" "ascii" idF0Smooth stdfile -import;
+		idF0Smooth 1 3 idF0Smooth -delete;										# Delete the last (3) columns
+	
+		### Remove a files in temporary  folder									#   - - - - - - - - - - - - - - - - - -
+		"rm -f *.*" -system;                                  					# Remove all files
+
+
+		### Detect the sentence mood											#   - - - - - - - - - - - - - - - - - -
+		idF0Smooth idWords idLabWord nSrate nSampRateF0 idWordsSentMoodAnno -Sentence_Mood_RisingF0_Annotation;	
+		idWordsSentMoodAnno idSentenceMoodSent -Concatenate_Words2Sentence;		# Concatenate words (Orthographic, Original or Kanonic) to sentence
+
+
+
+  		## Convert a prosodic annotated sentence to a BAS Partitur Format		#   - - - - - - - - - - - - - - - - - -
+		idSentenceMoodSent idPartiturProsSent -Convert_QueAnnoSent2Partitur;
+
+
+		### Export data from instance to non-native file formats          		#   - - - - - - - - - - - - - - - - - -
+		" " iFascii -set sep;   												# Set the separator (Space character) for export of ASCII files 
+
+
+		### Export prosodic annotated words as BAS Partitur Format 				#   - - - - - - - - - - - - - - - - - -
+		"${sDirSentenceMood}/${iF.sfile}.que" "ascii" idPartiturProsSent stdfile -export;
+		
+
+    	### Aftermath                                                           # . . . . . . . . . . . . . . . . .
+    	idSigNorm.nrec idSigNorm.rinc * 1000 / nCst =;                          # Compute current sample time [sec]
+    	nCst nTst +=;                                                           # Compute total sample time [sec]
+
+		"" stdprof -end_timer;                                                  #   Stop measuring time
+
+		nMeasureTime stdprof.time + nMeasureTime =;
+		
+		goto L_FILE;                                                            # End of file loop
+	end                                                                       # <<
+
+	
+	
+  	"\n  "                                                               -MSG2; # Protocol (verbose level 2)
+  	"done\n"                                                              -MSG; # Protocol
+  	"\n   Total sample time: $[nTst 60 /] [min]"                          -MSG; # Protocol
+  	"  = $[nTst 60 / 60 /] [hour]"                          			  -MSG; # Protocol
+
+  	nE if "$[nE]/$[iF.len] turns defective!" 1 -WARNING; end                  # Warn for defective turns
+
+	"\n\n   Total Accumulated Time for measuring the running time: "	  -MSG; # Protocol
+	"$[nMeasureTime 1000 / 60 /] [min]" 								  -MSG; # Protocol
+	"\t		$[nMeasureTime 1000 / 60 / 60 /] [hour]" 					  -MSG; # Protocol	
+
+  	### End of sensor loop                                                      # - - - - - - - - - - - - - - - - - -
+  	nSns ++=; nSns idSns.nrec < if goto L_SNS; end                            # End of loop
+
+	"\n\n $__SFILE__ completed (${__UTL_nErrors} errors).\n"              -MSG; # Protocol
+
+
+  0 return;                                                                     # Return "OK"
+}
+
+
+## Calculation of F0 parameter
+function -CMD_par()
+{
+  ## TODO: (F0 Level)
+
+  0 return;                                                                     # Return "OK"
+}
+
+
+## == MAIN PROGRAM ==                                                           # =====================================
+
+( "$1" "help" == ) -UASR_help || if "$2" -usage; 0 return; end                # Print help
+"$1" var sCmd;                                                                  # Get command
+sCmd "acc" ==                                                                   # | Accent marking
+sCmd "phr" == ||                                                                # | Phrase marking
+sCmd "pau" == ||                                                                # | Pause marking
+sCmd "que" == ||                                                                # | Sentence mood (question or statement)
+sCmd "par" == ||                                                                # | F0 parameter
+not ( $$ 2 < ) || if                                                            # Bad command or less than 2 args. >> 
+  $$ 2 < if "Too few arguments" else "unknown command '$1'"  end -ERROR;      #   Error
+  "\nType '$__SFILE__.xtp help' for usage\n" -echo;                             #   Give a little help
+  1 return;                                                                     #   Terminate with error code
+end                                                                           # <<
+
+## Initialize session                                                           # -------------------------------------
+"\n// $__SFILE__.xtp revision " -UASR_version +                           -MSG; # Protocol
+"\n// Configuration   : $2"                                               -MSG; # Protocol
+"$2" TRUE -CFG_init;                                                            # Configure session
+"util/uasr_session.itp" include;                                                # Include UASR session startup script
+
+## Execute commands                                                             # -------------------------------------
+-CMD_$[sCmd] return;                                                            # Call command handler function
+
+## EOF

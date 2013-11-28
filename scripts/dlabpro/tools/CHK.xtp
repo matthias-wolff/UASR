@@ -1,0 +1,318 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Database check-up tool
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/tools
+##
+## ARGUMENTS:
+##   $1: Command or 'help'
+##   $2: Setup file or, if 1st arg. is 'help', command
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"$UASR_HOME/scripts/dlabpro/util/@.itp" include;
+
+## Prints help on usage
+function -usage(sCmd)
+{
+  sCmd "fea" == if
+    "\n\n   fea: Check feature files"                                     -MSG; 
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp fea <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>   UASR configuration file"                        -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+    "\n\n     'dlabpro $__SFILE__.xtp fea myconfig.cfg'"                  -MSG;
+      "\n     Checks the feature files of the 'myconfig.cfg' UASR setup." -MSG;
+      "\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "fls" == if
+    "\n\n   fls: Check file lists"                                        -MSG; 
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp fls <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>   UASR configuration file"                        -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+    "\n\n     'dlabpro $__SFILE__.xtp fls myconfig.cfg'"                  -MSG;
+      "\n     Checks the file lists of the 'myconfig.cfg' UASR setup."    -MSG;
+      "\n"                                                                -MSG;
+    0 return;
+  sCmd "sig" == if
+    "\n\n   sig: Check signal and labels files"                           -MSG; 
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp sig <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>   UASR configuration file"                        -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+    "\n\n     'dlabpro $__SFILE__.xtp sig myconfig.cfg'"                  -MSG;
+      "\n     Checks the signal and label files of the 'myconfig.cfg'"    -MSG;
+      "\n     UASR setup."                                                -MSG;
+      "\n"                                                                -MSG;
+    0 return;
+  end
+  end
+  "\n\n   SYNOPSIS:"                                                      -MSG;
+    "\n     Database check-up tool"                                       -MSG;
+  "\n\n   USAGE:"                                                         -MSG;
+    "\n     dlabpro $__SFILE__.xtp <command> <cfgfile> [options]"         -MSG;
+  "\n\n   ARGUMENTS:"                                                     -MSG;
+    "\n     command   fea - Check feature files"                          -MSG;
+    "\n               fls - Check file lists"                             -MSG;
+    "\n               sig - Check signal files"                           -MSG;
+  "\n\n   OPTIONS:"                                                       -MSG;
+    "\n     -v<n>           verbose level"                                -MSG;
+    "\n     -P<key>=<value> override config. key-value-pairs"             -MSG;
+  "\n\n  Type 'dlabpro $__SFILE__.xtp help <command>' for help on a "     -MSG;
+         "specific command."                                              -MSG;
+    "\n"                                                                  -MSG;
+  0 return;
+}
+
+## Checks a set of file lists for integrity.
+function -CMD_fls()
+{
+  $$ 2 < if                                                                     # Need at least two arguments >>
+    "Too few arguments" -ERROR;                                                 #   Error message
+    "\nType 'dlabpro $__SFILE__.xtp help chk' for help" -MSG;                   #   Give a little help
+    1 return;                                                                   #   Terminate program
+  end                                                                           # <<
+  "$2" TRUE -CFG_init;                                                          # Initialize configuration
+
+  function -flst_load(sId,idF)
+  {
+    idF -reset;
+    var sFlst; ( sId "" -CFG_get_flist ) sFlst =;
+    sFlst "ascii" idF stdfile /strings /noerror -import;
+  }
+  
+	function -count(idF)
+	{
+    "\n   - Entries       : $[idF.nrec]" -echo;
+	}
+
+  function -unique(idF)
+  {
+    "\n   - Set unique    : " -echo;
+    var bRes; ( idF -SET_is_unique ) bRes =;
+    bRes if "yes - ok" else "NO - FAILURE" end -echo;
+    bRes return;
+  }
+  
+  function -subset(sId,idF,idA,bFrc)
+  {
+    data idAux;
+    var  bRes;
+    
+    ( "Subset of $[sId]" -14 -MSG_pad ) sId =; "\n   - $[sId]: " -echo;
+    idF idA idAux -SET_intersect;
+    ( idF.nrec idAux.nrec == ) bRes =;
+    bRes if "yes" else "NO" end -echo;
+    :bRes=not(bFrc)||bRes;
+    bRes if " - ok" else " - FAILURE" end -echo;
+    bRes return;
+  }
+  
+  function -disjoint(sId,idF,idA,bFrc)
+  {
+    data idAux;
+    var  bRes;
+    
+    ( "With $[sId]" -14 -MSG_pad ) sId =; "\n   - $[sId]: " -echo;
+    idF idA idAux -SET_intersect;
+    ( idAux.nrec 0 == ) bRes =;
+    bRes if "disjoint" else "OVERLAPPING" end -echo;
+    :bRes=not(bFrc)||bRes;
+    bRes if " - ok" else " - FAILURE" end -echo;
+    bRes return;
+  }
+
+  var bRes; TRUE bRes =;
+
+  ## Load file lists                                                            # ------------------------------------
+  "\n   Loading file lists" -echo;
+  data idAll; "all"    idAll -flst_load;
+  data idSta; "stat"   idSta -flst_load;
+  data idStt; "stat_t" idStt -flst_load;
+  data idTrn; "train"  idTrn -flst_load;
+  data idDev; "dev"    idDev -flst_load;
+  data idTst; "test"   idTst -flst_load;
+  data idAux;
+
+  ## Check file lists                                                           # ------------------------------------
+  "\n\n   Checking training set" -echo;
+  idTrn -count;
+  ( ( idTrn                -unique   ) bRes && ) bRes =;
+  ( ( "all"  idTrn idAll 1 -subset   ) bRes && ) bRes =;
+  ( ( "dev"  idTrn idDev 1 -disjoint ) bRes && ) bRes =;
+  ( ( "test" idTrn idTst 1 -disjoint ) bRes && ) bRes =;
+
+  "\n\n   Checking test set" -echo;
+  idTst -count;
+  ( ( idTst               -unique ) bRes && ) bRes =;
+  ( ( "all" idTst idAll 1 -subset ) bRes && ) bRes =;
+  ( idDev idTst -SET_equal ) if
+    "\n   - With dev      : equal - ok" -echo;
+  else
+    ( ( "dev" idTst idDev 1 -disjoint ) bRes && ) bRes =;
+  end
+
+  ( idDev idTst -SET_equal ) not if 
+    "\n\n   Checking development set" -echo;
+    idDev -count;
+    ( ( idDev                 -unique   ) bRes && ) bRes =;
+    ( ( "all"   idDev idAll 1 -subset   ) bRes && ) bRes =;
+    ( ( "train" idDev idTrn 1 -disjoint ) bRes && ) bRes =;
+    ( ( "test"  idDev idTst 1 -disjoint ) bRes && ) bRes =;
+  end
+
+  "\n\n   Checking statistics set" -echo;
+  idSta -count;
+  ( ( idSta                 -unique ) bRes && ) bRes =;
+  ( ( "all"   idSta idAll 1 -subset ) bRes && ) bRes =;
+  "trn." idSta idTrn 0 -subset;
+  ( idSta idStt -SET_equal ) if
+    "\n   - With stat_t   : equal - ok" -echo;
+  end
+
+  ( idSta idStt -SET_equal ) not if 
+    "\n\n   Checking linear feature trafo. statistics set" -echo;
+    idStt -count;
+    ( ( idStt                -unique ) bRes && ) bRes =;
+    ( ( "all"  idStt idAll 1 -subset ) bRes && ) bRes =;
+    "trn." idStt idTrn 1 -subset;
+  end
+
+  "\n\n   Checking completeness" -echo;
+  "\n   - train+dev+test: " -echo;
+  idTrn idDev idAux -SET_union;
+  idAux idTst idAux -SET_union;
+  idAux idAll -SET_equal if
+    "= all - ok" -echo;
+  else
+    data idAux2;
+    idAll idAux idAux2 -SET_minus;
+    ( idAux2.nrec 0 > ) if
+      "< all - ok" -echo;
+    else
+      idAux idAll idAux2 -SET_minus;
+      ( idAux2.nrec 0 > ) if ">" else "not related to" end -echo;
+      " all - FAILURE" -echo;
+      FALSE bRes =;
+    end
+  end
+
+  "\n\n   Test result" -echo;
+  bRes if
+    "\n   - File lists seem to be ok.\n" -echo;
+    0 return;
+  else
+    "\n   - File lists are CORRUPT.\n" -echo;
+    1 return;
+  end
+}
+
+## Database file check-up
+function -CMD_fcu(sType)
+{
+  "\n\n// DATABASE FILE CHECK-UP"                                         -MSG; # Protocol
+  "\n// File type       : $[sType]" -MSG;                                       # Protocol
+  sType "" -CFG_get_path;                                                       # Echo path to files
+  sType "sig" == if "lab" "" -CFG_get_path; end                                 # Echo path to label files
+  var  bOk;                                                                     # Current file ok?
+  var  nE;                                                                      # Number of errors
+  var  nSns;                                                                    # Current sensor index
+  var  sSns;                                                                    # Current sensor name
+  file iF;    "all" "" -CFG_get_flist iF set flist;                             # File list
+  data idSns; -SNS_get_tab idSns =;                                             # Get sensor table
+  data idX;                                                                     # Data file content
+
+  ## Check files                                                                # -------------------------------------
+  :idSns[0,0]: if "\n// No. of sensors  : $[idSns.nrec]" -MSG; end              # Protocol
+  label L_SNS;                                                                  # Loop over sensors
+    "${idSns[nSns,0]}" sSns =;                                                  #   Get sensor name
+    "\n" -MSG; sSns if "\n   Sensor $[sSns]" -MSG; end                          #   Protocol
+    "\n   Checking $[iF.len] files ..."                                   -MSG; #   Protocol
+    iF -reset; label L_FIL; iF -next if                                         #   Loop over files >>
+      "\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: ..."              -MSG2; #     Protocol
+      sType "fea" == if ( iF sSns "F" idX -FEA_get ) bOk =; end                 #     Check feature vector file
+      sType "sig" == if ( iF sSns     idX -SIG_get ) bOk =; end                 #     Check signal and label files
+      bOk if                                                                    #     File ok >>
+        " ok"                                                            -MSG2; #       Protocol
+      else                                                                      #     << File not ok >>
+        " LOAD FAILED"                                                   -MSG2; #       Protocol
+        "$[iF.sfile]: load failed"                                      -ERROR; #       Error 
+        nE ++=;                                                                 #       Count bogus files
+      end                                                                       #     <<
+      goto L_FIL;                                                               #     Next file
+    end                                                                         #   <<
+    nSns ++=; nSns idSns.nrec < if goto L_SNS; end                              #   End of loop
+
+  ## Aftermath                                                                  # -------------------------------------
+  "\n   done ("                                                           -MSG; # Protocol
+  nE 0 > if "$[nE] missing or damaged files" else "all files ok" end      -MSG; # Protocol
+  ")."                                                                    -MSG; # Protocol
+  "\n\n// $__SFILE__.xtp completed.\n"                                    -MSG; # Protocol
+  0 return;
+}
+
+## Checks if all feature files contained in the "all" file list are present. 
+function -CMD_fea()
+{
+  "fea" -CMD_fcu return;
+}
+
+## Checks if all signal and label files contained in the "all" file list are
+## present. 
+function -CMD_sig()
+{
+  "sig" -CMD_fcu return;
+}
+
+## == MAIN PROGRAM ==                                                           # =====================================
+
+"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
+"\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
+"\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
+"\n// dLabPro VID     : " -version +                                      -MSG; # Protocol
+"\n// UASR VID        : " -UASR_version +                                 -MSG; # Protocol
+( "$1" "help" == ) -UASR_help || if "$2" -usage; 0 return; end                  # Print help
+"$1" var sCmd;                                                                  # Get command
+$$ 2 < if                                                                       #   Too few arguments >> 
+  "Too few arguments" -ERROR;                                                   #   Error
+  "\nType '$__SFILE__.xtp help' for usage\n" -echo;                             #   Give a little help
+  1 return;                                                                     #   Terminate with error code
+end                                                                             # <<
+
+## Initialize session                                                           # -------------------------------------
+"\n// Configuration   : $2"                                               -MSG; # Protocol
+"$2" TRUE -CFG_init;                                                            # Configure session
+"../util/uasr_session.itp" include;                                             # Include UASR session startup script
+
+## Execute commands                                                             # -------------------------------------
+/noerror -CMD_$[sCmd] ?error if                                                 # Call cmd. handler function; Error >>
+  "Unknown command '$[sCmd]'" -ERROR;                                           #   Error
+  "\nType '$__SFILE__.xtp help' for usage\n" -echo;                             #   Give a little help
+  1 return;                                                                     #   Terminate with error code
+end                                                                             # <<
+0 return;                                                                       # Everything seems to be ok
+
+## EOF

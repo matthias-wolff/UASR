@@ -1,0 +1,1596 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<
+<    AUTHOR : n/a
+<    PACKAGE: manual
+<
+<    Copyright 2013 UASR contributors (see COPYRIGHT file)
+<    - Chair of System Theory and Speech Technology, TU Dresden
+<    - Chair of Communications Engineering, BTU Cottbus
+<
+<    This file is part of UASR.
+<
+<    UASR is free software: you can redistribute it and/or modify it under the
+<    terms of the GNU Lesser General Public License as published by the Free
+<    Software Foundation, either version 3 of the License, or (at your option)
+<    any later version.
+<
+<    UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+<    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+<    FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+<    more details.
+<
+<    You should have received a copy of the GNU Lesser General Public License
+<    along with UASR. If not, see [http://www.gnu.org/licenses/].
+-->
+<html>
+<head>
+  <meta http-equiv="Content-Type" content= "text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta name="description" content=   "UASR documentation - UASR script train/amtopo.itp">
+  <meta name="author" content="">
+  <meta name="generator" content="UASR_DOC">
+  <title>UASR script train/amtopo.itp</title>
+  <link rel=stylesheet type="text/css" href="../../default.css">
+</head>
+<script type="text/javascript" src="../../default.js"></script>
+<script type="text/javascript">__sRootPath="../../..";</script>
+<body>
+
+  <div id="clp_train/amtopo.itp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        UASR script <span class="mid">train/amtopo.itp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('','train/amtopo.itp','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden">General</td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><nobr><b>amtopo</b> </nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Author</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Frank Duckhorn
+</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Synopsis</h3>
+    <p>Training functions: HMM topology training
+ </p>
+  <!--{{ CUSTOM_DOC -->
+  <a name="description"></a><h3>Description</h3>
+	<p>The functions in this file can be used to train the topology of models.
+	To activate them use the configuration keys <code>uasr.am.train.act[0-9], uasr.am.train.acta[0-9]_[0-9], uasr.am.train.actb[0-9]_[0-9]</code>
+	(see <a href="../util/cfg.itp.html">Configuration keys</a>).
+	Following actions are implemented:</p>
+	<table cellpadding="3" class="indent">
+		<tr><th>Name</th><th>Function</th><th>Description</th></tr>
+		<tr><td>split</td><td><a href="#clp_-HMM_Act_split"><code class="link">-HMM_Act_split</code></a></td>
+		<td>Split a defined number of Gaussians</td></tr>
+		<tr><td>hmm</td><td><a href="#clp_-HMM_Act_hmm"><code class="link">-HMM_Act_hmm</code></a></td>
+		<td>Convert models using -hmm function</td></tr>
+		<tr><td>mix</td><td><a href="#clp_-HMM_Act_mix"><code class="link">-HMM_Act_mix</code></a></td>
+		<td>Convert hmm to mixture Gaussians</td></tr>
+		<tr><td>tprun</td><td><a href="#clp_-HMM_Act_TPrun"><code class="link">-HMM_Act_TPrun</code></a></td>
+		<td>Simple transition pruning using weight treshold</td></tr>
+		<tr><td>prun</td><td><a href="#clp_-HMM_Act_Prun"><code class="link">-HMM_Act_Prun</code></a></td>
+		<td>Pruning of transitions according the path weights of thier surroundings</td></tr>
+		<tr><td>uprc</td><td><a href="#clp_-HMM_Act_UsedPathRC"><code class="link">-HMM_Act_UsedPathRC</code></a></td>
+		<td>Pruning of unused transition (defined by dev data set)</td></tr>
+		<tr><td>bestn</td><td><a href="#clp_-HMM_Act_BestN"><code class="link">-HMM_Act_BestN</code></a></td>
+		<td>Reduce model to best paths (neg.-log. density as selection criterion)</td></tr>
+		<tr><td>up</td><td><a href="#clp_-HMM_Act_UsedPath"><code class="link">-HMM_Act_UsedPath</code></a></td>
+		<td>Reduce model to used paths (defined by dev data set)</td></tr>
+	</table>
+	<p>These function use the following configuration keys:</p>
+	<table cellpadding="3" class="indent">
+		<tr><th>Name</th><th>Key</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    <tr><td>split</td><td><code>uasr.am.train.split.minrc</code></td><td>number</td><td>-1    </td><td>Minimal Gaussian reference counter for state splitting</td></tr>
+    <tr><td></td><td><code>uasr.am.train.split.num</code></td><td>number</td><td>0     </td><td>Number of Gaussians to split (0 for all, negativ values are used as percentage)</td></tr>
+    <tr><td></td><td><code>uasr.am.train.split.krit</code></td><td>string</td><td>var    </td><td>Kriterium for selecting Gaussians ("var"-Variance, "rc"-Reference Counter, "pd"-Probability density, "ipd"-Inverse probability density</td></tr>
+		<tr><td>tprun</td><td><code>uasr.am.train.tprun.thresh</code></td><td>number</td><td>1000</td><td>Weight threshold for transition pruning</td></tr>
+		<tr><td>prun</td><td><code>uasr.am.train.prun.pathit</code></td><td>number</td><td>3</td><td>Maximal path length for path weight calcluation</td></tr>
+		<tr><td></td><td><code>uasr.am.train.prun.tpers</code></td><td>number</td><td>8</td><td>Number of transitions to remain in model as multiple of state count</td></tr>
+		<tr><td>uprc</td><td><code>uasr.am.train.uprc.num</code></td><td>number</td><td>0</td><td>Number of transitions to remain in all models (0 for as much as possible (limited by number of used paths), negative for multiple of state count)</td></tr>
+		<tr><td>bn</td><td><code>uasr.am.train.bn.num</code></td><td>number</td><td>-1</td><td>Number of best paths to remain in model (-1 for all)</td></tr>
+		<tr><td></td><td><code>uasr.am.train.bn.len</code></td><td>number</td><td>-1</td><td>Length of best paths to remain in model (-1 for shorttest possible, "mean" for meanage path length in training set)</td></tr>
+		<tr><td>up</td><td><code>uasr.am.train.up.num</code></td><td>number</td><td>-1</td><td>Number of best used paths to remain in model (-1 for all used paths)</td></tr>
+		<tr><td>split(pd,ipd),<br>prun,uprc,<br>bn,up</td><td><code>uasr.am.train.2trainlst</code></td><td>string</td><td>"dev"</td><td>2. Trainingsfilelist for optimization methods</td></tr>
+	</table>
+	<p>The functions can be used in different scenarios. One scenario is transition purning after the third split and
+	four more iterations of parameter estimation. For this example here is a configuration file, which uses used path
+	transition pruning with 8000 transitions to remain in the model after pruning.
+	<pre>
+	## HMM training settings
+	uasr.am.train.split       = 5;
+	uasr.am.train.ite0        = 5;
+	uasr.am.train.ite1        = 10;
+	uasr.am.train.ite2        = 15;
+	uasr.am.train.ite3        = 20;
+	uasr.am.train.ite4        = 4;
+	uasr.am.train.act3        = "uprc";
+	uasr.am.train.uprc.num    = 8000;
+	</pre></p>
+	<p>A second scenario is topology training of technical signals. For izfp valve signals the following
+	configuration file may be used. It trains the topology by alterately spliting of pruning the model.
+	The spliting is done by selection the half of all Gaussians according thier average density.
+	The pruning is done by pruning of unused paths. Between all these topology optimizing one
+	iteration of parameter adaption is executed. In the last step by usedpath function the
+	horziontal topology of the signals is determined.
+	<pre>
+	## HMM training settings
+	## Configure training schedule
+	uasr.am.train.split     = 9;
+	uasr.am.train.ite0      = 0;
+	uasr.am.train.ite1      = 1;
+	uasr.am.train.ite2      = 1;
+	uasr.am.train.ite3      = 1;
+	uasr.am.train.ite4      = 1;
+	uasr.am.train.ite5      = 1;
+	uasr.am.train.ite6      = 1;
+	uasr.am.train.ite7      = 2;
+	uasr.am.train.ite8      = 2;
+	uasr.am.train.ite9      = 4;
+
+	## Use simple transition pruning after every update
+	uasr.am.train.acta0_0   = "tprun";
+	uasr.am.train.acta1_0   = "tprun";
+	uasr.am.train.acta2_0   = "tprun";
+	uasr.am.train.acta3_0   = "tprun";
+	uasr.am.train.acta4_0   = "tprun";
+	uasr.am.train.acta5_0   = "tprun";
+	uasr.am.train.acta6_0   = "tprun";
+	uasr.am.train.acta7_0   = "tprun";
+	uasr.am.train.acta7_1   = "tprun";
+	uasr.am.train.acta8_0   = "tprun";
+	uasr.am.train.acta8_1   = "tprun";
+	uasr.am.train.acta9_0   = "tprun";
+	uasr.am.train.acta9_1   = "tprun";
+	uasr.am.train.acta9_2   = "tprun";
+	uasr.am.train.acta9_3   = "tprun";
+
+	## Alternately split or prun the model
+	uasr.am.train.act0      = "split,hmm";
+	uasr.am.train.act1      = "uprc";
+	uasr.am.train.act2      = "split,hmm";
+	uasr.am.train.act3      = "uprc";
+	uasr.am.train.act4      = "split,hmm";
+	uasr.am.train.act5      = "uprc";
+	uasr.am.train.act6      = "split,hmm";
+	uasr.am.train.act7      = "uprc";
+	uasr.am.train.act8      = "up";
+
+	## Config used methods
+	uasr.am.train.tprun.thresh = 1000;
+	uasr.am.train.split.krit   = "pd";
+	uasr.am.train.split.num    = -0.5;
+	uasr.am.train.uprc.num     = -2;
+	uasr.am.train.up.num       = 50;
+	</pre></p>
+  <!--}} CUSTOM_DOC -->
+  <a name="functions"></a><h3>Functions</h3>
+  <table cellSpacing="0" cellPadding="4" border="0">
+    <tr>
+      <td class="rowgroup" colSpan="2">Functions</td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-TOPOHLP_add_norm"><code class="link">-TOPOHLP_add_norm</code></a></td>
+      <td><code><b>-TOPOHLP_add_norm</b>(sCold,sCnew,sCref,idAux)</code><br>&nbsp;<br>Add normalised component to data instance
+
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-TOPOHLP_Trans"><code class="link">-TOPOHLP_Trans</code></a></td>
+      <td><code><b>-TOPOHLP_Trans</b>(itHMM,itUsed,idLenMean,idTrans,sWriteStat)</code><br>&nbsp;<br> Calculation of transition weights and mean length of paths through itHMM
+ 
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-TOPOHLP_UsedPath"><code class="link">-TOPOHLP_UsedPath</code></a></td>
+      <td><code><b>-TOPOHLP_UsedPath</b>(itHMM,nPathNum,itUsed)</code><br>&nbsp;<br> Calculation of Used Paths for dev-Dataset
+ 
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-TOPOHLP_UsedPathRC"><code class="link">-TOPOHLP_UsedPathRC</code></a></td>
+      <td><code><b>-TOPOHLP_UsedPathRC</b>(nTransNum,itHMM)</code><br>&nbsp;<br> Calculation of Used Paths Reference Counter for dev-Dataset
+ 
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-TOPOHLP_Gm_Vars"><code class="link">-TOPOHLP_Gm_Vars</code></a></td>
+      <td><code><b>-TOPOHLP_Gm_Vars</b>(itGM,idGmVars)</code>
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-TOPOHLP_aggRCNld"><code class="link">-TOPOHLP_aggRCNld</code></a></td>
+      <td><code><b>-TOPOHLP_aggRCNld</b>(idTrans,idTab,nIcTab,nDst,idDst)</code>
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-TOPOHLP_Nldagg"><code class="link">-TOPOHLP_Nldagg</code></a></td>
+      <td><code><b>-TOPOHLP_Nldagg</b>(idTrans,nIcTab,nDst,itHMM,idDst)</code>
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-TOPOHLP_Gm"><code class="link">-TOPOHLP_Gm</code></a></td>
+      <td><code><b>-TOPOHLP_Gm</b>(itHMM,idTrans,idGm)</code>
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-TOPOHLP_cleanup"><code class="link">-TOPOHLP_cleanup</code></a></td>
+      <td><code><b>-TOPOHLP_cleanup</b>(itHMM)</code><br>&nbsp;<br> Trim unusable transitions and delete orphan Gm's in HMM
+ 
+ @parm itHMM hmm
+          HMM instance
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_Act_split"><code class="link">-HMM_Act_split</code></a></td>
+      <td><code><b>-HMM_Act_split</b>(itHMM)</code><br>&nbsp;<br> HMM Action Split
+ Split a defined number of Gaussians.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_Act_mix"><code class="link">-HMM_Act_mix</code></a></td>
+      <td><code><b>-HMM_Act_mix</b>(itHMM)</code><br>&nbsp;<br> HMM Action Converting to mixture gaussians
+ Convert models using -gmm_mix function.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_Act_hmm"><code class="link">-HMM_Act_hmm</code></a></td>
+      <td><code><b>-HMM_Act_hmm</b>(itHMM)</code><br>&nbsp;<br> HMM Action Transition Pruning
+ HMM Action Converting to hmm
+ Convert models using -hmm function.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_Act_TPrun"><code class="link">-HMM_Act_TPrun</code></a></td>
+      <td><code><b>-HMM_Act_TPrun</b>(itHMM)</code><br>&nbsp;<br> HMM Action Transition Pruning
+ Do a simple transition pruning.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_Act_BestN"><code class="link">-HMM_Act_BestN</code></a></td>
+      <td><code><b>-HMM_Act_BestN</b>(itHMM)</code><br>&nbsp;<br> HMM Action Best Paths
+ This function reduces the models to their best paths.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_Act_UsedPath"><code class="link">-HMM_Act_UsedPath</code></a></td>
+      <td><code><b>-HMM_Act_UsedPath</b>(itHMM)</code><br>&nbsp;<br> HMM Action Used Paths
+ This function reduces the models to their used paths.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_Act_UsedPathRC"><code class="link">-HMM_Act_UsedPathRC</code></a></td>
+      <td><code><b>-HMM_Act_UsedPathRC</b>(itHMM)</code><br>&nbsp;<br> HMM Action Used Paths Reference Counter
+ This function prunes the model by thier unused transitions.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_Act_Prun"><code class="link">-HMM_Act_Prun</code></a></td>
+      <td><code><b>-HMM_Act_Prun</b>(itHMM)</code><br>&nbsp;<br> HMM Action Path-Pruning
+ This function does a more complex transition pruning.
+      </td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <div id="clp_-TOPOHLP_add_norm">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-TOPOHLP_add_norm</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-TOPOHLP_add_norm','-TOPOHLP_add_norm','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-TOPOHLP_add_norm</b>(sCold,sCnew,sCref,idAux)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amtopo.itp(37)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3>Add normalised component to data instance
+
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sCold</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Component name of component to normalize
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sCnew</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Component name of component to store normalized values
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sCref</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Component name of component with normalizing values
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idAux</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Data instance to modify
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-TOPOHLP_Trans">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-TOPOHLP_Trans</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-TOPOHLP_Trans','-TOPOHLP_Trans','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-TOPOHLP_Trans</b>(itHMM,itUsed,idLenMean,idTrans,sWriteStat)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amtopo.itp(65)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Calculation of transition weights and mean length of paths through itHMM
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Source HMM instance
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itUsed</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Destination FST for used paths or NULL
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLenMean</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Destination Buffer for mean length of paths per unit or NULL
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idTrans</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Destination Buffer for transition weights (~Nld+~Nldavg)
+          and reference counters (~RC)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sWriteStat</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Model name for statistic to write ("" for no statistic write)
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> nLenMean number
+          Overall mean length of paths through itHMM
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.2trainlst&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-TOPOHLP_UsedPath">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-TOPOHLP_UsedPath</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-TOPOHLP_UsedPath','-TOPOHLP_UsedPath','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-TOPOHLP_UsedPath</b>(itHMM,nPathNum,itUsed)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amtopo.itp(232)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Calculation of Used Paths for dev-Dataset
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Source HMM instance
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nPathNum</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Number of best used paths (-1 for all used paths)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itUsed</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Destination FST instance
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.2trainlst&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-TOPOHLP_UsedPathRC">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-TOPOHLP_UsedPathRC</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-TOPOHLP_UsedPathRC','-TOPOHLP_UsedPathRC','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-TOPOHLP_UsedPathRC</b>(nTransNum,itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amtopo.itp(365)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Calculation of Used Paths Reference Counter for dev-Dataset
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nTransNum</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Aimed number of transitions with ref. counter zero
+          <0 -> use this multiple of states in each unit
+          =0 -> maximal number of transitions
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Source HMM instance (reference counters are updated)
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.2trainlst&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-TOPOHLP_Gm_Vars">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-TOPOHLP_Gm_Vars</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-TOPOHLP_Gm_Vars','-TOPOHLP_Gm_Vars','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-TOPOHLP_Gm_Vars</b>(itGM,idGmVars)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amtopo.itp(505)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itGM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idGmVars</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-TOPOHLP_aggRCNld">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-TOPOHLP_aggRCNld</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-TOPOHLP_aggRCNld','-TOPOHLP_aggRCNld','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-TOPOHLP_aggRCNld</b>(idTrans,idTab,nIcTab,nDst,idDst)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amtopo.itp(531)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idTrans</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idTab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nIcTab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nDst</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idDst</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-TOPOHLP_Nldagg">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-TOPOHLP_Nldagg</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-TOPOHLP_Nldagg','-TOPOHLP_Nldagg','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-TOPOHLP_Nldagg</b>(idTrans,nIcTab,nDst,itHMM,idDst)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amtopo.itp(543)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idTrans</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nIcTab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nDst</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idDst</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-TOPOHLP_Gm">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-TOPOHLP_Gm</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-TOPOHLP_Gm','-TOPOHLP_Gm','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-TOPOHLP_Gm</b>(itHMM,idTrans,idGm)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amtopo.itp(566)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idTrans</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idGm</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-TOPOHLP_cleanup">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-TOPOHLP_cleanup</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-TOPOHLP_cleanup','-TOPOHLP_cleanup','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-TOPOHLP_cleanup</b>(itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amtopo.itp(593)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Trim unusable transitions and delete orphan Gm's in HMM
+ 
+ @parm itHMM hmm
+          HMM instance
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_Act_split">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_Act_split</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_Act_split','-HMM_Act_split','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_Act_split</b>(itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amtopo.itp(616)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> HMM Action Split
+ Split a defined number of Gaussians. There are three
+ different selection criterions ("var"-Variance,
+ "rc"-Reference Counter, "pd"-Probability density,
+ "ipd"-Inverse probability density). The number of
+ Gaussians to split can be defined absolute (posivitve
+ value) or relative to the total number of Gaussians
+ (negative number).
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.split.minrc&gt;(Default:-1)</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.split.num&gt;(Default:0)</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.split.krit&gt;(Default:var)</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_Act_mix">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_Act_mix</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_Act_mix','-HMM_Act_mix','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_Act_mix</b>(itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amtopo.itp(661)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> HMM Action Converting to mixture gaussians
+ Convert models using -gmm_mix function.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_Act_hmm">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_Act_hmm</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_Act_hmm','-HMM_Act_hmm','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_Act_hmm</b>(itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amtopo.itp(676)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> HMM Action Transition Pruning
+ HMM Action Converting to hmm
+ Convert models using -hmm function.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_Act_TPrun">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_Act_TPrun</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_Act_TPrun','-HMM_Act_TPrun','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_Act_TPrun</b>(itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amtopo.itp(692)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> HMM Action Transition Pruning
+ Do a simple transition pruning. For selection a threshold
+ for transition weights is used.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.tprun.thresh&gt;(Default:1000</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_Act_BestN">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_Act_BestN</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_Act_BestN','-HMM_Act_BestN','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_Act_BestN</b>(itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amtopo.itp(716)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> HMM Action Best Paths
+ This function reduces the models to their best paths.
+ As selection criterion neg.-log. density is used.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.bn.num&gt;(Default:-1)</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.bn.len&gt;(Default:-1)</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_Act_UsedPath">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_Act_UsedPath</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_Act_UsedPath','-HMM_Act_UsedPath','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_Act_UsedPath</b>(itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amtopo.itp(793)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> HMM Action Used Paths
+ This function reduces the models to their used paths.
+ The used paths are defined by a development data set.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.up.num&gt;(Default:-1)</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.up.shorttis&gt;(Default:0)</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_Act_UsedPathRC">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_Act_UsedPathRC</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_Act_UsedPathRC','-HMM_Act_UsedPathRC','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_Act_UsedPathRC</b>(itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amtopo.itp(853)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> HMM Action Used Paths Reference Counter
+ This function prunes the model by thier unused transitions.
+ These unused transitions are defined by a development data set.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.uprc.num&gt;(Default:0)</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_Act_Prun">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_Act_Prun</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_Act_Prun','-HMM_Act_Prun','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_Act_Prun</b>(itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amtopo.itp(896)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> HMM Action Path-Pruning
+ This function does a more complex transition pruning.
+ As selection criterion probability densities of paths
+ surrounding the prospected transition are used.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.prun.pathit&gt;(Default:3)</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.prun.tpers&gt;(Default:8)</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+<div class="footer">End of page</div>
+</body>
+</html>
+

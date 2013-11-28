@@ -1,0 +1,433 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Synthesis functions: DRESS intonation data handling
+##
+## AUTHOR : Guntram Strecha
+## PACKAGE: uasr/scripts/dlabpro/synth
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Obtains an into data object for one turn.
+##
+## There are different operation modes defined
+## by configuration key uasr.into:
+##
+## file
+##     Into is loaded form a file named $[sFile].into
+##     in $[sDirInto].
+## grm
+##     Into is generated using the grammar from
+##     $[sDirGrm]/syn.grm. The transcription in
+##     $[sDirTrans]/$[sFile].trans is used. The
+##     generated into is saved to $[sDirLog]/$[sFile].into
+##     for debugging purposes.
+##
+## @param sFile string
+##          Turn ID
+## @param idInv data
+##          Diphone inventory used for phonem length calculation in grm mode.
+##          May be NULL in file mode.
+## @param idInto data
+##          Will be filled with the into data
+## @global sDirInto                R
+## @global sDirTrans               R
+## @global sDirGrm                 R
+## @global sDirLog                 R
+## @global &lt;uasr.into&gt;       R
+function -Into_get(sFile,idInv,idInto)
+{
+  ".sIntoCfg" "var" ?instance not if;                                           # No into-cfg ? >>
+    "into" "file" "S" -CFG_get_ex var .sIntoCfg;                                #   Read into-cfg
+  end;                                                                          # <<
+
+  .sIntoCfg "file" == if;                                                       # Into file mode >>
+    "$[sDirInto]/$[sFile].into" "into" idInto stdfile -import;                  #   Load into data
+    return;                                                                     #   Ready.
+  end;                                                                          # <<
+
+  .sIntoCfg "grm" == if;                                                        # Into grm mode >>
+    idControl -reset;                                                           #   Load transcription
+    "$[sDirTrans]/$[sFile].trans" "ascii" idInto stdfile -import;               #   |
+    idControl " " "ccat" idInto -strop;                                         #   Join transcription
+    "$[sDirGrm]/syn.grm" :idInto[0,0]: idInv -Fstprosody_into idInto =;         #   Generate into with prosody
+    "$[sDirLog]/$[sFile].into" "into" idInto stdfile -export;                   #   Save into
+    return;                                                                     #   Ready.
+  end;                                                                          # <<
+
+  "Unknown into generation mode (uasr.into =  $[sIntoCfg])" -ERROR;             # Unknown into mode
+}
+
+function -Fstprosody_compilern(sGrm,itRN)
+{
+  ## PT ##
+  data idPT;
+  file iF;
+  "PHN:" iF -set line_flt;
+  "" 255 idPT -addcomp;
+  "" 255 idPT -addcomp;
+  sGrm "ascii" idPT iF -import;
+  idPT 0 1 idPT -delete;
+
+  ## LX ##
+  fst  itLX;
+  data idLX;
+  fst  itLXt;
+  data idOS;
+  fst  itV;
+  data idV;
+  data idLen;
+  var  nA;
+  var  u;
+  var  t;
+  var  l;
+  var  nLen;
+  # Get LX
+  sGrm "LEX:" idLX -LX_load;
+  idPT idLX itLX -LX_compile;
+  # Convert semiring to PSR
+  "~LSR" itLX.td -find_comp "~PSR" itLX.td -set_cname;
+  :itLX.td["~PSR"]: :itLX.td["~PSR"]: 0 .== + 0 1 "~PSR" itLX.td -xstore;
+  # Get Len-Matrix
+  :idLX["LEN"]: ":" "split" idLen -strop;
+  "~LEN" -type double itLX.td -addcomp;
+  # Create output symbol and weight table per unit
+  "" itLX.ud.dim itLX.ud -rindex;
+  itLX.ud itLX.ud.dim -- "~FT" itLX.ud -find_comp "~XT" itLX.ud -find_comp idOS -expand;
+  :itLX.td["~TOS"]: idOS -join;
+  :itLX.td["~PSR"]: idOS -join;
+  :idOS[1]: 0 .< idOS -dmark;
+  idOS 0 0 idOS /noerror /mark -delete;
+  itLX.ud idOS itLX.ud.dim -- 0 idV -gen_index;
+  idV 0 idOS 1 2 idOS -lookup;
+  # Get "A+" input symbol number
+  { { "A+" } } itLX.is 0 0 idV -gen_index;
+  :idV[0,0]: nA =;
+  # Replace output symbol with "A+" symbol and weight=1
+  itLX.os.nrec ++ itLX.os -reallocate;
+  "A+" itLX.os.nrec -- 0 itLX.os -sstore;
+  :itLX.td["~TIS"]: nA .== itLX.os.nrec .* -- 0 1 "~TOS" itLX.td -xstore;
+  :itLX.td["~PSR"]: 0 .* 1 + 0 1 "~PSR" itLX.td -xstore;
+  # Loop over units
+  0 u =; label LU; u itLX.ud.nrec < if;
+    :idLX[u,"LEN"]: "" != if;
+      # Set length for phonems
+      0 l =;
+      0 t =; label LT; t :itLX.ud[u,"~XT"]: < if;
+        :itLX.td[itLX.ud[u,"~FT"]+t,"~TIS"]: nA < if;
+          l idLen.dim >= :idLen[u,l]: "" == || if; "\nERROR: too less lengths for ${idLX[u,0]}\n" -echo; else;
+            :idLen[u,l]: nLen -vset;
+            :itLX.td[itLX.ud[u,"~FT"]+t,"~LEN"]=nLen;
+            l ++=;
+          end;
+        end;
+      t ++=; goto LT; end;
+      l idLen.dim < :idLen[u,l]: "" != && if; "\nERROR: too many lengths for ${idLX[u,0]}\n" -echo; end;
+    end;
+    # Create itV as "A+" => "A+, OS"
+    itV -reset;
+    "" itV /psr /fst -addunit;
+    0 1 itV -addstates;
+    0 1 itV /final -addstates;
+    0 0 0 itV -addtrans { ${itLX.os.nrec-1} ${itLX.os.nrec-1} ${idOS[u,1]} };
+    0 0 1 itV -addtrans { -1 ${idOS[u,0]} 1 };
+    itLX.os itV.is =;
+    itLX.os itV.os =;
+    # Compose itLX unit with itV and save to itLXt
+    itLX itV u 0 itV -compose;
+    itV itLXt -cat;
+  u ++=; goto LU; end;
+  itLXt itLX =;
+#  "$[sGrm].lx.svg" itLX.is itLX.os -1 itLX -FST_render;
+
+  ## LM ##
+  fst  itLM;
+  data idR;
+  data idLMo;
+  # Get LM
+  sGrm "GRM:" idR -FSG_load;
+  idR itLX.os NULL itLM -FSG_compile;
+  # Convert semiring to PSR
+  "~LSR" itLM.td -find_comp "~PSR" itLM.td -set_cname;
+  :itLM.td["~PSR"]: :itLM.td["~PSR"]: 0 .== + 0 1 "~PSR" itLM.td -xstore;
+  # Draw LM
+#  "$[sGrm].lm.svg" itLM.is itLM.os -1 itLM -FST_render;
+
+  ## RN ##
+  itLX itLXt -union; itLXt 0 itLXt /local -close;
+  itLXt itLM 0 0 itRN -compose;
+#  "$[sGrm].rn.svg" itRN.is itRN.os -1 itRN -FST_render;
+}
+
+function -Fstprosody_getrn(sGrm,itRN)
+{
+  "db" "" "S" -CFG_get_ex "" != if;
+    file iF;
+    data idGrm;
+    "\n\r" iF -set sep;
+    sGrm "ascii" idGrm iF /strings -import;
+    idGrm "CRC-32" "hash" idGrm -strop;
+    "log" "FS" -CFG_get_path var sDirLog;
+    "$[sDirLog]/syn-rn-${idGrm[0,0]}.fst" itRN /noerror -restore ?error not if return end;
+  end;
+  
+  sGrm itRN -Fstprosody_compilern;
+
+  "db" "" "S" -CFG_get_ex "" != if;
+    "$[sDirLog]/syn-rn-${idGrm[0,0]}.fst" itRN /zip -save;
+  end;
+}
+
+function -Fstprosody_prosody(sGrm,sRQ,idInv)
+{
+  ## RN ##
+  fst itRN;
+  sGrm itRN -Fstprosody_getrn;
+
+  ## RQ ##
+  data idRQ;
+  fst  itRQ;
+  { { "$[sRQ]" } } idRQ =;
+  idRQ " " "split" idRQ -strop;
+  idRQ.dim idRQ -reallocate;
+  0 var n; label LR; n idRQ.dim < if;
+    0 n idRQ -sfetch n 0 idRQ -sstore;
+  n ++=; goto LR; end;
+  idRQ 1 idRQ.dim -- idRQ -delete;
+  idRQ itRN.os 0 0 idRQ -gen_index;
+  "" itRQ /fst /psr -addunit;
+  itRN.os itRQ.is =;
+  itRN.os itRQ.os =;
+  idRQ 0 -1 -1 0 itRQ -addseq;
+  :itRQ.td["~TIS"]: 0 1 "~TOS" itRQ.td -xstore;
+
+  ## RS ##
+  fst  itRS;
+  data idRS;
+  data idRSt;
+  fstsearch iS;
+  itRN itRQ 0 0 itRS -compose;
+  itRS 0 1 0 itRS -best_n;
+  # Get interessiting information
+  :itRS.td["~TIS"]: idRS =;
+  :itRS.td["~PSR"]: idRS -join;
+  :itRS.td["~LEN"]: idRS -join;
+  # Remove eps-transitions
+  :idRS[0]: 0 .< idRS -dmark;
+  idRS 0 0 idRS /noerror /mark -delete;
+  # Lookup symbol names
+  idRS 0 itRN.is 0 1 idRSt -lookup;
+  0 "~PHN" idRSt -set_cname;
+  idRS 0 1 idRS -delete;
+  idRS idRSt -join;
+  idRSt idRS =;
+
+  # Update phoneme lengths through inventory
+  idRS idInv -Fstprosody_invlen;
+
+  ## Ready ##
+  idRS return;
+}
+
+function -Fstprosody_into(sGrm,sRQ,idInv)
+{
+  data idAux;
+  10 var tlen;
+
+  # Do grammar work
+  data idRS;
+  sGrm sRQ idInv -Fstprosody_prosody idRS =;
+
+  # Convert LEN -> POS
+  "~POS" -type long idRS -addcomp;
+  0 var p; label LP; p idRS.nrec -- < if;
+    :idRS[p+1,"~POS"]=idRS[p,"~POS"]+idRS[p,"~LEN"];
+  p ++=; goto LP; end;
+
+  # Init fujisaki (split accent and phrase commandos from idRS)
+  data idFCA;
+  data idFCP;
+  idRS idFCA idFCP -Fujisaki_init;
+
+  # Create into object
+  data idInto;
+  "unit"           64 idInto -addcomp;
+  "dura" -type  short idInto -addcomp;
+  "fpho"            4 idInto -addcomp;
+  "fval" -type double idInto -addcomp;
+  "fpos" -type double idInto -addcomp;
+  "ipho"            4 idInto -addcomp;
+  "ival" -type double idInto -addcomp;
+  "ipos" -type double idInto -addcomp;
+
+  # Copy from RS to Into
+  :idRS[idRS.nrec-1,"~LEN"]+idRS[idRS.nrec-1,"~POS"]: tlen / ent idInto -reallocate;
+  0 p =;
+  var fval;
+  0 var t; label LT; t idInto.nrec < if;
+   p idRS.nrec -- < t tlen * :idRS[p+1,"~POS"]: >= && while; p ++=; end;
+   :t*tlen: idFCA idFCP -Fujisaki fval -vset;
+   :idInto[t,"unit"]=idRS[p,"~PHN"];
+   :idInto[t,"dura"]=idRS[p,"~LEN"];
+   :idInto[t,"fpho"]=idRS[p,"~PHN"];
+   :idInto[t,"fval"]=fval;
+   :idInto[t,"fpos"]=(t*tlen-idRS[p,"~POS"])/idRS[p,"~LEN"];
+ t ++=; goto LT; end;
+  { { 0 0 0 0 0 0 1 1 } } idInto -dmark;
+  -1 0 idInto /mark -fill;
+  idInto -unmark;
+
+  # Remove phone lengths
+#:idInto[0]: "_" "cmp" idAux -strop;
+#{ { 0 1 0 0 0 0 0 0 } } idAux * idInto -dmark;
+#0 0 idInto /mark -fill;
+#idInto -unmark;
+
+  idInto return;
+}
+
+function -Fstprosody_invlen(idRS,idInv)
+{
+  10 var lentresh;
+  data idAux;
+
+  # Get real phonemes from RS
+  data idRSD
+  "RSID" idRS.dim idRS -rindex;
+  idRS { { "A+" } { "A-" } { "Cc" } { "Cf" } { "Cq" } { "Ce" } } 0 0 idAux /noerror -gen_index; idAux 0 .< idRS -dmark;
+  idRS 0 0 idRSD /mark -select;
+  idRS -unmark;
+  idRS idRS.dim -- 1 idRS -delete;
+  idRSD idRSD -LAB_map;
+
+  # Create diphone labels
+  data idPLab;
+  data idDLab;
+  idRSD 0 idPLab -compress;
+  0 idPLab.nrec -- :idPLab[0]: /rec -xfetch idDLab =;
+  1 idPLab.nrec -- :idPLab[0]: /rec -xfetch idDLab -join;
+  idDLab "" "ccat" idDLab -strop;
+
+  # Compress inventory and labels
+  data idInvD;
+  idInv "~DPH" idInv -find_comp idInvD -compress;
+
+  # Lookup diphones
+  idDLab idInvD 0 0 idDLab -gen_index;
+  idDLab 0 idInvD 0 idInvD.dim idDLab -lookup;
+
+  # Sum up diphon lengths to pos
+  :idDLab["n___"]: -Len2pos idDLab -join;
+
+  # Lookup phone labels for diphones
+  :idDLab["ind_"]: :idDLab["pos"]: - idDLab -join;
+  idDLab idDLab.dim -- -1 "n___" idDLab -find_comp idAux -expand;
+  "" 1 idAux -rindex;
+  :idAux[0]: :idAux[1]: + idAux =;
+  idAux 0 idInv "~PHO" idInv -find_comp 1 idAux -lookup;
+  idAux 0 idAux -compress;
+  :idAux["n___"]: 10 .* idPLab -join;
+  idPLab.dim -- "~LEN" idPLab -set_cname;
+
+  # Expand phone labels to length of idRS
+  idPLab "~LEN" idPLab -find_comp -1 "n___" idPLab -find_comp idPLab -expand;
+  :idRSD["RSID"]: idPLab -join;
+  1 idPLab.nrec ones idPLab -join;
+  idPLab 0 1 2 idPLab -expand;
+
+  idPLab -print;
+  # Join lengths of idRS and idPLab
+  :idRS["~LEN"]: lentresh .< :idRS["~LEN"]: .* :idPLab["~LEN"]: .* idAux =;
+  :idRS["~LEN"]: lentresh .>= :idRS["~LEN"]: .* idAux + idAux =;
+  idAux 0 1 "~LEN" idRS -xstore;
+}
+
+function -Len2pos(idLen)
+{
+  data idPos;
+
+  idLen 0 1 idPos -select;
+  "" 1 idPos -rindex;
+  idPos 1 -1 0 idPos -expand;
+  "" 1 idPos -rindex;
+  idPos 0 idPos -compress;
+  idPos 1 1 idPos -select;
+  0 "pos" idPos -set_cname;
+
+  idPos return;
+}
+
+function -Fujisaki_init(idRS,idFCA,idFCP)
+{
+  # Get accent commands
+  idRS { { "A+" } { "A-" } } 0 0 idFCA /noerror -gen_index; idFCA 0 .>= idRS -dmark;
+  idRS 0 0 idFCA /mark /noerror -select;
+  idRS 0 0 idRS  /mark /noerror -delete;
+  var nA;
+  0 var r; label LR; r idFCA.nrec < if;
+    :idFCA[r,"~PHN"]: "A+" == if;
+      :nA=idFCA[r,"~PSR"];
+    else;
+      :idFCA[r,"~PSR"]=-nA;
+    end;
+  r ++=; goto LR; end;
+  idFCA "~PHN" idFCA -find_comp 1 idFCA -delete;
+  idFCA "~LEN" idFCA -find_comp 1 idFCA -delete;
+  :idFCA["~PSR"]: 0 .== idFCA -dmark; idFCA 0 0 idFCA /mark /noerror -delete;
+
+  # Get phrase commands
+  idRS { { "Cc" } { "Cf" } { "Cq" } { "Ce" } } 0 0 idFCP /noerror -gen_index; idFCP 0 .>= idRS -dmark;
+  idRS 0 0 idFCP /mark /noerror -select;
+  idRS 0 0 idRS  /mark /noerror -delete;
+  idFCP "~LEN" idFCP -find_comp 1 idFCP -delete;
+  :idFCP["~PSR"]: 0 .== idFCP -dmark; idFCP 0 0 idFCP /mark /noerror -delete;
+}
+
+function -Fujisaki(nT,idFCA,idFCP)
+{
+  2    var alpha;
+  20   var beta;
+  -400 var poffset; # phrase command offset
+  0.6  var fmin;    # fmin/fmean
+
+  data idAux;
+  var  nFP;
+  var  nFA;
+
+  # Phrase commands
+  nT :idFCP["~POS"]: poffset + - -type double idAux -tconvert;  # calc time diff with offset
+  idAux 1000 ./ idAux =; # time diff to sec
+  idAux alpha .* -1 .* .exp idAux .* alpha .* alpha .* idAux -join; # calc phrase cmd
+  :idAux[1]: :idAux[0]: 0 .> .* idAux =; # negative time diff => 0
+  idAux :idFCP["~PSR"]: idAux .* NULL 0 "sum" idAux /rec -aggregate; # amply amp and sum up
+  :idAux[0,0]: nFP -vset;
+
+  # Accent commands
+  nT :idFCA["~POS"]: - -type double idAux -tconvert;  # calc time diff
+  idAux 1000 ./ idAux =; # time diff to sec
+  1 idAux beta .* -1 .* .exp idAux beta .* ++ .* - idAux -join; # calc accent cmd
+  :idAux[1]: :idAux[0]: 0 .> .* idAux =; # negative time diff => 0
+  idAux :idFCA["~PSR"]: idAux .* NULL 0 "sum" idAux /rec -aggregate; # amply amp and sum up
+  :idAux[0,0]: nFA -vset;
+
+  # Finalize
+  nFP nFA + exp fmin * return;
+}
+
+## EOF

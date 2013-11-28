@@ -1,0 +1,96 @@
+## Unified Approach to Speech Synthesis and Recognition
+## - Training functions: HMM Gaussian parameters reduction
+##
+## AUTHOR : Frank Duckhorn
+## PACKAGE: uasr/scripts/dlabpro/train
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## HMM Action only variance vectors in Gaussians
+##
+## Converts covariance matrizies of Gaussians to variance vectors
+## by clearing all covariances.
+##
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance
+function -HMM_Act_vargm(itHMM)
+{
+  "\n   Deleting Covariances ..."                                         -MSG; # Protocol
+	itHMM.gm.icov NULL != if;                                                     # If covariances exists >>
+		"\n   del Cov's ..."                                                  -MSG; #   Protocol
+		data idMean;                                                                #   Mean vector set
+		data idCov;                                                                 #   Covariance matrix set
+		data idVar;                                                                 #   Variance vector set
+		var nB;                                                                     #   Gaussian index
+		var nC;                                                                     #   Vector comp. index
+		idMean idCov itHMM.gm -extract;                                             #   Get Gaussians
+		idCov idCov NULL matrix -invert;                                            #   Reinvert cov. mat.s
+		0 idCov -get_comp_type idMean.dim idCov.nblock idVar -array;                #   Create var. vectors
+		idCov.nblock idVar -set nblock;                                             #   Set blocks in var. vec.s
+		0 nB =;                                                                     #   Init Gauss. index
+		label lB; nB idCov.nblock < if;                                             #   Loop over all Gauss. >>
+			nB 1000 % 0 == if; "\n   ${nB}/${idCov.nblock}" -MSG; end;                #     Protcol
+			0 nC =;                                                                   #     Init comp. index
+			label lC; nC idMean.dim < if;                                             #     Loop over all comp.s >>
+				:idVar[nB,nC]=idCov[nB*idCov.nrec/idCov.nblock+nC,nC];                  #       Copy variance to vector
+				nC ++=;                                                                 #       Inc. comp. index
+			goto lC; end;                                                             #     <<
+			nB ++=;                                                                   #     Inc. Gauss. index
+		goto lB; end;                                                               #   <<
+		idMean idVar NULL itHMM.gm -setup;                                          #   Resetup Gaussians
+	 end;                                                                         # <<
+  " done"                                                                 -MSG; # Protocol
+}
+
+## HMM Action LDL Covariance Tie
+##
+## Factorizies the inverse covariance matrizies using LDL factorization.
+## After only <code>ldl.covcount</code> parameters remain in the L
+## matrix. Parameters with low absolute value are set to zero.
+##
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance
+## @global &lt;uasr.am.train.ldl.covcount&gt;(Default:-1) R
+function -HMM_Act_ldl(itHMM)
+{
+  "uasr.am.train.ldl.covcount" -1 "S" -CFG_get_ex var nLdlCovCount;             # Get covariances count
+  "\n   LDL-factorizing Covariances (${nLdlCovCount} values in L) ..."    -MSG; # Protocol
+
+  nLdlCovCount 0 >= if;                                                         # Covariances count valid >>
+		data idMean;
+		data idICov;
+		vmap itMap;
+		idMean idICov itHMM.gm -extract;
+		nLdlCovCount itHMM.gm -set ldl_coef;
+		itHMM.gm.mmap NULL == if;
+			idMean idICov NULL itHMM.gm /icov /ldl -setup;
+		else;
+			itHMM.gm.mmap itMap =;
+			idMean idICov itMap itHMM.gm /icov /ldl -setup;
+		end;
+  else;                                                                         # << else >>
+    "uasr.am.train.ldl.covcount = ${nLdlCovCount} (nothing done)" -MSG;         #   Protocol
+  end;                                                                          # <<
+  " done"                                                                 -MSG; # Protocol
+}
+
+# EOF

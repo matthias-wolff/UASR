@@ -1,0 +1,207 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: Operating system dependent
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Returns a temporary file name. The function returns just a file name. It does
+## not create the file itself!
+##
+## @cgen:index
+## @param sPrefix string
+##          Prefix string to be included into the temporary file name.
+## @return Fully qualified name of a temporary file.
+function -SH_tmpfile(sPrefix)
+{
+  ## Find temporary folder                                                      # -------------------------------------
+  "." var sTmp;                                                                 # The last resort: current folder
+  "$TMP"  "\$TMP"  == not if "$TMP"  sTmp =; end                                # Get TMP environment variable
+  sTmp "" == if "$TEMP" "\$TEMP" == not if "$TEMP" sTmp =; end end              # Alternatively: TEMP
+  sTmp "" == if                                                                 # Still nothing >>
+    "\$TEMP not set."                                                 -WARNING; #   Warning
+    "WIN32" ?platform not if                                                    #   Not on windows >>
+      "/var/tmp" sTmp =;                                                        #     Use standard temp folder name
+    end                                                                         #   <<
+  end                                                                           # <<
+  
+  ## Check if temporary folder exsist and, if not, try to create it             # -------------------------------------
+  sTmp stdfile /dir -exists not if                                              # Temp. folder does not exist >>
+    "Temp. folder " sTmp + " does not exist. Trying to create it." + 1 -WARNING;#   That's sure worth a warning...
+    var sDfn; ( sTmp "/_" + stdprof -tstamp + ) sDfn =;                         #   A dummy temp file's name
+    sDfn "ascii" { "" } stdfile -export; sDfn -SH_rm;                           #   Write and remove a dummy temp. file
+    sTmp stdfile /dir -exists not if                                            #   Temp. folder still not existing >>
+      "Failed to create temp. folder " sTmp +                           -ERROR; #     Uhm....
+      "." sTmp =;                                                               #     Fall back to current folder
+    end                                                                         #   <<
+  end                                                                           # <<
+
+  ## Create temporary file name                                                 # -------------------------------------
+  ( sTmp "/${sPrefix}_" + stdprof -tstamp + ) return;                                # Make and return temp. file name
+}
+
+## Finds files or folders using the system's "find" program.
+##
+## <h4>Typical Tasks</h4>
+## <p class="indent"><table cellpadding="2">
+##   <tr><th rowspan="2">Task</th><th rowspan="2"><code>bRec</code></th>
+##       <th colspan="2" style="text-align:center"><code>sOpt</code></th>
+##   <tr><th>Unix/Linux</th><th>Windows</th></tr>
+##   <tr><td>List only subfolders            </td><td><code>FALSE</code></td><td>"-type d"</td><td>"/a:d"</td></tr>
+##   <tr><td>List only subfolders recursively</td><td><code>TRUE </code></td><td>"-type d"</td><td>"/a:d"</td></tr>
+## </table></p>
+##
+## @cgen:index
+## @param sDir string
+##          Directory to find files or folders in, <em>must not</em> be empty
+##          or <code>NULL</code>
+## @param sPattern string
+##          File name pattern, <em>must not</em> be empty or <code>NULL</code>
+## @param bRec boolean
+##          Search subfolders
+## @param sOpt string
+##          Find options (platform dependent)
+## @param idList data
+##          Will be filled with the list of mathing file names
+function -SH_find_ex(sDir,sPattern,bRec,sOpt,idList)
+{
+  file iF; "" iF -set sep;                                                      # File list object
+  var  sTf; "UASR" -SH_tmpfile sTf =;                                           # Get a temporary file name
+  idList -reset;                                                                # Reset target
+
+  ## Check if folder exists                                                     # -------------------------------------
+  sDir stdfile /dir -exists not if idList return; end                           # Tacitly return empty list 
+
+  ## Use platform tool to find files                                            # -------------------------------------
+  "WIN32" ?platform if                                                          # Windows >>
+    sOpt not if " /a:-d" sOpt =; end                                            #   Default options
+    sOpt " /b" + sOpt =;                                                        #   Simple list
+    bRec if sOpt " /s" + sOpt =; end                                            #   Enable recursive search
+    ( "$[sDir]/$[sPattern]" -WIN_convert_path ) var sPath;                      #   Make fully qualified search pattern
+    sPath "#/#\\\\\\\\" "replace" -VAR_strop sPath =;                           #   Replace '/' by '\'
+    "cmd /c dir \"$[sPath]\" ${sOpt} > \"${sTf}\"" var sCmdFind;                #   Shell cmd. listing subdirectories
+    #"\n|" sCmdFind + "|" + -echo;                                              #   DEBUGGIN'
+    sCmdFind -system;                                                           #   Run find
+  else                                                                          # << Other systems >>
+    bRec not if sOpt " -maxdepth 1" + sOpt =; end                               #   Disable recursive search
+    "find $[sDir] $[sOpt] -follow -name \"$[sPattern]\""                        #   Run find
+    "|sed \'s?^[.]/??1\' > ${sTf}" + -system;                                   #   ?
+  end                                                                           # <<
+
+  ## Load file list                                                             # -------------------------------------
+  "file" 255 idList -addcomp;                                                   # Define one symbolic component
+  "${sTf}" "ascii" idList iF /noerror -import;                                  # Load file list
+  "${sTf}" -SH_rm;                                                              # Remove file list
+
+  ## Post-processing                                                            # -------------------------------------
+  "WIN32" ?platform if                                                          # Windows >>
+    idList "#\\#/" "replace" idList -strop;                                     #   Adjust path separators ('\'->'/')
+  else                                                                          # << Other systems >>
+    idList "?$[sDir]/?" "replace" idList -strop;                                #   Remove heading sDir
+  end                                                                           # <<
+}
+
+## Finds files or folders using the system's "find" program.
+##
+## @cgen:index
+## @param sDir string
+##          Directory to find files or folders in, <em>must not</em> be empty
+##          or <code>NULL</code>
+## @param sPattern string
+##          File name pattern, <em>must not</em> be empty or <code>NULL</code>
+## @param bRec boolean
+##          Search subfolders
+## @param idList data
+##          Will be filled with the list of matching file names
+function -SH_find(sDir,sPattern,bRec,idList)
+{
+  sDir sPattern bRec "" idList -SH_find_ex;
+}
+
+## Forcibly removes a file.
+##
+## @cgen:index
+## @param sFile string
+##          The path of the file to be removed
+function -SH_rm(sFile)
+{
+  "WIN32" ?platform if                                                          # Windows >>
+    ( sFile -WIN_convert_path ) sFile =; 
+    "cmd /c if exist \"$[sFile]\" del /f /q \"$[sFile]\"" -system;              #   Call system command
+  else                                                                          # << other OS >>
+    "rm -f $[sFile]" -system;                                                   #   Call system command
+  end                                                                           # <<
+}
+
+## Removes a directory.
+##
+## @cgen:index
+## @param sDir string
+##          The path of the directory to be removed
+function -SH_rmdir(sDir)
+{
+  "rmdir \"$[sDir]\"" -system;                                                  # Call system command
+}
+
+## Creates a directory.
+##
+## @cgen:index
+## @param sDir string
+##          The path of the directory to be created
+function -SH_mkdir(sDir)
+{
+  "mkdir -p \"$[sDir]\"" -system;                                               # Call system command
+}
+
+## Copy a file.
+##
+## @cgen:index
+## @param sSrcFile string
+##          Path of the file to be copied.
+## @param sDestFile string
+##          Destination path of the file to be copied.
+function -SH_copy(sSrcFile,sDestFile)
+{
+  "WIN32" ?platform if                                                          # 
+    ( sSrcFile  -WIN_convert_path ) sSrcFile  =;
+    ( sDestFile -WIN_convert_path ) sDestFile =;
+    "cmd /c copy $[sSrcFile] $[sDestFile]" -system;
+  else                                                                          
+    "cp $[sSrcFile] $[sDestFile]" -system;
+  end                                                                         
+}
+
+## Converts a path name for calling MS DOS command line utilities.
+##
+## @cgen:index
+## @param sPathName string
+##          Path name to be converted
+## @return Converted path name
+function -WIN_convert_path(sPathName)
+{
+  sPathName "?/t?\\\\\\\\t" "replace" -VAR_strop sPathName =;                   # '/t' -> '\\t'
+  sPathName "?/b?\\\\\\\\b" "replace" -VAR_strop sPathName =;                   # '/b' -> '\\b'
+  sPathName "?/0?\\\\\\\\0" "replace" -VAR_strop sPathName =;                   # '/0' -> '\\0'
+  sPathName "?/?\\"         "replace" -VAR_strop sPathName =;                   # '/'  -> '\'
+  sPathName return;
+}
+
+## EOF

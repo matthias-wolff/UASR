@@ -1,0 +1,278 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<
+<    AUTHOR : n/a
+<    PACKAGE: manual
+<
+<    Copyright 2013 UASR contributors (see COPYRIGHT file)
+<    - Chair of System Theory and Speech Technology, TU Dresden
+<    - Chair of Communications Engineering, BTU Cottbus
+<
+<    This file is part of UASR.
+<
+<    UASR is free software: you can redistribute it and/or modify it under the
+<    terms of the GNU Lesser General Public License as published by the Free
+<    Software Foundation, either version 3 of the License, or (at your option)
+<    any later version.
+<
+<    UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+<    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+<    FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+<    more details.
+<
+<    You should have received a copy of the GNU Lesser General Public License
+<    along with UASR. If not, see [http://www.gnu.org/licenses/].
+-->
+<html>
+<head>
+  <meta http-equiv="Content-Type" content= "text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta name="description" content=   "UASR documentation - UASR script train/amgmm.itp">
+  <meta name="author" content="">
+  <meta name="generator" content="UASR_DOC">
+  <title>UASR script train/amgmm.itp</title>
+  <link rel=stylesheet type="text/css" href="../../default.css">
+</head>
+<script type="text/javascript" src="../../default.js"></script>
+<script type="text/javascript">__sRootPath="../../..";</script>
+<body>
+
+  <div id="clp_train/amgmm.itp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        UASR script <span class="mid">train/amgmm.itp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('','train/amgmm.itp','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden">General</td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><nobr><b>amgmm</b> </nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Author</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Frank Duckhorn
+</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Synopsis</h3>
+    <p>Training functions: HMM Gaussian parameters reduction
+ </p>
+  <!--{{ CUSTOM_DOC -->
+  <a name="description"></a><h3>Description</h3>
+	<p>The functions in this file can be used to reduce the number of parameters of the Gaussians.
+	To activate them use the configuration keys <code>uasr.am.train.act[0-9], uasr.am.train.acta[0-9]_[0-9], uasr.am.train.actb[0-9]_[0-9]</code>
+	(see <a href="../util/cfg.itp.html">Configuration keys</a>).
+	Following actions are implemented:</p>
+	<table cellpadding="3" class="indent">
+		<tr><th>Key</th><th>Function</th><th>Description</th></tr>
+		<tr><td>vargm</td><td><a href="#clp_-HMM_Act_vargm"><code class="link">-HMM_Act_vargm</code></a></td>
+		<td>Reduce Gaussians to variance vectors</td></tr>
+		<tr><td>ldl</td><td><a href="#clp_-HMM_Act_ldl"><code class="link">-HMM_Act_ldl</code></a></td>
+		<td>Use LDL factorization and reduction of L-matrix</td></tr>
+	</table>
+	<p>These function use the following configuration keys:</p>
+	<table cellpadding="3" class="indent">
+		<tr><th>Name</th><th>Key</th><th>Type</th><th>Default</th><th>Description</th></tr>
+		<tr><td>ldl</td><td><code>uasr.am.train.ldl.covcount</code></td><td>number</td><td>-1</td><td>Number of non diagonal values not to set zero in triangular matrix L</td></tr>
+	</table>
+	<p>LDL factorization can for example be used through the following configuration entries.
+	The models will be trained normally until the third split. After that they are reduced
+	to 200 Parameters in the L-matrix. To optimize the remaining parameteres four iterations
+	are done.
+	<pre>
+	## HMM training settings
+	uasr.am.train.split        = 5;
+	uasr.am.train.ite0         = 5;
+	uasr.am.train.ite1         = 10;
+	uasr.am.train.ite2         = 15;
+	uasr.am.train.ite3         = 20;
+	uasr.am.train.ite4         = 4;
+	uasr.am.train.act3         = "ldl";
+	uasr.am.train.acta4_0      = "ldl";
+	uasr.am.train.acta4_1      = "ldl";
+	uasr.am.train.acta4_2      = "ldl";
+	uasr.am.train.acta4_3      = "ldl";
+	uasr.am.train.acta4_4      = "ldl";
+	uasr.am.train.ldl.covcount = 200;
+	</pre></p>
+	<p>The reduction to variance vectors had to be done after every split. So the interesting
+	entries of a possible configration file would lock like this:
+	<pre>
+	uasr.am.train.actb0_0 = "vargm";
+	uasr.am.train.act0    = "split,vargm";
+	uasr.am.train.act1    = "split,vargm";
+	...
+	</pre></p>
+  <!--}} CUSTOM_DOC -->
+  <a name="functions"></a><h3>Functions</h3>
+  <table cellSpacing="0" cellPadding="4" border="0">
+    <tr>
+      <td class="rowgroup" colSpan="2">Functions</td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_Act_vargm"><code class="link">-HMM_Act_vargm</code></a></td>
+      <td><code><b>-HMM_Act_vargm</b>(itHMM)</code><br>&nbsp;<br>HMM Action only variance vectors in Gaussians
+Converts covariance matrizies of Gaussians to variance vectors
+by clearing all covariances.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_Act_ldl"><code class="link">-HMM_Act_ldl</code></a></td>
+      <td><code><b>-HMM_Act_ldl</b>(itHMM)</code><br>&nbsp;<br> HMM Action LDL Covariance Tie
+ Factorizies the inverse covariance matrizies using LDL factorization.
+      </td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_Act_vargm">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_Act_vargm</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_Act_vargm','-HMM_Act_vargm','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_Act_vargm</b>(itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amgmm.itp(34)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3>HMM Action only variance vectors in Gaussians
+Converts covariance matrizies of Gaussians to variance vectors
+by clearing all covariances.
+
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">HMM instance
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-HMM_Act_ldl">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_Act_ldl</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_Act_ldl','-HMM_Act_ldl','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_Act_ldl</b>(itHMM)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/amgmm.itp(73)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> HMM Action LDL Covariance Tie
+ Factorizies the inverse covariance matrizies using LDL factorization.
+ After only <code>ldl.covcount</code> parameters remain in the L
+ matrix. Parameters with low absolute value are set to zero.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance
+
+      </td>
+    </tr>  </table>
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.am.train.ldl.covcount&gt;(Default:-1)</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+<div class="footer">End of page</div>
+</body>
+</html>
+

@@ -1,0 +1,125 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - dLabPro data file conversion tool
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/tools
+##
+## ARGUMENTS:
+##   $1: Input file
+##   $2: Output file format (optional)
+##   $3: Output file (optional)
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"$UASR_HOME/scripts/dlabpro/util/uasr.itp" include;
+
+## Prints help on usage
+function -usage()
+{
+    "\n   SYNOPSIS:"                                                      -MSG;
+    "\n     dLabPro file conversion tool. Converts a dLabPro data file"   -MSG;
+    "\n     from (zipped) XML or DNorm3 to a third party format."         -MSG;
+  "\n\n   USAGE:"                                                         -MSG;
+    "\n     dlabpro $__SFILE__.xtp <infile> [<format>] [<outfile>] "      -MSG;
+            "[options]"                                                   -MSG;
+  "\n\n   ARGUMENTS:"                                                     -MSG;
+    "\n     format     output file format (see documentation of dLabPro " -MSG;
+    "\n                class 'file'), one of the following"               -MSG;
+    "\n                csv    - Comma separated values (US locale)"       -MSG;
+    "\n                csv_de - Comma separated values (German locale)"   -MSG;
+    "\n                txt    - Tab stop separated ASCII file"            -MSG;
+    "\n                wav    - Waves file"                               -MSG;
+    "\n                ..."                                               -MSG;
+    "\n                (dump to stdout if omitted)"                       -MSG;
+    "\n     infile     dLabPro data file to convert"                      -MSG;
+    "\n     outfile    converted file (<infile>.<format> if omitted)"     -MSG;
+  "\n\n   OPTIONS:"                                                       -MSG;
+    "\n     -h,--help  display this help and exit"                        -MSG;
+  "\n\n   EXAMPLE:"                                                       -MSG;
+    "\n     'dlabpro $__SFILE__.xtp foo.dn3 wav bar.wav'"                 -MSG;
+    "\n"                                                                  -MSG;
+}
+
+## Initialize session
+-UASR_help if -usage; quit; end
+$$ 1 < if "Missing command line options" -ERROR; -usage; quit; end
+
+## Read dLabPro file
+data idFile;
+"$1" idFile -restore ?error if 1 return; end
+
+## Dump to stdout
+$$ 2 < if
+  var nR;
+  var nC;
+  0 nR =; label L_PR; nR idFile.nrec < if
+    0 nC =; label L_PC; nC idFile.dim < if
+      nR nC idFile -fetch -echo;
+      nC ( idFile.dim -- ) < if "\t" -echo; end
+      nC ++=; goto L_PC;
+    end
+    "\n" -echo;
+    nR ++=; goto L_PR;
+  end
+  0 return;
+end
+
+## Preparations for wav-export
+"$2" "wav" == if
+  data idAux;
+  var  nC;
+  
+  idFile idAux =; idFile -reset;
+  label L_C; nC idAux.dim < if
+    ( nC idAux -get_comp_type ) 256 > if
+      idFile.dim 2 >= if
+        "Ignoring extra numeric components" 1 -WARNING;
+        goto L_C_BREAK;
+      end
+      :idAux[nC]: idFile -join;
+    end 
+    nC ++=; goto L_C;
+  end
+  label L_C_BREAK;
+  idFile.dim 0 == if
+     "No numeric components found. Aborting" -ERROR;
+     1 return;
+  end
+    
+	( idFile abs ) NULL 0 "max" idAux /rec -aggregate;
+	idAux NULL 0 "max" idAux -aggregate;
+	:idAux[0,0]: 1 < if :idFile=idFile*2^15; end
+	idFile -type short idFile -tconvert;
+
+  idFile.rinc 0 <= if
+    "Assuming 16 kHz samling rate" 1 -WARNING;
+    0.0625 idFile -set rinc;
+  end  
+
+end
+
+## Export third party file
+( $$ 2 > if "$3" else "$1.$2" end ) "$2" idFile stdfile -export ?error if
+  1 return;
+end
+0 return;
+
+## EOF

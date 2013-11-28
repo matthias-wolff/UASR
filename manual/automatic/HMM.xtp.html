@@ -1,0 +1,1762 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<
+<    AUTHOR : n/a
+<    PACKAGE: manual
+<
+<    Copyright 2013 UASR contributors (see COPYRIGHT file)
+<    - Chair of System Theory and Speech Technology, TU Dresden
+<    - Chair of Communications Engineering, BTU Cottbus
+<
+<    This file is part of UASR.
+<
+<    UASR is free software: you can redistribute it and/or modify it under the
+<    terms of the GNU Lesser General Public License as published by the Free
+<    Software Foundation, either version 3 of the License, or (at your option)
+<    any later version.
+<
+<    UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+<    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+<    FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+<    more details.
+<
+<    You should have received a copy of the GNU Lesser General Public License
+<    along with UASR. If not, see [http://www.gnu.org/licenses/].
+-->
+<html>
+<head>
+  <meta http-equiv="Content-Type" content= "text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta name="description" content=   "UASR documentation - UASR script HMM.xtp">
+  <meta name="author" content="">
+  <meta name="generator" content="UASR_DOC">
+  <title>UASR script HMM.xtp</title>
+  <link rel=stylesheet type="text/css" href="../default.css">
+</head>
+<script type="text/javascript" src="../default.js"></script>
+<script type="text/javascript">__sRootPath="../..";</script>
+<body>
+
+  <div id="clp_HMM.xtp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        UASR script <span class="mid">HMM.xtp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('','HMM.xtp','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden">General</td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><nobr><b>HMM</b> $1 $2</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Author</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Matthias Wolff
+</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Synopsis</h3>
+    <p>Hidden Markov model classifier and synthesizer
+ </p>
+  <h3>Arguments</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>$1</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Command or 'help'
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>$2</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Setup file or, if 1st arg. is 'help', command
+
+      </td>
+    </tr>  </table>
+  <!--{{ CUSTOM_DOC -->
+	<a name="contents"></a><h3>Contents</h3>
+  <div class="indent"><ul class="linklist">
+    <li class="linklist"><a class="linklist" href="#usage">Usage</a></li>
+    <li class="linklist"><a class="linklist" href="#configuration">Configuration</a></li>
+    <li class="linklist"><a class="linklist" href="#reference">Reference</a></li>
+  </ul></div>
+  
+	<a name="usage"></a><h3>Usage</h3>
+	<pre class="code">
+ dlabpro HMM.xtp &lt;command&gt; &lt;cfgfile&gt; [options]
+ dlabpro HMM.xtp help [&lt;command&gt;]</pre>
+
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td><b>$1</b>: command</td>
+			<td>Command, one of the following:<br>&nbsp;
+				<table class="indent" cellpadding="3" cellspacing="0">
+					<tr>
+						<td class="hidden"><a href="#clp_adp" class="code"><b>adp</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">HMM adaptation</td>
+					</tr>
+					<tr>
+						<td class="hidden"><a href="#clp_ana" class="code"><b>ana</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">HMM analysis (<em>experimental</em>)</td>
+					</tr>
+          <tr>
+            <td class="hidden"><a href="#clp_evl" class="code"><b>evl</b></a></td>
+            <td class="hidden">-</td>
+            <td class="hidden">HMM evaluation</td>
+          </tr>
+					<tr>
+						<td class="hidden"><a href="#clp_lab" class="code"><b>lab</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">Phoneme labeling</td>
+					</tr>
+					<tr>
+						<td class="hidden"><a href="#clp_syn" class="code"><b>syn</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">HMM synthesis and vocoding</td>
+					</tr>
+					<tr>
+						<td class="hidden"><a href="#clp_trn" class="code"><b>trn</b></a></td>
+						<td class="hidden">-</td>
+						<td class="hidden">HMM training</td>
+					</tr>
+				</table><br>
+				or "help"
+			</td>
+		</tr>
+		<tr>
+			<td><b>$2</b>: cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+
+	  <tr><td class="rowgroup" colspan="2">Options</td></tr>
+		<tr>
+			<td><b>-c</b></td>
+  		<td>Use colors for screen protocol</td>
+		</tr>
+		<tr>
+			<td><b>-h</b>, <b>--help</b></td>
+			<td>Display help and exit</td>
+		</tr>
+		<tr>
+			<td><b>-P</b>&lt;key&gt;=&lt;value&gt;</td>
+			<td>Define or override <a href="util/cfg.itp.html#index:cfgk">configuration key-value pairs</a></td>
+		</tr>
+		<tr>
+			<td><b>-n</b></td>
+  		<td>Write protection. If set, no output files will be written.<br>
+			  <b class="warning">WARNING:</b> The implementation of this feature is fragmentary. Some files will still be
+				written!!!</td>
+		</tr>
+		<tr>
+			<td><b>-v</b>&lt;n&gt;</td>
+  		<td>Verbose level
+  			<table>
+  				<tr><td class="hidden">-v1&nbsp;&nbsp;&nbsp;</td><td class="hidden">minimal screen protocol (default)</td></tr>
+  				<tr><td class="hidden">-v2</td><td class="hidden">extended screen protocol</td></tr>
+  				<tr><td class="hidden">-v3</td><td class="hidden">even more screen protocol, program may break</td></tr>
+  			</table>
+  		</td>
+		</tr>
+		<tr>
+			<td><b>-j</b>&#60;n&#62;</td>
+  		<td>
+  		  <span class="warning">EXPERIMENTAL</span>: Parallel computing with &#60;n&#62; parallel jobs.<br/>
+        <span class="CHECK">In some cases parallel computing won't produce the same results as single thread computing. The
+        exact problem is still unknown.</span>
+  		</td>
+		</tr>
+
+	  <tr><td class="hidden" colspan="2"><span class="small">There are further, individual options to the commands.</span></td></tr>
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+	</table>
+
+  <a name="configuration"></a><h3>Configuration</h3>
+	<p><code>HMM.xtp</code> is configured through a <a href="util/cfg.itp.html#index:cfgf">UASR configuration
+  file</a> (parameter <code>$2</code>). The configuration file is a Java properties file containing key-value-pairs.
+  The common configuration keys are described with the utility script <a class="code"
+  href="util/cfg.itp.html#index:cfgk">cfg.itp</a> (see there). Some commands use dedicated configuration keys which are
+  described with the command. Dedicated keys may be placed in the configuration file just like all other keys. Any key
+  (common and dedicated) may be specified or overwritten through the command line using
+  <nobr><code><b>-P</b>&lt;key&gt;=&lt;value&gt;</code></nobr> options:</p>
+  <pre class="code">
+ dlabpro HMM.xtp trn $UASR_HOME/config/vm/VMV.cfg -Pskip=SI -Pstart=2,5</pre>
+  <p><code>-P</code> options <em>always</em> overwrite the configuration file. The heading "<code>uasr.</code>" of the
+	keys may be omitted in <code>-P</code> options.</p>
+  <p>For further information</p>
+  <ul>
+  	<li class="indent">see documentation of <a href="util/cfg.itp.html#index:datadirs"
+  		class="code">util/cfg.itp</a> to learn more about UASR's organization of databases.</li>
+  	<li class="indent">see documentation of <a href="util/cfg.itp.html#clp_-CFG_get_path"
+			class="code">-CFG_get_path</a> to learn how UASR determines paths to the various data sets.</li>
+  	<li class="indent">see documentation of <a href="util/cfg.itp.html#clp_-CFG_get_flist"
+			class="code">-CFG_get_flist</a> to learn how UASR obtains file lists of the various data sets.</li>
+  </ul>
+	
+  <!-- <h3>Description</h3> -->
+
+  </div>
+  </div>
+
+ <!-- == HMM.xtp adp ====================================================== -->
+  <div id="clp_adp" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        HMM.xtp <span class="mid">adp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_adp','HMM.xtp adp','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>HMM.xtp <b>adp</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">HMM adaptation</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  <div class="indent"><ul class="linklist">
+  	<li class="linklist"><a href="#adp_description" class="linklist">Description</a></li>
+  </ul></div>
+
+  <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+  <a name="adp_description"></a><h3>Description</h3>
+	<p><span class="warning"> </span> Adapts HMMs trained by <a href="#clp_trn">HMM.xtp trn</a>.</p>
+
+  <p>The MAP (Maximum a posteriori) adaptation method updates the HMM model parameters by combining prior known information (the old parameters) with the statistics derived from the adaptation data. 
+  In the first phase of the adaptation, the statistics required for computing the means and covariances are gathered from adaptation data. 
+  In the second phase, the gathered statistics are combined with the acoustic model statistics using a data-dependent weighting coefficient. 
+  The data-dependency of the weighting coefficients is realized by the relevance factor &rho;<sub>&mu;</sub> and &rho;<sub>&Sigma;</sub>. 
+  Theirs values mark the point where the data count of the adaptation data has the same weight as the old parameter. 
+  Higher values of &rho; gives more weight to the prior information i.e. the old parameters.
+  </p>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+ dlabpro HMM.xtp adp &lt;cfgfile&gt; [options]</pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see <a href="#usage">Usage</a>).</p>
+
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <a name="index:cfgHmml" title="Configuration Keys | HMM.xtp lab"></a>
+  <h4>Configuration</h4>
+  <p>The following table lists dedicated configuration keys and some important common keys (see section <a 
+  href="#configuration">Configuration</a> above). There are many more common keys. See documentation of <a
+  href="util/cfg.itp.html#index:cfgk" class="code">util/cfg.itp</a> for a complete list.</p>
+  <table cellpadding="3" class="indent" summary="">
+  	<tr><th>Key</th><th>Type</th><th>Default</th><th>Value</th></tr>
+  	<tr><td class="rowgroup" colspan="4">Dedicated keys to <code>HMM.xtp adp</code></td></tr>
+    <tr>
+    	<td><code>uasr.am.adapt.imean     </code></td><td>number</td><td>&lt;uasr.sfa.dim&gt;</td>
+    	<td>Relevance factor &rho;<sub>&mu;</sub>, mark the point where the data count of the adaptation mean vector has the same weight as the old mean vector.</td>
+    </tr>
+
+    <tr>
+      <td><code>uasr.am.adapt.icov     </code></td><td>number</td><td>&lt;uasr.sfa.dim&gt;<sup>2</sup></td>
+      <td>Relevance factor &rho;<sub>&Sigma;</sub>, mark the point where the data count of the adaptation covariance matrix has the same weight as the old covariance matrix.</td>
+    </tr>
+    
+   <tr>
+      <td><code>uasr.am.adapt.ext     </code></td><td>string</td><td>"A"</td>
+      <td>Adapted model indentifier extension - "&lt;uasr.am.model&gt;_&lt;uasr.am.adapt.ext&gt;"</td>
+    </tr>
+
+  	<tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+  	<tr><td class="rowgroup" colspan="4">Important common keys</td></tr>
+    <tr>
+    	<td><code>uasr.am.model</code></td><td>string</td><td>"0_0"</td>
+    	<td>HMM to adapt with</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.customize</code></td><td>string</td><td> </td>
+    	<td>Custom include script (path absolute or relative to script accessing the key)</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.db</code></td><td>string</td><td>"vm"</td>
+    	<td>Data base name</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.db.include</code></td><td>string</td><td>"db/&lt;uasr.db&gt;.itp"</td>
+    	<td>Database dependent include script (path absolute or relative to script accessing the key)</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.exp</code></td><td>string</td><td>""</td>
+    	<td>Experiment code</td>
+    </tr>
+    <caption>Dedicated and important common configuration keys</caption>
+  </table>
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <h4>Input and Output Files</h4>
+  <h5>Required input files:</h5>
+	<ul>
+		<li>An HMM set (created by <a href="clp_trn" class="code">HMM.xtp trn</a>),</li>
+		<li>One feature <em>or</em> signal adaptation file per turn, listed in development file list</li>
+	</ul>
+	<p>Adaptation feature and signal files are expected in the respective 
+	<a href="util/cfg.itp.html#index:datadirs">standard directories</a>. If these files
+  are located elsewhere, please specify the directory/ies through the
+  <code>uasr.dir.*</code> <a href="util/cfg.itp.html#index:cfgk">configuration keys</a>.</p>
+
+  <h5>Output files:</h5>
+	<p>The program creates adapted model file in the standard experiment model directory (configuration key <code>uasr.dir.model</code>, see table above).</p> 
+
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<p class="indent">Remarks</p>
+  <ul>
+  	<li class="indent"><code>HMM.xtp adp</code> uses many more common keys. See documentation of functions and
+  		documentation of <a href="util/cfg.itp.html#index:cfgk" class="code">util/cfg.itp</a>.</li>
+  	<li class="indent">See documentation of <a href="util/cfg.itp.html#index:datadirs"
+  		class="code">util/cfg.itp</a> to learn more about UASR's organization of databases.</li>
+  	<li class="indent">See documentation of <a href="util/cfg.itp.html#clp_-CFG_get_path"
+			class="code">-CFG_get_path</a> to learn how UASR determines paths to the various data sets.</li>
+  	<li class="indent">See documentation of <a href="util/cfg.itp.html#clp_-CFG_get_flist"
+			class="code">-CFG_get_flist</a> to learn how UASR obtains file lists of the various data sets.</li>
+  </ul>
+	<p>Dedicated keys may be placed in the configuration file just like all other keys. Any key (common and dedicated)
+	may be specified or overwritten through the command line using <code><b>-P</b>&lt;key&gt;=&lt;value&gt;</code>
+	options:</p>
+  <pre class="code">
+ dlabpro HMM.xtp adp $UASR_HOME/config/vm/VMV.cfg -Pam.model="3_15"</pre>
+  <p><code>-P</code> options <em>always</em> overwrite the configuration file. The heading "<code>uasr.</code>" of the
+	keys may be omitted in <code>-P</code> options.</p>
+
+	</div>
+	</div>
+
+
+  <!-- == HMM.xtp ana ====================================================== -->
+  <div id="clp_ana" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        HMM.xtp <span class="mid">ana</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_ana','HMM.xtp ana','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>HMM.xtp <b>ana</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">HMM analysis</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  <div class="indent"><ul class="linklist">
+  	<li class="linklist"><a href="#ana_description" class="linklist">Description</a></li>
+  </ul></div>
+
+  <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+  <a name="ana_description"></a><h3>Description</h3>
+	<p><span class="warning">EXPERIMENTAL.</span> Analyzes HMMs trained by <a href="#clp_trn">HMM.xtp trn</a>.</p>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+ dlabpro HMM.xtp ana &lt;cfgfile&gt; [options]</pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see <a href="#usage">Usage</a>).</p>
+
+	</div>
+	</div>
+
+  <!-- == HMM.xtp evl ====================================================== -->
+  <div id="clp_evl" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        HMM.xtp <span class="mid">evl</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_evl','HMM.xtp evl','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>HMM.xtp <b>evl</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">HMM evaluation</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  <ul class="linklist">
+    <li class="linklist"><a href="#evl_description" class="linklist">Description</a></li>
+  </ul>
+
+  <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+  <a name="evl_description"></a><h3>Description</h3>
+  <p><code>HMM.xtp evl</code> is part of the UASR acoustic model processing. It evaluates a set of HMMs</p>
+  <p>(See documentation of <a href="util/cfg.itp.html#index:datadirs" class="code">util/cfg.itp</a> for details on the
+  organization of databases in UASR.)</p>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <h4>Start and Command Line Options</h4>
+  <p>The program is started as follows:</p>
+  <pre class="code">
+ dlabpro HMM.xtp evl &lt;cfgfile&gt; [options]</pre>
+  <table cellpadding="3" cellspacing="0" class="indent">
+    <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+    <tr><th>Argument/Option</th><th>Description</th></tr>
+    <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+    <tr>
+      <td>cfgfile</td>
+      <td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+    </tr>
+  </table>
+  <p>The standard command line options are accepted (see <a href="#usage">Usage</a>).</p>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <a name="index:cfgHmmt" title="Configuration Keys | HMM.xtp trn"></a>
+  <h4>Configuration</h4>
+  <p><code>HMM.xtp evl</code> as a UASR application is configured through a <a
+  href="util/cfg.itp.html#index:cfgf">UASR configuration file</a> argument <code>$2</code>). The configuration file
+  is a Java properties file containing key-value-pairs. The common configuration keys are described with the utility
+  script <a class="code" href="util/cfg.itp.html#index:cfgk">cfg.itp</a> (see there). There are also some dedicated
+  keys for <code>HMM.xtp evl</code>:</p>
+  <table cellpadding="3" class="indent">
+    <tr><th>Key</th><th>Type</th><th>Default</th><th>Value</th></tr>
+    <tr><td class="rowgroup" colspan="4">Dedicated keys to <code>HMM.xtp evl</code></td></tr>
+    <tr>
+      <td nowrap><code>uasr.am.model</code></td><td>string</td><td>""</td>
+      <td>Specifies acoustic model to use for evaluation</td>
+    </tr>
+    <tr><td class="hidden" colspan="4">&nbsp;</td></tr>
+    <tr><td class="rowgroup" colspan="4">Important common keys</td></tr>
+    <tr><td><code>uasr.customize </code></td><td>string</td><td> </td><td>Custom include script (path absolute or relative to script accessing the key)</td></tr>
+    <tr><td><code>uasr.db        </code></td><td>string</td><td>"vm"</td><td>Data base name</td></tr>
+    <tr><td><code>uasr.db.include</code></td><td>string</td><td>"db/&lt;uasr.db&gt;.itp"</td><td>Database dependent include script (path absolute or relative to script accessing the key)</td></tr>
+    <tr><td><code>uasr.exp</code></td><td>string</td><td>""</td><td>Experiment code</td></tr>
+    <tr><td><code>uasr.pfa          </code></td><td>string</td><td>"MEL"     </td><td>Primary feature analysis type<pre>
+  "none" - No primary feature extraction
+  "CP"   - Cepstrum (including MFCC)
+  "LCQ"  - Line cepstral quefrencies
+  "lmag" - log. magnitude spectrum
+  "LPC"  - Linear prediction coding
+  "LSF"  - Line spectral frequencies
+  "mag"  - magnitude spectrum
+  "MEL"  - Melfilter</pre> There are more <a href="util/cfg.itp.html#index:cfgk"
+    class="code">&lt;uasr.pfa.*&gt;</a>-keys!</td></tr>
+    <tr><td><code>uasr.sfa            </code></td><td>string</td><td>"std,delta,pca"</td><td>Secondary feature analysis type(s),
+      one or a comma separated list of the following strings:<pre>
+  std   - feature standardization (mean -&gt; 0, std. dev. -&gt; 1)
+  delta - compute dynamic features
+  pca   - principal component analysis
+  ica   - independent component analysis
+  red   - reduce linear feature trafo. matrix to &lt;uasr.sfa.dim&gt;</pre> There are more <a
+    href="util/cfg.itp.html#index:cfgk" class="code">&lt;uasr.sfa.*&gt;</a>-keys!</td></tr>
+    <tr><td><code>uasr.am.eval           </code></td><td>string</td><td>"auto"</td><td>HMM evaluation during training, one of the following strings:<pre>
+  none   - just train, do not evaluate (equivalent to uasr.skip=T)
+  assess - use <a href="train/am.itp.html#clp_-HMM_assess">-HMM_assess</a>
+  eval   - use <a href="train/am.itp.html#clp_-HMM_eval">-HMM_eval</a> (normal recognition)
+  auto   - decide automatically</pre></td></tr>
+    <tr><td><code>uasr.am.eval.mode</code></td><td>string</td><td>"0"</td><td>HMM evaluation mode (only if
+      <code>&lt;uasr.am.eval&gt;</code> is "eval"), one of the following characters:<pre>
+  0 - Free recognition with grammar
+  F - Forced alignment on labels with enforcement of the label boundaries 
+  L - Forced alignment on labels ("phoneme" sequence)
+  T - Forced alignment on transliteration ("word" sequence)</pre>
+      See documentation of function <a class="code" href="train/am.itp.html#clp_-HMM_process">-HMM_process</a> for
+      more details.
+    </td></tr>
+    <tr><td><code>uasr.am.eval.assess    </code></td><td>string</td><td>"cmx,hist"</td><td>Assessment mode (only if <code>&lt;uasr.am.eval&gt;</code> is "assess"),
+    comma separated list of the following strings:<pre>
+  cmx     - compute class confusion matrices
+  hist    - compute NLL x class histograms
+  loghist - compute NLL x class histograms with logarithmic counts</pre></td></tr>
+    <caption>Dedicated and important common configuration keys</caption>
+  </table>
+  <p class="indent">Remarks</p>
+  <ul>
+    <li class="indent"><code>HMM.xtp evl</code> uses many more common keys. See documentation of functions and
+      documentation of <a href="util/cfg.itp.html#index:cfgk" class="code">util/cfg.itp</a>.</li>
+    <li class="indent">See documentation of <a href="util/cfg.itp.html#index:datadirs"
+      class="code">util/cfg.itp</a> to learn more about UASR's organization of databases.</li>
+    <li class="indent">See documentation of <a href="util/cfg.itp.html#clp_-CFG_get_path"
+      class="code">-CFG_get_path</a> to learn how UASR determines paths to the various data sets.</li>
+    <li class="indent">See documentation of <a href="util/cfg.itp.html#clp_-CFG_get_flist"
+      class="code">-CFG_get_flist</a> to learn how UASR obtains file lists of the various data sets.</li>
+  </ul>
+  <p>Dedicated keys may be placed in the configuration file just like all other keys. Any key (common and dedicated)
+  may be specified or overwritten through the command line using <code><b>-P</b>&lt;key&gt;=&lt;value&gt;</code>
+  options:</p>
+  <pre class="code">
+ dlabpro HMM.xtp evl $UASR_HOME/config/vm/VMV.cfg -Pskip=SI -Pstart=2_5</pre>
+  <p><code>-P</code> options <em>always</em> overwrite the configuration file. The heading "<code>uasr.</code>" of the
+  keys may be omitted in <code>-P</code> options.</p>
+  </div></div>
+
+  <!-- == HMM.xtp lab ====================================================== -->
+  <div id="clp_lab" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        HMM.xtp <span class="mid">lab</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_lab','HMM.xtp lab','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>HMM.xtp <b>lab</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Phoneme labeling</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  <div class="indent"><ul class="linklist">
+  	<li class="linklist"><a href="#ana_description" class="linklist">Description</a></li>
+  </ul></div>
+
+  <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+  <a name="lab_description"></a><h3>Description</h3>
+	<p>Labels a data set.</p>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+ dlabpro HMM.xtp lab &lt;cfgfile&gt; [options]</pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see <a href="#usage">Usage</a>).</p>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <a name="index:cfgHmml" title="Configuration Keys | HMM.xtp lab"></a>
+  <h4>Configuration</h4>
+  <p>The following table lists dedicated configuration keys and some important common keys (see section <a 
+  href="#configuration">Configuration</a> above). There are many more common keys. See documentation of <a
+  href="util/cfg.itp.html#index:cfgk" class="code">util/cfg.itp</a> for a complete list.</p>
+  <table cellpadding="3" class="indent" summary="">
+  	<tr><th>Key</th><th>Type</th><th>Default</th><th>Value</th></tr>
+  	<tr><td class="rowgroup" colspan="4">Dedicated keys to <code>HMM.xtp lab</code></td></tr>
+    <tr>
+    	<td><code>uasr.dataset</code></td><td>string</td><td>"test"</td>
+    	<td>The data set to be labeled, see documentation of function <a class="code"
+        href="util/cfg.itp.html#clp_-CFG_get_flist">-CFG_get_flist</a> for a list of
+				data set identifiers.</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.from</code></td><td>string</td><td>"T"</td>
+    	<td>Information to create labels from, one of following
+			  <pre>
+  T - Label from transliterations
+  L - Label from labels (re-alignment to known labels)
+  F - Label from labels enforcing the boundaries (useful in connection with uasr.type=gss only)
+  0 - Label from scratch
+</pre>
+			  </td>
+    </tr>
+    <tr>
+    	<td><code>uasr.out</code></td><td>string</td><td>"lab"</td>
+    	<td>File types to create, one or a comma separated list of the following strings:
+			  <pre>
+  lab - ESPS label files
+  fea - labeled primary feature vector files
+</pre>
+			  </td>
+    </tr>
+    <tr>
+    	<td><code>uasr.type</code></td><td>string</td><td>"phn"</td>
+    	<td>Label types to create, one or a comma separated list of the following strings:
+			  <pre>
+  phn - Label with HMM names (phonemes for speech recognition)
+  gss - Label with Gaussian indexes
+</pre>
+        If both types are specified, feature vector files will contain two label components.
+				However, label files will contain phonetic labels <em>only</em>.</td>
+    </tr>
+
+  	<tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+  	<tr><td class="rowgroup" colspan="4">Important common keys</td></tr>
+    <tr>
+    	<td><code>uasr.am.model</code></td><td>string</td><td>"0_0"</td>
+    	<td>HMM to label with</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.lm.*</code></td><td> </td><td> </td>
+    	<td>Language model settings</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.lx.*</code></td><td> </td><td> </td>
+    	<td>Lexicon settings</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.dir.out</code></td><td>string</td><td>&nbsp;</td>
+    	<td>Output directory (if not specified or not found, label and/or labeled feature files
+			    will be written into the log directory)</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.dir.trl</code></td><td>string</td><td>&nbsp;</td>
+    	<td>Transliteration directory (if not specified or not found, transliteations
+			    will be loaded from the label directory)</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.customize</code></td><td>string</td><td> </td>
+    	<td>Custom include script (path absolute or relative to script accessing the key)</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.db</code></td><td>string</td><td>"vm"</td>
+    	<td>Data base name</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.db.include</code></td><td>string</td><td>"db/&lt;uasr.db&gt;.itp"</td>
+    	<td>Database dependent include script (path absolute or relative to script accessing the key)</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.exp</code></td><td>string</td><td>""</td>
+    	<td>Experiment code</td>
+    </tr>
+    <caption>Dedicated and important common configuration keys</caption>
+  </table>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <h4>Input and Output Files</h4>
+  <h5>Required input files:</h5>
+	<ul>
+		<li>An HMM set (created by <a href="clp_trn" class="code">HMM.xtp trn</a>),</li>
+		<li>A lexicon and/or a grammar (specified through the <a href="util/cfg.itp.html#index:cfgk">configuration
+		    keys</a> <code>uasr.lx.*</code> and <code>uasr.lm.*</code>, see documentaion of function
+        <a class="code" href="util/lm.itp.html#clp_-GRM_get">-GRM_get</a>),</li>
+		<li>One feature <em>or</em> signal file per turn, and</li>
+		<li>If labeling from transliteration (see key <code>uasr.from</code>): one transliteration file 
+		    per turn (imported through the database-dependent <a class="code"
+		    href="util/lab.itp.html#clp_-TRL_import">-TRL_import</a> function).</li>
+	</ul>
+	<p>Feature, signal and transliteration files are expected in the respective 
+	<a href="util/cfg.itp.html#index:datadirs">standard directories</a>. If these files
+  are located elsewhere, please specify the directory/ies through the
+  <code>uasr.dir.*</code> <a href="util/cfg.itp.html#index:cfgk">configuration keys</a>.</p>
+
+  <h5>Output files:</h5>
+	<p>The program creates one ESPS label and/or one labeled primary feature vector file per turn
+  in the output directory (configuration key <code>uasr.dir.out</code>, see table above).</p> 
+	
+	</div>
+	</div>
+
+  <!-- == HMM.xtp syn ====================================================== -->
+  <div id="clp_syn" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        HMM.xtp <span class="mid">syn</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_syn','HMM.xtp syn','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>HMM.xtp <b>syn</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">HMM synthesis and vocoding</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  <div class="indent"><ul class="linklist">
+  	<li class="linklist"><a href="#syn_description" class="linklist">Description</a></li>
+  </ul></div>
+
+  <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+  <a name="syn_description"></a><h3>Description</h3>
+	<p>This command performs (acoustic) HMM synthesis, HMM vocoding and vocoding. It processes the
+	test <a href="util/cfg.itp.html#index:flists">file lists</a> of speech databases or single speech turns.</p>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+ dlabpro HMM.xtp syn &lt;cfgfile&gt; [options]</pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see <a href="#usage">Usage</a>).</p>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <a name="index:cfgHmms" title="Configuration Keys | HMM.xtp syn"></a>
+  <h4>Configuration</h4>
+  <p>The following table lists dedicated configuration keys and some important common keys (see section <a 
+  href="#configuration">Configuration</a> above). There are many more common keys. See documentation of <a
+  href="util/cfg.itp.html#index:cfgk" class="code">util/cfg.itp</a> for a complete list.</p>
+  <table cellpadding="3" class="indent" summary="">
+  	<tr><th>Key</th><th>Type</th><th>Default</th><th>Value</th></tr>
+  	<tr><td class="rowgroup" colspan="4">Dedicated keys to <code>HMM.xtp syn</code></td></tr>
+  	<tr>
+  		<td nowrap><code>uasr.dir.syn</code></td><td>string</td><td> </td>
+  		<td>Path to output files</td>
+  	</tr>
+  	<tr>
+  		<td nowrap><code>uasr.fea</code></td><td>string</td><td>""</td>
+  		<td>Type(s) of feature vector files to generate and store into the output folder.
+  		Blank or any combination of the following characters:<pre>
+  V - vocoded (primary feature analysis of signal)
+  H - HMM-vocoded (optimal HMM path obtained by forced alignment of the signal)
+  S - HMM-synthesized</pre></td>
+  	</tr>
+  	<tr>
+  		<td nowrap><code>uasr.file</code></td><td>string</td><td>""</td>
+  		<td>- reserved -<br><span style="color:#808080">DreSS control file to be synthesized</span></td>
+  	</tr>
+  	<tr>
+  		<td nowrap><code>uasr.sig</code></td><td>string</td><td>"S"</td>
+  		<td>Type(s) of signal files to generate and store into the output folder.
+  		Blank or any combination of the following characters:<pre>
+  O - original unprocessed signal
+  V - vocoded (primary feature analysis and resynthesis)
+  H - HMM-vocoded (optimal HMM path obtained by forced alignment of the signal)
+  S - HMM-synthesized</pre></td>
+  	</tr>
+  	<tr>
+  		<td nowrap><code>uasr.turn</code></td><td>string</td><td>""</td>
+  		<td>turn to synthese; if omitted all turns of the databases' test set will be synthesized</td>
+  	</tr>
+  	<tr>
+  		<td nowrap><code>uasr.into</code></td><td>string</td><td>"file"</td>
+      <td>Into generation mode<pre>
+  file - Load into form a file
+  grm  - Generate into from a grammar</pre></td>
+  	</tr>
+
+  	<tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+  	<tr><td class="rowgroup" colspan="4">Important common keys</td></tr>
+    <tr>
+    	<td><code>uasr.am.model</code></td><td>string</td><td>"0_0"</td>
+    	<td>HMM to synthesize from</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.customize</code></td><td>string</td><td> </td>
+    	<td>Custom include script (path absolute or relative to script accessing the key)</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.db</code></td><td>string</td><td>"vm"</td>
+    	<td>Data base name</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.db.include</code></td><td>string</td><td>"db/&lt;uasr.db&gt;.itp"</td>
+    	<td>Database dependent include script (path absolute or relative to script accessing the key)</td>
+    </tr>
+    <tr>
+    	<td><code>uasr.exp</code></td><td>string</td><td>""</td>
+    	<td>Experiment code</td>
+    </tr>
+    <caption>Dedicated and important common configuration keys</caption>
+  </table>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <h4>Input and Output Files</h4>
+  <p>The program requires the following <a href="util/cfg.itp.html#index:datadirs">files from the speech database</a>:</p>
+  <ul>
+    <li>signal <em>or</em> primary feature vector files,</li>
+    <li>phonetic label files, and</li>
+    <li>pitch mark files</li>
+  </ul>
+  <p>along with the file lists and database information files.</p>
+  
+	<p>Depending on the <code>&lt;uasr.sig&gt;</code> and <code>&lt;uasr.fea&gt;</code> keys, the program generates one or
+  several of the following output files for each speech turn it processes:</p>
+  <table cellpadding="3" class="indent" summary="">
+    <tr><th rowspan="2">File</th><th colspan="2">Activated by</th><th rowspan="2">Description</th></tr>
+    <tr><th>Key</th><th>Value</th></tr>
+    <tr>
+      <td><code>&lt;uasr.dir.syn&gt;/&lt;turn_id&gt;.O.sig.dn3</code></td>
+      <td><code>uasr.sig</code></td><td><code>O</code></td>
+      <td>copy of the original speech signal</td>
+    </tr>
+    <tr>
+      <td><code>&lt;uasr.dir.syn&gt;/&lt;turn_id&gt;.V.fea.dn3</code></td>
+      <td><code>uasr.fea</code></td><td><code>V</code></td>
+      <td>primary feature vector sequence (copy of database file or, if not present, computed from signal file)</td>
+    </tr>
+    <tr>
+      <td><code>&lt;uasr.dir.syn&gt;/&lt;turn_id&gt;.V.sig.dn3</code></td>
+      <td><code>uasr.sig</code></td><td><code>V</code></td>
+      <td>vocoded speech signal (primary feature vectors passed through synthesis filter)</td>
+    </tr>
+    <tr>
+      <td><code>&lt;uasr.dir.syn&gt;/&lt;turn_id&gt;.H.&lt;uasr.am.model&gt;.fea.dn3</code></td>
+      <td><code>uasr.fea</code></td><td><code>H</code></td>
+      <td>primary feature vector sequence computed through a forced alignment of the speech turn on the respective HMMs
+          (this bypasses the HMM path selection algorithm and just uses the optimal path given the original signal)</td>
+    </tr>
+    <tr>
+      <td><code>&lt;uasr.dir.syn&gt;/&lt;turn_id&gt;.H.&lt;uasr.am.model&gt;.sig.dn3</code></td>
+      <td><code>uasr.sig</code></td><td><code>H</code></td>
+      <td>HMM-vocoded speech signal (the above feature vector sequence passed through the synthesis filter)</td>
+    </tr>
+    <tr>
+      <td><code>&lt;uasr.dir.syn&gt;/&lt;turn_id&gt;.S.&lt;uasr.am.model&gt;.fea.dn3</code></td>
+      <td><code>uasr.fea</code></td><td><code>S</code></td>
+      <td>primary feature vector sequence created by the acoustic HMM synthesis</td>
+    </tr>
+    <tr>
+      <td><code>&lt;uasr.dir.syn&gt;/&lt;turn_id&gt;.S.&lt;uasr.am.model&gt;.sig.dn3</code></td>
+      <td><code>uasr.sig</code></td><td><code>S</code></td>
+      <td>HMM-synthesized speech signal (the above feature vector sequence passed through the synthesis filter)</td>
+    </tr>
+  </table>
+  <p>Any combination of characters is allowed for <code>&lt;uasr.sig&gt;</code> and <code>&lt;uasr.fea&gt;</code>, e.g.
+  <code>uasr.sig="VHS"</code>. All generated files will be placed in the folder specified by
+  <code>&lt;uasr.dir.syn&gt;</code>.</p>
+
+  </div>
+  </div>
+  
+  <!-- == HMM.xtp trn ====================================================== -->
+  <div id="clp_trn" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        HMM.xtp <span class="mid">trn</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_trn','HMM.xtp trn','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code>HMM.xtp <b>trn</b> &lt;cfgfile&gt; [options]</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Synopsis</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">HMM training</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  <ul class="linklist">
+  	<li class="linklist"><a href="#trn_description" class="linklist">Description</a></li>
+  	<li class="linklist"><a href="#trn_flowchart" class="linklist">Program Flow Chart</a></li>
+  </ul>
+
+  <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+  <a name="trn_description"></a><h3>Description</h3>
+	<p><code>HMM.xtp trn</code> is part of the UASR acoustic model training outlined in figure 1. It creates a set of
+  HMMs from either</p>
+  <ol>
+    <li>a database consisting of labelled primary feature vector files <em>or</em></li>
+    <li>a database consisting of signal files and labels.</li>
+  </ol>
+  <p>(See documentation of <a href="util/cfg.itp.html#index:datadirs" class="code">util/cfg.itp</a> for details on the
+  organization of databases in UASR.)</p>
+  <p>The first first method requires more disk space but is quicker if there is more than one HMM training iteration.
+  The primary feature vector files database must be created <em>before</em> the actual model training</p>
+  <ul>
+  	<li>using <a href="FEA.xtp.html#clp_ana" class="code">FEA.xtp ana</a> (primary feature analsis of signal
+			files) <em>or</em></li>
+  	<li>using <a href="FEA.xtp.html#clp_imp" class="code">FEA.xtp imp</a> (import of external feature files).</li>
+  </ul>
+  <p>The second method saves the disk space for storing the primary feature vectors but it requires to compute these
+  for <em>each</em> HMM training iteration anew.</p>
+  <p class="figure"><nobr>
+    <object data="../resources/figures/UasrModelTraining-hmm.svg" type="image/svg+xml" width="463" height="386">
+      <param name="src" value="../resources/figures/UasrModelTraining-hmm.svg">
+      <img src="../resources/figures/UasrModelTraining-hmm.png" alt="Figure 1: UASR model training" width="463" height="385">
+    </object><a href="../resources/figures/UasrModelTraining-hmm.svg" target="_blank"><img src="../resources/zoom.gif" width="17"
+    height="17" border="0" alt="Enlarge image"></a></nobr></p>
+  <p class="figure">Figure 1: UASR model training</p>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <h4>Start and Command Line Options</h4>
+	<p>The program is started as follows:</p>
+  <pre class="code">
+ dlabpro HMM.xtp trn &lt;cfgfile&gt; [options]</pre>
+	<table cellpadding="3" cellspacing="0" class="indent">
+	  <tr><td class="hidden" colspan="2">&nbsp;</td></tr>
+  	<tr><th>Argument/Option</th><th>Description</th></tr>
+	  <tr><td class="rowgroup" colspan="2">Arguments</td></tr>
+		<tr>
+			<td>cfgfile</td>
+			<td>UASR <a href="util/cfg.itp.html#index:cfgf">configuration file</a></td>
+		</tr>
+	</table>
+	<p>The standard command line options are accepted (see <a href="#usage">Usage</a>).</p>
+
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  <a name="index:cfgHmmt" title="Configuration Keys | HMM.xtp trn"></a>
+  <h4>Configuration</h4>
+	<p><code>HMM.xtp trn</code> as a UASR application is configured through a <a
+  href="util/cfg.itp.html#index:cfgf">UASR configuration file</a> argument <code>$2</code>). The configuration file
+  is a Java properties file containing key-value-pairs. The common configuration keys are described with the utility
+  script <a class="code" href="util/cfg.itp.html#index:cfgk">cfg.itp</a> (see there). There are also some dedicated
+  keys for <code>HMM.xtp trn</code>:</p>
+  <table cellpadding="3" class="indent">
+  	<tr><th>Key</th><th>Type</th><th>Default</th><th>Value</th></tr>
+  	<tr><td class="rowgroup" colspan="4">Dedicated keys to <code>HMM.xtp trn</code></td></tr>
+  	<tr>
+  		<td nowrap><code>uasr.skip</code></td><td>string</td><td>""</td>
+  		<td>Specifies functionality to skip, any combination of the following letters:<pre>
+  S - skip feature statistics
+  I - skip HMM intitialization
+  U - skip iterative HMM update*)
+  E - skip HMM evaluation*)
+  T - skip model folder tidy up (keep all HMM iterations; default is keep best iteration per split only)</pre></td>
+  	</tr>
+  	<tr>
+  		<td nowrap><code>uasr.start</code></td><td>string</td><td>""</td>
+  		<td>Specifies split and iteration number to start form, two integers separated by an underscore, NO white spaces!</td>
+  	</tr>
+  	<tr>
+  		<td nowrap><code>uasr.sensor</code></td><td>string</td><td>""</td>
+  		<td>Name of sensor whose signals are to be processed <em>only</em> (does typically not apply to speech recognition).
+  		    Append "..." to process the specified and all following sensors.</td>
+  	</tr>
+    <tr><td class="hidden" colspan="4">*) implies <code>uasr.skip</code>=T and skips folder tidying (Reason: skip=E: don't know which is best; skip=U: no new models written)</td></tr>
+  	<tr><td class="hidden" colspan="4">&nbsp;</td></tr>
+  	<tr><td class="rowgroup" colspan="4">Important common keys</td></tr>
+    <tr><td><code>uasr.customize </code></td><td>string</td><td> </td><td>Custom include script (path absolute or relative to script accessing the key)</td></tr>
+    <tr><td><code>uasr.db        </code></td><td>string</td><td>"vm"</td><td>Data base name</td></tr>
+    <tr><td><code>uasr.db.include</code></td><td>string</td><td>"db/&lt;uasr.db&gt;.itp"</td><td>Database dependent include script (path absolute or relative to script accessing the key)</td></tr>
+    <tr><td><code>uasr.exp</code></td><td>string</td><td>""</td><td>Experiment code</td></tr>
+    <tr><td><code>uasr.pfa          </code></td><td>string</td><td>"MEL"     </td><td>Primary feature analysis type<pre>
+  "none" - No primary feature extraction
+  "CP"   - Cepstrum (including MFCC)
+  "LCQ"  - Line cepstral quefrencies
+  "lmag" - log. magnitude spectrum
+  "LPC"  - Linear prediction coding
+  "LSF"  - Line spectral frequencies
+  "mag"  - magnitude spectrum
+  "MEL"  - Melfilter</pre> There are more <a href="util/cfg.itp.html#index:cfgk"
+		class="code">&lt;uasr.pfa.*&gt;</a>-keys!</td></tr>
+    <tr><td><code>uasr.sfa            </code></td><td>string</td><td>"std,delta,pca"</td><td>Secondary feature analysis type(s),
+      one or a comma separated list of the following strings:<pre>
+  std   - feature standardization (mean -&gt; 0, std. dev. -&gt; 1)
+  delta - compute dynamic features
+  pca   - principal component analysis
+  ica   - independent component analysis
+  red   - reduce linear feature trafo. matrix to &lt;uasr.sfa.dim&gt;</pre> There are more <a
+		href="util/cfg.itp.html#index:cfgk" class="code">&lt;uasr.sfa.*&gt;</a>-keys!</td></tr>
+    <tr><td><code>uasr.am.train          </code></td><td>string</td><td>""      </td><td>Training mode,
+		  one or a comma separated list of the following strings:<pre>
+  viterbi    - Viterbi training (default: Baum-Welch training)
+  var        - GMMs with variance vectors only (default: covariance matrices)</pre></td></tr>
+    <tr><td><code>uasr.am.train.split    </code></td><td>number</td><td>0      </td><td>Number of splits</td></tr>
+    <tr><td><code>uasr.am.train.ite0<br>
+      . . .<br>
+      uasr.am.train.ite&lt;uasr.am.train.split&gt;</code></td><td>number</td><td>0  </td><td>Number of iterations at
+			split<br/>There are more <a href="util/cfg.itp.html#index:cfgk" class="code">uasr.am.train.*</a>-keys!</td></tr>
+    <tr><td><code>uasr.am.eval           </code></td><td>string</td><td>"auto"</td><td>HMM evaluation during training, one of the following strings:<pre>
+  none   - just train, do not evaluate (equivalent to uasr.skip=T)
+  assess - use <a href="train/am.itp.html#clp_-HMM_assess">-HMM_assess</a>
+  eval   - use <a href="train/am.itp.html#clp_-HMM_eval">-HMM_eval</a> (normal recognition)
+  auto   - decide automatically</pre></td></tr>
+    <tr><td><code>uasr.am.eval.mode</code></td><td>string</td><td>"0"</td><td>HMM evaluation mode (only if
+      <code>&lt;uasr.am.eval&gt;</code> is "eval"), one of the following characters:<pre>
+  0 - Free recognition with grammar
+  F - Forced alignment on labels with enforcement of the label boundaries 
+  L - Forced alignment on labels ("phoneme" sequence)
+  T - Forced alignment on transliteration ("word" sequence)</pre>
+	    See documentation of function <a class="code" href="train/am.itp.html#clp_-HMM_process">-HMM_process</a> for
+			more details.
+	  </td></tr>
+    <tr><td><code>uasr.am.eval.assess    </code></td><td>string</td><td>"cmx,hist"</td><td>Assessment mode (only if <code>&lt;uasr.am.eval&gt;</code> is "assess"),
+    comma separated list of the following strings:<pre>
+  cmx     - compute class confusion matrices
+  hist    - compute NLL x class histograms
+  loghist - compute NLL x class histograms with logarithmic counts</pre></td></tr>
+    <caption>Dedicated and important common configuration keys</caption>
+  </table>
+  <p class="indent">Remarks</p>
+  <ul>
+  	<li class="indent"><code>HMM.xtp trn</code> uses many more common keys. See documentation of functions and
+  		documentation of <a href="util/cfg.itp.html#index:cfgk" class="code">util/cfg.itp</a>.</li>
+  	<li class="indent">See documentation of <a href="util/cfg.itp.html#index:datadirs"
+  		class="code">util/cfg.itp</a> to learn more about UASR's organization of databases.</li>
+  	<li class="indent">See documentation of <a href="util/cfg.itp.html#clp_-CFG_get_path"
+			class="code">-CFG_get_path</a> to learn how UASR determines paths to the various data sets.</li>
+  	<li class="indent">See documentation of <a href="util/cfg.itp.html#clp_-CFG_get_flist"
+			class="code">-CFG_get_flist</a> to learn how UASR obtains file lists of the various data sets.</li>
+  </ul>
+	<p>Dedicated keys may be placed in the configuration file just like all other keys. Any key (common and dedicated)
+	may be specified or overwritten through the command line using <code><b>-P</b>&lt;key&gt;=&lt;value&gt;</code>
+	options:</p>
+  <pre class="code">
+  
+  dlabpro HMM.xtp trn $UASR_HOME/config/vm/VMV.cfg -Pskip=SI -Pstart=2_5
+  </pre>
+  <p><code>-P</code> options <em>always</em> overwrite the configuration file. The heading "<code>uasr.</code>" of the
+	keys may be omitted in <code>-P</code> options.</p>
+  
+  <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+  <a name="trn_flowchart"></a><h3>Program Flow Chart</h3>
+  <p class="figure"><nobr>
+    <object data="../resources/figures/HmmTraining.svg" type="image/svg+xml" width="709" height="1049">
+      <param name="src" value="../resources/figures/HmmTraining.svg">
+      <img src="../resources/figures/HmmTraining.png" alt="Figure 2: Flowchart of HMM training" width="708" height="1048">
+    </object><a href="../resources/figures/HmmTraining.svg" target="_blank"><img src="../resources/zoom.gif" width="17"
+    height="17" border="0" alt="Enlarge image"></a></nobr></p>
+  <p class="figure">Figure 2: Flowchart of HMM training</p>
+	<p class="indent">Remarks</p>
+	<ul>
+	  <li class="indent">See documentation of <a href="util/cfg.itp.html#index:datadirs" class="code">util/cfg.itp</a>
+			for details on the organization of databases in UASR.</li>
+		<li class="indent">The UASR functions shown in the flowchart are documented with <a href="train/am.itp.html"
+			class="code">train/am.itp</a>.</li>
+	</ul>
+	</div>
+	</div>
+
+  <!-- ===================================================================== -->
+  <div class="footer">End of user documentation.</div>
+  <div id="reference" style="margin-top:12pt;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar"><b>Reference</b>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('reference','Reference','..');"><img src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;" alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe2">
+
+  <!--}} CUSTOM_DOC -->
+  <a name="functions"></a><h3>Functions</h3>
+  <table cellSpacing="0" cellPadding="4" border="0">
+    <tr>
+      <td class="rowgroup" colSpan="2">Functions</td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-usage"><code class="link">-usage</code></a></td>
+      <td><code><b>-usage</b>(sCmd)</code><br>&nbsp;<br> Prints help on usage
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_ana"><code class="link">-CMD_ana</code></a></td>
+      <td><code><b>-CMD_ana</b></code><br>&nbsp;<br> HMM analysis
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_label_fnc"><code class="link">-HMM_label_fnc</code></a></td>
+      <td><code><b>-HMM_label_fnc</b>(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)</code><br>&nbsp;<br> Result function to <code>-HMM_process</code> for labeling with HMMs.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_lab"><code class="link">-CMD_lab</code></a></td>
+      <td><code><b>-CMD_lab</b></code><br>&nbsp;<br> HMM labeling
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_syn"><code class="link">-CMD_syn</code></a></td>
+      <td><code><b>-CMD_syn</b></code><br>&nbsp;<br> HMM synthesis
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-HMM_set_eval_mode"><code class="link">-HMM_set_eval_mode</code></a></td>
+      <td><code><b>-HMM_set_eval_mode</b></code><br>&nbsp;<br> Set evaluation mode for -CMD_trn and -CMD_evl
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_evl"><code class="link">-CMD_evl</code></a></td>
+      <td><code><b>-CMD_evl</b></code><br>&nbsp;<br> HMM training
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_trn"><code class="link">-CMD_trn</code></a></td>
+      <td><code><b>-CMD_trn</b></code><br>&nbsp;<br> HMM training
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_adp"><code class="link">-CMD_adp</code></a></td>
+      <td><code><b>-CMD_adp</b></code>
+      </td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <div id="clp_-usage">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-usage</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-usage','-usage','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-usage</b>(sCmd)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">HMM.xtp(40)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Prints help on usage
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sCmd</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Command to display help for (general help if empty).
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-CMD_ana">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_ana</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_ana','-CMD_ana','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_ana</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">HMM.xtp(192)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> HMM analysis
+
+  </div>
+  </div>
+  <div id="clp_-HMM_label_fnc">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_label_fnc</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_label_fnc','-HMM_label_fnc','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_label_fnc</b>(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">HMM.xtp(228)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Result function to <code>-HMM_process</code> for labeling with HMMs.
+ <h4>See also</h4>
+ <ul>
+   <li><a href="train/am.itp.html#clp_-HMM_process" class="linklist"><code>-HMM_process</code></a></li>
+ </ul>
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">hmm&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itHMM</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          HMM instance being labeled with
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Ignored
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nSpl</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Ignored
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nIte</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Ignored
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sHint</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Hint, see documentation of function <a class="code"
+          href="train/am.itp.html#clp_-HMM_process">-HMM_process</a>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">file&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iF</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The turn (file) being labeled
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itRes</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The recognition result of the turn (file) being labeled
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">object&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iL</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Container for log objects
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> If <code>sHint</code> is "L", the function returns 1. If <code>sHint</code> is "I", the function return
+         "Labeling". In all other cases it returns 0.
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.out&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.type&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.dir.out&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-CMD_lab">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_lab</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_lab','-CMD_lab','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_lab</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">HMM.xtp(268)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> HMM labeling
+
+  </div>
+  </div>
+  <div id="clp_-CMD_syn">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_syn</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_syn','-CMD_syn','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_syn</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">HMM.xtp(311)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> HMM synthesis
+
+  </div>
+  </div>
+  <div id="clp_-HMM_set_eval_mode">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_set_eval_mode</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_set_eval_mode','-HMM_set_eval_mode','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_set_eval_mode</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">HMM.xtp(735)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Set evaluation mode for -CMD_trn and -CMD_evl
+
+  </div>
+  </div>
+  <div id="clp_-CMD_evl">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_evl</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_evl','-CMD_evl','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_evl</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">HMM.xtp(761)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> HMM training
+
+  </div>
+  </div>
+  <div id="clp_-CMD_trn">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_trn</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_trn','-CMD_trn','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_trn</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">HMM.xtp(822)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> HMM training
+
+  </div>
+  </div>
+  <div id="clp_-CMD_adp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_adp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_adp','-CMD_adp','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_adp</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">HMM.xtp(1053)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  </div>
+  </div>
+<div class="footer">End of page</div>
+</body>
+</html>
+

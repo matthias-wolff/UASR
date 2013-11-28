@@ -1,0 +1,95 @@
+#!dlabpro
+## Unified Approach to Speech Synthesis and Recognition
+## - Blind source separation demo
+##
+## DESCRIPTION:
+## <a name="index:bssd" title="Demo | Blind source separation (ICA)"></a>
+## Demonstrates the incremenal fast ICA algorithm applied to a simple blind
+## source separation problem.
+
+"../util/@.itp"   include;                                                      # UASR utility functions
+"../train/am.itp" include;                                                      # AM training functions
+"\n// This is $__SFILE__" -echo;                                                # Protocol
+
+file iF;                                                                        # Snippet file list
+data idMix;                                                                     # Mixed signals
+data idUnmix;                                                                   # Unmixed signals
+data idF;                                                                       # File list buffer
+data idAux;                                                                     # Auxilary data instance
+var  n;                                                                         # Current snippet/channel
+var  sPath;                                                                     # Path
+var  sBuf;                                                                      # Configuration file
+
+# Configure session                                                             # -------------------------------------
+this :sfl[0,0]: "" "splitp" -VAR_strop sBuf =;                                  # Get path of current script
+sBuf "/BSS/BSS.cfg" + sBuf =;                                                   # Get path of config. file
+sBuf TRUE -CFG_init;                                                            # Initialize configuration
+"\n" -echo;                                                                     # Protocol
+#2 .__UTL_nVlevel =;
+
+## Load mixes signals and cut into pieces                                       # -------------------------------------
+"\n// Preparing data" -echo;                                                    # Protocol
+"\n   Cutting mixed signals" -echo;                                             # Protocol
+"mixed" "" -CFG_get_path sPath =;                                               # Get path to mixed signal files
+"${sPath}/mix_1.wav" "wav" idAux stdfile -import; idAux idMix -copy;            # Load mixed signal 1
+"${sPath}/mix_2.wav" "wav" idAux stdfile -import; idAux idMix -join;            # Load mixed signal 2
+"${sPath}/mix_3.wav" "wav" idAux stdfile -import; idAux idMix -join;            # Load mixed signal 3
+"${sPath}/mix_4.wav" "wav" idAux stdfile -import; idAux idMix -join;            # Load mixed signal 4
+idMix abs NULL 0 "max" idAux -aggregate;                                        # Get unmixed signals peak amplitude
+idAux NULL 0 "max" idAux /rec -aggregate;                                       # ...
+"\n   - Peak          : ${idAux[0,0]} -> *${1/idAux[0,0]}" -echo;               # Protocol
+idMix -type double idMix -tconvert;                                             # Convert to double
+:1/idAux[0,0]: idMix .* idMix =;                                                # Amplify unmixed signals
+"fea"   "" -CFG_get_path sPath =;                                               # Get temporary (=feature file) path
+0 n =; label L_CUT; n 1000 * idMix.nrec < if                                    # Loop signal snippets >>
+  idMix :n*1000: 1000 idAux /rec -select;                                       #   Cut snippet
+  "${sPath}/X${n}.dn3" idAux -save;                                             #   Save as "feature file"
+  { { "X${n}" } } idF -cat;                                                     #   Continue "feature file" list
+  n ++=; goto L_CUT                                                             #   End of signal snippets loop
+end                                                                             # <<
+"stat" "" -CFG_get_flist "ascii" idF stdfile -export;                           # Write file list
+
+## Do incremental fast ICA                                                      # -------------------------------------
+"\n\n// Performing incremental fast ICA" -echo;                                 # Protocol
+object iFI;                                                                     # Feature information object
+NULL iFI -FEA_info;                                                             # Create feature info object
+NULL iFI -FEA_analyze;                                                          # Gather feature information
+
+## Unmix                                                                        # -------------------------------------
+"\n   Unmixing signals" -echo;                                                  # Protocol
+"stat"    "" -CFG_get_flist iF set flist;                                       # Setup signal snippet file list
+"fea"     "" -CFG_get_path  iF set path;                                        # ...
+"fea.ext" "" -CFG_get iF set ext;                                               # ...
+label L_DEMIX; iF -next if                                                      # Loop over snippets >>
+  iF.sfile_fq idAux -restore;                                                   #   Load snipped
+  idAux iFI -1 idAux NULL -FEA_sfa;                                             #   Unmix
+  idAux idUnmix -cat;                                                           #   Append to unmixed signals
+  goto L_DEMIX;                                                                 #   End of loop
+end                                                                             # <<
+"" iF -set flist;                                                               # Close file list file
+
+## Save unmixed signale                                                         # -------------------------------------
+"\n\n// Aftermath" -echo;                                                       # Protocol
+"\n   Saving unmixed signals" -echo;                                            # Protocol
+"unmixed" "" -CFG_get_path sPath =;                                             # Get save path
+idUnmix abs NULL 0 "max" idAux -aggregate;                                      # Get unmixed signals peak amplitude
+idAux NULL 0 "max" idAux /rec -aggregate;                                       # ...
+"\n   - Peak          : ${idAux[0,0]} -> *${2^15/idAux[0,0]}" -echo;            # Protocol
+:2^15/idAux[0,0]: idUnmix .* idUnmix =;                                         # Amplify unmixed signals
+0 n =; label L_SAVE; n idUnmix.dim < if                                         # Loop over channels >>
+  idUnmix n 1 idAux -select;                                                    #   Copy channel n
+  1 12 / idAux -set rinc;                                                       #   Set sampling rate
+  idAux -type short idAux -tconvert;                                            #   Convert to short (not necessarily needed)
+  "${sPath}/channel_${n}.wav" "wav" idAux stdfile -export;                      #   Export wav-file
+  n ++=; goto L_SAVE;                                                           #   End of loop
+end;                                                                            # <<
+
+## Clean up                                                                     # -------------------------------------
+"\n   Cleaning up temporary directory" -echo;                                   # Protocol
+"fea" "" -CFG_get_path -cd;                                                     # Change to temporary directory
+"*.*" -SH_rm;                                                                   # Remove all files
+"\n\n// $__SFILE__ passed" -echo;                                               # Protocol
+"\n   Unmixed signals in ${sPath}/\n" -echo;                                    # Protocol
+quit                                                                            # Terminate session
+
+## EOF

@@ -1,0 +1,594 @@
+#!/usr/bin/env dlabpro
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Concatenative synthesis inventory generator
+##
+## AUTHOR : Guntram Strecha
+## PACKAGE: uasr/scripts/dlabpro
+##
+## ARGUMENTS:
+##   $1: Command or 'help'
+##   $2: Setup file or, if 1st arg. is 'help', command
+
+## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"util/cfg.itp"  include;                                                        # Include configuration utilities
+"util/os.itp"   include;                                                        # Include OS utilities
+"util/uasr.itp" include;                                                        # Include UASR utilities
+"util/var.itp"  include;                                                        # Include variables' utilities
+
+## Prints help on usage
+##
+## @param sCmd string
+##          Command to display help for (general help if empty).
+function -usage(sCmd)
+{
+  "\n"                                                                    -MSG;
+  sCmd "cnv" == if
+      "\n   cnv: Feature/Speaker conversion matrix"                       -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp cnv <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+    "\n\n   REMARKS:"                                                     -MSG;
+      "\n     Special <key>s for $__SFILE__:"                             -MSG;
+      "\n       input : type of input"                                    -MSG;
+      "\n             I - Into file(s)"                                   -MSG;
+      "\n             G - Gaussian state sequence(s)"                     -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp cnv ../../config/vm/VM.cfg -Pinput=G"        -MSG;
+      "\n     $__SFILE__.xtp syn ../../config/vm/VM.cfg -Pinput=I"        -MSG;
+      " -Pam.model=0_4"                                                   -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "cut" == if
+      "\n   cut: HMM cut diphones and generate HMM diphone inventory"     -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp <cfgfile> [options]"                 -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>       UASR configuration file"                    -MSG;
+    "\n\n   OPTIONS:"                                                     -MSG;
+      "\n     -v<n>           verbose level"                              -MSG;
+      "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
+    "\n\n   REMARKS:"                                                     -MSG;
+      "\n     Special <key>s for $__SFILE__:"                             -MSG;
+      "\n       skip  : Combination of the following letters"             -MSG;
+      "\n                 F - Feature extraction"                         -MSG;
+      "\n                 H - HMM training"                               -MSG;
+      "\n                 L - Automatic cut list generation"              -MSG;
+      "\n                 D - Dump packed inventory"                      -MSG;
+      "\n                 I - Inventory generation"                       -MSG;
+      "\n                 C - Conversion matrix generation"               -MSG;
+    0 return;
+  end
+    "\n   SYNOPSIS:"                                                      -MSG;
+    "\n     CSI: Concatenative synthesis inventory generator"             -MSG;
+  "\n\n   USAGE:"                                                         -MSG;
+    "\n     dlabpro $__SFILE__.xtp <command> <cfgfile> [options]"         -MSG;
+  "\n\n   COMMANDS:"                                                      -MSG;
+    "\n     cut - HMM cut diphones and generate HMM diphone inventory"    -MSG;
+    "\n     cnv - Calculate feature/speaker conversion matrix"            -MSG;
+  "\n\n  Type 'dlabpro $__SFILE__.xtp help <command>' for help on a "     -MSG;
+         "specific command."                                              -MSG;
+    "\n"                                                                  -MSG;
+  0 return;
+}
+
+## Generating speaker conversion matrices
+function -CMD_cnv() {
+  data    idSyn;
+  data    idOri;
+  data    idSynPhn
+  data    idOriPhn
+  data    idCnvMat;
+  data    idSig;
+  data    idFeaOri;
+  data    idFeaSyn;
+  data    idGss;
+  file    iF;                                                                   # File list
+  hmm     itHMM;
+  object  iFI;
+
+  ## Initialize                                                                 # -------------------------------------
+  "\n\n// Generatin per phoneme conversion matrizes"                      -MSG; # Protocol
+  "\n// Model           : " ( "am.model" "0_0" -CFG_get ) +               -MSG; # Display HMM name
+  var sDirLog; "log" "FS" -CFG_get_path sDirLog =;                              # Synthesized files output path
+  "\n   - Log dir       : $[sDirLog]"                                     -MSG; # Display output folder 
+  var sDirSyn; "syn" "FS" -CFG_get_path sDirSyn =;                              # Synthesized files output path
+  "\n   - Output dir    : $[sDirSyn]"                                     -MSG; # Display output folder 
+
+  ## - Get some settings form config                                            # - - - - - - - - - - - - - - - - - - -
+  var sAmId;     "am.model"           "0_0"     -CFG_get      sAmId     =;      # Acoustic model ID
+  var sDirSig;   "sig"                   ""     -CFG_get_path sDirSig   =;      # Signal files path
+  var sDirModel; "model"                 ""     -CFG_get_path sDirModel =;      # Model path
+  var sDirLab;   "lab"                   ""     -CFG_get_path sDirLab   =;      # Label files path
+  var sDirInto;  "into"                  ""     -CFG_get_path sDirInto  =;      # Into files path
+  var sDirPm;    "pm"                    ""     -CFG_get_path sDirPm    =;      # Pitch mark files path
+  var sBuf;
+
+  ## - Load model data                                                          # - - - - - - - - - - - - - - - - - - -
+  "$[sDirModel]/feainfo.object" iFI -FEA_info;                                  # Load feature info file
+  "$[sDirModel]/$[sAmId].hmm" itHMM -restore ?error if 1 return; end            # Load HMM
+
+  ( "flist.sep" "\t " "S" -CFG_get_ex ) iF set sep;                             # Set file list separator(s)  
+  ( "test" "" -CFG_get_flist ) iF -set flist;                                   # Load test set
+  
+  "LCQ"  -FEA_pfa_init;
+  "Uels" .__FEA_iPfa -set type
+
+  0 1 -PBAR;                                                                    # Begin progress bar
+  label L_FILE; iF -next if                                                     # Loop over files >>
+    "\n     $[iF.nfile 1 +]/$[iF.flist_data.nrec] - $[iF.sfile]: "       -MSG2; #   Protocol
+    :(iF.nfile+1)/iF.flist_data.nrec: 1 -PBAR;                                  #   Display progress
+
+    "$[sDirSig]" iF.sfile idSig -SIG_import_wav;                                #   Load signal
+ 
+    idFeaOri -reset;
+    idSig NULL idFeaOri NULL .__FEA_iPfa -analyze;                              #   Run feature analysis
+
+    idFeaSyn -reset;
+    "$[sDirInto]/$[iF.sfile].into" itHMM idFeaSyn idGss -HMM_get_fea;           # Get HMM feature sequence from into
+
+    :(idFeaOri.nrec-idFeaSyn.nrec): 1 == if
+      idFeaOri 0 idFeaOri.nrec -- idFeaOri /rec -select;
+    end  
+    :(idFeaSyn.nrec-idFeaOri.nrec): 1 == if
+      idFeaSyn 0 idFeaSyn.nrec -- idFeaSyn /rec -select;
+    end  
+    idFeaSyn.nrec idFeaOri.nrec == if
+      idFeaOri idOri -cat;                                                      #   Concatenate orignal features vectors
+      idFeaSyn idSyn -cat;                                                      #   Concatenate HMM feature vectors
+    else
+      "\nNumber of records of original and synthesized features differs -> skipping" 1 -WARNING;
+    end  
+    goto L_FILE;                                                                #   End file loop
+  end                                                                           # <<
+
+  .__UTL_nVlevel 2 > if
+    "idSyn_I.dn3" + idSyn -save;
+    "idOri_I.dn3" + idOri -save;
+  end  
+
+   idSyn 0 idSyn.dim -- idSyn -select;                                          # Cut phoneme sequence
+   :inv(idSyn*idSyn')*idSyn*idOri': idCnvMat =;                                 # Calculate conversion matrix
+   "$[sDirLog]/cnvMat_$[sAmId].dn3" idCnvMat -save;                             # Save conversion matrix
+
+  "\nok"                                                                   -MSG;
+  0 return;
+}
+
+function -CUT_init()
+{
+  object  iSI                                                                   # Session information object
+  object  iSI.iFI;                                                              # Feature information object
+  hmm     iSI.itAM;                                                             # Acoustic model
+  fst     iSI.itRN;                                                             # Recognition network
+  fst     iSI.itLX;                                                             # Lexical transducer
+  fst     iSI.itGP;                                                             # Gaussians->phonemes transducer
+  var  sAmFn;                                                                   # Acoustic model file name
+
+  var  sDirModel; "model"                         "" -CFG_get_path  sDirModel =;# Model path
+  var  sAmId;     "am.model"                   "0_0" -CFG_get       sAmId     =;# Acoustic model ID
+
+  sAmId sDirModel -CFG_getAmId sAmId =;                                         # Get model name for split
+
+  "\n   - Acoustic model: $[sAmId]"                                       -MSG; # Protocol
+
+  ## Load feature info and acoustic model                                       # -------------------------------------
+  "\n   Loading acoustic model ..."                                      -MSG2; # Protocol
+  "$[sDirModel]/feainfo.object" iSI.iFI -FEA_info;                              # Load feature info file
+  "$[sDirModel]/$[sAmId].hmm" sAmFn =;                                          # Get AM file name
+  sAmFn iSI.itAM /noerror -restore ?error if                                    # Load acoustic model; failed? >>
+    " FAILED"                                                            -MSG2; #   Error message
+    "Cannot load acoustic model $[sAmFn]."                              -ERROR; #   Error message
+    2 return;                                                                   #   Terminate session
+  else                                                                          # << successful >>
+    " ok ($[sAmFn])"                                                     -MSG2; #   Protocol
+  end                                                                           # <<
+  " done"                                                                -MSG2; # Protocol
+  iSI -HMM_inventory_init;
+  iSI return;
+}
+
+function -CUT_F()
+{
+  file    iCfg;
+  var     sFn;                                                                  # File name
+  var     sExp;      "exp"                     "" -CFG_get       sExp        =; # Experiment
+  var     sDirLog;   "log"                     "" -CFG_get_path  sDirLog     =; # Log path
+
+  "uasr.skip" -CFG_del;
+  "=" iCfg -set sep;
+  "$[sDirLog]/HmmDiphSyn_$[sExp].cfg" sFn =;
+  sFn "ascii" .__CFG_idCfg iCfg -export;
+  "\n\n   Starting Feature Analysis: dlabpro $UASR_HOME/scripts/dlabpro/FEA.xtp ana $[sFn] -c -v$[.__UTL_nVlevel]\n" -MSG;
+  "dlabpro $UASR_HOME/scripts/dlabpro/FEA.xtp ana $[sFn] -c -v$[.__UTL_nVlevel]" -system ?error if quit; end
+  sFn -SH_rm;
+
+  0 return;
+}
+
+function -CUT_H()
+{
+  file    iCfg;
+  var     sFn;                                                                  # File name
+  var     sExp;      "exp"                     "" -CFG_get       sExp        =; # Experiment
+  var     sDirLog;   "log"                     "" -CFG_get_path  sDirLog     =; # Info path
+
+  "uasr.skip" -CFG_del;
+  "=" iCfg -set sep;
+  "$[sDirLog]/HmmDiphSyn_$[sExp].cfg" sFn =;
+  sFn "ascii" .__CFG_idCfg iCfg -export;
+  "\n\n   Starting HMM Training: dlabpro $UASR_HOME/scripts/dlabpro/HMM.xtp trn $[sFn] -c -v$[.__UTL_nVlevel]\n" -MSG;
+  "dlabpro $UASR_HOME/scripts/dlabpro/HMM.xtp trn $[sFn] -c -v$[.__UTL_nVlevel]" -system ?error if quit; end
+  sFn -SH_rm;
+
+  0 return;
+}
+
+function -CUT_L()
+{
+  object  iSI                                                                   # Session information object
+  file    iF;                                                                   # File list
+  data    idLex;                                                                # Lexicon
+  data    idSig;                                                                # Speech signal
+  data    idSeq;                                                                # Recognition result of turn
+  data    idCutL;                                                               # Cut list
+
+  var sDb;     "db"                              "" -CFG_get       sDb        =;# Database
+  var sExp;    "exp"                             "" -CFG_get       sExp       =;# Experiment
+  var sAmId;   "am.model"                       "3" -CFG_get       sAmId      =;# Acoustic model ID
+  var sDirSig; "sig"                             "" -CFG_get_path  sDirSig    =;# Signal files path
+  var sDirLog; "log"                             "" -CFG_get_path  sDirLog    =;# Inventory file name
+  var sFnList; "flist.cut"                       "" -CFG_get       sFnList    =;# File list
+  var sFnCut;  "cut" "$[sDirLog]/cutlist_$[sDb]_$[sExp]_$[sAmId].flst" "S" -CFG_get_ex sFnCut    =;# Cut list file
+
+  -CUT_init iSI =;
+  
+  iF -reset;                                                                    # Reset file list
+  "\n\n// Generate cut list. (\"$[sFnCut]\")"                             -MSG; # Protocoll
+  ( "flist.sep" "\t " "S" -CFG_get_ex ) iF set sep;                             # Set file list separator(s)  
+  sFnList iF -set flist;                                                        # Load file set
+  0 1 -PBAR;                                                                    # Begin progress bar
+  label L_FILE; iF -next if                                                     # Loop over files >>
+    "\n     $[iF.nfile 1 +]/$[iF.flist_data.nrec] - $[iF.sfile]: "       -MSG2; #   Protocol
+    :(iF.nfile+1)/iF.flist_data.nrec: 1 -PBAR;                                  #   Display progress
+    iF iSI idSeq -HMM_inventory_recognize_turn;                                 #   Recognize turn
+    iF.sfile idSeq idCutL -HMM_inventory_addto_cutlist;                         #   Add diphons to cut list
+    goto L_FILE;                                                                #   End file loop
+  end                                                                           # <<
+  idCutL 0 idCutL /numeric -sortup;                                             # Sort cut list
+  sFnCut "ascii" idCutL stdfile -export;                                        # Save cut list
+
+  "\ndone"                                                                -MSG; # Protocoll
+  0 return;
+}
+
+function -CUT_D()
+{
+  data idCutL;                                                                  # Cut list
+  var  sDb;     "db"                              "" -CFG_get       sDb       =;# Database
+  var  sExp;    "exp"                             "" -CFG_get       sExp      =;# Experiment
+  var  sDirInv; "inv"                             "" -CFG_get_path  sDirInv   =;# Inventory file name
+  var  sDirLog; "log"                             "" -CFG_get_path  sDirLog   =;# Inventory file name
+  var  sAmId;   "am.model"                       "3" -CFG_get       sAmId     =;# Acoustic model ID
+  var  sFnCut;  "cut" "$[sDirLog]/cutlist_$[sDb]_$[sExp]_$[sAmId].flst" "S" -CFG_get_ex sFnCut    =;# Cut list file
+  var  sFnInv;  "inv" "$[sDirInv]/$[sDb]_$[sExp]_$[sAmId]"  "S" -CFG_get_ex    sFnInv    =;# Inventory base filename
+
+  "\n\n// Dump packed inventory. (\"$[sFnInv]\")"                         -MSG; # generate packed inventory
+  idCutL -HMM_inventory_init_cutlist;                                           #   Create cut list structure
+  sFnCut "ascii" idCutL stdfile -import;                                        #   Import cut list
+  idCutL "DIPH" idCutL -find_comp idCutL -sortup;                               #   Sort cut list
+  "$[sFnInv]" idCutL -DUMP_diphone;                                             #   generates packed inventory
+
+  "\ndone"                                                                -MSG; #   Protocoll  
+  0 return;
+}
+
+function -CUT_I()
+{
+  object iSI                                                                    # Session information object
+  file   iF;                                                                    # File list
+  data   idInv;                                                                 # The inventory 
+  data   idCutL;                                                                # Cut list
+  data   idLex;                                                                 # Lexicon
+  data   idSig;                                                                 # Speech signal
+  data   idSeq;                                                                 # Recognition result of turn
+  data   idAux;                                                                 # Auxilary data instance
+  data   idAux2;                                                                # Auxilary data instance
+  var    nValues;                                                               # Total number of states stored to inventory
+
+  var sDb;     "db"                              "" -CFG_get       sDb        =;# Database
+  var sExp;    "exp"                             "" -CFG_get       sExp       =;# Experiment
+  var sAmId;   "am.model"                       "3" -CFG_get       sAmId      =;# Acoustic model ID
+  var sDirSig; "sig"                             "" -CFG_get_path  sDirSig    =;# Signal files path
+  var sDirInv; "inv"                             "" -CFG_get_path  sDirInv    =;# Inventory file name
+  var sDirLog; "log"                             "" -CFG_get_path  sDirLog   =;# Inventory file name
+  var sFnCut;  "cut" "$[sDirLog]/cutlist_$[sDb]_$[sExp]_$[sAmId].flst" "S" -CFG_get_ex sFnCut    =;# Cut list file
+  var sFnInv;  "inv" "$[sDirInv]/$[sDb]_$[sExp]_$[sAmId]"  "S" -CFG_get_ex    sFnInv    =;# Inventory base filename
+
+  -CUT_init iSI =;
+
+  "\n\n// Generate inventory. (\"$[sFnInv].xml\")"                        -MSG; #   Protocoll
+  idCutL -HMM_inventory_init_cutlist;                                           #   Create cut list structure
+  sFnCut "ascii" idCutL stdfile -import;                                        #   Import cut list
+  idCutL "FILE" idCutL -find_comp idCutL /numeric -sortup;                      #   Sort cut list    
+  idCutL 0 2 idLex -select;                                                     #   Get lexicon
+  idLex 0 idAux -compress;                                                      #   |
+  1 1 idAux /comp -xfetch 0 idLex 0 1 idLex -lookup;                            #   |
+
+  iF -reset;                                                                    #   Reset file list
+  idLex iF -set flist_data;                                                     #   Set file list
+  0 1 -PBAR;                                                                    #   Begin progress bar
+  label L_FILE; iF -next if                                                     #   Loop over files >>
+    "\n     $[iF.nfile 1 +]/$[iF.flist_data.nrec] - $[iF.sfile]: "       -MSG2; #     Protocol
+    :(iF.nfile+1)/iF.flist_data.nrec: 1 -PBAR;                                  #     Display progress
+    iF iSI idSeq -HMM_inventory_recognize_turn;                                 #     Recognize turn
+    idSeq "~LSR" idSeq -find_comp 1 idSeq -delete;                              #     Delete recognition score
+    idCutL iF.nfile 1 idAux -dfetch iF.nfile 2 idAux -dfetch                    #     Select cut information for turn
+    idAux2 /rec -select;                                                        #     |
+    idSeq idAux2 idInv -HMM_inventory_addto_inv nValues +=;                     #     Add diphones to inventory
+    goto L_FILE;                                                                #     End file loop
+  end                                                                           #   <<
+  0 "~DPH" idInv -set_cname;                                                    #   Set diphone component name
+  "$[sFnInv].xml" idInv -save;                                                  #   Save inventory
+  "~TIS" idInv -find_comp 1 /comp -xfetch 0 idAux -sortup;                      #   Calc coverage
+  idAux 0 idAux -compress;                                                      #   |
+
+  "\n\n${nValues} frames saved, ${idAux.nrec} states in use."            -MSG2; #   Protocoll
+  0 return;
+}
+
+function -CUT_C(sSkip)
+{
+  object  iSI                                                                   # Session information object
+  file    iF;                                                                   # File list
+  data    idAux;                                                                # Auxilary data instance
+  data    idSig;                                                                # Speech signal
+  data    idLab;                                                                # Labels
+  data    idLex;                                                                # Lexicon
+  data    idSeq;                                                                # Recognition result of turn
+  data    idInv;                                                                # Inventory
+  data    idCutL;                                                               # Cut list
+  data    idFeaDS;
+  data    idFeaDN;
+  data    idFeaS;
+  data    idFeaN;
+  data    idCnvMat;
+  data    idCnvExp;
+  var     nDimTrg;
+  var     nValues;
+  var     sAmFn;                                                                # Acoustic model file name
+  var     sFnCnv;                                                               # Cnv matrix File name
+  var     sFnCfg;
+  var     sDiph;
+  var     sTyp;
+
+  var nQBit;     "fea.qbit"          8 -CFG_get       nQBit               -vset;# Get bit width for quantization
+  var nCrate;    "pfa.crate"       160 -CFG_get       nCrate              -vset;# Get frame rate (in samples)
+  var nDimSrc;   "pfa.dim"     ""  "S" -CFG_get_ex    nDimSrc             -vset;;# Primary feature analysis dimension
+  var sExp;      "exp"              "" -CFG_get       sExp                    =;# Experiment
+  var sDb;       "db"               "" -CFG_get       sDb                     =;# Database
+  var sAmId;     "am.model"        "3" -CFG_get       sAmId                   =;# Acoustic model ID
+  var sDirLog;   "log"              "" -CFG_get_path  sDirLog                 =;# Log files path
+  var sDirModel; "model"            "" -CFG_get_path  sDirModel               =;# Model path
+  var sDirInv;   "inv"              "" -CFG_get_path  sDirInv                 =;# Inventory file name
+  var sDirInfo;  "info"             "" -CFG_get_path  sDirInfo                =;# Info path
+  var sDirFlist; "flists"           "" -CFG_get_path  sDirFlist               =;# File lists path
+  var sSigExt;   "sig.ext"     ""  "S" -CFG_get_ex    sSigExt                 =;# Signal file extension
+  var sPfa;      "pfa"         ""  "S" -CFG_get_ex    sPfa                    =;# Primary feature analysis
+  var sCnvCfg    "cnv.cfg"     ""  "S" -CFG_get_ex    sCnvCfg                 =;# Config file for feature conversion
+  var sLabMap    "lab.map"     ""  "S" -CFG_get_ex    sLabMap                 =;# Get labmap
+
+  nQBit  8 == if "char"  else                                                  # Get fixpoint type string of bitwidth
+  nQBit 16 == if "short" else                                                  # |
+  nQBit 32 == if "int"   else                                                  # |
+                 "long" end end end sTyp =;                                    # |
+ 
+  sCnvCfg TRUE -CFG_init; -CFG_generate;                                        #   Init conversion config
+  var sDbIncl; "db.include"                      "" -CFG_get sDbIncl          =;
+  var sCnvExp; "exp"                             "" -CFG_get sCnvExp          =;
+  var sCnvPfa; "pfa"                        ""  "S" -CFG_get_ex    sCnvPfa    =;# Primary feature analysis
+  var sCnvDb;  "db"                              "" -CFG_get       sCnvDb     =;# Source database
+  var sFnCut;  "$[sDirLog]/cutlist_$[sCnvDb]_$[sDb]_$[sExp]_$[sAmId].flst" sFnCut =; # Cut list file
+  var sFnInv;  "$[sDirInv]/$[sCnvDb]_$[sDb]_$[sExp]_$[sAmId]"      sFnInv     =;# Inventory base filename
+  var sFnInvX; "$[sFnInv].xml" sFnInvX =;
+  
+  "db" sDb -CFG_set;
+  sDbIncl if sDbIncl include; end
+
+  "cut"       sFnCut  -CFG_set;
+  "inv"       sFnInv  -CFG_set;
+  "lab.map"   sLabMap -CFG_set;
+
+  sSkip "L" "search" -VAR_strop 0 < sFnCut  stdfile -exists not || if -CUT_L;end# Skipping cut list generation ?
+  sSkip "D" "search" -VAR_strop 0 <                                if -CUT_D;end# Skipping inventory dump ?
+  sSkip "I" "search" -VAR_strop 0 < sFnInvX stdfile -exists not || if -CUT_I;end# Skipping inventory generation ?
+  sSkip "C" "search" -VAR_strop 0 >= if "\ndone" -MSG; 0 return; end            # Skipping conversion matrix generation ?
+
+  -CUT_init iSI =;
+
+  sCnvCfg TRUE -CFG_init;
+  "cnv.exp" "$[sCnvExp]_$[sAmId]"  -CFG_get       sCnvExp                     =;# Get conversion experiment
+  "exp" sCnvExp                    -CFG_set;                                    # Make it visible in current config
+  -CFG_generate;                                                                # Init conversion config
+  "pfa"                    ""  "S" -CFG_get_ex    sCnvPfa                     =;# Primary feature analysis
+  "pfa.dim"                ""  "S" -CFG_get_ex    nDimTrg                 -vset;# Primary feature analysis dimension
+
+  "$[sDirInv]/cnvmtrx_$[sCnvDb]_$[sCnvExp]_$[sDb]_$[sExp]_$[sAmId].$[nQBit]bit.xml" sFnCnv =;# Set file name
+
+  "\n\n// Generating conversion matrix. (\"$[sFnCnv]\")"                 -MSG2; # Protocoll
+
+  sCnvPfa -FEA_pfa_init;                                                        # Init convert primary feature analysis
+
+  sFnInvX idInv -restore;                                                       # Load inventory
+  idCutL -HMM_inventory_init_cutlist;                                           # Create cut list structure
+  sFnCut "ascii" idCutL stdfile -import;                                        # Import cut list
+  idCutL 0 idCutL /numeric -sortup;                                             # Sort cut list
+
+  idCutL "FILE" idCutL -find_comp 1 idCutL -xfetch idAux =;                     # File list
+  idAux iF -set flist_data;                                                     # |
+  0 1 -PBAR;                                                                    # Begin progress bar
+  label L_FILE; iF -next if                                                     # Loop over files >>
+    "\n     $[iF.nfile 1 +]/$[iF.flist_data.nrec] - $[iF.sfile]: "       -MSG2; #   Protocol
+    :(iF.nfile+1)/iF.flist_data.nrec: 1 -PBAR;                                  #   Display progress    
+
+    iF "" "A" idFeaDN -FEA_get;                                      "." -MSG2; #   Get features
+    "lab" idFeaDN -find_comp 1 idFeaDN /comp -mark;                             #   Delete labels 
+    idFeaDN -1 -1 idFeaDN /mark -delete;                                        #   |
+    idFeaDN iF.nfile "FRMS" idCutL -find_comp -dfetch                           #   Cut features of target diphone
+               iF.nfile "FRMC" idCutL -find_comp -dfetch idFeaDN /rec -select;  #   |
+    iF.nfile "DIPH" idCutL -find_comp idCutL -sfetch sDiph =;                   #   Get diphone name
+    " $[sDiph]"                                                          -MSG2; #   Protocoll
+    sDiph idInv iSI.itAM iSI.iFI nDimSrc TRUE idFeaDS -HMM_inv_get_fea;         #   Get synthesis feature vectors
+    ?error if 0 " $[sDiph] not found in inventory." -WARNING; goto L_FILE; end  #   Diphone not found in inventory
+
+    idFeaDN.nrec idFeaDS.nrec != if                                             #   Number of frames not equal >>
+      "Number of frames differ in $[iF.sfile] at $[sDiph]."         1 -WARNING; #     Protocoll
+    else                                                                        #   Else >>
+      idFeaDS idFeaS -cat;                                                      #     concatenate feature vectors
+      idFeaDN idFeaN -cat;                                                      #     |
+    end                                                                         #   <<
+    goto L_FILE;                                                                #   End file loop
+  end                                                                           # <<
+
+  "~INT" idInv -find_comp 0 < if "~INT" -type double idInv -addcomp; end        # Add intensity track if needed
+  0 1 idFeaN /comp -xfetch 0 1 "~INT" idInv -find_comp idInv -xstore;           # Take it from natural feature vector
+  sFnInvX idInv -save;                                                          # Save it
+
+  idFeaS "~PHO" idFeaS -find_comp 1 idFeaS /comp -delete;                       # Delete unnecessary components
+  idFeaS "v/uv" idFeaS -find_comp 1 idFeaS /comp -delete;                       # |
+  0 1 idFeaN /comp -xfetch 0 1 0 idFeaS /comp -xstore;                          # Replace trained intensity with natural
+  idFeaN 0 1 idFeaN /comp -delete;                                              # Delete intensity component of natural feature vector
+  nQBit 0 > if                                                                  # Simulate quantization >>
+    idFeaS 0 nDimSrc sPfa nQBit -FEA_quantize   idFeaS =;                       #   Quantize features
+    idFeaS 0 nDimSrc NULL nQBit -FEA_dequantize idFeaS =;                       #   Dequantize features
+  end                                                                           # <<
+
+  .__UTL_nVlevel 2 > if
+    "idFeaS.$[sAmId].dn3" idFeaS -save;
+    "idFeaN.$[sAmId].dn3" idFeaN -save;
+  end
+
+  :idFeaS*idFeaS': idAux NULL matrix /svd -invert;                              # Calculate conversion matrix
+  :idAux*idFeaS*idFeaN': idCnvMat =;                                            # |
+  nQBit 0 > if                                                                  # Compress 64bit -> nFixp >>
+    :abs(idCnvMat): NULL 0 "max" idAux /rec -aggregate;                         #   Find scale factor
+    idAux NULL 0 "max" idAux /comp -aggregate;                                  #   |
+    :(idCnvMat*(2^(nQBit-1)))./idAux[0,0]+0.5: -type $[sTyp] idCnvMat -tconvert;#   Scale and convert
+    :idAux[0,0]: idCnvMat -set descr0;                                          #   Store scale factor
+  end                                                                           # <<
+  sFnCnv idCnvMat -save;                                                        # Save conversion matrix
+
+  "\ndone"                                                                -MSG; # Protocoll  
+  0 return;
+}
+
+## HMM cut diphones and generate HMM diphone inventory
+function -CMD_cut()
+{
+  var     bFea;
+  var     bHmm;
+  var     bList;
+  var     bInv;
+  var     bDump;
+  var     sCnvCfg    "cnv.cfg"            ""  "S" -CFG_get_ex    sCnvCfg     =; # Config file for feature conversion
+  var     sSkip      "skip"            "FHD"  "S" -CFG_get_ex    sSkip       =; # Skip generation of : F=FEA analysis, H=HMM trainging, L=cut list, I=inventory, C=conversion matrix 
+  
+  sSkip "F" "search" -VAR_strop 0 >= if FALSE else TRUE end bFea =;             # Skip feature analysis
+  sSkip "H" "search" -VAR_strop 0 >= if FALSE else TRUE end bHmm =;             # Skip HMM training
+  sSkip "L" "search" -VAR_strop 0 >= if FALSE else TRUE end bList =;            # Skip generation of cut list?
+  sSkip "I" "search" -VAR_strop 0 >= if FALSE else TRUE end bInv  =;            # Skip generation of inventory?
+  sSkip "D" "search" -VAR_strop 0 >= if FALSE else TRUE end bDump =;            # Skip diphone dump
+  
+  sCnvCfg if sSkip -CUT_C; else;
+    bFea  if -CUT_F; end
+    bHmm  if -CUT_H; end
+    bList if -CUT_L; end
+    bDump if -CUT_D; end
+    bInv  if -CUT_I; end
+  end
+  
+  "\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n"          -MSG2; # Protocoll
+  0 return;
+}
+
+## == MAIN PROGRAM ==                                                           # =====================================
+
+"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
+"\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
+"\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
+"\n// dLabPro VID     : " -version +                                      -MSG; # Protocol
+"\n// UASR VID        : " -UASR_version +                                 -MSG; # Protocol
+( "$1" "help" == ) -UASR_help || if "$2" -usage; 0 return; end                  # Print help
+"$1" var sCmd;                                                                  # Get command
+sCmd "cnv" ==                                                                   # | HMM speaker conversion
+sCmd "cut" == ||                                                                # | HMM cutter
+not ( $$ 2 < ) || if                                                            # Bad command or less than 2 args. >> 
+  $$ 2 < if "Too few arguments" else "unknown command '$1'"  end   -ERROR;      #   Error
+  "\nType '$__SFILE__.xtp help' for usage\n" -echo;                             #   Give a little help
+  1 return;                                                                     #   Terminate with error code
+end                                                                             # <<
+
+## Initialize session                                                           # -------------------------------------
+"\n// Configuration   : $2"                                               -MSG; # Protocol
+"$2" TRUE -CFG_init;                                                            # Configure session
+
+"\n// Includes        : "                                                 -MSG; # Protocol
+sCmd "cnv" == if                                                                # Some common cases >>
+  "util/am.itp"      include;                                         "." -MSG; #   Include AM utilities
+  "util/fea.itp"     include;                                         "." -MSG; #   Include feature utilities
+  "util/fst.itp"     include;                                         "." -MSG; #   Include FST utilities
+  "util/lab.itp"     include;                                         "." -MSG; #   Include label utilities
+  "util/lm.itp"      include;                                         "." -MSG; #   Include lexicon utilities
+  "util/lx.itp"      include;                                         "." -MSG; #   Include language model utilities
+  "util/prosody.itp" include;                                         "." -MSG; #   Include prosody handling utilities
+  "util/sig.itp"     include;                                         "." -MSG; #   Include signal utilities
+  "util/spp.itp"     include;                                         "." -MSG; #   Include signal preprocessing utilities
+  "util/into.itp"    include;                                         "." -MSG; #   Include into file processing utilities
+  "synth/am.itp"     include;                                         "." -MSG; #   Include synthesis AM utilities
+end                                                                             # <<
+sCmd "cut" == if                                                                # HMM analysis >>
+  "util/sig.itp"     include;                                         "." -MSG; #   Include signal utilities
+  "util/spp.itp"     include;                                         "." -MSG; #   Include signal preprocessing utilities
+  "util/lab.itp"     include;                                         "." -MSG; #   Include label utilities
+  "util/fea.itp"     include;                                         "." -MSG; #   Include feature utilities
+  "util/lx.itp"      include;                                         "." -MSG; #   Include AM analysis utilities
+  "synth/diph.itp"   include;                                         "." -MSG; #   Include diphon inventory utilities
+  "synth/cfg.itp"    include;                                         "." -MSG; #   Include automated config utilities
+  -CFG_generate;                                                      "." -MSG; #   Generate config
+end                                                                             # <<
+" done"                                                                   -MSG; # Protocol
+#"\n\n   Saving program object ..."                                       -echo;
+#"root10015" this -trace_error;
+#"d:/tmp/HMM.dlp" this /zip -save;
+#1 break;
+
+## TODO: need a pre-include or a real inline function
+# -init_session include;
+"util/uasr_session.itp" include;                                                # Include UASR session startup script
+
+## Execute commands                                                             # -------------------------------------
+-CMD_$[sCmd] return;                                                            # Call command handler function
+
+## EOF
