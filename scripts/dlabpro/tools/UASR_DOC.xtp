@@ -392,6 +392,18 @@ function -gen_html_head(sTitle,iDgn)
   <title>$[sTitle]</title>
   <link rel=stylesheet type="text/css" href="%RPATH%/default.css">
 </head>
+<script type="text/javascript">
+%>
+  "\n  if (top==self)"                                                 iDgn >>;
+  "\n  {"                                                              iDgn >>;
+  "\n    var sLocation = \"%RPATH%/index.html?%RURL%\";"               iDgn >>;
+  "\n    if (location.hash.length>0)"                                  iDgn >>;
+  "\n      sLocation += \";\"+location.hash.substr(1);"                iDgn >>;
+  "\n    top.location = sLocation;"                                    iDgn >>;
+  "\n  }"                                                              iDgn >>;
+  iDgn 
+<%
+</script>
 <script type="text/javascript" src="%RPATH%/default.js"></script>
 <script type="text/javascript">__sRootPath="%RPATH%/..";</script>
 <body>
@@ -1067,6 +1079,8 @@ end                                                                             
   idS.idCd${nS} idS.iDgn${nS} -doc_script;                                      #   Create HTML doc. for script
   idS.iDgn${nS} -scan_keywords;                                                 #   Scan for keywords
   idS.iDgn${nS}.gen "?%RPATH%?${sRpath}" "replace" idS.iDgn${nS}.gen -strop;    #   Replace %RPATH% key
+    idS.iDgn${nS}.gen "?%RURL%?automatic/${sFname}.html" "replace"              #   |
+  idS.iDgn${nS}.gen -strop;                                                     #   Replace %RURL% key
   "${sDpath}/${sFname}.html" idS.iDgn${nS} -write;                              #   Write document
   nS ++=;                                                                       #   End of loop
 end                                                                             # <<
@@ -1079,7 +1093,8 @@ end                                                                             
   "${sDpath}/${sFname}" idCdc -scan_cdc;                                        #   Scan custom HTML form doc. file
   idS :idP[nP,1]: :idP[nP,2]: idCdc iDgn -doc_package;                          #   Create HTML doc. for package
   iDgn -scan_keywords;                                                          #   Scan for keywords
-  iDgn.gen "?%RPATH%?${sRpath}" "replace" iDgn.gen -strop;                      #   Replace %RPATH% key
+  iDgn.gen "?%RPATH%?${sRpath}"          "replace" iDgn.gen -strop;             #   Replace %RPATH% key
+  iDgn.gen "?%RURL%?automatic/${sFname}" "replace" iDgn.gen -strop;             #   Replace %RURL% key
   "${sDpath}/${sFname}" iDgn -write;                                            #   Write document
   nP ++=;                                                                       #   End of loop
 end                                                                             # <<
@@ -1089,14 +1104,16 @@ iDgn -reset;                                                                    
 .__udc_idFnc 1 .__udc_idFnc -sortup;                                            # Sort by function name
 .__udc_idFnc iDgn -doc_fncindex;                                                # Create function index page
 "\n   g - ${sDpath}/fncindex.html" -MSG;                                        # Protocol
-iDgn.gen "?%RPATH%?.." "replace" iDgn.gen -strop;                               # Replace %RPATH% key
+iDgn.gen "?%RPATH%?.."                     "replace" iDgn.gen -strop;           # Replace %RPATH% key
+iDgn.gen "?%RURL%?automatic/fncindex.html" "replace" iDgn.gen -strop;           # Replace %RURL% key
 "${sDpath}/fncindex.html" iDgn -write;                                          # Write document
 
 ## Generated keyword index                                                      # -------------------------------------
 iDgn -reset;                                                                    # Reset document generator
 .__udc_idKwd iDgn -doc_kwdindex;                                                # Create keyword index page
 "\n   g - ${sDpath}/kwdindex.html" -MSG;                                        # Protocol
-iDgn.gen "?%RPATH%?.." "replace" iDgn.gen -strop;                               # Replace %RPATH% key
+iDgn.gen "?%RPATH%?.."                     "replace" iDgn.gen -strop;           # Replace %RPATH% key
+iDgn.gen "?%RURL%?automatic/kwdindex.html" "replace" iDgn.gen -strop;           # Replace %RURL% key
 "${sDpath}/kwdindex.html" iDgn -write;                                          # Write document
 
 ## Update TOC                                                                   # -------------------------------------

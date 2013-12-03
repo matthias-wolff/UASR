@@ -29,7 +29,15 @@
 <head>
   <title>UASR: Unified Approach to Speech Synthesis and Recognition</title>
 </head>
-<frameset cols="20%,*" border="4" frameborder=yes framespacing="4" bordercolor="#336699">
+<script type="text/javascript">
+  function __navigate()
+  {
+	  if (location.search.length==0) return;
+	  var sUrl = location.search.substr(1).replace(/;/g,"#");
+	  frames["contFrame"].location = sUrl;
+  }
+</script>
+<frameset cols="20%,*" border="4" frameborder="yes" framespacing="4" bordercolor="#336699" onLoad="void(__navigate());">
   <frame src="toc.html" name="tocFrame" marginheight="0" marginwidth="0" frameborder="0" bordercolor="#336699">
   <frame src="home.html" name="contFrame" marginheight="0" marginwidth="0" frameborder="0" bordercolor="#336699">
   <noframes>
