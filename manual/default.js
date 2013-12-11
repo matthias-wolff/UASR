@@ -146,15 +146,27 @@ function __tocToggle(sNode,nMode)
  * Navigates to a named anchor in the dLabPro manual.
  * 
  * @param sUrl
- *          The URL relative to the dLabPro manual root directory.
+ *          The URL, relative to the dLabPro manual root directory, of the 
+ *          dLabPro manual page to navigate to (optional, default is
+ *          <code>null</code> which navigates to the home page).
  * @param sHash
- *          The anchor name (optional).
+ *          The anchor name on the dLabPro manual page to navigate to 
+ *          (optional, default is <code>null</code> which navigates to the top
+ *          of the page).
  */
-function __goDlpA(sUrl,sHash)
+function __goDlabpro(sUrl,sHash)
 {
-	var iWnd = window.open(__sRootPath+"/../dLabPro/manual/index.html?automatic/"+sUrl+";"+sHash,"dLabPro");
-	iWnd.focus();
+  var sLocation = "..";
+  try
+  {
+	sLocation = __sRootPath;
+  }
+  catch (e) {}
+  sLocation += "/../dLabPro/manual/index.html";
+  if (sUrl ) sLocation += "?"+sUrl;
+  if (sHash) sLocation += ";"+sHash;
+  var iWnd = window.open(sLocation,"dLabPro");
+  iWnd.focus();
 }
-
 
 // EOF
