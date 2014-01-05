@@ -104,7 +104,7 @@ function __tocInit(sRootNode)
   for (i=0; i<aiDivs.length; i++)
   {
 	if (aiDivs[i].className!="tocNode") continue;
-	if (aiDivs[i].id=="" || aiDivs[i].id=="tocPackageReference") continue;
+	if (aiDivs[i].id=="" || aiDivs[i].id=="tocPackageDocumentation") continue;
 	// HACK: IE will get stuck when invoking __tocToggle directly 
 	window.setTimeout("__tocToggle(\""+aiDivs[i].id+"\",TOC_COLLAPSE)",10);
   }

@@ -56,7 +56,7 @@ function -usage(sCmd)
     "\n\n   REMARKS:"                                                     -MSG;
       "\n     Special <key>s for $__SFILE__.xtp:"                         -MSG;
       "\n       dlg.fsg       finite state dialog file"                   -MSG;
-      "\n       export        One of the following (default: no)"         -MSG;
+      "\n       export        One of the following (default: none)"       -MSG;
       "\n                       openFST - export openFST grammar files"   -MSG;
       "\n       out           output folder (default: current folder)"    -MSG;
       "\n       out.feainfo   output file (default: <out>/feainfo.object)"-MSG; 
@@ -299,7 +299,7 @@ function -RN_add_unit(sFile,sFilter,iSI)
   " done (${itRN.sd.nrec} states, ${itRN.td.nrec} transitions)" -MSG2 "." -MSG; # Protocol
 }
 
-## Pack the feature info file
+## Packs the feature info file.
 function -PACK_feainfo()
 {
   object iFI;                                                                   # The feature info object
@@ -319,7 +319,7 @@ function -PACK_feainfo()
   1 return;                                                                     # All right
 }
 
-## Pack the acoustic model file
+## Packs the acoustic model file.
 function -PACK_gmm()
 {
   hmm  itHMM;                                                                   # The HMM
@@ -353,7 +353,7 @@ function -PACK_gmm()
   1 return;                                                                     # All right
 }
 
-## Pack the acoustic model file. [CURRENTLY NOT USED]
+## Packs the acoustic model file. [CURRENTLY NOT USED]
 function -PACK_hmm()
 {
   hmm itHMM;                                                                    # The HMM
@@ -373,7 +373,52 @@ function -PACK_hmm()
   1 return;                                                                     # All right
 }
 
-## Pack the session info file
+## Packs the session info file.
+##
+## <a name="index:iSI" title="Session information object"></a>
+## <p>The session information object is structured as follows:</p>
+## <table class="indent" cellpadding="0" cellspacing="0" border="0">
+##   <tr>
+##     <th><code><b>iSI</b></code></th>
+##     <th>Description</th>
+##   </tr>
+##   <tr>
+##     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt04l.gif">
+##       <code>idLMtos</code></nobr></td>
+##     <td class="hidden"><i>&ndash; deprecated &ndash;</i> The output symbols of the
+##       recognition network, to be replaced by <code>itRN.os</code>.</td>
+##   </tr>
+##   <tr>
+##     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt04l.gif">
+##       <code>itGP</code></nobr></td>
+##     <td class="hidden">The Gaussian-to-phoneme labelling transducer. Used by the recognizer
+##       to generate phonetic output strings. For general acoustic pattern recognition
+##       applications read "HMM labels" instead of "phonemes".</td>
+##   </tr>
+##   <tr>
+##     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt04l.gif">
+##       <code>itLX</code></nobr></td>
+##     <td class="hidden">The lexicon (phoneme-to-word) transducer. The object contains exactly
+##       one <a href="javascript:__goDlabpro('automatic/fst.html','mth_-addunit')">FST unit</a>
+##       per lexicon entry. For general acoustic pattern recognition tasks the "lexicon" consists
+##       of application specific re-occurring HMM label sequences.</td>
+##   </tr>
+##   <tr>
+##     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt04l.gif">
+##       <code>itRN</code></nobr></td>
+##     <td class="hidden">The recognition network translating between Gassian sequences and
+##       grammar output symbol strings.</td>
+##   </tr>
+##   <tr>
+##     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt03l.gif">
+##       <code>itRNr</code></nobr></td>
+##     <td class="hidden">The reference recognition network translating between Gaussian
+##       sequences and phoneme strings. The object is used to obtain a secondary, unconstrained
+##       decoding for measuring the recognition confidence. For general acoustic pattern recognition
+##       applications read "HMM labels" instead of "phonemes". The object is only needed if a
+##       reference decoding is performed, otherwise it may be omitted.</td>
+##   </tr>
+## </table>
 function -PACK_sesinfo()
 {
   "\n   Packing session info file ."                                      -MSG; # Protocol
@@ -471,7 +516,7 @@ function -PACK_sesinfo()
   nRet return;                                                                  # All right
 }
 
-## Pack the VAD info file
+## Packs the VAD info file
 function -PACK_vadinfo()
 {
   "IMPLEMENTATION INCOMPLETE!" -ERROR;                                          # !!! NOT USABLE

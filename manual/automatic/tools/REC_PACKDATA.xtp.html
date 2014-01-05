@@ -114,6 +114,1332 @@
       </td>
     </tr>  </table>
   <!--{{ CUSTOM_DOC -->
+      <a name="contents"></a>
+      <h3>Contents</h3>
+      <div class="indent">
+        <ul class="linklist">
+          <li class="linklist"><a class="linklist" href="#description">Description</a></li>
+          <li class="linklist"><a class="linklist" href="#usage">Usage</a></li>
+          <li class="linklist"><a class="linklist" href="#configuration">Configuration</a></li>
+          <li class="linklist"><a class="linklist" href="#reference">Reference</a></li>
+        </ul>
+      </div>
+
+      <a name="description"></a>
+      <h3>Description</h3>
+      <p>
+        <code>REC_PACKDATA.xtp</code>
+        compiles binary data files for the dLabPro recognizer. There are two modes:
+      </p>
+      <ol>
+        <li><a class="code" href="#clp_dlg">REC_PACKDATA.xtp dlg</a> packs data files for a dialog. This includes a
+          finite dialog state machine and exactly one finite state recognition network (HMMs* o lexicon* o language
+          model) for each dialog state.</li>
+        <li><a class="code" href="#clp_rec">REC_PACKDATA.xtp rec</a> packs data files for a single grammar
+          (i.&nbsp;e. a dialog with only one state). In this case there is only one finite state recognition network.</li>
+      </ol>
+      <p>Details on input and output files can be found in the documentation of the commands.</p>
+
+      <h4>See also</h4>
+      <div class="indent">
+        <ul class="linklist">
+          <li class="linklist"><a class="linklist" href="#rec_grmFiles">Writing grammar files</a></li>
+          <li class="linklist"><a class="linklist" href="#dlg_dlgFiles">Writing dialog files</a></li>
+        </ul>
+      </div>
+
+      <a name="usage"></a>
+      <h3>Usage</h3>
+      <pre class="code">
+ dlabpro REC_PACKDATA.xtp &lt;command&gt; &lt;cfgfile&gt; [options]
+ dlabpro REC_PACKDATA.xtp help [&lt;command&gt;]</pre>
+
+      <table cellpadding="3" cellspacing="0" class="indent">
+        <tr>
+          <td class="hidden" colspan="2">&nbsp;</td>
+        </tr>
+
+        <tr>
+          <th>Argument/Option</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td class="rowgroup" colspan="2">Arguments</td>
+        </tr>
+        <tr>
+          <td><b>$1</b>: command</td>
+          <td>Command, one of the following:<br>&nbsp;
+            <table class="indent" cellpadding="3" cellspacing="0">
+              <tr>
+                <td class="hidden"><a href="#clp_dlg" class="code"><b>dlg</b></a></td>
+                <td class="hidden">-</td>
+                <td class="hidden">Pack recognition data (dialog)</td>
+              </tr>
+              <tr>
+                <td class="hidden"><a href="#clp_rec" class="code"><b>rec</b></a></td>
+                <td class="hidden">-</td>
+                <td class="hidden">Pack recognition data (simple grammar)</td>
+              </tr>
+              <tr>
+                <td class="hidden"><code>
+                    <b>vad</b>
+                  </code></td>
+                <td class="hidden">-</td>
+                <td class="hidden"><i>incomplete &ndash;</i> Pack voice activity detection data</td>
+              </tr>
+            </table>
+            <br> or "help"
+          </td>
+        </tr>
+        <tr>
+          <td><b>$2</b>: cfgfile</td>
+          <td><a href="../util/cfg.itp.html#index:cfgf">UASR configuration file</a></td>
+        </tr>
+        <tr>
+          <td class="hidden" colspan="2">&nbsp;</td>
+        </tr>
+
+        <tr>
+          <td class="rowgroup" colspan="2">Options</td>
+        </tr>
+        <tr>
+          <td><b>-c</b></td>
+          <td>Use colors for screen protocol</td>
+        </tr>
+        <tr>
+          <td><b>-h</b>, <b>--help</b></td>
+          <td>Display help and exit</td>
+        </tr>
+        <tr>
+          <td><b>-P</b>&lt;key&gt;=&lt;value&gt;</td>
+          <td>Define or override <a href="../util/cfg.itp.html#index:cfgk">configuration key-value pairs</a></td>
+        </tr>
+        <tr>
+          <td><b>-n</b></td>
+          <td>Write protection. If set, no output files will be written.<br>
+        </tr>
+        <tr>
+          <td><b>-v</b>&lt;n&gt;</td>
+          <td>Verbose level
+            <table>
+              <tr>
+                <td class="hidden">-v1&nbsp;&nbsp;&nbsp;</td>
+                <td class="hidden">minimal screen protocol (default)</td>
+              </tr>
+              <tr>
+                <td class="hidden">-v2</td>
+                <td class="hidden">extended screen protocol</td>
+              </tr>
+              <tr>
+                <td class="hidden">-v3</td>
+                <td class="hidden">even more screen protocol, program may break</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="hidden" colspan="2"><span class="small">There are further, individual options to the
+              commands.</span></td>
+        </tr>
+        <tr>
+          <td class="hidden" colspan="2">&nbsp;</td>
+        </tr>
+      </table>
+
+      <a name="configuration"></a>
+      <h3>Configuration</h3>
+      <p>
+        <code>HMM.xtp</code>
+        is configured through a <a href="../util/cfg.itp.html#index:cfgf">UASR configuration file</a> (parameter
+        <code>$2</code>
+        ). The configuration file is a Java properties file containing key-value-pairs. The common configuration keys
+        are described with the utility script <a class="code" href="../util/cfg.itp.html#index:cfgk">cfg.itp</a> (see
+        there). Some commands use dedicated configuration keys which are described with the command. Dedicated keys may
+        be placed in the configuration file just like all other keys. Any key (common and dedicated) may be specified or
+        overwritten through the command line using
+        <nobr>
+          <code>
+            <b>-P</b>&lt;key&gt;=&lt;value&gt;
+          </code>
+        </nobr>
+        options:
+      </p>
+      <pre class="code">
+ dlabpro REC_PACKDATA.xtp dlg mydialog.cfg -Pskip=FG -Prender=yes</pre>
+      <p>
+        <code>-P</code>
+        options <em>always</em> overwrite the configuration file. The heading "
+        <code>uasr.</code>
+        " of the keys may be omitted in
+        <code>-P</code>
+        options.
+      </p>
+    </div>
+  </div>
+
+  <!-- == REC_PACKDATA.xtp dlg ====================================================== -->
+  <div id="clp_dlg" style="margin-top: 12pt;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td nowrap width="25%" class="navbar">REC_PACKDATA.xtp <span class="mid">dlg</span>
+        </td>
+        <td nowrap width="75%" class="navbar" style="text-align: right;"><a class="navbar"
+          href="javascript:__PrintSection('clp_dlg','REC_PACKDATA.xtp dlg','../..');"><img
+            src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align: middle;"
+            alt="Print"></a> <a class="navbar" href="#">Script</a> <a class="navbar" href="index.html">Package</a> <a
+          class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a> <a class="navbar"
+          href="../../automatic/fncindex.html">Function Index</a> <a class="navbar" href="../../home.html">Home</a></td>
+      </tr>
+    </table>
+    <div class="mframe">
+      <table cellSpacing="0" cellPadding="0" border="0">
+        <tr>
+          <td class="hidden"></td>
+          <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+          <td class="hidden">Signature</td>
+          <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+          <td class="hidden"><code>
+              REC_PACKDATA.xtp <b>dlg</b> &lt;cfgfile&gt; [options]
+            </code></td>
+        </tr>
+        <tr>
+          <td class="hidden"></td>
+          <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+          <td class="hidden">Synopsis</td>
+          <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+          <td class="hidden">Pack recognition data (dialog)</td>
+        </tr>
+      </table>
+    </div>
+    <div class="mframe2">
+      <div class="indent">
+        <ul class="linklist">
+          <li class="linklist"><a href="#dlg_description" class="linklist">Description</a></li>
+          <li class="linklist"><a href="#dlg_dlgfiles" class="linklist">Writing Dialog Files</a></li>
+        </ul>
+      </div>
+
+      <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+      <a name="dlg_description"></a>
+      <h3>Description</h3>
+      <p>
+        <code>REC_PACKDATA.xtp dlg</code>
+        packs data files for a dialog. This includes a finite dialog state machine and exactly one finite state
+        recognition network (HMMs* o lexicon* o language model) for each dialog state.
+      </p>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <h4>Start and Command Line Options</h4>
+      <p>The program is started as follows:</p>
+      <pre class="code">
+ dlabpro REC_PACKDATA.xtp dlg &lt;cfgfile&gt; [options]</pre>
+      <table cellpadding="3" cellspacing="0" class="indent">
+        <tr>
+          <td class="hidden" colspan="2">&nbsp;</td>
+        </tr>
+        <tr>
+          <th>Argument/Option</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td class="rowgroup" colspan="2">Arguments</td>
+        </tr>
+        <tr>
+          <td>cfgfile</td>
+          <td><a href="util/cfg.itp.html#index:cfgf">UASR configuration file</a></td>
+        </tr>
+      </table>
+      <p>
+        The standard command line options are accepted (see <a href="#usage">Usage</a>).
+      </p>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <a name="index:cfgRecpackdataDlg" title="Configuration Keys | REC_PACKDATA.xtp dlg"></a>
+      <h4>Configuration</h4>
+      <p>
+        The following table lists dedicated configuration keys and some important common keys (see section <a
+          href="#configuration">Configuration</a> above). There are many more common keys. See documentation of <a
+          href="../util/cfg.itp.html#index:cfgk" class="code">util/cfg.itp</a> for a complete list.
+      </p>
+      <table cellpadding="3" class="indent" summary="">
+        <tr>
+          <th>Key</th>
+          <th>Type</th>
+          <th>Default</th>
+          <th>Value</th>
+        </tr>
+        <tr>
+          <td class="rowgroup" colspan="4">Dedicated keys to <code>HMM.xtp dlg</code></td>
+        </tr>
+        <tr>
+          <td><code>uasr.dlg.fsg</code></td>
+          <td>string</td>
+          <td>&ndash;</td>
+          <td>Finite state dialog file (see section "<a href="#dlg_dlgfiles">Writing Dialog Files</a>" for details)
+          </td>
+        </tr>
+        <tr>
+          <td><code>uasr.export</code></td>
+          <td>string</td>
+          <td>&ndash;</td>
+          <td>Export files; one of the following:<pre>
+  "openFST" - export openFST grammar files
+</pre></td>
+        </tr>
+        <tr>
+          <td><code>uasr.out</code></td>
+          <td>string</td>
+          <td>"."</td>
+          <td>Folder to place generated recognizer data files in</td>
+        </tr>
+        <tr>
+          <td><code>uasr.out.feainfo</code></td>
+          <td>string</td>
+          <td>"&lt;uasr.out&gt;/feainfo.object"</td>
+          <td><a href="../util/fea.itp.html#index:iFI">Feature information</a> file to generate</td>
+        </tr>
+        <tr>
+          <td><code>uasr.out.gmm</code></td>
+          <td>string</td>
+          <td>"&lt;uasr.out&gt;/&lt;uasr.am.model&gt;.gmm"</td>
+          <td>Gaussian mixture model file to generate</td>
+        </tr>
+        <tr>
+          <td><code>uasr.out.sesinfo</code></td>
+          <td>string</td>
+          <td>"&lt;uasr.out&gt;/sesinfo.object"</td>
+          <td><a href="#index:iSI">Session information</a> file to generate</td>
+        </tr>
+        <tr>
+          <td><code>uasr.render</code></td>
+          <td>string</td>
+          <td>"no"</td>
+          <td>"yes" to render dialog and grammar FSTs as SVG files<sup><a href="#dlg_cfg_fn1"
+              title="The dot utility by AT&T must be installed; may take very long for large grammars!">1)</a></sup></td>
+        </tr>
+        <tr>
+          <td><code>uasr.skip</code></td>
+          <td>string</td>
+          <td>&ndash;</td>
+          <td>Specifies functionality to skip, any combination of the following letters:<pre>
+  F - skip creating the feature information file
+  G - skip creating the Gaussian mixture model file
+  S - skip creating the session info file
+</pre></td>
+        </tr>
+        <tr>
+          <td class="rowempty" colspan="4">&nbsp;</td>
+        </tr>
+        <tr>
+          <td class="rowgroup" colspan="4">Important common keys</td>
+        </tr>
+        <tr>
+          <td><code>uasr.am.model</code></td>
+          <td>string</td>
+          <td>"0_0"</td>
+          <td>HMM to pack</td>
+        </tr>
+        <tr>
+          <td><code>uasr.dir.model</code></td>
+          <td>string</td>
+          <td>&ndash;</td>
+          <td>Folder to read model files from (mutually exclusive with keys <code>uasr.db</code> and <code>uasr.exp</code>)
+          </td>
+        </tr>
+        <tr>
+          <td><code>uasr.db</code></td>
+          <td>string</td>
+          <td>"vm"</td>
+          <td>Name of database to obtain model files from<sup><a href="#dlg_cfg_fn2"
+              title="See description of the UASR database structure for more information">2)</a></sup> (if <code>uasr.dir.model</code>
+            not specified)
+          </td>
+        </tr>
+        <tr>
+          <td><code>uasr.exp</code></td>
+          <td>string</td>
+          <td>""</td>
+          <td>Experiment code<sup><a href="#dlg_cfg_fn2"
+              title="See description of the UASR database structure for more information">2)</a></sup> (if <code>uasr.dir.model</code>
+            not specified)
+          </td>
+        </tr>
+        <caption>Dedicated and important common configuration keys</caption>
+      </table>
+      <table class="indent" summary="">
+        <tr>
+          <td class="rowempty" colspan="2">&nbsp;</td>
+        </tr>
+        <tr>
+          <td class="hidden"><a name="dlg_cfg_fn1"></a><sup>1)</sup></td>
+          <td class="hidden">The <a href="http://www.graphviz.org" target="_blank"><code>dot</code> utility by
+              AT&amp;T</a> must be installed; may take very long for large grammars!
+          </td>
+        </tr>
+        <tr>
+          <td class="hidden"><a name="dlg_cfg_fn2"></a><sup>2)</sup></td>
+          <td class="hidden">See description of the <a href="../util/cfg.itp.html#index:datadirs">UASR database
+              structure</a> for more information
+          </td>
+        </tr>
+      </table>
+      <p>
+        Dedicated keys may be placed in the configuration file just like all other keys. Any key (common and dedicated)
+        may be specified or overwritten through the command line using
+        <code>
+          <b>-P</b>&lt;key&gt;=&lt;value&gt;
+        </code>
+        options:
+      </p>
+      <pre class="code">
+ dlabpro REC_PACKDATA.xtp dlg mydialog.cfg -Pam.model="3_15"</pre>
+      <p>
+        <code>-P</code>
+        options <em>always</em> overwrite the configuration file. The heading "
+        <code>uasr.</code>
+        " of the keys may be omitted in
+        <code>-P</code>
+        options.
+      </p>
+
+      <h5>Remarks:</h5>
+      <ul>
+        <li><code>REC_PACKDATA.xtp dlg</code> uses many more common keys. See documentation of functions and
+          documentation of <a href="../util/cfg.itp.html#index:cfgk" class="code">util/cfg.itp</a>.</li>
+      </ul>
+
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <h4>Input and Output Files</h4>
+      <h5>Required input files:</h5>
+      <ul>
+        <li>A <a href="../util/fea.itp.html#index:iFI">feature information</a> file named <code>&lt;uasr.dir.model&gt;/feainfo.object</code>
+          (created by <a href="../HMM.xtp.html#clp_trn" class="code">HMM.xtp trn</a>),
+        </li>
+        <li>an HMM set named <code>&lt;uasr.dir.model&gt;/&lt;uasr.am.model&gt;.hmm</code> (created by <a
+          href="../HMM.xtp.html#clp_trn" class="code">HMM.xtp trn</a>), and
+        </li>
+        <li>a dialog file named <code>&lt;uasr.dlg.fsg&gt;</code> written to the specification <a
+          href="#dlg_dlgfiles">below</a>.
+        </li>
+      </ul>
+
+      <h5>Output files:</h5>
+      <ul>
+        <li>A copy of the input <a href="../util/fea.itp.html#index:iFI">feature information</a> file named <code>&lt;uasr.out&gt;/feainfo.object</code>,
+        </li>
+        <li>a Gaussion mixture model file named <code>&lt;uasr.out&gt;/&lt;uasr.am.model&gt;.gmm</code>, and
+        </li>
+        <li>a <a href="#index:iSI">session information file</a> named <code>&lt;uasr.out&gt;/sesinfo.object</code>.
+        </li>
+      </ul>
+
+      <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+      <a name="index:recDlgFiles" title="Dialog files"></a> <a name="dlg_dlgfiles"></a>
+      <h3>Writing Dialog Files</h3>
+      <p>A dialog file is an ASCII file defining a finite state dialog model, a lexicon and a exactly one finite state 
+        language model for each dialog state. Dialog files are organized by lines. The line format is:</p>
+      <pre class="code">
+ &lt;PREFIX&gt;<b>:</b> information</pre>
+      <p>
+        Blank lines and lines starting with the hash character (<code>#</code>) are ignored. White spaces are
+        significant. Sequences of white spaces &ndash; except line breaks &ndash; behave like a single space. The
+        following prefixes are supported:
+      </p>
+      <table class="indent" cellpadding="3">
+        <tr>
+          <th>Prefix</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code>DLG:</code></td>
+          <td>One dialog rule</td>
+        </tr>
+        <tr>
+          <td><code>LEX:</code></td>
+          <td>One lexicon entry</td>
+        </tr>
+        <tr>
+          <td><code>GRM.&lt;dlg-state&gt;:</code></td>
+          <td>One grammar rule of the dialog state named &lt;dlg-state&gt;</td>
+        </tr>
+        <tr>
+          <td><code>GRM:</code></td>
+          <td>One grammar rule shared by all dialog states</td>
+        </tr>
+      </table>
+      <p>
+        The syntax of lexicon entries and grammar rules is explained in section "<a href="#rec_grmFiles">Writing
+          grammar files</a>". The format of dialog rules (prefix <code>DLG:</code>) is identical to the format of
+          grammar rules. However
+      </p>
+      <ul>
+        <li>every dialog state must be named, and</li>
+        <li>terminal transitions must not contain output symbols, weights or stack tokens.</li>
+      </ul>
+      <p>
+        The input symbol of a terminal dialog transition should be enclosed in double underscores, e.&nbsp;g.
+        <code>__SLEEP__</code>. If the recognition result is equal to the terminal of a dialog transition starting
+        at the current dialog state, the dialog state is changed by traversing this transition. If no suitable
+        dialog transition is found, the recognizer remains in the current dialog state. If more than one suitable
+        dialog transition is found, a random state change occurs (should be avoided!).
+      </p>
+      <p>
+        The start state <code>(S)</code> of the dialog is the default or "sleeping" state. The dLabPro recognizer can be
+        configured to fall back to this state after a certain time of inactivity.
+      </p>
+
+      <h4>Example</h4>
+      <p>This ready-to-go example defines a dialog with a sleeping state and an active state which conatains a
+        micro-local grammar for sepcifying the dimensions of a rectangle in meters:</p>
+      <table class="indent" cellpadding="0" width="95%">
+        <tr>
+          <th style="padding: 3px;"><img src="../../resources/file.gif" width="18" height="16"
+            style="vertical-align: bottom;">&nbsp;<code>dialogexample.grm.txt</code></th>
+        </tr>
+        <tr>
+          <td><pre class="code" style="margin: 0pt">
+## Dialog rules
+DLG: (S)       __WAKEUP__ (1)
+DLG: (1)       __SLEEP__ (S)
+
+## Grammar rules of dialog state (S)
+GRM.S: (S)     &lt;PAU&gt; (S)
+GRM.S: (F)     &lt;PAU&gt; (F)
+GRM.S: S       computer:__WAKEUP__
+
+## Grammar rules of dialog state (1)
+GRM.1: (S)     &lt;PAU&gt; (S)
+GRM.1: (F)     &lt;PAU&gt; (F)
+GRM.1: S       ok:__SLEEP__
+GRM.1: S       SIDE LENGTH
+GRM.1: SIDE    breite:breite
+GRM.1: SIDE    laenge:laenge
+GRM.1: LENGTH  DIG (A) komma:komma (B) DIG (C) meter:meter
+GRM.1: (A)     (C)
+GRM.1: (C)     (B)
+GRM.1: DIG     null:null
+GRM.1: DIG     eins:eins
+GRM.1: DIG     zwei:zwei
+GRM.1: DIG     drei:drei
+GRM.1: DIG     vier:vier
+GRM.1: DIG     fuenf:fuenf
+GRM.1: DIG     sechs:sechs
+GRM.1: DIG     sieben:sieben
+GRM.1: DIG     acht:acht
+GRM.1: DIG     neun:neun
+
+## Lexicon entries
+LEX: acht      (Q|)axt
+LEX: breite    braIt@
+LEX: computer  (k|g|)(O|u:|o:|)(m|n|N|)(p|b|)(C|S)u:(t|d)(a:|)(6|)(x|)
+LEX: eins      (Q|)aIns
+LEX: drei      draI
+LEX: fuenf     fY(n|m)f
+LEX: komma     kOma:
+LEX: laenge    lEN@
+LEX: meter     me:t6
+LEX: neun      nOYn
+LEX: null      n(U|u:)l
+LEX: ok        o:ke:
+LEX: sechs     zEks
+LEX: sieben    zi:(b(@|)n|m)
+LEX: vier      fi:6
+LEX: zwei      tsv(aI|o:)</pre></td>
+        </tr>
+      </table>
+      <p>
+        Note that &ndash; in contrast to the similar example in section "<a
+          href="#rec_grmFiles">Writing grammar files</a>" &ndash; every terminal transition definition includes an input <em>and</em>
+        an output symbol (both lexicon entries). This is required because the transition
+        <code>ok:__SLEEP__</code> (rule three in <code>GRM.1</code>) defines an output symbol which is no lexicon entry
+        but triggers a dialog state change. Now that there is one non-empty output symbol,
+        <code>REC_PACKDATA.xtp</code> will not automatically fill in other output symbols. Hence, the other output
+        symbols must be included in the grammar rules.
+      </p>
+      <p>
+        For compilation and test instructions see section "<a href="#rec_grmFiles">Writing grammar files</a>". The
+        <a href="util/cfg.itp.html#index:cfgf">UASR configuration files</a> for <code>REC_PACKDATA.xtp</code> and
+        the dLabPro recognizer would be:
+      </p>
+      <table class="indent" cellpadding="0" width="95%">
+        <tr>
+          <th style="padding:3px;"><img src="../../resources/file.gif" width="18" height="16"
+            style="vertical-align: bottom;">&nbsp;<code>dialogexample.cfg</code></th>
+        </tr>
+        <tr>
+          <td><pre class="code" style="margin:0pt">
+## UASR keys
+uasr.dir.model = "./models"
+uasr.am.model  = "3_15"
+
+## REC_PACKDATA keys
+uasr.out       = "./output"
+uasr.dlg.fsg   = "dialogexample.grm.txt"</pre></td>
+        </tr>
+      </table>
+      <p>and</p>
+      <table class="indent" cellpadding="0" width="95%">
+        <tr>
+          <th style="padding:3px;"><img src="../../resources/file.gif" width="18" height="16"
+            style="vertical-align: bottom;">&nbsp;<code>recognizer.cfg</code></th>
+        </tr>
+        <tr>
+          <td><pre class="code" style="margin:0pt">
+## Recognizer configuration
+data.feainfo = ./output/feainfo.object
+data.dialog  = ./output/dialog.fst
+data.gmm     = ./output/3_15.gmm
+data.vadinfo = ./models/3_10_mod.vad
+data.sesinfo = ./output/sesinfo.object
+fst.sleep    = 5
+out          = sta</pre></td>
+        </tr>
+      </table>
+      <p>respectively.</p>
+      <p>Figures 1, 2 and 3 show the dialog automaton and the microlocal grammars of the
+      two dialog states</p>
+      <p class="figure">
+        <nobr>
+          <object data="../../resources/figures/RecPackdata-dlgdlg.svg" type="image/svg+xml" width="182" height="52">
+            <param name="src" value="../../resources/figures/RecPackdata-dlgdlg.svg">
+            <img src="../../resources/figures/RecPackdata-dlgdlg.png"
+              alt="Figure 1: Rendering of the dialog automaton" width="182" height="52">
+          </object>
+          <a href="../../resources/figures/RecPackdata-dlgdlg.svg" target="_blank"><img
+            src="../../resources/zoom.gif" width="17" height="17" border="0" alt="Enlarge image"></a>
+        </nobr>
+      </p>
+      <p class="figure">Figure 1: Rendering of the dialog automaton</p>
+      <p class="figure">
+        <nobr>
+          <object data="../../resources/figures/RecPackdata-dlgS.svg" type="image/svg+xml" width="279" height="78">
+            <param name="src" value="../../resources/figures/RecPackdata-dlgS.svg">
+            <img src="../../resources/figures/RecPackdata-dlgS.png"
+              alt="Figure 2: Rendering of the microlocal grammar of the sleeping state" width="279" height="78">
+          </object>
+          <a href="../../resources/figures/RecPackdata-dlgS.svg" target="_blank"><img
+            src="../../resources/zoom.gif" width="17" height="17" border="0" alt="Enlarge image"></a>
+        </nobr>
+      </p>
+      <p class="figure">Figure 2: Rendering of the microlocal grammar of the sleeping state</p>
+      <p class="figure">
+        <nobr>
+          <object data="../../resources/figures/RecPackdata-dlg1.svg" type="image/svg+xml" width="700" height="400">
+            <param name="src" value="../../resources/figures/RecPackdata-dlg1.svg">
+            <img src="../../resources/figures/RecPackdata-dlg1.png"
+              alt="Figure 3: Rendering of the microlocal grammar of the active state" width="700" height="400">
+          </object>
+          <a href="../../resources/figures/RecPackdata-dlg1.svg" target="_blank"><img
+            src="../../resources/zoom.gif" width="17" height="17" border="0" alt="Enlarge image"></a>
+        </nobr>
+      </p>
+      <p class="figure">Figure 3:Rendering of the microlocal grammar of the active state</p>
+    </div>
+  </div>
+
+  <!-- == REC_PACKDATA.xtp rec ====================================================== -->
+  <div id="clp_rec" style="margin-top: 12pt;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td nowrap width="25%" class="navbar">REC_PACKDATA.xtp <span class="mid">rec</span>
+        </td>
+        <td nowrap width="75%" class="navbar" style="text-align: right;"><a class="navbar"
+          href="javascript:__PrintSection('clp_rec','REC_PACKDATA.xtp rec','../..');"><img
+            src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align: middle;"
+            alt="Print"></a> <a class="navbar" href="#">Script</a> <a class="navbar" href="index.html">Package</a> <a
+          class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a> <a class="navbar"
+          href="../../automatic/fncindex.html">Function Index</a> <a class="navbar" href="../../home.html">Home</a></td>
+      </tr>
+    </table>
+    <div class="mframe">
+      <table cellSpacing="0" cellPadding="0" border="0">
+        <tr>
+          <td class="hidden"></td>
+          <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+          <td class="hidden">Signature</td>
+          <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+          <td class="hidden"><code>
+              REC_PACKDATA.xtp <b>rec</b> &lt;cfgfile&gt; [options]
+            </code></td>
+        </tr>
+        <tr>
+          <td class="hidden"></td>
+          <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+          <td class="hidden">Synopsis</td>
+          <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+          <td class="hidden">Pack recognition data (simple grammar)</td>
+        </tr>
+      </table>
+    </div>
+    <div class="mframe2">
+      <div class="indent">
+        <ul class="linklist">
+          <li class="linklist"><a href="#rec_description" class="linklist">Description</a></li>
+          <li class="linklist"><a href="#rec_grmFiles" class="linklist">Writing Grammar Files</a></li>
+        </ul>
+      </div>
+
+      <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+      <a name="rec_description"></a>
+      <h3>Description</h3>
+      <p>
+        <code>REC_PACKDATA.xtp rec</code>
+        packs data files for a single grammar (i.&nbsp;e. a dialog with only one state). In this case there is only one
+        finite state recognition network.
+      </p>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <h4>Start and Command Line Options</h4>
+      <p>The program is started as follows:</p>
+      <pre class="code">
+ dlabpro REC_PACKDATA.xtp rec &lt;cfgfile&gt; [options]</pre>
+      <table cellpadding="3" cellspacing="0" class="indent">
+        <tr>
+          <td class="hidden" colspan="2">&nbsp;</td>
+        </tr>
+        <tr>
+          <th>Argument/Option</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td class="rowgroup" colspan="2">Arguments</td>
+        </tr>
+        <tr>
+          <td>cfgfile</td>
+          <td><a href="util/cfg.itp.html#index:cfgf">UASR configuration file</a></td>
+        </tr>
+      </table>
+      <p>
+        The standard command line options are accepted (see <a href="#usage">Usage</a>).
+      </p>
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <a name="index:cfgRecpackdataRec" title="Configuration Keys | REC_PACKDATA.xtp rec"></a>
+      <h4>Configuration</h4>
+      <p>
+        The following table lists dedicated configuration keys and some important common keys (see section <a
+          href="#configuration">Configuration</a> above). There are many more common keys. See documentation of <a
+          href="../util/cfg.itp.html#index:cfgk" class="code">util/cfg.itp</a> for a complete list.
+      </p>
+      <table cellpadding="3" class="indent" summary="">
+        <tr>
+          <th>Key</th>
+          <th>Type</th>
+          <th>Default</th>
+          <th>Value</th>
+        </tr>
+        <tr>
+          <td class="rowgroup" colspan="4">Dedicated keys to <code>HMM.xtp rec</code></td>
+        </tr>
+        <tr>
+          <td><code>uasr.lm.fsg</code></td>
+          <td>string</td>
+          <td>&ndash;</td>
+          <td>Finite state grammar file (see section "<a href="#rec_grmfiles">Writing Grammar Files</a>" for details)
+          </td>
+        </tr>
+        <tr>
+          <td><code>uasr.export</code></td>
+          <td>string</td>
+          <td>&ndash;</td>
+          <td>Export files; one of the following:<pre>
+  "openFST" - export openFST grammar files
+</pre></td>
+        </tr>
+        <tr>
+          <td><code>uasr.out</code></td>
+          <td>string</td>
+          <td>"."</td>
+          <td>Folder to place generated recognizer data files in</td>
+        </tr>
+        <tr>
+          <td><code>uasr.out.feainfo</code></td>
+          <td>string</td>
+          <td>"&lt;uasr.out&gt;/feainfo.object"</td>
+          <td><a href="../util/fea.itp.html#index:iFI">Feature information</a> file to generate</td>
+        </tr>
+        <tr>
+          <td><code>uasr.out.gmm</code></td>
+          <td>string</td>
+          <td>"&lt;uasr.out&gt;/&lt;uasr.am.model&gt;.gmm"</td>
+          <td>Gaussian mixture model file to generate</td>
+        </tr>
+        <tr>
+          <td><code>uasr.out.sesinfo</code></td>
+          <td>string</td>
+          <td>"&lt;uasr.out&gt;/sesinfo.object"</td>
+          <td><a href="#index:iSI">Session information file</a> to generate</td>
+        </tr>
+        <tr>
+          <td><code>uasr.render</code></td>
+          <td>string</td>
+          <td>"no"</td>
+          <td>"yes" to render dialog and grammar FSTs as SVG files<sup><a href="#dlg_cfg_fn1"
+              title="The dot utility by AT&T must be installed; may take very long for large grammars!">1)</a></sup></td>
+        </tr>
+        <tr>
+          <td><code>uasr.skip</code></td>
+          <td>string</td>
+          <td>&ndash;</td>
+          <td>Specifies functionality to skip, any combination of the following letters:<pre>
+  F - skip creating the feature information file
+  G - skip creating the Gaussian mixture model file
+  S - skip creating the session info file
+</pre>
+          </td>
+        </tr>
+        <tr>
+          <td class="rowempty" colspan="4">&nbsp;</td>
+        </tr>
+        <tr>
+          <td class="rowgroup" colspan="4">Important common keys</td>
+        </tr>
+        <tr>
+          <td><code>uasr.am.model</code></td>
+          <td>string</td>
+          <td>"0_0"</td>
+          <td>HMM to pack</td>
+        </tr>
+        <tr>
+          <td><code>uasr.dir.model</code></td>
+          <td>string</td>
+          <td>&ndash;</td>
+          <td>Folder to read model files from (mutually exclusive with keys <code>uasr.db</code> and <code>uasr.exp</code>)
+          </td>
+        </tr>
+        <tr>
+          <td><code>uasr.db</code></td>
+          <td>string</td>
+          <td>"vm"</td>
+          <td>Name of database to obtain model files from<sup><a href="#rec_cfg_fn2"
+              title="See description of the UASR database structure for more information">2)</a></sup> (if <code>uasr.dir.model</code>
+            not specified)
+          </td>
+        </tr>
+        <tr>
+          <td><code>uasr.exp</code></td>
+          <td>string</td>
+          <td>""</td>
+          <td>Experiment code<sup><a href="#rec_cfg_fn2"
+              title="See description of the UASR database structure for more information">2)</a></sup> (if <code>uasr.dir.model</code>
+            not specified)
+          </td>
+        </tr>
+        <caption>Dedicated and important common configuration keys</caption>
+      </table>
+      <table class="indent" summary="">
+        <tr>
+          <td class="rowempty" colspan="2">&nbsp;</td>
+        </tr>
+        <tr>
+          <td class="hidden"><a name="rec_cfg_fn1"></a><sup>1)</sup></td>
+          <td class="hidden">The <a href="http://www.graphviz.org" target="_blank"><code>dot</code> utility by
+              AT&amp;T</a> must be installed; may take very long for large grammars!
+          </td>
+        </tr>
+        <tr>
+          <td class="hidden"><a name="rec_cfg_fn2"></a><sup>2)</sup></td>
+          <td class="hidden">See description of the <a href="../util/cfg.itp.html#index:datadirs">UASR database
+              structure</a> for more information
+          </td>
+        </tr>
+      </table>
+      <p>
+        Dedicated keys may be placed in the configuration file just like all other keys. Any key (common and dedicated)
+        may be specified or overwritten through the command line using
+        <code>
+          <b>-P</b>&lt;key&gt;=&lt;value&gt;
+        </code>
+        options:
+      </p>
+      <pre class="code">
+ dlabpro REC_PACKDATA.xtp rec mydialog.cfg -Pam.model="3_15"</pre>
+      <p>
+        <code>-P</code>
+        options <em>always</em> overwrite the configuration file. The heading "
+        <code>uasr.</code>
+        " of the keys may be omitted in
+        <code>-P</code>
+        options.
+      </p>
+
+      <h5>Remarks:</h5>
+      <ul>
+        <li><code>REC_PACKDATA.xtp rec</code> uses many more common keys. See documentation of functions and
+          documentation of <a href="../util/cfg.itp.html#index:cfgk" class="code">util/cfg.itp</a>.</li>
+      </ul>
+
+
+      <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+      <a name="rec_iofiles"></a>
+      <h4>Input and Output Files</h4>
+      <h5>Required input files:</h5>
+      <ul>
+        <li>A <a href="../util/fea.itp.html#index:iFI">feature information</a> file named <code>&lt;uasr.dir.model&gt;/feainfo.object</code>
+          (created by <a href="../HMM.xtp.html#clp_trn" class="code">HMM.xtp trn</a>),
+        </li>
+        <li>an HMM set named <code>&lt;uasr.dir.model&gt;/&lt;uasr.am.model&gt;.hmm</code> (created by <a
+          href="../HMM.xtp.html#clp_trn" class="code">HMM.xtp trn</a>), and
+        </li>
+        <li>a grammar file named <code>&lt;uasr.lm.fsg&gt;</code> written to the specification <a
+          href="#rec_grmfiles">below</a>.
+        </li>
+      </ul>
+
+      <h5>Output files:</h5>
+      <ul>
+        <li>A copy of the input <a href="../util/fea.itp.html#index:iFI">feature information</a> file named <code>&lt;uasr.out&gt;/feainfo.object</code>,
+        </li>
+        <li>a Gaussion mixture model file named <code>&lt;uasr.out&gt;/&lt;uasr.am.model&gt;.gmm</code>, and
+        </li>
+        <li>a <a href="#index:iSI">session information file</a> named <code>&lt;uasr.out&gt;/sesinfo.object</code>.
+        </li>
+      </ul>
+
+      <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+      <a name="index:recGrmFiles" title="Grammar files"></a> <a name="rec_grmfiles"></a>
+      <h3>Writing Grammar Files</h3>
+      <p>A grammar file is an ASCII file defining a lexicon and a finite state language model. Grammar files are
+        organized by lines. The line format is:</p>
+      <pre class="code">
+ &lt;PREFIX&gt;<b>:</b> information</pre>
+      <p>
+        Blank lines and lines starting with the hash character (<code>#</code>) are ignored. White spaces are
+        significant. Sequences of white spaces &ndash; except line breaks &ndash; behave like a single space. The
+        following prefixes are supported:
+      </p>
+      <table class="indent" cellpadding="3">
+        <tr>
+          <th>Prefix</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code>LEX:</code></td>
+          <td>One lexicon entry</td>
+        </tr>
+        <tr>
+          <td><code>GRM:</code></td>
+          <td>One grammar rule</td>
+        </tr>
+      </table>
+
+      <h4>Lexion Entries</h4>
+      <p>Each lexicon entry maps one orthograpic to one phonetic string (i.&nbsp;e. a string of HMM names). The
+        format of a lexicon entry is:
+      <pre class="code">
+ <b>LEX:</b> &lt;orthograpic&gt; &lt;phonetic&gt;</pre>
+      <p>
+        Orthographic strings are arbitrary. They must, however, not contain white spaces, colons (<code>:</code>) or
+        commas (<code>,</code>). It is recommendable to avoid special characters &ndash; except underscores (<code>_</code>)
+        &ndash; altogether.
+      </p>
+      <p>
+        Phonetic strings are sequences of HMM names. They must not conatain white spaces. Phonetic strings may contain
+        variants in the form</p>
+      <pre class="code">
+ &lt;prefix&gt;<b>(</b>&lt;variant1&gt;<b>|</b>&lt;variant2&gt;[<b>|</b>...]<b>)</b>&lt;suffix&gt;</pre>
+      <p>
+        A variant can be empty or contain nested veriants. For more information see documentation of dLabPro method <a
+          href="javascript:__goDlabpro('automatic/fst.html','mth_-compile')"><code class="link">fst -compile</code></a>.
+        For instance, the lexicon entry 
+      </p>
+      <pre class="code">
+ LEX: sieben zi:(b(@|)n|m)</pre>
+      <p>will expand to the pronunciation variants <code>zi:b@n</code>, <code>zi:bn</code>, and <code>zi:m</code>.
+      Orthograpic strings may occur multiply. Hence the tree entries</p>
+      <pre class="code">
+ LEX: sieben zi:b@n
+ LEX: sieben zi:bn
+ LEX: sieben zi:m</pre>
+      <p>are equvialent to the previous example. See <a href="../../reference/UasrPhonemeSets.html">UASR Phoneme Sets</a>
+      for phoneme tables.</p>
+
+      <h4>Grammar Rules</h4>
+      <p>A grammar rule has the format:</p>
+      <pre class="code">
+ <b>GRM:</b> &lt;left-symbol&gt; &lt;right-symbol&gt;[ &lt;right-symbol&gt; [...]]</pre>
+      <p>
+        where <code>&lt;left-symbol&gt;</code> is a named state or a non-terminal transition and <code>&lt;right-symbol&gt;</code>
+        is a named state, a terminal, or a non-terminal transition. Symbol strings must not contain white spaces, colons
+        (<code>:</code>) or commas (<code>,</code>). Though it is recommendable to avoid any special characters, parenthesis
+        (<code>()</code>), brackets (<code>[]</code>) and periods (<code>.</code>) are explicitly allowed. 
+      </p>
+      <ol>
+        <li><b>Named states</b>:<br>An arbitrary string enclosed in parentheses, e.&nbsp;g. <code>(A)</code>.
+          The names <code>(S)</code> and <code>(F)</code> are reserved and denote the start and final states.
+        <li><b>Non-terminal transitions</b>:<br>An arbitrary string <em>not</em> enclosed in parentheses,
+          e.&nbsp;g. <code>A</code>. The non-terminal <code>S</code> is reserved and denotes the start rule.
+        <li><b>Terminal transitions</b>:<br>A string in the format<br>&nbsp; <pre class="code">
+ &lt;in&gt;[<b>:</b>&lt;out&gt;[<b>:</b>&lt;weight&gt;[<b>:</b>&lt;token&gt;]]]</pre><br>&nbsp; with<br>&nbsp;
+          <table class="indent" cellpadding="3">
+            <tr>
+              <th>Element</th>
+              <th>Description</th>
+            </tr>
+            <tr>
+              <td><code>&lt;in&gt;</code></td>
+              <td>terminal input symbol; must be an orthographic string defined in the lexicon</td>
+            </tr>
+            <tr>
+              <td><code>&lt;out&gt;</code></td>
+              <td><i>&ndash; optional &ndash;</i> terminal output symbol; the recognition result is a string of
+                these symbols</td>
+            </tr>
+            <tr>
+              <td><code>&lt;weight&gt;</code></td>
+              <td><i>&ndash; optional &ndash;</i> a logarithmic transition weigt; a transition with an infinite
+                weight (e. g. <code>::INF</code>) is not added to the grammar. However, the path up to the transtion's
+                start state und from the transition's end state will be correctly inserted. Rules with infinite weight
+                are useful in connection with stack tokens in order to re-use previosly addad paths in the grammar.</td>
+            </tr>
+            <tr>
+              <td><code>&lt;token&gt;</code></td>
+              <td><i>&ndash; optional &ndash;</i> a stack token in the format <code><b>+</b>&lt;id&gt;</code> or <code><b>-</b>&lt;id&gt;</code>,
+                where the first pushes the token named <code>&lt;id&gt;</code> to the decoder stack and the second pops
+                the same token from the stack.</td>
+            </tr>
+          </table><br>Example:<br>&nbsp;<pre class="code">
+ sieben:val=7::+SEVEN</pre></li>
+      </ol>
+      <p>Depending on the <code>&lt;left-symbol&gt;</code> there are two types of grammar rules:</p>
+      <ol>
+        <li><b>Regular rules:</b><br>The left symbol is a named state. Such rules are expanded by appending a
+          path of (named) states and transitions to the named state on the rule's left side. If the last element does not
+          denote a named state, the last generated transition will terminate at the final state <code>(F)</code>.
+          Example:<br>&nbsp;<pre class="code">
+ <b>GRM:</b> (S) RECTDIM (A) LENDIM (F)</pre></li>
+        <li><b>Context free rules:</b><br>The left symbol is a non-terminal. All non-terminal transitions
+          named after the left symbol side will be replaced by the path defined by the sequence of right symbols.
+          Example:<br>&nbsp;<pre class="code">
+ <b>GRM:</b> S RECTDIM LENDIM </pre></li>
+      </ol>
+      <p>In both cases the rule expansion will properly regard named states in the rule. That is, if the state
+        exists it will be used and if it does not exist, it will be created.</p>
+
+      <h4>Example</h4>
+      <p>This ready-to-go example defines a micro-local grammar for sepcifying the dimensions of a rectangle in
+        meters:</p>
+      <table class="indent" cellpadding="0" width="95%">
+        <tr>
+          <th style="padding:3px;"><img src="../../resources/file.gif" width="18" height="16"
+            style="vertical-align: bottom;">&nbsp;<code>grammarexample.grm.txt</code></th>
+        </tr>
+        <tr>
+          <td><pre class="code" style="margin:0pt">
+## Grammar rules
+GRM: (S)     &lt;PAU&gt; (S)
+GRM: (F)     &lt;PAU&gt; (F)
+GRM: S       SIDE LENGTH
+GRM: SIDE    breite
+GRM: SIDE    laenge
+GRM: LENGTH  DIG (A) komma (B) DIG (C) meter
+GRM: (A)     (C)
+GRM: (C)     (B)
+GRM: DIG     null
+GRM: DIG     eins
+GRM: DIG     zwei
+GRM: DIG     drei
+GRM: DIG     vier
+GRM: DIG     fuenf
+GRM: DIG     sechs
+GRM: DIG     sieben
+GRM: DIG     acht
+GRM: DIG     neun
+
+## Lexicon entries
+LEX: acht    (Q|)axt
+LEX: breite  braIt@
+LEX: eins    (Q|)aIns
+LEX: drei    draI
+LEX: fuenf   fY(n|m)f
+LEX: komma   kOma:
+LEX: laenge  lEN@
+LEX: meter   me:t6
+LEX: neun    nOYn
+LEX: null    n(U|u:)l
+LEX: sechs   zEks
+LEX: sieben  zi:(b(@|)n|m)
+LEX: vier    fi:6
+LEX: zwei    tsv(aI|o:)</pre></td>
+        </tr>
+      </table>
+      <p>
+        The first three grammar rules are start rules. Rules one and two include a pause (pre-defined lexicon entry 
+        <code>&lt;PAU&gt;</code>) of arbitrary length before and after the utterance. It is recommended to always 
+        include these two rules. Rule three is the actual start rule.
+      </p>
+      <p>
+        To compile this grammar you need model files (see section "<a href="#rec_iofiles">Input and Output Files</a>"
+        above) and a UASR configuration file. We assume these files are located as follows:
+      </p>
+      <table class="indent" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="hidden"><img src="../../resources/folder.gif" width="18" height="16"
+            style="vertical-align: middle;">&nbsp;&lt;current folder&gt;</td>
+          <td class="hidden"> </td>
+        </tr>
+        <tr>
+          <td class="hidden"><img src="../../resources/jtt04l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/folder.gif" width="18" height="16"
+            style="vertical-align: middle;">&nbsp;<code>models</code></td>
+          <td class="hidden"><img src="../../resources/blank_stc.gif" width="16" height="16"
+            style="vertical-align: middle;">&nbsp;<nobr>Model files (input)</nobr></td>
+        </tr>
+        <tr>
+          <td class="hidden"><img src="../../resources/jtt02l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/jtt04l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/file.gif" width="18" height="16"
+            style="vertical-align: middle;">&nbsp;<code>3_10_mod.vad</code></td>
+          <td class="hidden"><img src="../../resources/blank_stc.gif" width="32" height="16"
+            style="vertical-align: middle;">&nbsp;<nobr>VAD model file (not required by <code>REC_PACKDATA.xtp</code>
+              but used by the dLabPro recognizer)</nobr></td>
+        </tr>
+        <tr>
+          <td class="hidden"><img src="../../resources/jtt02l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/jtt04l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/file.gif" width="18" height="16"
+            style="vertical-align: middle;">&nbsp;<code>3_15.hmm</code></td>
+          <td class="hidden"><img src="../../resources/blank_stc.gif" width="32" height="16"
+            style="vertical-align: middle;">&nbsp;<nobr>HMM file</nobr></td>
+        </tr>
+        <tr>
+          <td class="hidden"><img src="../../resources/jtt02l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/jtt03l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/file.gif" width="18" height="16"
+            style="vertical-align: middle;">&nbsp;<code>feainfo.object</code></td>
+          <td class="hidden"><img src="../../resources/blank_stc.gif" width="32" height="16"
+            style="vertical-align: middle;">&nbsp;<nobr><a
+            href="../util/fea.itp.html#index:iFI">Feature information</a> file
+            </nobr></td>
+        </tr>
+        <tr>
+          <td class="hidden"><img src="../../resources/jtt04l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/folder_grey.gif" width="18" height="16"
+            style="vertical-align: middle;">&nbsp;<code>output</code></td>
+          <td class="hidden"><img src="../../resources/blank_stc.gif" width="18" height="16"
+            style="vertical-align: middle;">&nbsp;<nobr>Output files (folder will be created, existing
+              files will be overwritten without warning)</nobr></td>
+        </tr>
+        <tr>
+          <td class="hidden"><img src="../../resources/jtt02l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/jtt04l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/file.gif" width="18" height="16"
+            style="vertical-align: middle;">&nbsp;<code>3_15.gmm</code></td>
+          <td class="hidden"><img src="../../resources/blank_stc.gif" width="32" height="16"
+            style="vertical-align: middle;">&nbsp;<nobr>
+              Gaussian mixture model file
+            </nobr></td>
+        </tr>
+        <tr>
+          <td class="hidden"><img src="../../resources/jtt02l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/jtt04l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/file.gif" width="18" height="16"
+            style="vertical-align: middle;">&nbsp;<code>feainfo.object</code></td>
+          <td class="hidden"><img src="../../resources/blank_stc.gif" width="32" height="16"
+            style="vertical-align: middle;">&nbsp;<nobr>
+               Copy of <a href="../util/fea.itp.html#index:iFI">feature information</a> file
+            </nobr></td>
+        </tr>
+        <tr>
+          <td class="hidden"><img src="../../resources/jtt02l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/jtt04l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/file.gif" width="18" height="16"
+            style="vertical-align: middle;">&nbsp;<code>GRM.svg</code></td>
+          <td class="hidden"><img src="../../resources/blank_stc.gif" width="32" height="16"
+            style="vertical-align: middle;">&nbsp;<nobr>
+               Rendering of grammar transducer (only if <code>uasr.render=yes</code>)
+            </nobr></td>
+        </tr>
+        <tr>
+          <td class="hidden"><img src="../../resources/jtt02l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/jtt03l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/file.gif" width="18" height="16"
+            style="vertical-align: middle;">&nbsp;<code>sesinfo.object</code></td>
+          <td class="hidden"><img src="../../resources/blank_stc.gif" width="32" height="16"
+            style="vertical-align: middle;">&nbsp;<nobr>
+               <a href="#index:iSI">Session information</a> file
+            </nobr></td>
+        </tr>
+        <tr>
+          <td class="hidden"><img src="../../resources/jtt04l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/file.gif" width="18" height="16"
+            style="vertical-align: middle;">&nbsp;<code>grammarexample.cfg</code></td>
+          <td class="hidden"><img src="../../resources/blank_stc.gif" width="16" height="16"
+            style="vertical-align: middle;">&nbsp;<nobr><a 
+            href="util/cfg.itp.html#index:cfgf">Configuration file</a> for <code>REC_PACKDATA.xtp rec</code> (see below)
+            </nobr></td>
+        </tr>
+        <tr>
+          <td class="hidden"><img src="../../resources/jtt04l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/file.gif" width="18" height="16"
+            style="vertical-align: middle;">&nbsp;<code>grammarexample.grm.txt</code></td>
+          <td class="hidden"><img src="../../resources/blank_stc.gif" width="16" height="16"
+            style="vertical-align: middle;">&nbsp;<nobr>Example grammar as ASCII file</nobr></td>
+        </tr>
+        <tr>
+          <td class="hidden"><img src="../../resources/jtt03l.gif" width="18" height="16"
+            style="vertical-align: middle;"><img src="../../resources/file.gif" width="18" height="16"
+            style="vertical-align: middle;">&nbsp;<code>recognizer.cfg</code></td>
+          <td class="hidden"><img src="../../resources/blank_stc.gif" width="16" height="16"
+            style="vertical-align: middle;">&nbsp;<nobr><a 
+            href="util/cfg.itp.html#index:cfgf">Configuration file</a> for the dLabPro recognizer (see below)
+            </nobr></td>
+        </tr>
+      </table>
+      <p>
+        The <a href="util/cfg.itp.html#index:cfgf">UASR configuration file</a> <code>grammarexample.cfg</code> looks
+        like this:
+      </p>
+      <table class="indent" cellpadding="0" width="95%">
+        <tr>
+          <th style="padding:3px;"><img src="../../resources/file.gif" width="18" height="16"
+            style="vertical-align: bottom;">&nbsp;<code>grammarexample.cfg</code></th>
+        </tr>
+        <tr>
+          <td><pre class="code" style="margin:0pt">
+## UASR configuration
+uasr.dir.model = "./models"
+uasr.am.model  = "3_15"
+ 
+## REC_PACKDATA configuration
+uasr.out       = "./output"
+uasr.lm.fsg    = "grammarexample.grm.txt"</pre></td>
+        </tr>
+      </table>
+
+      <p>To compile the grammar change to the root folder of the directory structure outline above and invoke:</p>
+      <pre class="code">
+REC_PACKDATA.xtp rec grammarexample.cfg -Prender=yes</pre>
+      <p>The last argument is optional and will render der grammar transducer as SVG graphics (requires the <a 
+      href="http://www.graphviz.org" target="_blank">AT&amp;T <code>dot</code></a> tool). Fig. 1 shows the rendering.</p>
+      <p class="figure">
+        <nobr>
+          <object data="../../resources/figures/RecPackdata-rec.svg" type="image/svg+xml" width="570" height="400">
+            <param name="src" value="../../resources/figures/RecPackdata-rec.svg">
+            <img src="../../resources/figures/RecPackdata-rec.png" alt="Figure 1: Rendering of the example grammar" width="570"
+              height="400">
+          </object>
+          <a href="../../resources/figures/RecPackdata-rec.svg" target="_blank"><img src="../../resources/zoom.gif"
+            width="17" height="17" border="0" alt="Enlarge image"></a>
+        </nobr>
+      </p>
+      <p class="figure">Figure 1: Rendering of the example grammar</p>
+      <p>To test the grammer you need a configuration file for the dLabPro recognizer:</p>
+      <table class="indent" cellpadding="0" width="95%">
+        <tr>
+          <th style="padding:3px;"><img src="../../resources/file.gif" width="18" height="16"
+            style="vertical-align: bottom;">&nbsp;<code>recognizer.cfg</code></th>
+        </tr>
+        <tr>
+          <td><pre class="code" style="margin:0pt">
+## Recognizer configuration
+data.feainfo = ./output/feainfo.object
+data.gmm     = ./output/3_15.gmm
+data.vadinfo = ./models/3_10_mod.vad
+data.sesinfo = ./output/sesinfo.object
+fst.sleep    = 5
+out          = sta</pre></td>
+        </tr>
+      </table>
+      <p>Invoke the dLabPro recognizer in live mode using the command line:</p>
+      <pre class="code">
+recognizer -cfg recognizer.cfg</pre>
+
+      <p>Recognition results are concatenations of the output symbols of the decoded paths through the grammar. If
+        the grammar does not define any output symbols (as in our example), the terminal input symbols will be used as
+        output.</p>
+
+      <a name="index:recFvrStrings" title="Feature value relation strings"></a>
+      <h4>Semantic output</h4>
+      <p>
+        The terminal output symbols of the grammar definition may be used to feature value trees. For details see <a
+          href="https://www.tu-cottbus.de/kommunikationstechnik/wiki/index.php/UASR_(Project)#Serialisation_of_FVR.27s"
+          target="_blank">KT-Wiki/UASR (Project)/Serialisation of FVR's</a> (KT-Wiki account required). The following
+          version of the example grammar produces such semantic output:
+      </p>
+      <table class="indent" cellpadding="0" width="95%">
+        <tr>
+          <th style="padding:3px;"><img src="../../resources/file.gif" width="18" height="16"
+            style="vertical-align: bottom;">&nbsp;<code>grammarexample-fvr.grm.txt</code></th>
+        </tr>
+        <tr>
+          <td><pre class="code" style="margin:0pt">
+## Grammar rules
+GRM: (S)     &lt;PAU&gt; (S)
+GRM: (F)     &lt;PAU&gt; (F)
+GRM: S       :FVR[RECTDIM SIDE LENGTH :]
+GRM: SIDE    :[side=width breite :]
+GRM: SIDE    :[side=length laenge :]
+GRM: LENGTH  :[val= DIG :] (A) :[val=. komma :] (B) :[val= DIG :] (C) :[unit= meter:m :]
+GRM: (A)     (C)
+GRM: (C)     (B)
+GRM: DIG     null:0
+GRM: DIG     eins:1
+GRM: DIG     zwei:2
+GRM: DIG     drei:3
+GRM: DIG     vier:4
+GRM: DIG     fuenf:5
+GRM: DIG     sechs:6
+GRM: DIG     sieben:7
+GRM: DIG     acht:8
+GRM: DIG     neun:2 
+ 
+## Lexicon entries
+LEX: acht    (Q|)axt
+LEX: breite  braIt@
+LEX: eins    (Q|)aIns
+LEX: drei    draI
+LEX: fuenf   fY(n|m)f
+LEX: komma   kOma:
+LEX: laenge  lEN@
+LEX: meter   me:t6
+LEX: neun    nOYn
+LEX: null    n(U|u:)l
+LEX: sechs   zEks
+LEX: sieben  zi:(b(@|)n|m)
+LEX: vier    fi:6
+LEX: zwei    tsv(aI|o:)</pre></td>
+        </tr>
+      </table>
+      <p>
+        Only the first four rules of the grammar have changed. The concatenation of the output symbols of each path
+        through the grammer produces a feature value relation string. For instance, the speech input "Breite null Komma
+        f&uuml;nf sieben Meter" would yield <code>FVR[RECTDIM[side=width][val=0][val=.][val=5][val=7][unit=m]]</code>
+        Fig. 2 shows the rendering of the modified grammar.
+      </p>
+      <p class="figure">
+        <nobr>
+          <object data="../../resources/figures/RecPackdata-recfvr.svg" type="image/svg+xml" width="1373" height="400">
+            <param name="src" value="../../resources/figures/RecPackdata-recfvr.svg">
+            <img src="../../resources/figures/RecPackdata-recfvr.png"
+              alt="Figure 2: Rendering of the modified example grammar" width="1373" height="400">
+          </object>
+          <a href="../../resources/figures/RecPackdata-recfvr.svg" target="_blank"><img
+            src="../../resources/zoom.gif" width="17" height="17" border="0" alt="Enlarge image"></a>
+        </nobr>
+      </p>
+      <p class="figure">Figure 2: Rendering of the modified example grammar</p>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <div class="footer">End of user documentation.</div>
+  <div id="reference" style="margin-top: 12pt;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td nowrap width="25%" class="navbar"><b>Reference</b></td>
+        <td nowrap width="75%" class="navbar" style="text-align: right;"><a class="navbar"
+          href="javascript:__PrintSection('reference','Reference','../..');"><img src="../../resources/print.gif"
+            width="16" height="16" border="0" style="vertical-align: middle;" alt="Print"></a> <a class="navbar"
+          href="#functions">Functions</a> <a class="navbar" href="#">Script</a> <a class="navbar" href="index.html">Package</a>
+          <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a> <a class="navbar"
+          href="../../automatic/fncindex.html">Function Index</a> <a class="navbar" href="../../home.html">Home</a></td>
+      </tr>
+    </table>
+    <div class="mframe2">
+
   <!--}} CUSTOM_DOC -->
   <a name="functions"></a><h3>Functions</h3>
   <table cellSpacing="0" cellPadding="4" border="0">
@@ -149,30 +1475,27 @@
     </tr>
     <tr>
       <td><a href="#clp_-PACK_feainfo"><code class="link">-PACK_feainfo</code></a></td>
-      <td><code><b>-PACK_feainfo</b></code><br>&nbsp;<br> Pack the feature info file
-.
+      <td><code><b>-PACK_feainfo</b></code><br>&nbsp;<br> Packs the feature info file.
       </td>
     </tr>
     <tr>
       <td><a href="#clp_-PACK_gmm"><code class="link">-PACK_gmm</code></a></td>
-      <td><code><b>-PACK_gmm</b></code><br>&nbsp;<br> Pack the acoustic model file
-.
+      <td><code><b>-PACK_gmm</b></code><br>&nbsp;<br> Packs the acoustic model file.
       </td>
     </tr>
     <tr>
       <td><a href="#clp_-PACK_hmm"><code class="link">-PACK_hmm</code></a></td>
-      <td><code><b>-PACK_hmm</b></code><br>&nbsp;<br> Pack the acoustic model file.
+      <td><code><b>-PACK_hmm</b></code><br>&nbsp;<br> Packs the acoustic model file.
       </td>
     </tr>
     <tr>
       <td><a href="#clp_-PACK_sesinfo"><code class="link">-PACK_sesinfo</code></a></td>
-      <td><code><b>-PACK_sesinfo</b></code><br>&nbsp;<br> Pack the session info file
-.
+      <td><code><b>-PACK_sesinfo</b></code><br>&nbsp;<br> Packs the session info file.
       </td>
     </tr>
     <tr>
       <td><a href="#clp_-PACK_vadinfo"><code class="link">-PACK_vadinfo</code></a></td>
-      <td><code><b>-PACK_vadinfo</b></code><br>&nbsp;<br> Pack the VAD info file
+      <td><code><b>-PACK_vadinfo</b></code><br>&nbsp;<br> Packs the VAD info file
 .
       </td>
     </tr>
@@ -581,7 +1904,7 @@
   </table>
   </div>
   <div class="mframe2">
-    <h3>Description</h3> Pack the feature info file
+    <h3>Description</h3> Packs the feature info file.
 
   </div>
   </div>
@@ -623,7 +1946,7 @@
   </table>
   </div>
   <div class="mframe2">
-    <h3>Description</h3> Pack the acoustic model file
+    <h3>Description</h3> Packs the acoustic model file.
 
   </div>
   </div>
@@ -665,7 +1988,7 @@
   </table>
   </div>
   <div class="mframe2">
-    <h3>Description</h3> Pack the acoustic model file. [CURRENTLY NOT USED]
+    <h3>Description</h3> Packs the acoustic model file. [CURRENTLY NOT USED]
 
   </div>
   </div>
@@ -702,12 +2025,56 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">tools/REC_PACKDATA.xtp(377)</td>
+      <td class="hidden">tools/REC_PACKDATA.xtp(422)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
-    <h3>Description</h3> Pack the session info file
+    <h3>Description</h3> Packs the session info file.
+ <a name="index:iSI" title="Session information object"></a>
+ <p>The session information object is structured as follows:</p>
+ <table class="indent" cellpadding="0" cellspacing="0" border="0">
+   <tr>
+     <th><code><b>iSI</b></code></th>
+     <th>Description</th>
+   </tr>
+   <tr>
+     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt04l.gif">
+       <code>idLMtos</code></nobr></td>
+     <td class="hidden"><i>&ndash; deprecated &ndash;</i> The output symbols of the
+       recognition network, to be replaced by <code>itRN.os</code>.</td>
+   </tr>
+   <tr>
+     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt04l.gif">
+       <code>itGP</code></nobr></td>
+     <td class="hidden">The Gaussian-to-phoneme labelling transducer. Used by the recognizer
+       to generate phonetic output strings. For general acoustic pattern recognition
+       applications read "HMM labels" instead of "phonemes".</td>
+   </tr>
+   <tr>
+     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt04l.gif">
+       <code>itLX</code></nobr></td>
+     <td class="hidden">The lexicon (phoneme-to-word) transducer. The object contains exactly
+       one <a href="javascript:__goDlabpro('automatic/fst.html','mth_-addunit')">FST unit</a>
+       per lexicon entry. For general acoustic pattern recognition tasks the "lexicon" consists
+       of application specific re-occurring HMM label sequences.</td>
+   </tr>
+   <tr>
+     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt04l.gif">
+       <code>itRN</code></nobr></td>
+     <td class="hidden">The recognition network translating between Gassian sequences and
+       grammar output symbol strings.</td>
+   </tr>
+   <tr>
+     <td class="hidden"><nobr>&nbsp;<img class="jttIcon" src="../../resources/jtt03l.gif">
+       <code>itRNr</code></nobr></td>
+     <td class="hidden">The reference recognition network translating between Gaussian
+       sequences and phoneme strings. The object is used to obtain a secondary, unconstrained
+       decoding for measuring the recognition confidence. For general acoustic pattern recognition
+       applications read "HMM labels" instead of "phonemes". The object is only needed if a
+       reference decoding is performed, otherwise it may be omitted.</td>
+   </tr>
+ </table>
 
   </div>
   </div>
@@ -744,12 +2111,12 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">tools/REC_PACKDATA.xtp(475)</td>
+      <td class="hidden">tools/REC_PACKDATA.xtp(520)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
-    <h3>Description</h3> Pack the VAD info file
+    <h3>Description</h3> Packs the VAD info file
 
   </div>
   </div>
