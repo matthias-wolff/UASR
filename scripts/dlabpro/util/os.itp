@@ -197,6 +197,7 @@ function -SH_copy(sSrcFile,sDestFile)
 ## @return Converted path name
 function -WIN_convert_path(sPathName)
 {
+  sPathName "?/r?\\\\\\\\r" "replace" -VAR_strop sPathName =;                   # '/r' -> '\\r'
   sPathName "?/t?\\\\\\\\t" "replace" -VAR_strop sPathName =;                   # '/t' -> '\\t'
   sPathName "?/b?\\\\\\\\b" "replace" -VAR_strop sPathName =;                   # '/b' -> '\\b'
   sPathName "?/0?\\\\\\\\0" "replace" -VAR_strop sPathName =;                   # '/0' -> '\\0'

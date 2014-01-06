@@ -63,7 +63,7 @@ SUP,SUB
 }
 TABLE
 {
-	border-collapse:collapse;
+	border-collapse: collapse;
 }
 TH
 {
@@ -81,7 +81,7 @@ TD
 	vertical-align: top;
 	color: black;
 	font-size: 9pt;
-	border:solid 1px black;
+	border: solid 1px black;
 }
 UL,OL
 {

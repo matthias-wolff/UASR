@@ -1003,6 +1003,7 @@ DGen iToc;                                                                      
 data idL;                                                                       # Langauge list (name, ext, parse)
 data idS;                                                                       # Script list (incl. parsed scrips)
 data idSTmp;                                                                    # Temporary script list
+data idH;                                                                       # Reference HTML page list
 data idP;                                                                       # Package list
 data idCdc;                                                                     # Custom documentation text
 data idKwi;                                                                     # Keyword index list
@@ -1014,6 +1015,7 @@ var  nP;                                                                        
 var  sSpath;                                                                    # Script path
 var  sDpath;                                                                    # Documentation path
 var  sRpath;                                                                    # Documentation root path (relative)
+var  sHpath;                                                                    # Path to HTML reference pages
 var  sFname;                                                                    # Documentation file name
 var  sLname;                                                                    # Documentation language name
 var  sParser;                                                                   # Documentation parser name
@@ -1024,10 +1026,12 @@ var  sParser;                                                                   
 ## Get paths                                                                    # -------------------------------------
 "$UASR_HOME/scripts"  "?\\?/" "replace" -VAR_strop sSpath -sset;                # UASR path (normalized for Windows!)
 "$UASR_HOME/manual/automatic" "?\\?/" "replace" -VAR_strop sDpath -sset;        # UASR doc. path (norm'd for Windows!)
+"$UASR_HOME/manual/reference" "?\\?/" "replace" -VAR_strop sHpath -sset;        # UASR ref. page path (norm'd for Win.)
 $$ 1 ==  if                                                                     # Have DB name as argument >>
   var sDhd; ( "$UASR_HOME-data/$1" "?\\?/" "replace" -VAR_strop ) dDhd =;       #   The database home directory
   sDhd "/scripts" +          sSpath =;                                          #   Script files
   sDhd "/manual/automatic" + sDpath =;   |                                      #   Manual files
+  sDhd "/manual/reference" + sHpath =;   |                                      #   Reference HTML pages
 end                                                                             # <<  
 "\n// UASR scripts    : ${sSpath}"                                        -MSG; # Protocol
 "\n// UASR manual     : ${sDpath}"                                        -MSG; # Protocol
@@ -1036,7 +1040,7 @@ end                                                                             
 ## List packages and scripts                                                    # -------------------------------------
 idS -reset;                                                                     # Clear script list
 0 nL =; nL idL.nrec < while                                                     # Loop over all languages >>
-  "\n   s (dir ) - ${sSpath}/${idL[nL,0]}" -MSG;                                #   Protocol
+  "\n   s (dir ) - ${sSpath}/${idL[nL,0]}"                                -MSG; #   Protocol
 	"${sSpath}/${idL[nL,0]}" :idL[nL,1]: TRUE idSTmp -SH_find;                    #   Find files in language script path
 	idSTmp "?${sSpath}/${idL[nL,0]}/?" "replace" idSTmp -strop;                   #   Normalize script path names
 	idSTmp "" "splitp" idSTmp -strop;                                             #   Split path(=packeage)/file name
@@ -1057,17 +1061,36 @@ idAux -reset;                                                                   
 end                                                                             # <<
 idAux idS =;                                                                    # Copy sorted list
 
-## Scan scripts                                                                 # -------------------------------------
+## List HTML reference pages                                                    # -------------------------------------
+idH -reset;                                                                     # Clear page list
+"\n   s (dir ) - ${sHpath}"                                               -MSG; #   Protocol
+sHpath "*.html" TRUE idH -SH_find;                                              #   Find HTML files
+idH "?${sHpath}/?" "replace" idH -strop;                                        #   Normalize path names
+idH 0 idH -sortup;                                                              #   Sort by file name
+
+## Scan scripts and documentation HTML pages (automatically generated)          # -------------------------------------
 0 nS =; nS idS.nrec < while                                                     # Loop over scripts >>
   :idS[nS,0]: :idS[nS,1]: -make_fname sFname =;                                 #   Make file name
 	:idS[nS,2]: sLname =;                                                         #   Get language name
 	:idS[nS,3]: sParser =;                                                        #   Get parser name
   "\n   s ($[sParser]) - ${sSpath}/${sLname}/${sFname}"                   -MSG; #   Protocol
-  DGen idS.iDgn${nS};                                                           #   Create document scanner instance
-  data idS.idCd${nS};                                                           #   Create custom documentaion instance
+  DGen idS.iDgn${nS};                                                           #   Create document scanner
+  data idS.idCd${nS};                                                           #   Create custom documentation
   "${sSpath}/${sLname}/${sFname}" sParser NULL idS.iDgn${nS} -scan;             #   Scan script
   "${sDpath}/${sFname}.html"        idS.idCd${nS} -scan_cdc;                    #   Scan custom HTML form doc. file
   :idS[nS,0]: 0 1 idS.iDgn${nS}.spl -sstore;                                    #   HACK: Correct package name
+  nS ++=;                                                                       #   End of loop
+end                                                                             # <<
+
+## Scan HTML reference pages                                                    # -------------------------------------
+0 nS =; nS idH.nrec < while                                                     # Loop over reference pages >>
+  "\n   s (html) - ${sHpath}/${idH[nS,0]}"                                -MSG; #   Protocol
+  DGen idH.iDgn${nS};                                                           #   Create document generator
+  "${sHpath}/${idH[nS,0]}" idH.iDgn${nS} -load;                                 #   Load HTML
+  { { "PACKAGE" "../reference" } { "NAME" "${idH[nS,0]}" } }                    #   |
+    idH.iDgn${nS}.spl =;                                                        #   HACK: Fake source properties list
+  idH.iDgn${nS}.spl "?.html?" "replace" idH.iDgn${nS}.spl -strop;               #   HACK: Remove ".html" from file name
+  idH.iDgn${nS} -scan_keywords;                                                 #   Scan for keywords
   nS ++=;                                                                       #   End of loop
 end                                                                             # <<
 
@@ -1108,7 +1131,7 @@ iDgn.gen "?%RPATH%?.."                     "replace" iDgn.gen -strop;           
 iDgn.gen "?%RURL%?automatic/fncindex.html" "replace" iDgn.gen -strop;           # Replace %RURL% key
 "${sDpath}/fncindex.html" iDgn -write;                                          # Write document
 
-## Generated keyword index                                                      # -------------------------------------
+## Generate keyword index                                                       # -------------------------------------
 iDgn -reset;                                                                    # Reset document generator
 .__udc_idKwd iDgn -doc_kwdindex;                                                # Create keyword index page
 "\n   g - ${sDpath}/kwdindex.html" -MSG;                                        # Protocol
