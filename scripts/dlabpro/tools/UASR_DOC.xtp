@@ -794,39 +794,61 @@ function -doc_kwdindex(idKwd,iDgn)
     { "W" "#W-Z" }
   } idSec =;
 
-  idSec idKwd -cat;
-  :idKwd[0]: "" "upr" idAux -strop;
-  idAux idKwd -join;
-  idKwd 2 idKwd -sortup;
-  
+  ## Make sections tool bar                                                     # -------------------------------------
   .__udc_idNavS .__udc_idNavS.nrec 2 - 2 idNav /rec -select;                    # Get navi buttons
   "" sSecs =; 0 nSec =; label L_SEC; nSec idSec.nrec < if                       # Loop over sections >>
     :idSec[nSec,1]: "?#?" "replace" -VAR_strop sBuf =;                          #   Get anchor name
     sSecs "<a href=\"#${sBuf}\">[${sBuf}]</a>&nbsp;" + sSecs =;                 #   Section link
     nSec ++=; goto L_SEC;                                                       #   End of section loop
   end                                                                           # << 
+
+  ## Prepare keyword list                                                       # -------------------------------------
+  idSec idKwd -cat;                                                             # Append sections to kdw. list
+  :idKwd[0]: "|" "split" idAux -strop; idAux " \t" "trim" idAux -strop;         # Split sub-keywords
+  idAux.dim 2 > if "Multiple \"|\" not allowd in keywords." 1 -WARNING; end     # No more than one sub-keyword!
+  idAux 0 2 idAux -select; idAux idKwd -join;                                   # Join sub-keywords
+  idAux.dim 2 < if 255 :2-idAux.dim: idKwd -addncomps; end                      # Fall-back: Join empty sub-keywords 
+  :idKwd[0]: "" "upr" idAux -strop; idAux idKwd -join;                          # Append normalized (upper-case) names
+  idKwd :idKwd.dim-1: idKwd -sortup;                                            # Sort by normalied composite keys
+  idKwd :idKwd.dim-1: 1 idAux "" -DATA_slice;                                   # Move normalized composite keys
+  idAux "|" "split" idAux -strop; idAux " \t" "trim" idAux -strop;              # Split normalized sub-keys
+  idAux 0 idSec -compress;                                                      # Compress for main keywords 
+
+  ## Generate HTML                                                              # -------------------------------------
   "UASR keyword index" iDgn -gen_html_head;                                     # HTML page header
   "UASR keyword index" "" idNav iDgn -gen_clip_head;                            # Begin script clip header
   "Contents" "" sSecs iDgn -gen_clip_hitem;                                     # Links to sections
   iDgn -gen_clip_body;                                                          # Begin script clip body
   "\n  <h3>Keyword Index</h3>"                                         iDgn >>; # Write header of keyword index
-  "\n  <table cellSpacing=\"0\" cellPadding=\"4\" border=\"0\">"       iDgn >>; # ...
-  0 nKwd =; label L_KWD; nKwd idKwd.nrec < if                                   # Loop over keywords >>
-    :idKwd[nKwd,0]: "" "len" -VAR_strop 1 == if                                 #   Is section header >>
-      nKwd 0 == not if                                                          #     Is not the first one >>
-        "\n    <tr><td class=\"hidden\">&nbsp;</td></tr>"              iDgn >>; #       Insert empty row
-      end                                                                       #     <<
-      :idKwd[nKwd,1]: "?#?" "replace" -VAR_strop sBuf =;                        #     Get anchor name
-      "\n    <tr><td class=\"rowgroup\">"                              iDgn >>; #     Begin table row
-      "<a name=\"${sBuf}\"></a>${sBuf}"                                iDgn >>; #     Write section header
-      "</td></tr>"                                                     iDgn >>; #     End table row
-    else                                                                        #   << Is keyword entry >>
-      "\n    <tr><td class=\"hidden\">"                                iDgn >>; #     Begin table row
-      "\n  <a href=\"${idKwd[nKwd,1]}\" class=\"linklist\">"           iDgn >>; #     Write keyword entry
-      "${idKwd[nKwd,0]}</a>"                                           iDgn >>; #     ...
-      "</td></tr>"                                                     iDgn >>; #     End table row
+  "\n  <table cellspacing=\"0\" cellpadding=\"2\" border=\"0\">"       iDgn >>; # ...
+  0 nSec =; nSec idSec.nrec < while                                             # Loop over main keywords >>
+    :idSec[nSec,1]: nKwd =;                                                     #   First keyword of section
+    :idKwd[nKwd,3]: "" !=  if                                                   #   Unlinked main keyword >>
+      "\n    <tr><td class=\"hidden\">${idKwd[nKwd,2]}</td></tr>"      iDgn >>; #     Write main keyword
     end                                                                         #   <<
-    nKwd ++=; goto L_KWD;                                                       #   End of loop
+    nKwd :idSec[nSec,1]+idSec[nSec,2]: < while;                                 #   Loop over sub-keywords >>
+      :idKwd[nKwd,0]: "" "len" -VAR_strop 1 == if                               #     Is section header >>
+        nKwd 0 == not if                                                        #       Is not the first one >>
+          "\n    <tr><td class=\"hidden\">&nbsp;</td></tr>"            iDgn >>; #         Insert empty row
+        end                                                                     #       <<
+        :idKwd[nKwd,1]: "?#?" "replace" -VAR_strop sBuf =;                      #       Get anchor name
+        "\n    <tr><td class=\"rowgroup\">"                            iDgn >>; #       Begin table row
+        "<a name=\"${sBuf}\"></a>${sBuf}"                              iDgn >>; #       Write section header
+        "</td></tr>"                                                   iDgn >>; #       End table row
+      else                                                                      #     << Is keyword entry >>
+        "\n    <tr><td class=\"hidden\">"                              iDgn >>; #       Begin table row
+        :idKwd[nKwd,3]: "" != if                                                #       Is sub-keyword
+          "&nbsp;&nbsp;&ndash;&nbsp; <a href=\"${idKwd[nKwd,1]}\" "    iDgn >>; #
+          "class=\"linklist\"\n      >${idKwd[nKwd,3]}</a>"            iDgn >>; #         ...
+        else                                                                    #       << Is no sub-keyword >>
+          "<a href=\"${idKwd[nKwd,1]}\" "                              iDgn >>; #
+          "class=\"linklist\"\n      >${idKwd[nKwd,0]}</a>"            iDgn >>; #         ...
+        end                                                                     #       <<
+        "</td></tr>"                                                   iDgn >>; #       End table row
+      end                                                                       #     <<
+      nKwd ++=;                                                                 #     Next sub-keyword
+    end                                                                         #   <<
+    nSec ++=;                                                                   #   Next main keyword
   end                                                                           # <<
   "\n  </table>"                                                       iDgn >>; # Write footer of function list
   iDgn -gen_clip_foot;                                                          # Clip footer

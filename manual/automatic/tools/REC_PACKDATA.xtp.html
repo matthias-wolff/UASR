@@ -1172,7 +1172,7 @@ LEX: zwei    tsv(aI|o:)</pre></td>
       </p>
       <p>
         To compile this grammar you need model files (see section "<a href="#rec_iofiles">Input and Output Files</a>"
-        above) and a UASR configuration file. We assume these files are located as follows:
+        above) and a UASR configuration file. We assume these files are organized as follows:
       </p>
       <table class="indent" cellpadding="0" cellspacing="0" border="0">
         <tr>
@@ -1188,7 +1188,7 @@ LEX: zwei    tsv(aI|o:)</pre></td>
             style="vertical-align: middle;">&nbsp;<nobr>Model files (input)</nobr></td>
         </tr>
         <tr>
-          <td class="hidden"><img src="../../resources/jtt02l.gif" width="18" height="16"
+          <td class="hidden" style="color:#808080"><img src="../../resources/jtt02l.gif" width="18" height="16"
             style="vertical-align: middle;"><img src="../../resources/jtt04l.gif" width="18" height="16"
             style="vertical-align: middle;"><img src="../../resources/file.gif" width="18" height="16"
             style="vertical-align: middle;">&nbsp;<code>3_10_mod.vad</code></td>
@@ -1215,7 +1215,7 @@ LEX: zwei    tsv(aI|o:)</pre></td>
             </nobr></td>
         </tr>
         <tr>
-          <td class="hidden"><img src="../../resources/jtt04l.gif" width="18" height="16"
+          <td class="hidden" style="color:#808080"><img src="../../resources/jtt04l.gif" width="18" height="16"
             style="vertical-align: middle;"><img src="../../resources/folder_grey.gif" width="18" height="16"
             style="vertical-align: middle;">&nbsp;<code>output</code></td>
           <td class="hidden"><img src="../../resources/blank_stc.gif" width="18" height="16"
@@ -1223,7 +1223,7 @@ LEX: zwei    tsv(aI|o:)</pre></td>
               files will be overwritten without warning)</nobr></td>
         </tr>
         <tr>
-          <td class="hidden"><img src="../../resources/jtt02l.gif" width="18" height="16"
+          <td class="hidden" style="color:#808080"><img src="../../resources/jtt02l.gif" width="18" height="16"
             style="vertical-align: middle;"><img src="../../resources/jtt04l.gif" width="18" height="16"
             style="vertical-align: middle;"><img src="../../resources/file.gif" width="18" height="16"
             style="vertical-align: middle;">&nbsp;<code>3_15.gmm</code></td>
@@ -1233,7 +1233,7 @@ LEX: zwei    tsv(aI|o:)</pre></td>
             </nobr></td>
         </tr>
         <tr>
-          <td class="hidden"><img src="../../resources/jtt02l.gif" width="18" height="16"
+          <td class="hidden" style="color:#808080"><img src="../../resources/jtt02l.gif" width="18" height="16"
             style="vertical-align: middle;"><img src="../../resources/jtt04l.gif" width="18" height="16"
             style="vertical-align: middle;"><img src="../../resources/file.gif" width="18" height="16"
             style="vertical-align: middle;">&nbsp;<code>feainfo.object</code></td>
@@ -1243,7 +1243,7 @@ LEX: zwei    tsv(aI|o:)</pre></td>
             </nobr></td>
         </tr>
         <tr>
-          <td class="hidden"><img src="../../resources/jtt02l.gif" width="18" height="16"
+          <td class="hidden" style="color:#808080"><img src="../../resources/jtt02l.gif" width="18" height="16"
             style="vertical-align: middle;"><img src="../../resources/jtt04l.gif" width="18" height="16"
             style="vertical-align: middle;"><img src="../../resources/file.gif" width="18" height="16"
             style="vertical-align: middle;">&nbsp;<code>GRM.svg</code></td>
@@ -1253,7 +1253,7 @@ LEX: zwei    tsv(aI|o:)</pre></td>
             </nobr></td>
         </tr>
         <tr>
-          <td class="hidden"><img src="../../resources/jtt02l.gif" width="18" height="16"
+          <td class="hidden" style="color:#808080"><img src="../../resources/jtt02l.gif" width="18" height="16"
             style="vertical-align: middle;"><img src="../../resources/jtt03l.gif" width="18" height="16"
             style="vertical-align: middle;"><img src="../../resources/file.gif" width="18" height="16"
             style="vertical-align: middle;">&nbsp;<code>sesinfo.object</code></td>
@@ -1289,8 +1289,8 @@ LEX: zwei    tsv(aI|o:)</pre></td>
         </tr>
       </table>
       <p>
-        The <a href="util/cfg.itp.html#index:cfgf">UASR configuration file</a> <code>grammarexample.cfg</code> looks
-        like this:
+        Then the <a href="util/cfg.itp.html#index:cfgf">UASR configuration file</a> for <code>REC_PACKDATA.xtp</code> 
+        should look like this:
       </p>
       <table class="indent" cellpadding="0" width="95%">
         <tr>
@@ -1309,7 +1309,7 @@ uasr.lm.fsg    = "grammarexample.grm.txt"</pre></td>
         </tr>
       </table>
 
-      <p>To compile the grammar change to the root folder of the directory structure outline above and invoke:</p>
+      <p>To compile the grammar change to the root folder of the directory structure outlined above and invoke:</p>
       <pre class="code">
 REC_PACKDATA.xtp rec grammarexample.cfg -Prender=yes</pre>
       <p>The last argument is optional and will render der grammar transducer as SVG graphics (requires the <a 
@@ -1354,7 +1354,7 @@ recognizer -cfg recognizer.cfg</pre>
       <a name="index:recFvrStrings" title="Feature value relation strings"></a>
       <h4>Semantic output</h4>
       <p>
-        The terminal output symbols of the grammar definition may be used to feature value trees. For details see <a
+        The terminal output symbols of the grammar definition may be used to generate feature value trees. For details see <a
           href="https://www.tu-cottbus.de/kommunikationstechnik/wiki/index.php/UASR_(Project)#Serialisation_of_FVR.27s"
           target="_blank">KT-Wiki/UASR (Project)/Serialisation of FVR's</a> (KT-Wiki account required). The following
           version of the example grammar produces such semantic output:
