@@ -648,13 +648,13 @@ function -HMM_eval_fnc(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)
     end                                                                         #   <<
     idM return;                                                                 #   Return means and conf. intervals
   }                                                                             # <<
-  function -CAL(idR,nC,nFmt,sUnit)                                              # Pretty printing of results
+  function -CAL(idR,nC,sFmt,sUnit)                                              # Pretty printing of results
   {                                                                             # >>
     var  sRet;                                                                  #   Return string 
     var  sVal;                                                                  #   Current value string
     var  nDec;                                                                  #   Number decimals
     var  nPad; sUnit "%%" == if -7 nPad =; else -6 nPad =; end                  #   Value string padding length
-    data idF; { { "$[nFmt]" } } "." "split" idF -strop;                         #   Parse number format specifier
+    data idF; { { "$[sFmt]" } } "." "split" idF -strop;                         #   Parse number format specifier
     idF -type double idF /force -tconvert; :idF[0,1]: nDec =;                   #   Number of decimals
     10 idF .^ idF =;                                                            #   Get numerator and denominator
     sUnit if " " sUnit + sUnit =; end                                           #   Prefix unit with a space
@@ -913,7 +913,7 @@ function -HMM_eval_fnc(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)
       "\n   Frame labels     : $[iL.idLabRes.nrec]/$[iF.len] samples"     -MSG; #     Protocol
       " (confidence level: 95 %)"                                         -MSG; #     Protocol
       ( "" iL.idLabRes -MCR ) idAux =;                                          #     Get mean and 95 % conf. interval
-      "\n   - Correctness    : " ( idAux 0 3.1 "%" -CAL ) +               -MSG; #     Protocol
+      "\n   - Correctness    : " ( idAux 0 "3.1" "%" -CAL ) +             -MSG; #     Protocol
       "FC" nTyd idR -addcomp; :idR[0,idR.dim-1]=idAux[0,0];                     #     Store frame correctness 
 
       ## Finish frame confusion matrix and save to file                         #     - - - - - - - - - - - - - - - - -
@@ -941,9 +941,9 @@ function -HMM_eval_fnc(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)
       " (confidence level: 95 %)"                                         -MSG; #     Protocol
       iL.idPhnRes 0 4 iL.idPhnRes -delete;                                      #     Delete counters
       ( "am.eval.ite$[nSpl]_$[nIte]" iL.idPhnRes -MCR ) idAux =;                #     Get means and 95 % conf. ints.
-      "\n   - Correctness    : " ( idAux 0 3.1 "%" -CAL ) +               -MSG; #     Protocol
-      "\n   - Accuracy       : " ( idAux 1 3.1 "%" -CAL ) +               -MSG; #     Protocol
-      "\n   - Lattice density: " ( idAux 2 3.3 ""   -CAL ) +              -MSG; #     Protocol
+      "\n   - Correctness    : " ( idAux 0 "3.1" "%" -CAL ) +             -MSG; #     Protocol
+      "\n   - Accuracy       : " ( idAux 1 "3.1" "%" -CAL ) +             -MSG; #     Protocol
+      "\n   - Lattice density: " ( idAux 2 "3.3" ""  -CAL ) +             -MSG; #     Protocol
       "LC" nTyd idR -addcomp; :idR[0,idR.dim-1]=idAux[0,0];                     #     Store label correctness 
       "LA" nTyd idR -addcomp; :idR[0,idR.dim-1]=idAux[0,1];                     #     Store label accuracy 
       "LL" nTyd idR -addcomp; :idR[0,idR.dim-1]=idAux[0,2];                     #     Store label lattice density
@@ -977,9 +977,9 @@ function -HMM_eval_fnc(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)
       "\n   Word sequences   : $[iL.idWrdRes.nrec]/$[iF.len] samples"     -MSG; #     Protocol
       iL.idWrdRes 0 4 iL.idWrdRes -delete;                                      #     Delete counters
       ( "am.eval.wrd.ite$[nSpl]_$[nIte]" iL.idWrdRes -MCR ) idAux =;            #     Get means and 95 % conf. ints.
-      "\n   - Correctness    : " ( idAux 0 3.1 "%" -CAL ) +               -MSG; #     Protocol
-      "\n   - Accuracy       : " ( idAux 1 3.1 "%" -CAL ) +               -MSG; #     Protocol
-      "\n   - Lattice density: " ( idAux 2 3.3 ""   -CAL ) +              -MSG; #     Protocol
+      "\n   - Correctness    : " ( idAux 0 "3.1" "%" -CAL ) +             -MSG; #     Protocol
+      "\n   - Accuracy       : " ( idAux 1 "3.1" "%" -CAL ) +             -MSG; #     Protocol
+      "\n   - Lattice density: " ( idAux 2 "3.3" ""  -CAL ) +             -MSG; #     Protocol
       "TC" nTyd idR -addcomp; :idR[0,idR.dim-1]=idAux[0,0];                     #     Store transliteration correctness 
       "TA" nTyd idR -addcomp; :idR[0,idR.dim-1]=idAux[0,1];                     #     Store transliteration accuracy 
       "TL" nTyd idR -addcomp; :idR[0,idR.dim-1]=idAux[0,2];                     #     Store translit.lattice density
