@@ -1050,7 +1050,7 @@ var  sParser;                                                                   
 "$UASR_HOME/manual/automatic" "?\\?/" "replace" -VAR_strop sDpath -sset;        # UASR doc. path (norm'd for Windows!)
 "$UASR_HOME/manual/reference" "?\\?/" "replace" -VAR_strop sHpath -sset;        # UASR ref. page path (norm'd for Win.)
 $$ 1 ==  if                                                                     # Have DB name as argument >>
-  var sDhd; ( "$UASR_HOME-data/$1" "?\\?/" "replace" -VAR_strop ) dDhd =;       #   The database home directory
+  var sDhd; ( "$UASR_HOME-data/$1" "?\\?/" "replace" -VAR_strop ) sDhd =;       #   The database home directory
   sDhd "/scripts" +          sSpath =;                                          #   Script files
   sDhd "/manual/automatic" + sDpath =;   |                                      #   Manual files
   sDhd "/manual/reference" + sHpath =;   |                                      #   Reference HTML pages
