@@ -230,19 +230,25 @@ function -MSG_pad(sMsg,nLen)
   sMsg nLen " " -MSG_pad_ex return;                                             # Call -MSG_pad_ex
 }
 
-## Adjust the length of a string representing a real number by adding tailing
-## zeros.
+## Adjust the length of a string representing a real number by roundung and by
+## adding tailing zeros.
 ##
 ## @cgen:index
 ## @param sNum string
 ##          The number string
+## @param nLen number
+##          The total length of the string (negative for left align, positive 
+##          for right align, and 0 for don't care)
 ## @param nDec number
 ##          The number of decimal places
 ## @return the padded number string
-function -MSG_dpad(sNum,nDec)
+function -FMT_f(sNum,nLen,nDec)
 {
-  data idAux; { { "$[sNum]" } } "." "split" idAux -strop;                       # Split number string
-  "${idAux[0,0]}" "." + ( "${idAux[0,1]}" :-nDec: "0" -MSG_pad_ex ) + return;   # Append trailing "0"s
+  var d; $[sNum] d =;
+  var s; 
+  :d = round(d*round(pow(10,nDec)))/round(pow(10,nDec));
+  ( :d!=ent(d): if ( "$[d]" :-nDec: "0" -MSG_pad_ex ) else "$[d]" end ) s =;
+  ( s nLen -MSG_pad ) return;
 }
 
 ## UASR message. The message will only be printed if <code>nLevel</code> is

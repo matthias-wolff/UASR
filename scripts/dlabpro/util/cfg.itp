@@ -152,10 +152,13 @@ function -CFG_init(sFile,bTerm)
   sDefCfg -CFG_init_fil;                                                        # Load default configuration file
 
   ## Find included config files                                                 # -------------------------------------
-  { { "$[sFile]" } } idFiles =;                                                 # Init list of files
-  0 var nF; nF idFiles.nrec < while;                                            # Loop over list of files >>
-    :idFiles[nF,0]: -CFG_get_include idFiles -cat;                              #   Append included files
-  nF ++=; end                                                                   # <<
+  0 var nF;                                                                     # Number of configuration files
+  sFile NULL != if                                                              # Include file committed >>
+    { { "$[sFile]" } } idFiles =;                                               #   Init list of files
+    nF idFiles.nrec < while;                                                    #   Loop over list of files >>
+      :idFiles[nF,0]: -CFG_get_include idFiles -cat;                            #     Append included files
+    nF ++=; end                                                                 #   <<
+  end                                                                           # <<
 
   ## Load config file                                                           # -------------------------------------
   nF --=; nF 0 >= while;                                                        # Loop over list of files >>

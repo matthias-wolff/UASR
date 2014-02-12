@@ -658,17 +658,17 @@ function -HMM_eval_fnc(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)
     idF -type double idF /force -tconvert; :idF[0,1]: nDec =;                   #   Number of decimals
     10 idF .^ idF =;                                                            #   Get numerator and denominator
     sUnit if " " sUnit + sUnit =; end                                           #   Prefix unit with a space
-    ( "${ent(idR[0,nC]*idF[0,0]+0.5)/idF[0,1]}" nDec -MSG_dpad ) sVal =;        #   Append tailing "0"s
+    ( "${ent(idR[0,nC]*idF[0,0]+0.5)/idF[0,1]}" 0 nDec -FMT_f ) sVal =;         #   Append tailing "0"s
     ( ( sVal sUnit + ) nPad -MSG_pad ) sRet =;                                  #   Render value
     idR.nrec 1 == if sRet return; end                                           #   No more information -> return
-    ( "${ent(idR[1,nC]*idF[0,0]+0.5)/idF[0,1]}" nDec -MSG_dpad ) sVal =;        #   Append tailing "0"s
+    ( "${ent(idR[1,nC]*idF[0,0]+0.5)/idF[0,1]}" 0 nDec -FMT_f ) sVal =;         #   Append tailing "0"s
     ( ( sVal sUnit + ) nPad -MSG_pad ) sVal =; sRet " +-" + sVal + sRet =;      #   Render confidence interval   
     idR.nrec 2 == if sRet return; end                                           #   No more information -> return
     :idR[2,nC]!=0: if                                                           #   Difference is not zero >>
       ( sRet " - " + ( "UNEXPECTED" -COLOR_red + " (" + ) sRet =;               #     Say "UNEXPECTED"
       :idR[2,nC]<0: if ( sRet "-" + ) sRet =; end                               #     Force "-" for negative values
       :idR[2,nC]>0: if ( sRet "+" + ) sRet =; end                               #     Force "+" for positive values
-      ( "${ent(abs(idR[2,nC])*idF[0,0]+0.5)/idF[0,1]}" nDec -MSG_dpad ) sVal =; #     Append tailing "0"s
+      ( "${ent(abs(idR[2,nC])*idF[0,0]+0.5)/idF[0,1]}" 0 nDec -FMT_f ) sVal =;  #     Append tailing "0"s
       ( ( sVal sUnit + ) nPad -MSG_pad ) sVal =; sRet sVal + ")" + sRet =;      #     Render difference value 
       sRet return;                                                              #     All done
     end                                                                         #   << 
