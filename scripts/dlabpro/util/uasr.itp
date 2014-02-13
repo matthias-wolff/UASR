@@ -215,7 +215,7 @@ function -MSG_pad_ex(sMsg,nLen,sChr)
     bLeft if sMsg sChr + sMsg =; else sChr sMsg + sMsg =; end                   #   Add one space to sMsg
   end                                                                           # <<
   sMsg return;                                                                  # Return result;
-}
+} 
 
 ## Adjusts the length of a string by appending leading or tailing spaces.
 ##
@@ -244,10 +244,18 @@ function -MSG_pad(sMsg,nLen)
 ## @return the padded number string
 function -FMT_f(sNum,nLen,nDec)
 {
-  var d; $[sNum] d =;
-  var s; 
+  var   d; $[sNum] d =;
+  var   s;
+  data idAux;
+  
   :d = round(d*round(pow(10,nDec)))/round(pow(10,nDec));
-  ( :d!=ent(d): if ( "$[d]" :-nDec: "0" -MSG_pad_ex ) else "$[d]" end ) s =;
+  ( :d==ent(d): if { "$[d]." } else { "$[d]" } end ) idAux =;
+  idAux "." "split" idAux -strop;
+  nDec 0 > if
+    "${idAux[0,0]}." ( "${idAux[0,1]}" :-nDec: "0" -MSG_pad_ex ) + s =;
+  else
+    "${idAux[0,0]}" s =;
+  end
   ( s nLen -MSG_pad ) return;
 }
 
@@ -478,6 +486,8 @@ function -GIT_version(sPath)
   data idMaster; "line" 255 idMaster -addcomp;                                  # File contents buffer
   "$[sPath]/.git/refs/heads/master" "ascii" idMaster iF /noerror -import        # Load refs/heads/master file
   ?error not if                                                                 # Got it >>
+    idMaster "10" "right" idMaster -strop;                                      #   Get the last 10 digits
+    idMaster ""   "upr"   idMaster -strop;                                      #   Convert to upper case
     "${idMaster[0,0]}" return;                                                  #   Return the master ID
   end                                                                           # <<
 

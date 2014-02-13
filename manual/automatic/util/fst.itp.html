@@ -108,6 +108,11 @@ no such component exists.
       </td>
     </tr>
     <tr>
+      <td><a href="#clp_-FST_lvnstn_ex"><code class="link">-FST_lvnstn_ex</code></a></td>
+      <td><code><b>-FST_lvnstn_ex</b>(itSrc1,itSrc2,nUnit1,nUnit2,idCost,idConf,idDst,itPath)</code><br>&nbsp;<br> Computes the Levenshtein distance between two finite state machines.
+      </td>
+    </tr>
+    <tr>
       <td><a href="#clp_-FST_render"><code class="link">-FST_render</code></a></td>
       <td><code><b>-FST_render</b>(sFname,idTisTab,idTosTab,nUnit,itSrc)</code><br>&nbsp;<br> Renders an FST as SVG graphic.
       </td>
@@ -324,6 +329,161 @@ The component index
 
   </div>
   </div>
+  <div id="clp_-FST_lvnstn_ex">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FST_lvnstn_ex</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FST_lvnstn_ex','-FST_lvnstn_ex','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FST_lvnstn_ex</b>(itSrc1,itSrc2,nUnit1,nUnit2,idCost,idConf,idDst,itPath)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fst.itp(126)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Computes the Levenshtein distance between two finite state machines.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itSrc1</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Automaton 1
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itSrc2</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Automaton 2
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nUnit1</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Unit index of automaton 1
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nUnit2</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Unit index of automaton 2
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idCost</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Symbol match cost matrix. May be <code>NULL</code> in order to use
+          the standard costs (3 for insertions/deletions and 4 for
+          subsitutions). Otherwise <code>idCost</code> is expected to be a
+          <i>N</i>-by-<i>N</i> matrix (where <i>N</i> is the size of the
+          transducer input alphabet excluding the epsilon symbol) specifying
+          the symbol match costs. <code>idCost.descr0</code> must contain the
+          insertion and deletion cost.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idConf</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Symbol confusion matrix (may be <code>NULL</code>).
+          The matrix is expected to contain at least <i>X<sub></i>1</sub>+1
+          records and <i>X</i><sub>2</sub>+1 components (all numeric), where
+          <i>X</i><sub>1</sub> denotes the size of the input alphabet of
+          <code>itSrc1</code> and <i>X</i><sub>2</sub> the size of the
+          input alphabet of <code>itSrc2</code>, respectively. The values in
+          record <i>i</i> count the input symbols from <code>itSrc2</code>
+          which where matched on the input symbol <i>x<sub>i</sub></i> from
+          <code>itSrc2</code>. The values in component <i>j</i> count the
+          input symbols from <code>itSrc1</code> which where matched on the
+          input symbol <i>x<sub>j</sub></i> from <code>itSrc1</code>. The
+          last record/component counts symbols matched on the epsilon symbol,
+          i.e. which where deleted.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idDst</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with detailed result (may be
+          <code>NULL</code>).
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itPath</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Fst instance to be filled with best path (may be <code>NULL</code>).
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> number
+          The Levenshtein distance or a negative number in case of errors.
+
+  </div>
+  </div>
   <div id="clp_-FST_render">
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
@@ -357,7 +517,7 @@ The component index
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/fst.itp(240)</td>
+      <td class="hidden">util/fst.itp(293)</td>
     </tr>
   </table>
   </div>
@@ -473,7 +633,7 @@ The component index
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/fst.itp(283)</td>
+      <td class="hidden">util/fst.itp(336)</td>
     </tr>
   </table>
   </div>

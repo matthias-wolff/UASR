@@ -80,6 +80,51 @@ function -FST_get_icw(itSrc)
 ##          The Levenshtein distance or a negative number in case of errors.
 function -FST_lvnstn(itSrc1,itSrc2,nUnit1,nUnit2,idCost,idConf,idDst)
 {
+  itSrc1 itSrc2 nUnit1 nUnit2 idCost idConf idDst NULL -FST_lvnstn_ex return;
+}
+
+## Computes the Levenshtein distance between two finite state machines.
+##
+## @cgen:index
+## @param itSrc1 fst
+##          Automaton 1
+## @param itSrc2 fst
+##          Automaton 2
+## @param nUnit1 number
+##          Unit index of automaton 1
+## @param nUnit2 number
+##          Unit index of automaton 2
+## @param idCost data
+##          Symbol match cost matrix. May be <code>NULL</code> in order to use
+##          the standard costs (3 for insertions/deletions and 4 for
+##          subsitutions). Otherwise <code>idCost</code> is expected to be a
+##          <i>N</i>-by-<i>N</i> matrix (where <i>N</i> is the size of the
+##          transducer input alphabet excluding the epsilon symbol) specifying
+##          the symbol match costs. <code>idCost.descr0</code> must contain the
+##          insertion and deletion cost.
+## @param idConf data
+##          Symbol confusion matrix (may be <code>NULL</code>). 
+##          The matrix is expected to contain at least <i>X<sub></i>1</sub>+1
+##          records and <i>X</i><sub>2</sub>+1 components (all numeric), where
+##          <i>X</i><sub>1</sub> denotes the size of the input alphabet of
+##          <code>itSrc1</code> and <i>X</i><sub>2</sub> the size of the
+##          input alphabet of <code>itSrc2</code>, respectively. The values in
+##          record <i>i</i> count the input symbols from <code>itSrc2</code>
+##          which where matched on the input symbol <i>x<sub>i</sub></i> from
+##          <code>itSrc2</code>. The values in component <i>j</i> count the
+##          input symbols from <code>itSrc1</code> which where matched on the
+##          input symbol <i>x<sub>j</sub></i> from <code>itSrc1</code>. The
+##          last record/component counts symbols matched on the epsilon symbol,
+##          i.e. which where deleted.
+## @param idDst data
+##          Data instance to be filled with detailed result (may be
+##          <code>NULL</code>).
+## @param itPath
+##          Fst instance to be filled with best path (may be <code>NULL</code>).
+## @return number
+##          The Levenshtein distance or a negative number in case of errors.
+function -FST_lvnstn_ex(itSrc1,itSrc2,nUnit1,nUnit2,idCost,idConf,idDst,itPath)
+{
   fst  itA;                                                                     # Left unit
   fst  itB;                                                                     # Right unit
   fst  itAxB;                                                                   # Cartesian product A x B
@@ -95,16 +140,18 @@ function -FST_lvnstn(itSrc1,itSrc2,nUnit1,nUnit2,idCost,idConf,idDst)
   var  M;                                                                       # No. symbols (for legibility)
   
   ## Initialize - Prepare result instance                                       # -------------------------------------
-  idDst.dim 7 != if                                                             # Not continuing output table >>
-    "I" -type long   idDst -addcomp;                                            #   Insertions
-    "D" -type long   idDst -addcomp;                                            #   Deletions
-    "S" -type long   idDst -addcomp;                                            #   Substitutions
-    "N" -type long   idDst -addcomp;                                            #   Number of symbols (reference)
-    "C" -type double idDst -addcomp;                                            #   Correctness
-    "A" -type double idDst -addcomp;                                            #   Accuracy
-    "L" -type double idDst -addcomp;                                            #   Lattice density
+  idDst if                                                                      # Have output table >>
+    idDst.dim 7 != if                                                           #   Not continuing output table >>
+      "I" -type long   idDst -addcomp;                                          #    Insertions
+      "D" -type long   idDst -addcomp;                                          #     Deletions
+      "S" -type long   idDst -addcomp;                                          #     Substitutions
+      "N" -type long   idDst -addcomp;                                          #     Number of symbols (reference)
+      "C" -type double idDst -addcomp;                                          #     Correctness
+      "A" -type double idDst -addcomp;                                          #     Accuracy
+      "L" -type double idDst -addcomp;                                          #     Lattice density
+    end                                                                         #   <<
+    idDst.nrec ++ idDst -reallocate;                                            #   Add one new record
   end                                                                           # <<
-  idDst.nrec ++ idDst -reallocate;                                              # Add one new record
 
   ## Copy desired unit from left operand and remove all quali except TIS        # -------------------------------------
   itSrc1 NULL nUnit1 itA -copy_ui;                                              # Copy unit from left operand
@@ -117,7 +164,7 @@ function -FST_lvnstn(itSrc1,itSrc2,nUnit1,nUnit2,idCost,idConf,idDst)
   itA.td 0 itA.IC_TD_DATA itA.td -select;                                       # Remove all transition qualifications
   idAux -1 max 1 + idAux =;                                                     # Limit TIS index to -1 and add 1
   idAux itA.td -join;                                                           # Restore input symbols
-  itA.td.nrec N =; N idDst.nrec -- 3 idDst -dstore;                             # Store no. of symbols (reference, N)
+  idDst if itA.td.nrec N =; N idDst.nrec -- 3 idDst -dstore; end                # Store no. of symbols (reference, N)
   0 itA -loops { 0 };                                                           # Add epsilon loops for comparison
 
   ## Copy desired unit from right operand and remove all quali except TIS       # -------------------------------------
@@ -175,6 +222,7 @@ function -FST_lvnstn(itSrc1,itSrc2,nUnit1,nUnit2,idCost,idConf,idDst)
   "none" iS -set as_aheutype;                                                   # |
   "t"    iS -set bt;                                                            # |
   itAxB 0 NULL itAxB iS -search;                                                # Find best path
+  itPath NULL != if itAxB itPath -copy; end;                                    # Copy best path
 
   ## Continue confusion matrix                                                  # -------------------------------------
   idConf NULL != if                                                             # Have confusion matrix ? >> (YES)
@@ -190,19 +238,24 @@ function -FST_lvnstn(itSrc1,itSrc2,nUnit1,nUnit2,idCost,idConf,idDst)
     end                                                                         #   <<
   end                                                                           # <<
   
-  ## Aftermath - Count insertions, deletions and substitutions                  # -------------------------------------
-  itAxB.td 0 "==" idAux -scalop;                                                # Mark epsilon symbols (here index 0!!)
-  :itAxB.td["~W"].>idC.descr0: idAux -join;                                     # Mark subsitutions (missmatch and !=0)
-  idAux NULL 0 "sum" idAux /rec -aggregate;                                     # Count 'em
-  idAux [ 0 2 ] I =; I idDst.nrec -- 0 idDst -dstore;                           # Store insertions
-  idAux [ 0 3 ] D =; D idDst.nrec -- 1 idDst -dstore;                           # Store deletions
-  idAux [ 0 6 ] S =; S idDst.nrec -- 2 idDst -dstore;                           # Store substitutions
+  ## Aftermath                                                                  # -------------------------------------
+  idDst if                                                                      # Have target object >>
 
-  ## Aftermath - Compute correctness, accuracy and lattice density              # -------------------------------------
-  N D - I +         M =;                                                        # No. of rec. symbols
-  N D - S -     N / idDst.nrec -- 4 idDst -dstore;                              # Correctness
-  N D - S - I - N / idDst.nrec -- 5 idDst -dstore;                              # Accuracy
-  M             N / idDst.nrec -- 6 idDst -dstore;                              # Lattice density
+    ## - Count insertions, deletions and substitutions                          #   - - - - - - - - - - - - - - - - - -
+    itAxB.td 0 "==" idAux -scalop;                                              #   Mark epsilon symbols (here index 0!!)
+    :itAxB.td["~W"].>idC.descr0: idAux -join;                                   #   Mark subsitutions (mismatch and !=0)
+    idAux NULL 0 "sum" idAux /rec -aggregate;                                   #   Count 'em
+    idAux [ 0 2 ] I =; I idDst.nrec -- 0 idDst -dstore;                         #   Store insertions
+    idAux [ 0 3 ] D =; D idDst.nrec -- 1 idDst -dstore;                         #   Store deletions
+    idAux [ 0 6 ] S =; S idDst.nrec -- 2 idDst -dstore;                         #   Store substitutions
+
+    ## Aftermath - Compute correctness, accuracy and lattice density            #   - - - - - - - - - - - - - - - - - -
+    N D - I +         M =;                                                      #   No. of rec. symbols
+    N D - S -     N / idDst.nrec -- 4 idDst -dstore;                            #   Correctness
+    N D - S - I - N / idDst.nrec -- 5 idDst -dstore;                            #   Accuracy
+    M             N / idDst.nrec -- 6 idDst -dstore;                            #   Lattice density
+
+  end                                                                           # <<
 
   ## Aftermath - Compute Levenshtein distance                                   # -------------------------------------
   itAxB.td NULL 0 "sum" idAux /rec -aggregate;                                  # Aggregate local distances

@@ -167,9 +167,9 @@
       </td>
     </tr>
     <tr>
-      <td><a href="#clp_-MSG_dpad"><code class="link">-MSG_dpad</code></a></td>
-      <td><code><b>-MSG_dpad</b>(sNum,nDec)</code><br>&nbsp;<br> Adjust the length of a string representing a real number by adding tailing
- zeros.
+      <td><a href="#clp_-FMT_f"><code class="link">-FMT_f</code></a></td>
+      <td><code><b>-FMT_f</b>(sNum,nLen,nDec)</code><br>&nbsp;<br> Adjust the length of a string representing a real number by roundung and by
+ adding tailing zeros.
       </td>
     </tr>
     <tr>
@@ -1119,14 +1119,14 @@
 
   </div>
   </div>
-  <div id="clp_-MSG_dpad">
+  <div id="clp_-FMT_f">
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
       <td nowrap width="25%" class="navbar">
-        Function <span class="mid">-MSG_dpad</span>
+        Function <span class="mid">-FMT_f</span>
       </td>
       <td nowrap width="75%" class="navbar" style="text-align:right;">
-        <a class="navbar" href="javascript:__PrintSection('clp_-MSG_dpad','-MSG_dpad','../..');"><img
+        <a class="navbar" href="javascript:__PrintSection('clp_-FMT_f','-FMT_f','../..');"><img
         src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
         alt="Print"></a> 
         <a class="navbar" href="#functions">Functions</a>
@@ -1145,20 +1145,20 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Signature</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden"><code><b>-MSG_dpad</b>(sNum,nDec)</code></td>
+      <td class="hidden"><code><b>-FMT_f</b>(sNum,nLen,nDec)</code></td>
     </tr>
     <tr>
       <td class="hidden"></td>
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(242)</td>
+      <td class="hidden">util/uasr.itp(245)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
-    <h3>Description</h3> Adjust the length of a string representing a real number by adding tailing
- zeros.
+    <h3>Description</h3> Adjust the length of a string representing a real number by roundung and by
+ adding tailing zeros.
  
 
   <h3>Parameters</h3>
@@ -1171,6 +1171,18 @@
       <td class="hidden"><code><b>sNum</b></code></td>
       <td class="hidden">&nbsp;</td>
       <td class="hidden">          The number string
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nLen</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The total length of the string (negative for left align, positive
+          for right align, and 0 for don't care)
 
       </td>
     </tr>
@@ -1222,7 +1234,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(256)</td>
+      <td class="hidden">util/uasr.itp(270)</td>
     </tr>
   </table>
   </div>
@@ -1290,7 +1302,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(267)</td>
+      <td class="hidden">util/uasr.itp(281)</td>
     </tr>
   </table>
   </div>
@@ -1347,7 +1359,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(278)</td>
+      <td class="hidden">util/uasr.itp(292)</td>
     </tr>
   </table>
   </div>
@@ -1404,7 +1416,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(291)</td>
+      <td class="hidden">util/uasr.itp(305)</td>
     </tr>
   </table>
   </div>
@@ -1472,7 +1484,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(306)</td>
+      <td class="hidden">util/uasr.itp(320)</td>
     </tr>
   </table>
   </div>
@@ -1529,7 +1541,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(327)</td>
+      <td class="hidden">util/uasr.itp(341)</td>
     </tr>
   </table>
   </div>
@@ -1597,7 +1609,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(349)</td>
+      <td class="hidden">util/uasr.itp(363)</td>
     </tr>
   </table>
   </div>
@@ -1668,7 +1680,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(377)</td>
+      <td class="hidden">util/uasr.itp(391)</td>
     </tr>
   </table>
   </div>
@@ -1725,7 +1737,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(407)</td>
+      <td class="hidden">util/uasr.itp(421)</td>
     </tr>
   </table>
   </div>
@@ -1782,7 +1794,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(434)</td>
+      <td class="hidden">util/uasr.itp(448)</td>
     </tr>
   </table>
   </div>
@@ -1826,7 +1838,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(445)</td>
+      <td class="hidden">util/uasr.itp(459)</td>
     </tr>
   </table>
   </div>
@@ -1873,7 +1885,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(455)</td>
+      <td class="hidden">util/uasr.itp(469)</td>
     </tr>
   </table>
   </div>
@@ -1920,7 +1932,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(468)</td>
+      <td class="hidden">util/uasr.itp(482)</td>
     </tr>
   </table>
   </div>
@@ -1979,7 +1991,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(488)</td>
+      <td class="hidden">util/uasr.itp(504)</td>
     </tr>
   </table>
   </div>
@@ -2026,7 +2038,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(502)</td>
+      <td class="hidden">util/uasr.itp(518)</td>
     </tr>
   </table>
   </div>
@@ -2071,7 +2083,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(526)</td>
+      <td class="hidden">util/uasr.itp(542)</td>
     </tr>
   </table>
   </div>
