@@ -244,18 +244,23 @@ function -MSG_pad(sMsg,nLen)
 ## @return the padded number string
 function -FMT_f(sNum,nLen,nDec)
 {
-  var   d; $[sNum] d =;
-  var   s;
-  data idAux;
-  
-  :d = round(d*round(pow(10,nDec)))/round(pow(10,nDec));
-  ( :d==ent(d): if { "$[d]." } else { "$[d]" } end ) idAux =;
-  idAux "." "split" idAux -strop;
-  nDec 0 > if
-    "${idAux[0,0]}." ( "${idAux[0,1]}" :-nDec: "0" -MSG_pad_ex ) + s =;
+  var s;
+
+  ( "$[sNum]" "nan" == ) ( "$[sNum]" "nan+nani" == ) || if
+    "nan" s =;
   else
-    "${idAux[0,0]}" s =;
+    var   d; $[sNum] d =;
+    data idAux;
+    :d = round(d*round(pow(10,nDec)))/round(pow(10,nDec));
+    ( :d==ent(d): if { "$[d]." } else { "$[d]" } end ) idAux =;
+    idAux "." "split" idAux -strop;
+    nDec 0 > if
+      "${idAux[0,0]}." ( "${idAux[0,1]}" :-nDec: "0" -MSG_pad_ex ) + s =;
+    else
+      "${idAux[0,0]}" s =;
+    end
   end
+  
   ( s nLen -MSG_pad ) return;
 }
 
