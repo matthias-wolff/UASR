@@ -10,16 +10,29 @@ function -PACK_dialog(itDlg)
 	"$[.sDirDsp]/dialog.bin" var sDlg;
 	"\n   Packing dialog file ($[sDlg])."                                        -MSG; # Protocol
   
-	data dDlg;
+	data idAux;
 	itDlg.td 1 itDlg.td -sortup;
-	:itDlg.td["~TIS"]: 0 itDlg.is 0 1 dDlg -lookup;
-	dDlg 255 dDlg /force -tconvert;
-	"~SRC" -type int 0 dDlg -insertcomp; itDlg.td 1 1 0 dDlg -xstore;
-	"~DST" -type int 1 dDlg -insertcomp; itDlg.td 0 1 1 dDlg -xstore;
-	"" 1 dDlg -addcomp;
-	data itXT; -type int 1 1 itXT -array; :itXT[0,0]=dDlg.nrec;
-	sDlg "raw" itXT stdfile -export;
-	sDlg "raw" dDlg stdfile /append -export;
+
+	data dX; -type int 1 2 dX -array;
+	:dX[0,0]=itDlg.sd.nrec;
+	:dX[1,0]=itDlg.td.nrec;
+	sDlg "raw" dX stdfile -export;
+
+	data dSD; -type int 1 itDlg.sd.nrec dSD -array;
+	0 1 dSD -fill; dSD :itDlg.td["~INI"]: 0 0 dSD -gen_index;
+	dSD -type int dSD -tconvert;
+	:itDlg.sd["~NAM"]: 255 idAux /force -tconvert;
+	idAux dSD -join;
+	"" 1 dSD -addcomp;
+	sDlg "raw" dSD stdfile /append -export;
+
+	data dTD;
+	:itDlg.td["~TIS"]: 0 itDlg.is 0 1 dTD -lookup;
+	dTD 255 dTD /force -tconvert;
+	"~SRC" -type int 0 dTD -insertcomp; :itDlg.td["~INI"]: 0 1 0 dTD -xstore;
+	"~DST" -type int 1 dTD -insertcomp; :itDlg.td["~TER"]: 0 1 1 dTD -xstore;
+	"" 1 dTD -addcomp;
+	sDlg "raw" dTD stdfile /append -export;
 
 	" ok"                                                   -MSG; # Protocol
 }
