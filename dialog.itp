@@ -1,0 +1,25 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Data packaging tool for hardware recognizer
+##
+## AUTHOR : Frank Duckhorn
+
+function -PACK_dialog(itDlg)
+{
+	itDlg.ud.nrec 1 != if leave endif;
+
+	"$[.sDirDsp]/dialog.bin" var sDlg;
+	"\n   Packing dialog file ($[sDlg])."                                        -MSG; # Protocol
+  
+	data dDlg;
+	itDlg.td 1 itDlg.td -sortup;
+	:itDlg.td["~TIS"]: 0 itDlg.is 0 1 dDlg -lookup;
+	dDlg 255 dDlg /force -tconvert;
+	"~SRC" -type int 0 dDlg -insertcomp; itDlg.td 1 1 0 dDlg -xstore;
+	"~DST" -type int 1 dDlg -insertcomp; itDlg.td 0 1 1 dDlg -xstore;
+	"" 1 dDlg -addcomp;
+	data itXT; -type int 1 1 itXT -array; :itXT[0,0]=dDlg.nrec;
+	sDlg "raw" itXT stdfile -export;
+	sDlg "raw" dDlg stdfile /append -export;
+
+	" ok"                                                   -MSG; # Protocol
+}

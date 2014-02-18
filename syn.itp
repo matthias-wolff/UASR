@@ -1,0 +1,22 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Data packaging tool for hardware recognizer
+##
+## AUTHOR : Frank Duckhorn
+
+65536  var nF_PADE;
+
+function -PACK_pade()
+{
+	"$[.sDirDsp]/PADE.BIN" var sPADE;
+	"\n   Packing pade file ($[sPADE])."         -MSG; # Protocol
+	
+	data dPADE;
+	## TODO how to calculate the values
+	{ 3.895500000000000e-001 1.797923085853458e-001 1.082083384931088e-001 7.082727483808994e-002 4.674599895514548e-002 2.885555577054620e-002 1.391250062193722e-002 } dPADE =;
+
+	dPADE .nF_PADE dPADE -QUANT_int;
+	sPADE "raw" dPADE stdfile -export;
+
+	" ok"                                                   -MSG; # Protocol
+}
+

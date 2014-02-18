@@ -1,0 +1,38 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Data packaging tool for hardware recognizer
+##
+## AUTHOR : Frank Duckhorn
+
+65536      var nF_FFTW;
+1024       var nF_LOGS;
+65536      var nDim_LOGS;
+1          var nF_FFT;
+
+function -PACK_fftw(idFFTW)
+{
+	"$[.sDirDsp]/FFT_W.BIN" var sFFTW;
+	"\n   Packing window file ($[sFFTW])."         -MSG; # Protocol
+
+	data dFFTW;
+	idFFTW .nF_FFTW dFFTW -QUANT_ushort;
+	sFFTW "raw" dFFTW stdfile -export;
+
+	" ok"                                                   -MSG; # Protocol
+}
+
+function -PACK_logs()
+{
+	"$[.sDirDsp]/LOG_S.BIN"  var sLOGS;
+	"\n   Packing log table ($[sLOGS])."         -MSG; # Protocol
+
+	data dLOGS;
+	-type double 1 .nDim_LOGS dLOGS -array;
+	0 :16/.nF_FFT: dLOGS -fill;
+	dLOGS .ln dLOGS =;
+
+	dLOGS .nF_LOGS dLOGS -QUANT_ushort;
+	sLOGS "raw" dLOGS stdfile -export;
+
+	" ok"                                                   -MSG; # Protocol
+}
+
