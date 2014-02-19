@@ -13,7 +13,7 @@ function -PACK_dialog(itDlg)
 	data idAux;
 	itDlg.td 1 itDlg.td -sortup;
 
-	data dX; -type int 1 2 dX -array;
+	data dX; -type int 1 4 dX -array;
 	:dX[0,0]=itDlg.sd.nrec;
 	:dX[1,0]=itDlg.td.nrec;
 	sDlg "raw" dX stdfile -export;
