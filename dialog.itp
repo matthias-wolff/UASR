@@ -18,20 +18,19 @@ function -PACK_dialog(itDlg)
 	:dX[1,0]=itDlg.td.nrec;
 	sDlg "raw" dX stdfile -export;
 
-	data dSD; -type int 1 itDlg.sd.nrec dSD -array;
-	0 1 dSD -fill; dSD :itDlg.td["~INI"]: 0 0 dSD -gen_index;
+	data dSD; :itDlg.td["~INI"]: 0 dSD -compress;
+	dSD 0 1 dSD -delete;
+	:dSD[0]+dSD[1]: 0 1 1 dSD -xstore;
 	dSD -type int dSD -tconvert;
-	:itDlg.sd["~NAM"]: 255 idAux /force -tconvert;
-	idAux dSD -join;
-	"" 1 dSD -addcomp;
 	sDlg "raw" dSD stdfile /append -export;
 
 	data dTD;
-	:itDlg.td["~TIS"]: 0 itDlg.is 0 1 dTD -lookup;
-	dTD 255 dTD /force -tconvert;
-	"~SRC" -type int 0 dTD -insertcomp; :itDlg.td["~INI"]: 0 1 0 dTD -xstore;
-	"~DST" -type int 1 dTD -insertcomp; :itDlg.td["~TER"]: 0 1 1 dTD -xstore;
-	"" 1 dTD -addcomp;
+	:itDlg.td["~TER"]: dTD -join;
+	dTD -type int dTD -tconvert;
+	:itDlg.td["~TIS"]: 0 itDlg.is 0 1 idAux -lookup; idAux 255 idAux /force -tconvert;
+	idAux dTD -join; "" 1 dTD -addcomp;
+	:itDlg.td["~TOS"]: 0 itDlg.os 0 1 idAux -lookup; idAux 255 idAux /force -tconvert;
+	idAux dTD -join; "" 1 dTD -addcomp;
 	sDlg "raw" dTD stdfile /append -export;
 
 	" ok"                                                   -MSG; # Protocol
