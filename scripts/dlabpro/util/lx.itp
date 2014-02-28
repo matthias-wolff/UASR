@@ -364,9 +364,7 @@ function -LX_get(idAM,itLX)
   "<OOV>" idAM.nrec itLX -LX_add_filler;                                        # Add filler word
 }
 
-## Unifies, minimizes and closes a lexical transducer. The resulting transducer
-## translates phoneme into word sequences and may be composed with a language
-## model acceptor or transducer.
+## Unifies and minimizes a lexical transducer.
 ##
 ## <h4>Remarks</h4>
 ## <p>Some lexicon entries (like the filler model "&lt;OOV&gt;") are not
@@ -380,7 +378,7 @@ function -LX_get(idAM,itLX)
 ## @param itDst fst
 ##          Filled with a phoneme-to-word transducer, may be indentical with
 ##          <code>itSrc</code>
-function -LX_close(itSrc,itDst)
+function -LX_unify(itSrc,itDst)
 {
   data idIs;  itSrc.is idIs  -copy;                                             # Save input symbol table
   data idOs;  itSrc.os idOs  -copy;                                             # Save output symbol table
@@ -405,10 +403,10 @@ function -LX_close(itSrc,itDst)
     itLex 0 itLex -minimize;                                                    #   Minimize
   end                                                                           # <<
   itXxx.ud.nrec 0 > if                                                          # Have special entries >>
+  	itXxx 0 itXxx /lazy -minimize;                                              #   Lazy minimize
     itXxx itLex -cat;                                                           #   Add them
     itLex itLex -union;                                                         #   Unify again
   end                                                                           # <<
-  itLex 0 itLex -close;                                                         # Close
 
   ## Word change penalty                                                        # -------------------------------------
   "lx.wordpenalty" 0 "S" -CFG_get_ex var nWCP;                                  # Read config entry
@@ -424,6 +422,23 @@ function -LX_close(itSrc,itDst)
   idIs itLex.is -copy;                                                          # Restore input symbol table
   idOs itLex.os -copy;                                                          # Restore output symbol table
   itLex itDst -copy;                                                            # Copy to destination instance
+}
+
+## Unifies, minimizes and closes a lexical transducer. The resulting transducer
+## translates phoneme into word sequences and may be composed with a language
+## model acceptor or transducer. For unify and minimization the function
+## -FS_unify is used.
+##
+## @cgen:index
+## @param itSrc fst
+##          Source transducer, is expected to contain one unit per lexicon entry
+## @param itDst fst
+##          Filled with a phoneme-to-word transducer, may be indentical with
+##          <code>itSrc</code>
+function -LX_close(itSrc,itDst)
+{
+  itSrc itDst -LX_unify;                                                        # Unify and minimize
+  itDst 0 itDst -close;                                                         # Close
 }
 
 ## Determines if a word list is trivial. A trivial word list contains at most
