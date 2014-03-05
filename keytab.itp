@@ -3,10 +3,10 @@
 ##
 ## AUTHOR : Frank Duckhorn
 
-function -PACK_keymap()
+function -PACK_keytab()
 {
-	"$[.sDirDsp]/keymap.bin" var sKey;
-	"\n   Packing keymap file ($[sKey])."                                        -MSG; # Protocol
+	"$[.sDirDsp]/keytab.bin" var sKey;
+	"\n   Packing keytab file ($[sKey])."                                        -MSG; # Protocol
 	
 	data dKey;
 
@@ -65,10 +65,16 @@ function -PACK_keymap()
 	    0   0   0   0   0   0  51   0   0   0   0   0  47   0   0   0  # F.
 	} ' dKey =;
 	256 dKey -reallocate;
-	# negative => Left shift = 225
-	:1-2*(dKey.<0): dKey .* :dKey.<0: :225*256: .* + dKey =;
-	## right alt 230
-	##:1-2*(dKey.<0): dKey .* :dKey.<0: :230*256: .* + dKey =;
+	# negative => Left shift = 2
+	:1-2*(dKey.<0): dKey .* :dKey.<0: :2*256: .* + dKey =;
+	# left ctrl   = 1
+	# left shift  = 2
+	# left alt    = 4
+	# left GUI    = 8
+	# right ctrl  = 16
+	# right shift = 32
+	# right alt   = 64
+	# right GUI   = 128
 	:dKey+0.5: -type UINT16 dKey -tconvert;
 	sKey "raw" dKey stdfile -export;
 
@@ -102,8 +108,8 @@ function -PACK_keymap()
 		{ ""     0 } # this is the last one, do not remove!
 	} dKey =;
 	0 1 dKey -mark; dKey 8 dKey /force /mark -tconvert; dKey -unmark;
-	# negative => Left shift = 225
-	:1-2*(dKey[1].<0): :dKey[1]: .* :dKey[1].<0: :225*256: .* + 0 1 1 dKey -xstore;
+	# negative => Left shift = 2
+	:1-2*(dKey[1].<0): :dKey[1]: .* :dKey[1].<0: :2*256: .* + 0 1 1 dKey -xstore;
 	1 1 dKey -mark; dKey -type UINT16 dKey /mark -tconvert; dKey -unmark;
 	sKey "raw" dKey stdfile /append -export;
 
