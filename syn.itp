@@ -20,3 +20,54 @@ function -PACK_pade()
 	" ok"                                                   -MSG; # Protocol
 }
 
+function -PACK_syn(sSynDir,sSynMod)
+{
+	"$[.sDirDsp]/syn_cnv.bin"   var sCNV;
+	"$[.sDirDsp]/syn_gmm.bin"   var sGMM;
+	"$[.sDirDsp]/syn_unit.bin"  var sUNIT;
+	"$[.sDirDsp]/syn_ustr.bin"  var sUSTR;
+
+	"\n   Packing syn cnv matrix file ($[sCNV])."         -MSG; # Protocol
+	data dCNV; "$[sSynDir]/cnvMat_$[sSynMod].dn3" dCNV -restore;
+	dCNV -type float dCNV -tconvert;
+	sCNV "raw" dCNV stdfile -export;
+	" ok"                                                   -MSG; # Protocol
+
+	"\n   Packing gaussian mean vectors file ($[sGMM])."         -MSG; # Protocol
+	hmm itHMM;  "$[sSynDir]/$[sSynMod].hmm" itHMM -restore;
+	object iFI; "$[sSynDir]/feainfo.object" iFI   -restore;
+	data dGMM; itHMM.gm.mean dGMM =;
+	itHMM.lsmean dGMM -join;
+	iFI.idW inv dGMM * iFI.idX - dGMM =;
+	dGMM -type float dGMM -tconvert;
+	sGMM "raw" dGMM stdfile -export;
+	" ok"                                                   -MSG; # Protocol
+
+	"\n   Packing syn unit string file ($[sUSTR])."         -MSG; # Protocol
+	data dUSTR;
+	"$[sSynDir]/allUnits.txt" "ascii" dUSTR stdfile -import;
+	dUSTR 255 dUSTR /force -tconvert;
+	1 1 dUSTR -addncomps;
+	sUSTR "raw" dUSTR stdfile -export;
+	" ok"                                                   -MSG; # Protocol
+
+	"\n   Packing syn unit string file ($[sUNIT])."         -MSG; # Protocol
+	data dUNIT;
+	-type int       1 dUNIT -addncomps;
+	-type short   128 dUNIT -addncomps;
+	-type FLOAT32 256 dUNIT -addncomps;
+	data idU;
+	data dU;
+	0 var nU; nU dUSTR.nrec < while;
+		"$[sSynDir]/${dUSTR[nU,0]}_$[sSynMod].dn3" idU -restore;
+		{ idU.nrec } dU =;
+		idU -type double idU -tconvert;
+		128 idU -reallocate;
+		idU 1 :idU.nrec*idU.dim: idU -reshape;
+		idU dU -join;
+		dU dUNIT -cat;
+	nU ++=; end;
+	sUNIT "raw" dUNIT stdfile -export;
+	" ok"                                                   -MSG; # Protocol
+}
+
