@@ -48,6 +48,7 @@ function -PACK_syn(sSynDir,sSynMod)
 	"$[sSynDir]/allUnits.txt" "ascii" dUSTR stdfile -import;
 	dUSTR 255 dUSTR /force -tconvert;
 	1 1 dUSTR -addncomps;
+	138 dUSTR -reallocate;
 	sUSTR "raw" dUSTR stdfile -export;
 	" ok"                                                   -MSG; # Protocol
 
@@ -59,7 +60,9 @@ function -PACK_syn(sSynDir,sSynMod)
 	data idU;
 	data dU;
 	0 var nU; nU dUSTR.nrec < while;
-		"$[sSynDir]/${dUSTR[nU,0]}_$[sSynMod].dn3" idU -restore;
+		"$[sSynDir]/${dUSTR[nU,0]}_$[sSynMod].dn3" idU /noerror -restore ?error if;
+			idU -reset;
+		endif;
 		{ idU.nrec } dU =;
 		idU -type double idU -tconvert;
 		128 idU -reallocate;
