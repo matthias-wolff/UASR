@@ -46,10 +46,11 @@ function -PACK_syn(sSynDir,sSynMod)
 	"\n   Packing syn unit string file ($[sUSTR])."         -MSG; # Protocol
 	data dUSTR;
 	"$[sSynDir]/allUnits.txt" "ascii" dUSTR stdfile -import;
+	data dNU; -type int 1 1 dNU -array; :dNU[0,0]=dUSTR.nrec;
+	sUSTR "raw" dNU stdfile -export;
 	dUSTR 255 dUSTR /force -tconvert;
 	1 1 dUSTR -addncomps;
-	138 dUSTR -reallocate;
-	sUSTR "raw" dUSTR stdfile -export;
+	sUSTR "raw" dUSTR stdfile /append -export;
 	" ok"                                                   -MSG; # Protocol
 
 	"\n   Packing syn unit string file ($[sUNIT])."         -MSG; # Protocol
