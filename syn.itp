@@ -25,7 +25,6 @@ function -PACK_syn(sSynDir,sSynMod)
 	"$[.sDirDsp]/syn_cnv.bin"   var sCNV;
 	"$[.sDirDsp]/syn_gmm.bin"   var sGMM;
 	"$[.sDirDsp]/syn_unit.bin"  var sUNIT;
-	"$[.sDirDsp]/syn_ustr.bin"  var sUSTR;
 
 	"\n   Packing syn cnv matrix file ($[sCNV])."         -MSG; # Protocol
 	data dCNV; "$[sSynDir]/cnvMat_$[sSynMod].dn3" dCNV -restore;
@@ -43,35 +42,35 @@ function -PACK_syn(sSynDir,sSynMod)
 	sGMM "raw" dGMM stdfile -export;
 	" ok"                                                   -MSG; # Protocol
 
-	"\n   Packing syn unit string file ($[sUSTR])."         -MSG; # Protocol
-	data dUSTR;
-	"$[sSynDir]/allUnits.txt" "ascii" dUSTR stdfile -import;
-	data dNU; -type int 1 1 dNU -array; :dNU[0,0]=dUSTR.nrec;
-	sUSTR "raw" dNU stdfile -export;
-	dUSTR 255 dUSTR /force -tconvert;
-	1 1 dUSTR -addncomps;
-	sUSTR "raw" dUSTR stdfile /append -export;
-	" ok"                                                   -MSG; # Protocol
-
 	"\n   Packing syn unit string file ($[sUNIT])."         -MSG; # Protocol
+	data idUnits; "$[sSynDir]/allUnits.txt" "ascii" idUnits stdfile -import;
+
+	data dNU; -type int 1 1 dNU -array; :dNU[0,0]=idUnits.nrec;
+	sUNIT "raw" dNU stdfile -export;
+
 	data dUNIT;
-	-type int       1 dUNIT -addncomps;
-	-type short   128 dUNIT -addncomps;
-	-type FLOAT32 256 dUNIT -addncomps;
+	idUnits 0 1 dUNIT -select;
+	dUNIT 255 dUNIT /force -tconvert;
+	1 1 dUNIT -addncomps;
+	-type int 4 dUNIT -addncomps;
+
 	data idU;
-	data dU;
-	0 var nU; nU dUSTR.nrec < while;
-		"$[sSynDir]/${dUSTR[nU,0]}_$[sSynMod].dn3" idU /noerror -restore ?error if;
+	data dID; -type short 1 dID -addncomps;
+	data dF0; -type float 1 dF0 -addncomps;
+	data dI0; -type float 1 dI0 -addncomps;
+	0 var nU; nU idUnits.nrec < while;
+		"$[sSynDir]/${idUnits[nU,0]}_$[sSynMod].dn3" idU /noerror -restore ?error if;
 			idU -reset;
 		endif;
-		{ idU.nrec } dU =;
-		idU -type double idU -tconvert;
-		128 idU -reallocate;
-		idU 1 :idU.nrec*idU.dim: idU -reshape;
-		idU dU -join;
-		dU dUNIT -cat;
+		:dUNIT[nU,2]=idU.nrec;
+		:idU["~TIS"]: dID -cat;
+		:idU["~F0"]:  dF0 -cat;
+		:idU["~INT"]: dI0 -cat;
 	nU ++=; end;
-	sUNIT "raw" dUNIT stdfile -export;
+	sUNIT "raw" dUNIT stdfile /append -export;
+	sUNIT "raw" dID   stdfile /append -export;
+	sUNIT "raw" dF0   stdfile /append -export;
+	sUNIT "raw" dI0   stdfile /append -export;
 	" ok"                                                   -MSG; # Protocol
 }
 
