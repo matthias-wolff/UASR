@@ -50,8 +50,7 @@ function -PACK_syn(sSynDir,sSynMod)
 
 	data dUNIT;
 	idUnits 0 1 dUNIT -select;
-	dUNIT 255 dUNIT /force -tconvert;
-	1 1 dUNIT -addncomps;
+	dUNIT 64 dUNIT /force -tconvert;
 	-type int 4 dUNIT -addncomps;
 
 	data idU;
@@ -62,7 +61,7 @@ function -PACK_syn(sSynDir,sSynMod)
 		"$[sSynDir]/${idUnits[nU,0]}_$[sSynMod].dn3" idU /noerror -restore ?error if;
 			idU -reset;
 		endif;
-		:dUNIT[nU,2]=idU.nrec;
+		:dUNIT[nU,1]=idU.nrec;
 		:idU["~TIS"]: dID -cat;
 		:idU["~F0"]:  dF0 -cat;
 		:idU["~INT"]: dI0 -cat;
