@@ -73,7 +73,7 @@ function __PrintSection(sId,sChapter,sRpath)
 			writeln(sSection);
 			writeln("<p class=\"small\">Printed from the UASR manual.<br>");
 			writeln("State: "+iNow.toLocaleString()+"<br>");
-			writeln("Copyright: UASR Contributors</p>");
+			writeln("Copyright: UASR contributors</p>");
 			writeln("</body>");
 			writeln("</html>");
 			close();

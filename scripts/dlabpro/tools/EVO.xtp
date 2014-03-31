@@ -6,7 +6,7 @@
 ## PACKAGE: uasr/scripts/dlabpro
 ##
 ## ARGUMENTS:
-##   $1: Setup file or 'help'
+##   $1: Configuration file or 'help'
 
 ## Copyright 2013 UASR contributors (see COPYRIGHT file)
 ## - Chair of System Theory and Speech Technology, TU Dresden
@@ -27,11 +27,11 @@
 ## You should have received a copy of the GNU Lesser General Public License
 ## along with UASR. If not, see <http://www.gnu.org/licenses/>.
 
-"../util/cfg.itp"  include;                                                     # Include configuration utilities
-"../util/data.itp" include;                                                     # Include data utilities
-"../util/os.itp"   include;                                                     # Include OS utilities
-"../util/uasr.itp" include;                                                     # Include UASR utilities
-"../util/var.itp"  include;                                                     # Include variables' utilities
+"$UASR_HOME/scripts/dlabpro/util/cfg.itp"  include;                             # Include configuration utilities
+"$UASR_HOME/scripts/dlabpro/util/data.itp" include;                             # Include data utilities
+"$UASR_HOME/scripts/dlabpro/util/os.itp"   include;                             # Include OS utilities
+"$UASR_HOME/scripts/dlabpro/util/uasr.itp" include;                             # Include UASR utilities
+"$UASR_HOME/scripts/dlabpro/util/var.itp"  include;                             # Include variables' utilities
 
 ## Prints help on usage
 function -usage()
@@ -94,14 +94,14 @@ function -EVO_recombination(nChildren,idP)
 	data idC; -type double idP.dim nChildren idC -array;                          # Population of children
 
 	"\n     - Recombination: $[idP.nrec] parents, $[nChildren] children"   -MSG2; # Protocol
-	0 nC =; label L_C; nC nChildren < if                                          # Loop over children >>
+	0 nC =; nC nChildren < while                                                  # Loop over children >>
 	  "\n       - Child $[nC]: "                                         3 -MSGX; #   Protocol
-  	0 nG =; label L_G; nG idP.dim < if                                          #   Loop over genes >>
+  	0 nG =; nG idP.dim < while                                                  #   Loop over genes >>
 	      r nP =;                                               " $[nP]" 3 -MSGX; #     Randomly select a parent
         :idC[nC,nG]=idP[nP,nG];                                                 #     Copy gene
-	    nG ++=; goto L_G;                                                         #     Next gene
+	    nG ++=;                                                                   #     Next gene
 	  end                                                                         #   <<
-	  nC ++=; goto L_C;                                                           #   Next child
+	  nC ++=;                                                                     #   Next child
 	end                                                                           # <<
 	idC idP -cat;                                                                 # Add children to population 
 	"\n      " 3 -MSGX; " done."                                           -MSG2; # Protocol
@@ -175,12 +175,12 @@ function -EVO_evaluation(idE,idP)
 
 	"\n     - Evaluation ..."                                              -MSG2; # Protocol
 	-type double 1 idP.nrec idE -array;                                           # Initialize fitness data
-	label L_P; nP idP.nrec < if                                                   # Loop over individuals >>
+	nP idP.nrec < while                                                           # Loop over individuals >>
 	  "\n       - Individual $[nP]:"                                     3 -MSGX; #   Protocol
 	  idP nP 1 idX /rec -select;                                                  #   Get current individual
 	  ( idX FALSE -EVO_evaluate_individual ) nP 0 idE -dstore;                    #   Evaluate it
 	  " ${idE[nP,0]}"                                                    3 -MSGX; #   Protocol
-	  nP ++=; goto L_P;                                                           #   Next individual
+	  nP ++=;                                                                     #   Next individual
 	end                                                                           # <<
 	"\n      " 3 -MSGX;                                           " done." -MSG2; # Protocol
 }
@@ -206,7 +206,7 @@ function -EVO_selection(nPopulation,idP)
 	idI 0 nPopulation idI /rec -select;                                           # Select the nPopulation fittest
 	.__UTL_nVlevel 2 >= if                                                        # On verbose level 2 and higher >>
 	  " ... done (individuals"                                             -echo; #   Protocol
-	  label L_P; nP idI.nrec < if " ${idI[nP,0]}" -echo; nP ++=; goto L_P; end    #   Print indices of selected indivdls.
+	  nP idI.nrec < while " ${idI[nP,0]}" -echo; nP ++=; end                      #   Print indices of selected indivdls.
 	  ")"                                                                  -echo; #   Protocol
   end                                                                           # <<
 	idI 0 2 idP -delete;                                                          # Delete index and fitness values
@@ -224,12 +224,16 @@ function -EVO_selection(nPopulation,idP)
 ( "$1" "help" == ) -UASR_help || if "$2" -usage; 0 return; end                  # Print help
 "\n// Configuration   : $1"                                               -MSG; # Protocol
 "$1" TRUE -CFG_init;                                                            # Configure session
-"util/uasr_session.itp" include;                                                # Include UASR session startup script
+"$UASR_HOME/scripts/dlabpro/util/uasr_session.itp" include;                     # Include UASR session startup script
 
 var nPopulation;  ( "gen.population"      2 "S" -CFG_get_ex ) nPopulation  =;   # Population size
 var nChildren;    ( "gen.children"        5 "S" -CFG_get_ex ) nChildren    =;   # Number of children per generation
 var nGenerations; ( "gen.generations"   100 "S" -CFG_get_ex ) nGenerations =;   # Maximal number of generations
 var nAbort;       ( "gen.abort"       0.001 "S" -CFG_get_ex ) nAbort       =;   # Evolution abort threshold
+
+"\n   Generations     : max. $[nGenerations]"                             -MSG; # Protocol
+"\n   Population size : $[nPopulation]"                                   -MSG; # Protocol
+"\n   Children        : $[nChildren]"                                     -MSG; # Protocol
 
 var  nG;                                                                        # Current generation
 var  nE;                                                                        # Currently best evaluation result
@@ -238,25 +242,27 @@ data idP;                                                                       
 data idX;                                                                       # The fittest individual so far
 
 ## Evolution                                                                    # -------------------------------------
-"\n\n   Performing evolution (max. $[nGenerations] generations)"          -MSG; # Protocol
+"\n\n   Performing evolution"                                             -MSG; # Protocol
 nPopulation idP -EVO_population;                                                # Create population
-label L_GEN; nG nGenerations < if                                               # Loop over generations >>
+nG nGenerations < while                                                         # Loop over generations >>
   "\n   - Generation $[nG]: ..." -MSG;                                          #   Protocol
   nChildren idP   -EVO_recombination;                                           #   Recombination
   idP             -EVO_mutation;                                                #   Mutation
   nPopulation idP -EVO_selection nE =;                                          #   Selection
   " done. (best $[nE])" -MSG;                                                   #   Protocol
-  nE nEmin < if                                                                 #   Found new fittest individual >>
+  nE nEmin <= if                                                                #   Found new fittest individual >>
     nE nEmin =;                                                                 #     Remember evaluation result
     idP 0 1 idX /rec -select;                                                   #     Remember the individual
     " *"                                                                  -MSG; #     Protocol
   end                                                                           #   <<
-  nE nAbort > if nG ++=; goto L_GEN; end                                        #   Next generaration
+  nE nAbort <= if break; end                                                    #   Attained desired fitness -> abort
+  nG ++=;                                                                       #   Next generaration
 end                                                                             # <<
 
 ## Aftermath                                                                    # -------------------------------------
 "\n   Evolution complete. Here is the best individual:"                   -MSG; # Protocol
-idX TRUE -EVO_evaluate_individual;                                              # Show individual
+idX TRUE -EVO_evaluate_individual;                                              # Protocol best individual's genes 
+"\n   Fitness: $[nE]"                                                     -MSG; # Protocol fitness
 
 "\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n"           -MSG; # Protocol
 0 return;                                                                       # That's it folks
