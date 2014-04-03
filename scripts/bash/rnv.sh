@@ -53,12 +53,11 @@
 ## You should have received a copy of the GNU Lesser General Public License
 ## along with UASR. If not, see <http://www.gnu.org/licenses/>.
 
-
 ## Maintainer gets notification in any case
-MAINTAINER=strecha
+MAINTAINER=matthias.wolff@tu-cottbus.de
 
 ## Uasr common data directory for vm database
-UASR_DATA_VM_COMMON=/erk/daten2/uasr-data-common/vm/common
+UASR_DATA_VM_COMMON= ~/uasr-data-common/vm.de/common
 
 UASR_HOME="$0"
 [ "${UASR_HOME#/}" = "$UASR_HOME" ] && UASR_HOME=`pwd`"/$UASR_HOME"
