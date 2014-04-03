@@ -5,8 +5,6 @@
 ## AUTHOR  : Matthias Wolff, Frank Duckhorn
 ## PACKAGE : uasr/scripts/bash
 
-## TODO    : Adjust for GIT repositories!  
-##
 ## UASR/dLabPro maintenance script. Warning: this script overwrites ALL
 ## local modifications of the working copies!'
 ##
@@ -26,11 +24,11 @@
 ##   or verify experiment fails. The MAINTAINER (see variable below) gets this mail 
 ##   in any case (notice of successful completion or svn log).
 ##
-##   A cronjob is used to run this script every night. 
-##   The file /erk/daten2/uasr-maintanance/.crontab can be used for this purpose.
-##   It contains the following job entry (as of 2010-01-07):
+##   A cronjob is used to run this script every night. The file 
+##   /home/wolff/uasr-maintanance/.crontab on newisland.kt.tu-cottbus.de can be 
+##   used for this purpose. It contains the following job entry:
 ##
-##   5 23 * * *       exec bash -login /erk/daten2/uasr-maintenance/uasr/scripts/bash/rnv.sh -a > /erk/daten2/uasr-maintenance/maintenance.log 2>&1
+##   5 23 * * *       exec bash -login /home/wolff/uasr-maintenance/uasr/scripts/bash/rnv.sh -a &> /home/wolff/uasr-maintenance/maintenance.log
 ##
 ##   See man cronjob and man -S 5 cronjob for more information.
 ##
@@ -70,7 +68,6 @@ export PATH=$DLABPRO_HOME/bin.release:$PATH
 export RECOGNIZER_SUBDIR=
 DLABPRO=${UASR_HOME%uasr}dLabPro/bin.release/dlabpro
 RECOGNIZER=${UASR_HOME%uasr}dLabPro/bin.release/recognizer
-
 
 UR="HEAD"
 DR="HEAD"
@@ -297,7 +294,6 @@ run_reco "Recognizer verify experiment" \
 	-data.sesinfo log/sesinfo.object \
 	-data.vadinfo "" \
 	PCUS11_test.flst
-
 
 finalize_error
 

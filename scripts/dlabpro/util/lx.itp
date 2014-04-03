@@ -400,10 +400,10 @@ function -LX_unify(itSrc,itDst)
   ## Process lexicon                                                            # -------------------------------------
   itLex.ud.nrec 0 > if                                                          # Have ordinary entries >>
     itLex itLex -union;                                                         #   Unify
-    itLex 0 itLex -minimize;                                                    #   Minimize
+    itLex -1 itLex -minimize;                                                   #   Minimize
   end                                                                           # <<
   itXxx.ud.nrec 0 > if                                                          # Have special entries >>
-  	itXxx 0 itXxx /lazy -minimize;                                              #   Lazy minimize
+  	itXxx -1 itXxx /lazy -minimize;                                             #   Lazy minimize
     itXxx itLex -cat;                                                           #   Add them
     itLex itLex -union;                                                         #   Unify again
   end                                                                           # <<
