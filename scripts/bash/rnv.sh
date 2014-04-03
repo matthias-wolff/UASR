@@ -57,7 +57,7 @@
 MAINTAINER=matthias.wolff@tu-cottbus.de
 
 ## Uasr common data directory for vm database
-UASR_DATA_VM_COMMON= ~/uasr-data-common/vm.de/common
+UASR_DATA_VM_COMMON=/home/wolff/uasr-data/vm.de/common
 
 UASR_HOME="$0"
 [ "${UASR_HOME#/}" = "$UASR_HOME" ] && UASR_HOME=`pwd`"/$UASR_HOME"
