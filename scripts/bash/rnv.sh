@@ -34,7 +34,7 @@
 ##
 ##   See man cronjob and man -S 5 cronjob for more information.
 ##
-## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## Copyright 2013-2014 UASR contributors (see COPYRIGHT file)
 ## - Chair of System Theory and Speech Technology, TU Dresden
 ## - Chair of Communications Engineering, BTU Cottbus
 ##
@@ -60,37 +60,17 @@ MAINTAINER=strecha
 ## Uasr common data directory for vm database
 UASR_DATA_VM_COMMON=/erk/daten2/uasr-data-common/vm/common
 
-
-PROCESSOR=`/bin/uname -m`   # Determine processor type
-case $PROCESSOR in
-	i386) PROCESSOR=x86;;
-	i686) PROCESSOR=x86;;
-	x86_64) PROCESSOR=x86_64;;
-	*) echo "rnv.sh: unbekannter Prozessor \"$PROCESSOR\""
-	   exit 1;;
-esac
-SYSTEM=`/bin/uname`         # Determine system type
-case $SYSTEM in 
-	OSF1)	MACHINE=alpha;;
-	SunOS)  MACHINE=sparc;;
-	ULTRIX) MACHINE=mips;;
-	Linux)  MACHINE=$PROCESSOR-linux;;
-	*) MACHINE=unknown
-	   echo ".bashrc: unbekanntes System \"$SYSTEM\""
-	   exit 1;;
-esac
 UASR_HOME="$0"
 [ "${UASR_HOME#/}" = "$UASR_HOME" ] && UASR_HOME=`pwd`"/$UASR_HOME"
 UASR_HOME=${UASR_HOME%rnv.sh}
 UASR_HOME=${UASR_HOME%uasr/*}
 UASR_HOME=${UASR_HOME%uasr}uasr
 export UASR_HOME
-export MACHINE
 export DLABPRO_HOME=${UASR_HOME%uasr}dLabPro
-export PATH=$DLABPRO_HOME/bin.release.$MACHINE:$PATH
+export PATH=$DLABPRO_HOME/bin.release:$PATH
 export RECOGNIZER_SUBDIR=
-DLABPRO=${UASR_HOME%uasr}dLabPro/bin.release.$MACHINE/dlabpro
-RECOGNIZER=${UASR_HOME%uasr}dLabPro/bin.release.$MACHINE/recognizer
+DLABPRO=${UASR_HOME%uasr}dLabPro/bin.release/dlabpro
+RECOGNIZER=${UASR_HOME%uasr}dLabPro/bin.release/recognizer
 
 
 UR="HEAD"
@@ -272,10 +252,10 @@ function run_reco
 
 if [ "$UPDATE_NO" != "yes" ]; then
 	echo; echo "// Checking out revisions -----------------------------------------------"
-	svn_update dLabPro         $DLABPRO_HOME             svn+ssh://eakss1.et.tu-dresden.de/dLabPro/trunk             $DR
-	svn_update UASR            $UASR_HOME                svn+ssh://eakss1.et.tu-dresden.de/uasr/trunk                $UR
-	svn_update vm.de           $UASR_HOME-data/vm.de     svn+ssh://eakss1.et.tu-dresden.de/uasr-data-vm.de/trunk     $VR
-	svn_update synthesizer_hmm $DLABPRO_HOME-synthesizer svn+ssh://eakss1.et.tu-dresden.de/dLabPro-synthesizer/trunk $SR
+	svn_update dLabPro         $DLABPRO_HOME             https://github.com/matthias-wolff/dLabPro/trunk             $DR
+	svn_update UASR            $UASR_HOME                https://github.com/matthias-wolff/UASR/trunk                $UR
+	svn_update vm.de           $UASR_HOME-data/vm.de     https://github.com/matthias-wolff/uasr-data-vm.de/trunk     $VR
+#	svn_update synthesizer_hmm $DLABPRO_HOME-synthesizer svn+ssh://eakss1.et.tu-dresden.de/dLabPro-synthesizer/trunk $SR
 	lnk_vm
 fi
 
@@ -286,7 +266,7 @@ rm -rf $DLABPRO_HOME/bin.*
 prj_build dcg              $DLABPRO_HOME/programs/dcg
 prj_build dlapro           $DLABPRO_HOME/programs/dlabpro
 prj_build recognizer       $DLABPRO_HOME/programs/recognizer
-prj_build synthesizer_hmm  $DLABPRO_HOME-synthesizer/hmm-diphone
+#prj_build synthesizer_hmm  $DLABPRO_HOME-synthesizer/hmm-diphone
 
 echo; echo "// Running VMV feature extraction and verify experiment -----------------"
 run_xtp "VMV Feature extraction" FEA.xtp ana $UASR_HOME-data/vm.de/common/info/VMV.cfg \
