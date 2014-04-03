@@ -231,7 +231,7 @@ function prj_build
 {
 	NAME="$1"
 	DIR="$2"
-	echo "   - Building $NAME ..."
+	echo "   - Building $NAME in $DIR ..."
 	make -s -C "$DIR" CLEANALL
 	make -s -C "$DIR" RELEASE
 	check_error $? "Build of $NAME"
