@@ -57,6 +57,8 @@ MAINTAINER=matthias.wolff@tu-cottbus.de
 ## Uasr common data directory for vm database
 UASR_DATA_VM_COMMON=/home/wolff/uasr-data/vm.de/common
 
+# == Initialization ============================================================
+
 UASR_HOME="$0"
 [ "${UASR_HOME#/}" = "$UASR_HOME" ] && UASR_HOME=`pwd`"/$UASR_HOME"
 UASR_HOME=${UASR_HOME%rnv.sh}
@@ -73,7 +75,6 @@ UR="HEAD"
 DR="HEAD"
 VR="HEAD"
 RR="HEAD"
-SR="HEAD"
 if [ "X$1" = 'X-a' ]; then
 	echo; echo "// ROLLBACK AND VERIFY //////////////////////////////////////////////////"
 	RM="yes"
@@ -92,19 +93,17 @@ elif [ "X$1" = 'X-d' ]; then
 	DR="{$2}"
 	VR="{$2}"
 	RR="{$2}"
-	SR="{$2}"
 elif [ "X$1" = 'X-r' ]; then
 	if [ $# -lt 4 ]; then
 		echo 'Missing arguments, type "rnv.sh" for help'
 		echo 'Stop'
 		exit 1
 	fi
-	echo "   - to revision UASR $2 / dLabPro $3 / vm.de $4 / recognizer $5 / synthesizer $6"
+	echo "   - to revision UASR $2 / dLabPro $3 / vm.de $4"
 	UR="$2"
 	DR="$3"
 	VR="$4"
-	RR="$5"
-	SR="$6"
+	RR="$3"
 elif [ "X$1" = 'X-k' ]; then
 	echo "   - keep current revision (UASR `svnversion $UASR_HOME` / dLabPro `svnversion $UASR_HOME/../dLabPro` / vm.de `svnversion $UASR_HOME-data/vm.de`)"
 	export UPDATE_NO="yes"
@@ -129,6 +128,8 @@ fi
 [ "X$1" != "X-k" -o "X$2" != "Xself" ] && ERRTXT=""
 
 echo "   - \$UASR_HOME: $UASR_HOME"
+
+# == Functions =================================================================
 
 function check_error
 {
@@ -246,13 +247,13 @@ function run_reco
 	check_error $? "$1"
 }
 
+# == MAIN PROGRAM ==============================================================
 
 if [ "$UPDATE_NO" != "yes" ]; then
 	echo; echo "// Checking out revisions -----------------------------------------------"
-	svn_update dLabPro         $DLABPRO_HOME             https://github.com/matthias-wolff/dLabPro/trunk             $DR
-	svn_update UASR            $UASR_HOME                https://github.com/matthias-wolff/UASR/trunk                $UR
-	svn_update vm.de           $UASR_HOME-data/vm.de     https://github.com/matthias-wolff/uasr-data-vm.de/trunk     $VR
-#	svn_update synthesizer_hmm $DLABPRO_HOME-synthesizer svn+ssh://eakss1.et.tu-dresden.de/dLabPro-synthesizer/trunk $SR
+	svn_update dLabPro $DLABPRO_HOME         https://github.com/matthias-wolff/dLabPro/trunk         $DR
+	svn_update UASR    $UASR_HOME            https://github.com/matthias-wolff/UASR/trunk            $UR
+	svn_update vm.de   $UASR_HOME-data/vm.de https://github.com/matthias-wolff/uasr-data-vm.de/trunk $VR
 	lnk_vm
 fi
 
