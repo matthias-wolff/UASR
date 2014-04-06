@@ -54,8 +54,9 @@
 ## Maintainer gets notification in any case
 MAINTAINER=matthias.wolff@tu-cottbus.de
 
-## Uasr common data directory for vm database
+## Uasr common data directores
 UASR_DATA_VM_COMMON=/home/wolff/uasr-data/vm.de/common
+UASR_DATA_SSMG_COMMON=/home/wolff/uasr-data/ssmg/common
 
 # == Initialization ============================================================
 
@@ -217,11 +218,12 @@ function svn_update
 	fi
 }
 
-function lnk_vm
+function lnk_db
 {
 	[ ! -e "$UASR_HOME-data/vm.de/common/sig"     ] && ln -sf "$UASR_DATA_VM_COMMON/sig"     "$UASR_HOME-data/vm.de/common/"
 	[ ! -e "$UASR_HOME-data/vm.de/common/sig-wav" ] && ln -sf "$UASR_DATA_VM_COMMON/sig-wav" "$UASR_HOME-data/vm.de/common/"
 	[ ! -e "$UASR_HOME-data/vm.de/common/lab"     ] && ln -sf "$UASR_DATA_VM_COMMON/lab"     "$UASR_HOME-data/vm.de/common/"
+	[ ! -e "$UASR_HOME-data/ssmg/common"          ] && ln -sf "$UASR_DATA_VM_COMMON"         "$UASR_HOME-data/ssmg/"
 }
 
 function prj_build
@@ -254,7 +256,7 @@ if [ "$UPDATE_NO" != "yes" ]; then
 	svn_update dLabPro $DLABPRO_HOME         https://github.com/matthias-wolff/dLabPro/trunk         $DR
 	svn_update UASR    $UASR_HOME            https://github.com/matthias-wolff/UASR/trunk            $UR
 	svn_update vm.de   $UASR_HOME-data/vm.de https://github.com/matthias-wolff/uasr-data-vm.de/trunk $VR
-	lnk_vm
+	lnk_db
 fi
 
 [ "$UPDATE_ONLY" = "yes" ] && finalize_error
