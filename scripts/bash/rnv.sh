@@ -300,17 +300,17 @@ fi
 
 [ "$UPDATE_ONLY" = "yes" ] && finalize_error
 
-echo; echo "// Building -------------------------------------------------------------"
-rm -rf $DLABPRO_HOME/bin.*
-prj_build dcg              $DLABPRO_HOME/programs/dcg
-prj_build dlapro           $DLABPRO_HOME/programs/dlabpro
-prj_build recognizer       $DLABPRO_HOME/programs/recognizer
+#echo; echo "// Building -------------------------------------------------------------"
+#rm -rf $DLABPRO_HOME/bin.*
+#prj_build dcg              $DLABPRO_HOME/programs/dcg
+#prj_build dlapro           $DLABPRO_HOME/programs/dlabpro
+#prj_build recognizer       $DLABPRO_HOME/programs/recognizer
 #prj_build synthesizer_hmm  $DLABPRO_HOME-synthesizer/hmm-diphone
-
-test_HMM_trn
-test_rec_SSMG
-test_rec_PCUS11
-
-finalize_error
+#
+#test_HMM_trn
+#test_rec_SSMG
+#test_rec_PCUS11
+#
+#finalize_error
 
 ## EOF
