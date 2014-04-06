@@ -56,7 +56,7 @@ MAINTAINER=matthias.wolff@tu-cottbus.de
 
 ## Uasr common data directores
 UASR_DATA_VM_COMMON=/home/wolff/uasr-data/vm.de/common
-UASR_DATA_SSMG_COMMON=/home/wolff/uasr-data/ssmg/common
+UASR_DATA_SSMG=/home/wolff/uasr-data/ssmg
 
 # == Initialization ============================================================
 
@@ -223,7 +223,7 @@ function lnk_db
 	[ ! -e "$UASR_HOME-data/vm.de/common/sig"     ] && ln -sf "$UASR_DATA_VM_COMMON/sig"     "$UASR_HOME-data/vm.de/common/"
 	[ ! -e "$UASR_HOME-data/vm.de/common/sig-wav" ] && ln -sf "$UASR_DATA_VM_COMMON/sig-wav" "$UASR_HOME-data/vm.de/common/"
 	[ ! -e "$UASR_HOME-data/vm.de/common/lab"     ] && ln -sf "$UASR_DATA_VM_COMMON/lab"     "$UASR_HOME-data/vm.de/common/"
-	[ ! -e "$UASR_HOME-data/ssmg/common"          ] && ln -sf "$UASR_DATA_VM_COMMON"         "$UASR_HOME-data/ssmg/"
+	[ ! -e "$UASR_HOME-data/ssmg"                 ] && ln -sf "$UASR_DATA_SSMG"              "$UASR_HOME-data/"
 }
 
 function prj_build
