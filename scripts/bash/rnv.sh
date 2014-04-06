@@ -249,6 +249,45 @@ function run_reco
 	check_error $? "$1"
 }
 
+function test_HMM_trn
+{
+  echo; echo "// Running VMV feature extraction and verify experiment -----------------"
+  run_xtp "VMV Feature extraction" FEA.xtp ana $UASR_HOME-data/vm.de/common/info/VMV.cfg \
+    -Pexp=VMV_RNV -Pdir.flists=$UASR_HOME-data/vm.de/VMV/flists \
+    -Pdir.fea=$UASR_HOME-data/vm.de/VMV_RNV/fea
+  run_xtp "VMV Verify experiment"  HMM.xtp trn $UASR_HOME-data/vm.de/common/info/VMV.cfg \
+    -Pexp=VMV_RNV -Pdir.flists=$UASR_HOME-data/vm.de/VMV/flists \
+    -Pdir.fea=$UASR_HOME-data/vm.de/VMV_RNV/fea \
+    -Pam.train.split=1
+}
+
+function test_rec_SSMG
+{
+  echo; echo "// Running command recognition verify experiment -----------------"
+  run_xtp "Command recognition verify experiemnt #1" HMM.xtp evl $UASR_HOME-data/ssmg/common/info/SAMURAI_0.cfg \
+    -Pdir.model=$UASR_HOME-data/vm.de/VMV_RNV/model \
+    -Pam.model=1_5 \
+    -Pam.eval.wrd.ite-1_-1=0.956,0.936,1.013
+  run_xtp "Command recognition verify experiemnt #2" HMM.xtp evl $UASR_HOME-data/ssmg/common/info/MYUSE_0.cfg \
+    -Pdir.model=$UASR_HOME-data/vm.de/VMV_RNV/model \
+    -Pam.model=1_5 \
+    -Pam.eval.wrd.ite-1_-1=0.951,0.943,1.002
+}
+
+function test_rec_PCUS11
+{
+  echo; echo "// Running recognizer verify experiment -----------------"
+  cd $UASR_HOME-data/pcus11
+  rm -rf log
+  run_xtp "Recognizer pack data" tools/REC_PACKDATA.xtp rec PCUS11.cfg -Pout=log
+  run_reco "Recognizer verify experiment" \
+    -data.feainfo log/feainfo.object \
+    -data.gmm log/1_5.gmm \
+    -data.sesinfo log/sesinfo.object \
+    -data.vadinfo "" \
+    PCUS11_test.flst
+}
+
 # == MAIN PROGRAM ==============================================================
 
 if [ "$UPDATE_NO" != "yes" ]; then
@@ -268,35 +307,9 @@ prj_build dlapro           $DLABPRO_HOME/programs/dlabpro
 prj_build recognizer       $DLABPRO_HOME/programs/recognizer
 #prj_build synthesizer_hmm  $DLABPRO_HOME-synthesizer/hmm-diphone
 
-echo; echo "// Running VMV feature extraction and verify experiment -----------------"
-run_xtp "VMV Feature extraction" FEA.xtp ana $UASR_HOME-data/vm.de/common/info/VMV.cfg \
-  -Pexp=VMV_RNV -Pdir.flists=$UASR_HOME-data/vm.de/VMV/flists \
-  -Pdir.fea=$UASR_HOME-data/vm.de/VMV_RNV/fea
-run_xtp "VMV Verify experiment"  HMM.xtp trn $UASR_HOME-data/vm.de/common/info/VMV.cfg \
-  -Pexp=VMV_RNV -Pdir.flists=$UASR_HOME-data/vm.de/VMV/flists \
-  -Pdir.fea=$UASR_HOME-data/vm.de/VMV_RNV/fea \
-  -Pam.train.split=1
-
-echo; echo "// Running command recognition verify experiment -----------------"
-run_xtp "Command recognition verify experiemnt #1" HMM.xtp evl $UASR_HOME-data/ssmg/common/info/SAMURAI_0.cfg \
-	-Pdir.model=$UASR_HOME-data/vm.de/VMV_RNV/model \
-	-Pam.model=1_5 \
-	-Pam.eval.wrd.ite-1_-1=0.956,0.936,1.013
-run_xtp "Command recognition verify experiemnt #2" HMM.xtp evl $UASR_HOME-data/ssmg/common/info/MYUSE_0.cfg \
-	-Pdir.model=$UASR_HOME-data/vm.de/VMV_RNV/model \
-	-Pam.model=1_5 \
-	-Pam.eval.wrd.ite-1_-1=0.951,0.943,1.002
-
-echo; echo "// Running recognizer verify experiment -----------------"
-cd $UASR_HOME-data/pcus11
-rm -rf log
-run_xtp "Recognizer pack data" tools/REC_PACKDATA.xtp rec PCUS11.cfg -Pout=log
-run_reco "Recognizer verify experiment" \
-	-data.feainfo log/feainfo.object \
-	-data.gmm log/1_5.gmm \
-	-data.sesinfo log/sesinfo.object \
-	-data.vadinfo "" \
-	PCUS11_test.flst
+test_HMM_trn
+test_rec_SSMG
+test_rec_PCUS11
 
 finalize_error
 
