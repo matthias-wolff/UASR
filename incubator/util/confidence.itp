@@ -1,0 +1,254 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: For speech recognition confidence/rejection
+##
+## AUTHOR : Matthias Wolff, Leonard Förster
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2014 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## -- Confidence Score Functions --                                             # =====================================
+##    For details see: L. Foerster: Rueckweisung ungrammatischer Spracherkenner-
+##    Eingaben. Bachelor Thesis, BTU Cottbus, Chair of Communications 
+##    Engineering, 2014.
+
+## Computes the normalized acoustic distance (NAD) score of a recognition
+## result.
+## 
+## @param idRes data
+##          The post-processed recognition result as returned by
+##          {@link -RR_postprocess}.
+## @param iSi object
+##          The recognizer session information.
+## @return The NAD score.
+function -CNFS_nad(idRes,iSi)
+{
+  data idRes2;                                                                  # Copy of recognition result
+  data idAux;                                                                   # Auxiliary data                     
+  data idAux2;                                                                  # Auxiliary data 2
+  var  nNad;                                                                    # Normalized acoustic distance
+  
+  idRes idRes2 -copy;                                                           # Copy recognition result
+  :(idRes2["PHN"].==.nSilMod).||(idRes2["PHNr"].==.nSilMod): idRes2 -dmark;     # Mark pause labels
+  idRes2 0 0 idRes2 /mark -delete;                                              # Delete
+  :(idRes2["PHN"].==.nGbgMod).||(idRes2["PHNr"].==.nGbgMod): idRes2 -dmark;     # Mark garbage labels
+  idRes2 0 0 idRes2 /mark -delete;                                              # Delete
+  idRes2 -is_empty if NAN return; end                                           # No speech frames left -> reject
+
+  :abs(idRes2["NLL"]-idRes2["NLLr"]): NULL 0 "sum" idAux  /rec -aggregate;      # Sum absolute NLL diff's. of frames
+  :idRes2["NLL"]:                     NULL 0 "sum" idAux2 /rec -aggregate;      # Sum NLLs of speech recognition res. 
+  :nNad = idAux[0,0]/idAux2[0,0];                                               # Compute normalized acoustic distance
+  nNad return;                                                                  # Return NAD score
+}
+
+## Computes the normalized Hamming distance (formerly normalized edit distance,
+## NED) score of a recognition result.
+## 
+## @param idRes data
+##          The post-processed recognition result as returned by
+##          {@link -RR_postprocess}.
+## @param iSi object
+##          The recognizer session information.
+## @return The NHD score.
+function -CNFS_nhd(idRes,iSi)
+{
+  data idRes2;                                                                  # Copy of recognition result
+  data idAux;                                                                   # Auxiliary data                     
+  data idAux2;                                                                  # Auxiliary data 2
+  var  nNhd;                                                                    # Normalized acoustic distance
+  
+  idRes idRes2 -copy;                                                           # Copy recognition result
+  :(idRes2["PHN"].==.nSilMod).||(idRes2["PHNr"].==.nSilMod): idRes2 -dmark;     # Mark pause labels
+  idRes2 0 0 idRes2 /mark -delete;                                              # Delete
+  :(idRes2["PHN"].==.nGbgMod).||(idRes2["PHNr"].==.nGbgMod): idRes2 -dmark;     # Mark garbage labels
+  idRes2 0 0 idRes2 /mark -delete;                                              # Delete
+  idRes2 -is_empty if NAN return; end                                           # No speech frames left -> reject
+
+  :idRes2["PHN"].!=idRes2["PHNr"]: NULL 0 "sum" idAux /rec -aggregate;          # Sum Hamming distance of frame labels
+  :nNhd = idAux[0,0]/idRes2.nrec;                                               # Compute normalzed edit distance
+  nNhd return;                                                                  # Return NED score
+}
+
+## Computes the (unweighted) negative phoneme duration likelihood score of a
+## recognition result.
+## 
+## @param idRes data
+##          The post-processed recognition result as returned by
+##          {@link -RR_postprocess}.
+## @param iSi object
+##          The recognizer session information.
+## @return The negative phoneme duration likelihood score.
+function -CNFS_pdl(idRes,iSi)
+{
+  ( idRes iSi "U" -CNFS_pdur_int ) return;  
+}
+
+## Computes the weighted negative phoneme duration likelihood score of a
+## recognition result.
+## 
+## @param idRes data
+##          The post-processed recognition result as returned by
+##          {@link -RR_postprocess}.
+## @param iSi object
+##          The recognizer session information.
+## @return The negative phoneme duration likelihood score.
+function -CNFS_pdlw(idRes,iSi)
+{
+  ( idRes iSi "W" -CNFS_pdur_int ) return;  
+}
+
+## Computes the normalized weighted Levenshtein divergence between the
+## phonetic recognition and the reference recognition results. Convenience 
+## function. Invokes <code>idRes iSi "L" -CNFS_nwpd_int</code>.
+##
+## @param idRes data
+##          The post-processed recognition result as returned by
+##          {@link -RR_postprocess}.
+## @param iSi object
+##          The recognizer session information.
+## @see -CNFS_nwpd_int
+function -CNFS_nwld(idRes,iSi)
+{
+  ( idRes iSi "L" -CNFS_nwpd_int ) return;
+}
+
+## Computes the normalized weighted Hamming divergence between the phonetic
+## recognition and the reference recognition results. Convenience function; 
+## invokes <code>idRes iSi "H" -CNFS_nwpd_int</code>.
+##
+## @param idRes data
+##          The post-processed recognition result as returned by
+##          {@link -RR_postprocess}.
+## @param iSi object
+##          The recognizer session information.
+## @see -CNFS_nwpd_int
+function -CNFS_nwhd(idRes,iSi)
+{
+  ( idRes iSi "H" -CNFS_nwpd_int ) return;
+}
+
+## Computes the negative phoneme duration likelihood score of a recognition
+## result.
+## 
+## @param idRes data
+##          The post-processed recognition result as returned by
+##          {@link -RR_postprocess}.
+## @param iSi object
+##          The recognizer session information.
+## @param sMode string
+##          The operation mode: "U" unweighted (normal), "W" weighted with the
+##          the phoneme durations
+## @global idPhnDUR CRW
+## @global sModDir  R
+## @return The negative phoneme duration likelihood score.
+function -CNFS_pdur_int(idRes,iSi,sMode)
+{
+  data idDur;
+  data idAux;
+
+  ".idPhnDur" "data" ?instance not if                                           # No phoneme duration probabilities >>
+    data .idPhnDur;                                                             #   Persistently create it
+    var  sModDir; ( "model" "S" -CFG_get_path ) sModDir =;                      #   Model directory
+    "$[sModDir]/phon_dur_probs.dn3" .idPhnDur -restore;                         #   Load probability functions
+    :idPhnDur=-.ln(idPhnDur);                                                   #   Compute neg. log. probabilities
+  end                                                                           # <<
+
+  :idRes["PHN"]: 0 idDur -compress;                                             # Get recognized phoneme durations
+  idDur 1 1 idDur -delete; 1 "DUR" idDur -set_cname;                            # ...
+  :(idDur["PHN"].==.nSilMod).||(idDur["PHN"].==.nGbgMod): idDur -dmark;         # Remove silence and garbage
+  idDur 0 0 idDur /mark -delete;                                                # ...
+  
+  :idDur["DUR"]: 0 :idDur["PHN"]: 0 .idPhnDur idAux -lookup_2;                  # Lookup single phoneme duration NLLs
+  sMode "W" == if                                                               # Weighted mode >>
+    idAux idDur -join;                 idDur.dim -- "NLP"   idDur -set_cname;   #   Join phoneme durations
+    :idAux.*idDur["DUR"]: idDur -join; idDur.dim -- "NLPxL" idDur -set_cname;   #   Computed weighted NLPs
+    idDur NULL 0 "sum" idAux /rec -aggregate;                                   #   Sum
+    :idAux[0,"NLPxL"]/idAux[0,"DUR"]: return;                                   #   Normalize
+  else sMode "U" == if                                                          # << Unweighted mode >>
+    idAux NULL 0 "mean" idAux /rec -aggregate;                                  #   Compute mean
+    :idAux[0,0]: return;                                                        #   Return result
+  else                                                                          # << Unknown mode >>
+    "sMode=\"$[sMode]\" invalid in function -CONF_nwld" 1 -WARNING;             #   Warning
+    NAN return;                                                                 #   All we can do...
+  end end                                                                       # <<
+}
+
+## Computes the normalized weighted phonetic divergence between the recognition 
+## and the reference recognition results. As the negative logarithmic phoneme
+## confusion probabilities are used as weights, the function is not a metric
+## (the identity and symmetry axioms do not hold).   
+## 
+## @param idRes data
+##          The post-processed recognition result as returned by
+##          {@link -RR_postprocess}.
+## @param iSi object
+##          The recognizer session information.
+## @param sMode string
+##          The operation mode: "H" Hamming divergence, "L" Levenshtein 
+##          divergence.
+## @global idPhnCmx CRW
+## @global sModDir  R
+## @return The negative phoneme duration likelihood score.
+function -CNFS_nwpd_int(idRes,iSi,sMode)
+{
+  data idCmx;
+  fst  itAux;
+  data idAux;                                                                   # Auxiliary data                     
+  data idAux2;                                                                  # Auxiliary data #2                     
+
+  ".idPhnCmx" "data" ?instance not if                                           # No phoneme confusion matrix >>
+    data .idPhnCmx;                                                             #   Persistently create it
+    var sAmMod;  ( "am.model" "3_20" "S" -CFG_get_ex   ) sAmMod  =;             #   Acoustic model identifier 
+    var sModDir; ( "model" "S"           -CFG_get_path ) sModDir =;             #   Model directory
+    "$[sModDir]/$[sAmMod]_hmm-frm-cmx.dn3" .idPhnCmx -restore;                  #   Load per-frame phoneme conf. matrix
+    :.idPhnCmx += 1;                                                            #   Add-one smoothing
+    .idPhnCmx NULL 0 "sum" idAux -aggregate;                                    #   Aggregate smoothed counts
+    :.idPhnCmx = -.ln(.idPhnCmx/idAux);                                         #   Normalize and log
+  end                                                                           # <<
+
+  sMode "H" == if                                                               # Hamming mode >>
+    idRes idCmx -copy;                                                          #   Copy recognition result
+    :(idCmx["PHN"].==.nSilMod).||(idCmx["PHNr"].==.nSilMod): idCmx -dmark;      #   Mark pause labels
+    idCmx 0 0 idCmx /mark -delete;                                              #   Delete
+    :(idCmx["PHN"].==.nGbgMod).||(idCmx["PHNr"].==.nGbgMod): idCmx -dmark;      #   Mark garbage labels
+    idCmx 0 0 idCmx /mark -delete;                                              #   Delete
+    idCmx -is_empty if NAN return; end                                          #   No speech frames left -> reject
+  else sMode "L" == if                                                          # << Levenshtein mode >>
+    :idRes["PLB"]:  0  idAux  -compress; idAux  "" "rcat" idAux  -strop;        #   Get recognized phoneme string
+    :idRes["PLBr"]: 0  idAux2 -compress; idAux2 "" "rcat" idAux2 -strop;        #   Get reference phoneme string
+    idAux2 idAux -cat; idAux 0 1 idAux -select;                                 #   Collect phoneme strings
+    idAux 0 -1 :.idPhnCmx[.idPhnCmx.dim-1]: itAux -compile;                     #   Compile phoneme strings
+    itAux itAux 0 1 NULL NULL NULL itAux -FST_lvnstn_ex;                        #   Best path (eps -> last symbol!)
+    itAux.td 2 2 idCmx -select; { "PLB" "PLBr" } ' 0 idCmx -set_cnames;         #   Copy and name aligned sequences
+  else                                                                          # << Unknown mode >>
+    "sMode=\"$[sMode]\" invalid in function -CONF_nwld" 1 -WARNING;             #   Warning
+    NAN return;                                                                 #   All we can do...
+  end end                                                                       # <<
+
+  :idCmx["PHN"]: 0 :idCmx["PHNr"]: 0 .idPhnCmx idAux -lookup_2;                 # Lookup single phoneme confusion NLLs
+  idAux NULL 0 "mean" idAux /rec -aggregate;                                    # Compute mean
+  :idAux[0,0]: return;                                                          # Return result
+}
+
+## -- Global initialization --                                                  # =====================================
+
+".nSilMod" "am.sil" -1 -CFG_get_persistent;                                     # Silence model (HMA ID)
+".nGbgMod" "am.gbg" -1 -CFG_get_persistent;                                     # Garbage model (HMA ID)
+
+## EOF

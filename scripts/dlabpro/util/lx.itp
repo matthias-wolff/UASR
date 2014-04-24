@@ -230,8 +230,9 @@ function -LX_add_pause(sName,sMode,itLX)
 ## @param itLX fst
 ##          The lexical transducer to add the filler word to
 ## @return The unit index of the newly added filler word
-## @global &lt;am.gbg&gt; R
-## @global &lt;am.sil&gt; R
+## @global &lt;am.gbg&gt;           R
+## @global &lt;am.sil&gt;           R
+## @global &lt;lex.filler.pwght&gt; R
 function -LX_add_filler(sName,nXP,itLX)
 {
   data idAux; { { "$[sName]" } } itLX.ud 0 0 idAux /noerror -gen_index;         # Seek filler word
@@ -240,9 +241,10 @@ function -LX_add_filler(sName,nXP,itLX)
   var nU;                                                                       # Pause word unit index
   var nP;                                                                       # Current phoneme index
   var nT;                                                                       # Current transition index
-  var nTos;   -1                       nTos   =;                                # Output symbol index of filler word
-  var nAmSil; ( "am.sil" -2 -CFG_get ) nAmSil =;                                # Pause phoneme index
-  var nAmGbg; ( "am.gbg" -2 -CFG_get ) nAmGbg =;                                # Garbage phoneme index
+  var nTos;   -1                                        nTos   =;               # Output symbol index of filler word
+  var nAmSil; ( "am.sil"           -2     -CFG_get    ) nAmSil =;               # Pause phoneme index
+  var nAmGbg; ( "am.gbg"           -2     -CFG_get    ) nAmGbg =;               # Garbage phoneme index
+  var nPWght; ( "lex.filler.pwght"  0 "S" -CFG_get_ex ) nPWght =;               # Phoneme weight
 
   ( itLX.os -is_empty not ) ( itLX.ud.nrec 1 <= ) || if                         # Have output symbol table >> 
     { { "$[sName]" } } itLX.os -cat;                                            #   Add filler word to output symbols
@@ -261,6 +263,7 @@ function -LX_add_filler(sName,nXP,itLX)
     nU 1 1 itLX -addtrans; itLX.td.nrec -- nT =;                                #   Add a transition
     :itLX.td[nT,"~TIS"]=nP;                                                     #   Write input symbol
     :itLX.td[nT,"~TOS"]=-1;                                                     #   Write output symbol
+    :itLX.td[nT,"~LSR"]=nPWght;                                                 #   Write phoneme weight
   end                                                                           # <<
 
   nU return;                                                                    # Return index of newly created unit

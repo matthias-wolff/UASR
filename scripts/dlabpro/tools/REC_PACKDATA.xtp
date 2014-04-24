@@ -453,6 +453,7 @@ function -PACK_sesinfo()
   ( "out.sesinfo" sSiFile "S" -CFG_get_ex )    sSiFile  =;                      # Get configured output file name
   var    sDlgFile; "$[.sDirOut]/dialog.fst"    sDlgFile =;                      # Get default dialog file name
   ( "out.dialog" sDlgFile "S" -CFG_get_ex )    sDlgFile =;                      # Get configured dialog file name
+  var    s;                                                                     # Auxiliary string variable
 
   "\n   - Reading \"$[.sAmFile]\" ..."                                   -MSG2; # Protocol
   .sAmFile itHMM /noerror -restore                                              # Load HMMs
@@ -480,6 +481,10 @@ function -PACK_sesinfo()
   itHMM.os idLX iSI.itLX -LX_compile;                                           # Compile lexicon (string -> FST)
   "<OOV>" iSI.itLX.is.nrec iSI.itLX -LX_add_filler;                             # Add filler word (as FST)
   " done" -MSG2 "."                                                       -MSG; # Protocol
+  .bRender if                                                                   # Rendering lexicon? Yes >>
+    "$[.sDirOut]/lexicon.svg" s =; "\n   - Writing \"$[s]\" .."          -MSG2; #   Make file name/Protocol
+    s iSI.itLX.is iSI.itLX.os -1 iSI.itLX -FST_render;               "." -MSG2; #   Protocol
+  end                                                                           # <<
 
   .sCmd "dlg" == if                                                             # Dialog mode >>
     var nS;                                                                     #   The dialog state index

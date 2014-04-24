@@ -296,7 +296,6 @@ function -CFG_get_ex_persistent(sVar,sKey,default,sMode)
   $[sVar] return;
 }
 
-
 ## Determines if the value for a key from the session's configuration contains
 ## a specified item.
 ## <h4>Remarks</h4>

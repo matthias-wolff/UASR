@@ -1,0 +1,328 @@
+#!/usr/bin/env dlabpro
+## Unified Approach to Speech Synthesis and Recognition
+## - Experimental offline speecg recognizer
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: (uasr/scripts/dlabpro)
+##
+## ARGUMENTS:
+##   $1: Configuration file
+
+## Copyright 2014 UASR contributors (see COPYRIGHT file)
+## - Chair of System Theory and Speech Technology, TU Dresden
+## - Chair of Communications Engineering, BTU Cottbus
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+"$UASR_HOME/scripts/dlabpro/util/cfg.itp"  include;                             # Include configuration utilities
+"$UASR_HOME/scripts/dlabpro/util/fea.itp"  include;                             # Include feature utilities
+"$UASR_HOME/scripts/dlabpro/util/fst.itp"  include;                             # Include fst utilities
+"$UASR_HOME/scripts/dlabpro/util/lab.itp"  include;                             # Include label utilities
+"$UASR_HOME/scripts/dlabpro/util/sig.itp"  include;                             # Include signal utilities
+"$UASR_HOME/scripts/dlabpro/util/uasr.itp" include;                             # Include UASR utilities
+"$UASR_HOME/scripts/dlabpro/util/var.itp"  include;                             # Include UASR variables' utilities
+
+"$UASR_HOME/incubator/util/confidence.itp" include;                             # Include ASR confidence utilities
+
+## -- Overloadable functions ---------------------------------------------------
+
+## Standard speech recognition confidence computation.
+##
+## @param idRes data
+##          The post-processed recognition result as returned by
+##          {@link -ASR_postprocess}.
+## @param iSi object
+##          The recognizer session information.
+## @global nNadT R
+## @return
+##   The recognizer confidence ranging from -1 for "sure to reject" to 1 for
+##   "sure to accept". If a positive value is returned, the recognition result
+##   should be accepted.
+function -ASR_confidence(idRes,iSi)
+{
+  ## HACK: Magic confidence parameters; better implementation pending...        # From Leonard Foerster's BA thesis
+  ".__CNF_nNadM" "rej.nad.mean" 0.0612 -CFG_get_persistent;                     # NAD mean
+  ".__CNF_nNadS" "rej.nad.sdev" 0.0260 -CFG_get_persistent;                     # NAD std. dev.
+  ".__CNF_sNadO" "rej.nad.op"   "neg"  -CFG_get_persistent;                     # NAD standardization extra operation
+  ".__CNF_nNadT" "rej.nad.thrs" 0.36   -CFG_get_persistent;                     # NAD threshold
+
+  ## Compute recognition confidence                                             # -------------------------------------
+  var nNad; ( idRes iSi -CNFS_nad ) nNad  =;                                    # Normalized acoustic distance
+  :nNad = $[.__CNF_sNadO](nNad-.__CNF_nNadM)/.__CNF_nNadS;                      # Standardize score
+  ( nNad isnan ) if -1 return; end                                              # Nan scores -> to be rejected
+  :min(max(nNad-.__CNF_nNadT,-1),1): return;                                    # Compute and return confidence
+}
+
+## Standard post-processing of a speech recognition result.
+##
+## @param itRR fst
+##          The recognition result (with grammar).
+## @param itRRr fst
+##          The reference recognition result (phoneme loop).
+## @param idNld data
+##          The neg. log. density array of the recognition.
+## @param iSi object
+##          The recognizer session information.
+## @return
+##   A data instance containing extactly one record per speech frame. The
+##   components are:
+##   <table>
+##     <tr><th>Name</th><th>Description</th></tr>
+##     <tr><td>GMM </th><th>GMM indices of speech recognition</th></tr>
+##     <tr><td>GMMr</th><th>GMM indices of reference recognition</th></tr>
+##     <tr><td>PHN </th><th>Phoneme indices of speech recognition</th></tr>
+##     <tr><td>PHNr</th><th>Phoneme indices of reference recognition</th></tr>
+##     <tr><td>NLL </th><th>Neg. log. likelihoods of speech recognition</th></tr>
+##     <tr><td>NLLr</th><th>Neg. log. likelihoods of reference recognition</th></tr>
+##     <tr><td>PLB </th><th>Phoneme labels of speech recognition</th></tr>
+##     <tr><td>PLBr</th><th>Phoneme labels of reference recognition</th></tr>
+##   </table>
+function -ASR_postprocess(itRR,itRRr,idNld,iSi)
+{
+  ## Local functions and instances                                              # -------------------------------------
+  function -relabel(itGP,itRes)                                                 # Recover per-frame phoneme labels
+  {                                                                             # >>
+    fst itAux;                                                                  #   Auxiliary transducer
+    data idAux;                                                                 #   Auxiliary data
+    itRes itAux -copy;                                                          #   Copy recognition result
+    0 itAux -invert;                                                            #   Invert
+    itAux itGP 0 0 itAux -compose;                                              #   Compose with labeling transducer
+    itAux 0 1 -1 itAux -best_n;                                                 #   Best path (if solution not unique)
+    :itAux.td["~TOS"]: idAux -copy;                                             #   Copy recovered labels
+    idAux.nrec itRes.td.nrec != if "Re-label: " .S_WRONGNOFRAMES + -ERROR; end  #   Wrong # of recovered labels
+    0 "~PHN" idAux -set_cname;                                                  #   Name label component
+    idAux itRes.td -join;                                                       #   Join to recognition result
+  }                                                                             # <<
+  function -epsremove(idSrc,idDst)                                              # Removes epsilon transitions
+  {                                                                             # >>
+    # HACK: Inaccurate because epsilon transition weights get lost!             #   #
+    idSrc idDst -copy;                                                          #   Copy source
+    :idDst["~TIS"].<0: idDst -dmark;                                            #   Mark epsilon transitions
+    idDst 0 0 idDst /mark -delete;                                              #   Delete marked records 
+  }                                                                             # <<
+  function -reweight(idNld,idRes)                                               # Reweight with GMM neg. log. densities
+  {                                                                             # >>
+    data idAux;                                                                 #   Auxiliary data
+    idNld.nrec idRes.nrec != if "Re-weight: " .S_WRONGNOFRAMES + -ERROR; end    #   Check number of records
+    "~RID" -1 idRes -rindex;                                                    #   Add record index component
+    :idRes["~RID"]: 0 :idRes["~TIS"]: 0 idNld idAux -lookup_2;                  #   Get GMM neg. log. densities
+    0 "~NLL" idAux -set_cname; idAux idRes -join;                               #   Add to recognition result
+    idRes ( "~RID" idRes -find_comp ) 1 idRes -delete;                          #   Delete record index component
+  }                                                                             # <<
+  data idRR;                                                                    # Per-frame recognition result
+  data idRRr;                                                                   # Per-frame reference recog. result
+  data idRes;                                                                   # Post-processed recognition result
+  data idAux;                                                                   # Auxiliary data
+
+  ## Recover per-frame phoneme labels of recognition results                    # -------------------------------------
+  iSi.itGP itRR  -relabel;                                                      # ... of speech recognition result 
+  iSi.itGP itRRr -relabel;                                                      # ... of reference recognition result 
+
+  ## Remove epsilon transitions                                                 # ------------------------------------- 
+  itRR.td  idRR  -epsremove;                                                    # ... from speech recognition result
+  itRRr.td idRRr -epsremove;                                                    # ... from reference recognition result
+
+  ## Recover pure acoustic neg. log. likelihoods                                # -------------------------------------
+  ## (i. e. remove the time-invariant HMM, lexicon and grammar weights)         #
+  idNld idRR  -reweight;                                                        # ... of speech recognition result
+  idNld idRRr -reweight;                                                        # ... of reference recognition result
+
+  ## Collect useful data into recognition result                                # -------------------------------------
+  :idRR["~TIS"]:  idRes -copy;                                                  # GMM indices of speech recog. result 
+  :idRRr["~TIS"]: idRes -join;                                                  # GMM indices of ref. recog. result
+  :idRR["~PHN"]:  idRes -join;                                                  # Phoneme indices of speech recog. res.
+  :idRRr["~PHN"]: idRes -join;                                                  # Phoneme indices of ref. recog. res.
+  :idRR["~NLL"]:  idRes -join;                                                  # Neg.log.likelihoods of sp. rec. res.
+  :idRRr["~NLL"]: idRes -join;                                                  # Neg.log.likelihoods of ref. rec. res.
+  :idRR["~PHN"]:  0 iSi.itRNr.os 0 1 idAux -lookup; idAux idRes -join;          # Phoneme labels of speech recog. rec.
+  :idRRr["~PHN"]: 0 iSi.itRNr.os 0 1 idAux -lookup; idAux idRes -join;          # Phoneme labels of ref. recog. rec.
+  { "GMM" "GMMr" "PHN" "PHNr" "NLL" "NLLr" "PLB"  "PLBr" } '                    # |
+    0 idRes -set_cnames;                                                        # Rename result components 
+
+  idRes return;                                                                 # Return post-processed recog. result
+}
+
+## -- Utility functions --------------------------------------------------------
+
+## Returns a hash code for a recognizer session information object.
+##
+## @param iSi object
+##          The session information object.
+## @return The hash code as string.
+function -SI_hash(iSi)
+{
+  data idAux;                                                                   # Auxiliary data
+  iSi.itRN.td 255 idAux /force -tconvert;                                       # String version of itRN's trans. table
+  idAux "CRC-32" "hash" idAux -strop;                                           # Hashing
+  :idAux[0,0]: return;                                                          # Return hash code
+}
+
+## -- Worker functions ---------------------------------------------------------
+
+## Speech recognition of a list of audio files.
+##
+## @param sFlist string
+##          Name of recognition file list (see {@link -CFG_get_flist}).
+## @param sLogMode string
+##          Controlles writing log files for each recognized turn; Empty (no 
+##          logging) or any combination of the following letters:
+##          <table>
+##            <tr></td>N</td><td>Gaussian neg. log. densities</td></tr>
+##            <tr></td>P</td><td>Primary feature vectors     </td></tr>
+##            <tr></td>R</td><td>Recognition result          </td></tr>
+##            <tr></td>S</td><td>Secondary feature vectors   </td></tr>
+##          </table>
+function -ASR_recognizer(sFlist,sLogMode)
+{
+  ## Local functions and instances                                              # -------------------------------------
+  function -label(idRes,idVs)                                                   # Label vector sequence with rec.result
+  {                                                                             # >>
+    :idRes["PLB"]:  idVs -join;                                                 #   Phoneme labels of speech recog.
+    :idRes["PLBr"]: idVs -join;                                                 #   Phoneme labels of reference recog.
+  }                                                                             # <<
+  function -load_res(sFname,sMode,idRes)                                        # Load logged recognition result
+  {                                                                             # >>
+    "\n     - R: $[sFname]"                                            3 -MSGX; #   Screen protocol
+    ( sMode "R" "search" -VAR_strop ) 0 < if                                    #   Loading disabled >>
+      " (disabled)"                                      3 -MSGX; FALSE return; #     Screen protocol, return
+    end                                                                         #   <<
+    sFname idRes /noerror -restore ?error if                                    #   Load failed >>
+      " (failed)"                                        3 -MSGX; FALSE return; #     Screen protocol, return
+    else                                                                        #   << Load successful >> 
+      "R" -MSG2; " (ok)"                                 3 -MSGX; TRUE  return; #     Screen protocol, return
+    end                                                                         #   <<
+  }                                                                             # <<
+  function -log(sFname,idData,sMode,sID)                                        # Log data to a file
+  {                                                                             # >>
+    ( sMode sID "search" -VAR_strop ) 0 < if leave; end                         #   Abort if this log is disabled
+    "\n     - " 3 -MSGX; "L" -MSG2; ": $[sFname]"                      3 -MSGX; #   Screen protocol
+    ( sID "R" == ) ( idData.dim 9 == ) && if                                    #   Std. post-processed rec. result >>
+      data idAux; idData idAux -copy;                                           #     Make a copy
+      "0,Oscillogram\n0,Oscillogram\n0,Oscillogram\n0,Oscillogram\n"            #     |
+      "1,Oscillogram\n1,Oscillogram\n2,LabelDisplay\n3,LabelDisplay\n" +        #     |
+      "4,Oscillogram" + idAux -set rtext;                                       #     Make display hint for Eclipse
+      sFname idAux -save;                                                       #     Save tuned copy
+    else                                                                        #   << all other logs >>
+      sFname idData -save;                                                      #    Just save data
+    end                                                                         #   <<
+  }                                                                             # <<
+
+  ## Define instances                                                           # ------------------------------------- 
+  data      idPfv;                                                              # Primary feature vector sequence
+  data      idSfv;                                                              # Secondary feature vector sequence
+  data      idNld;                                                              # GMM neg. log. density array
+  data      idRes;                                                              # Recognition result (post-processed)
+  data      idAux;                                                              # Auxiliary data
+  fst       itRR;                                                               # Recognition result (with grammar)
+  fst       itRRr;                                                              # Reference recognition result
+  fstsearch iRR;                                                                # Speech decoder (with grammar) 
+  fstsearch iRRr;                                                               # Reference decoder phoneme loop)
+  var       sSiHash;                                                            # Session info hash code
+  var       sWlb;                                                               # Recognized word label string
+  var       sWlbr;                                                              # Reference word label string
+  var       sLogFn;                                                             # Log file name (w/o extension)
+  var       nConf;                                                              # Recognizer confidence [-1...1]
+
+  ## Get paths and recognition file list                                        # -------------------------------------
+  "\n\n// Offline speech recognition"                                     -MSG; # Screen protocol
+  var  nRNU;    ( "dlg.state" 1     "S" -CFG_get_ex ) nRNU   =;                 # Recognition network unit to use
+  var  sAmMod;  ( "am.model" "3_20" "S" -CFG_get_ex ) sAmMod =;                 # Acoustic model identifier 
+  var  sModDir; ( "model" "" -CFG_get_path  ) sModDir =;                        # Get model folder
+  var  sLogDir; ( "log"   "" -CFG_get_path  ) sLogDir =;                        # Get log folder
+  var  sSigDir; ( "sig"   "" -CFG_get_path  ) sSigDir =;                        # Get signal folder
+  file iF;      ( sFlist  "" -CFG_get_flist ) iF -set flist;                    # Recognition file list
+
+  ## Load models                                                                # -------------------------------------
+  object iFi;   "$[sModDir]/feainfo.object"  iFi  -restore;                     # Feature information
+  object iSi;   "$[sModDir]/sesinfo.object"  iSi  -restore;                     # Recognizer session information
+  gmm    iGmm;  "$[sModDir]/$[sAmMod].gmm"   iGmm -restore;                     # Gaussian mixture models
+  ( iSi -SI_hash ) sSiHash =;                                                   # Get hash code of session info object
+  "\n   - Feature info  : $[sModDir]/feainfo.object"                      -MSG; # Screen protocol
+  "\n   - Session info  : $[sModDir]/sesinfo.object"                      -MSG; # Screen protocol
+  "\n                     #$[sSiHash]"                                    -MSG; # Screen protocol
+  "\n   - GMMs          : $[sModDir]/$[sAmMod].gmm"                       -MSG; # Screen protocol
+  "\n   - Log mode      : $[sLogMode]"                                    -MSG; # Screen protocol
+
+  ## Initialize decoders                                                        # -------------------------------------
+  "tp"  iRR -set algo; "tp" iRRr -set algo;                                     # Use token passing algorithm
+  "t"   iRR -set bt;   "t"  iRRr -set bt;                                       # Output frame labels
+  FALSE iRR -set stkprn;                                                        # No stack pruning; TODO: why??
+
+  ## Loop over speech files                                                     # -------------------------------------
+  "\n\n   Recognizing $[iF.len] turn(s) ..."                              -MSG; # Screen protocol
+
+  0 1 -PBAR;                                                                    # Begin progress bar
+  iF -reset; iF -next while                                                     # Get next file from file list >>
+    "\n   - $[iF.nfile 1 +]/$[iF.len] $[iF.sfile]: ..."                  -MSG2; #   Screen protocol (verbose level 2)
+    :(iF.nfile+1)/iF.len: 1                                              -PBAR; #   Display progress
+
+    ## - Try loading previous recognition result                                #   - - - - - - - - - - - - - - - - - -
+    "$[sLogDir]/SI-$[sSiHash]/$[iF.sfile]" sLogFn =;                            #   Make log file name
+    #( "$[sLogFn].res.dn3" sLogMode idRes -load_res ) not if                     #   Load result; failed (or disabled)>>
+    TRUE if
+  
+      ## - Do speech recognition                                                #     - - - - - - - - - - - - - - - - -
+      ( iF NULL "" idPfv -FEA_get ) not if " SKIP" -MSG2; continue; end         #     Do primary feature analysis
+      idPfv iFi iGmm.mean.dim idSfv NULL -FEA_sfa;                   "." -MSG2; #     Do secondary feature analysis
+      idSfv NULL idNld iGmm /neglog -density;                        "." -MSG2; #     Compute neg. log. densities
+      iSi.itRN  nRNU idNld itRR  iRR  -search;                       "." -MSG2; #     Recognition with grammar
+      iSi.itRNr 0    idNld itRRr iRRr -search;                       "." -MSG2; #     Reference recognition
+      ( itRR itRRr idNld iSi -ASR_postprocess ) idRes =;             "." -MSG2; #     Post-process recognition result
+      idPfv.rinc idRes -set rinc;                                               #     Copy record increment from features
+      :idRes["NLL"]-idRes["NLLr"]: idRes -join;                                 #     Add NLL difference component...
+      :idRes.dim-1: "dNLL" idRes -set_cname;                                    #     ... and name it
+      :itRR.td["~TOS"]: 0 iSi.idLMtos 0 1 idAux -lookup;                        #     Get word labels of speech recog.
+      idAux " " "rcat" idAux -strop; ( 0 0 idAux -fetch ) idRes -set rtext;     #     Concat. to recognized word string
+
+      ## - Log                                                                  #     - - - - - - - - - - - - - - - - -
+      "$[sLogFn].res.dn3" idRes sLogMode "R" -log;                              #     Log recognition result
+      idRes idPfv -label; "$[sLogFn].pfv.dn3" idPfv sLogMode "P" -log           #     Log primary features
+      idRes idSfv -label; "$[sLogFn].sfv.dn3" idSfv sLogMode "S" -log           #     Log secondary features
+      idRes idNld -label; "$[sLogFn].nld.dn3" idNld sLogMode "N" -log           #     Log neg. log. densities
+
+    end                                                                         #   <<
+    ( 0 1 iF.recfile -fetch ) sWlbr =;                                          #   Get reference word label string
+    idRes.rtext               sWlb  =;                                          #   Get word labels of speech recog.
+    " REC=\"" sWlb + "\" REF=\"" + sWlbr + "\"" +                        -MSG2; #   Protocol
+
+    ## - Post-processing                                                        #   - - - - - - - - - - - - - - - - - -
+    ( idRes iSi -ASR_confidence ) nConf =;  " C=" ( nConf 4 2 ) -FMT_f + -MSG2; #   Compule confidence
+        
+  end                                                                           # <<
+  "\n   " -MSG2; "done\n"                                                 -MSG; # Finish progress bar
+
+  ## Aftermath                                                                  # -------------------------------------
+  # TODO: ...
+
+  #idEvl return;
+}
+
+## == MAIN PROGRAM ==                                                           # =====================================
+
+## Magic constants                                                              # -------------------------------------
+var sCfgFile; "$1"sCfgFile =;                                                   # The UASR configuration file
+
+## Initialize UASR session                                                      # -------------------------------------
+"\n// $__SFILE__.xtp revision " -UASR_version + "/" + -version +          -MSG; # Screen protocol
+"\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Screen protocol
+"\n// Configuration   : $[sCfgFile]"                                      -MSG; # Screen protocol
+sCfgFile TRUE -CFG_init;                                                        # Configure session
+"$UASR_HOME/scripts/dlabpro/util/uasr_session.itp" include;                     # Include UASR session startup script
+"\n\n// OOT REJECTION TEST PROGRAM"                                       -MSG; # Screen protocol
+
+"asr" "R" -ASR_recognizer;
+
+## EOF
