@@ -243,6 +243,7 @@ function -ASR_recognizer(sFlist,sLogMode)
   var  sModDir; ( "model" "" -CFG_get_path  ) sModDir =;                        # Get model folder
   var  sLogDir; ( "log"   "" -CFG_get_path  ) sLogDir =;                        # Get log folder
   var  sSigDir; ( "sig"   "" -CFG_get_path  ) sSigDir =;                        # Get signal folder
+  var  sTrlDir; ( "trl"   "" -CFG_get_path  ) sTrlDir =;                        # Get transliteration folder
   file iF;      ( sFlist  "" -CFG_get_flist ) iF -set flist;                    # Recognition file list
 
   ## Load models                                                                # -------------------------------------
@@ -295,7 +296,11 @@ function -ASR_recognizer(sFlist,sLogMode)
 
     end                                                                         #   <<
     ( 0 1 iF.recfile -fetch ) sWlbr =;                                          #   Get reference word label string
-    idRes.rtext               sWlb  =;                                          #   Get word labels of speech recog.
+    sWlbr not if                                                                #   No word labels in file list >>
+      sTrlDir iF.sfile idAux -TRL_import;                                       #     Load transliteration
+      idAux ' " " "ccat" idAux -strop; ( 0 0 idAux -fetch ) sWlbr =;            #     Convert to string
+    end                                                                         #   <<
+    idRes.rtext sWlb  =;                                                        #   Get word labels of speech recog.
     " REC=\"" sWlb + "\" REF=\"" + sWlbr + "\"" +                        -MSG2; #   Protocol
 
     ## - Post-processing                                                        #   - - - - - - - - - - - - - - - - - -

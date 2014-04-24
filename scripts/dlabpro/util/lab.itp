@@ -616,6 +616,7 @@ function -LAB_from_into(idInto,idLab)
 ##          Data instance to be filled with transliteration
 ## @return <code>TRUE</code> if the transliteration was successfully imported
 ##         and <code>FALSE</code> otherwise.
+## @global &lt;trl.ext&gt; R
 function -TRL_import(sDir,sTid,idTrl)
 {
   ".__TRL_imp_sExt" "var" ?instance not if
@@ -625,12 +626,13 @@ function -TRL_import(sDir,sTid,idTrl)
 
   var sF; "$[sDir]/$[sTid].$[.__TRL_imp_sExt]" sF =;
   idTrl -reset;
-  "ORTH" 255 idTrl -addcomp;
   "\n     - loading: $[sF] ..."                                        3 -MSGX; 
   sF "ascii" idTrl stdfile /strings /noerror -import ?error if
     " FAILED"                                                          3 -MSGX;
     FALSE return;
   end
+  ( idTrl.nrec 1 == ) ( idTrl.dim 1 > ) && if idTrl ' idTrl =; end
+  0 "ORTH" idTrl -set_cname;
   0 idTrl -LAB_shrink;
   " ok\n     "                                                         3 -MSGX;
   TRUE return;
