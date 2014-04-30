@@ -24,7 +24,9 @@
 ## along with UASR. If not, see <http://www.gnu.org/licenses/>.
 
 var sBuf;                                                                       # A string buffer
-var sDirInfo;
+var sDb;                                                                        # UASR Database ID
+var sDirInfo;                                                                   # Info folder
+var sDirScr;                                                                    # Scripts folder
 var sDBrev;                                                                     # Database revision                            
 
 ## Default function overloads                                                   # -------------------------------------
@@ -50,32 +52,34 @@ end                                                                             
 end                                                                             # <<
 
 ## - Database and custom settings                                               # -------------------------------------
-"\n// Database        : "                                                 -MSG; # Protocol
-( "info" "S"          -CFG_get_path ) sDirInfo -sset;                           # Get data directory
-( "db.include" "" "S" -CFG_get_ex   ) sBuf     -sset;                           # Get configured database include file
-sBuf if                                                                         # Include was configured >>
-  sBuf /noerror include ?error if                                               #   Include it, failed >>
-    "../db/$[sBuf]" include ?error if                                           #     Include from old pos., failed >>
-      "FATAL: cannot load database include file.\n" -ERROR; quit;               #       EL FATAL
-    end                                                                         #     <<
-  end                                                                           #   <<
-  "$[sBuf]"                                                               -MSG; #   Protocol
-else                                                                            # << include was not configured >>
-  "db" "" -CFG_get ".itp" + sBuf =;                                             #   Get standard database include file
-  "$[sDirInfo]/$[sBuf]" /noerror include ?error not if                          #   Std. database include file found >>
-    "$[sDirInfo]/$[sBuf]"                                                 -MSG; #     Say so
-  else                                                                          #   << not found >>
-    "../db/$[sBuf]" /noerror include ?error if                                  #     Try at old location, not found >>
-      "n/a"                                                               -MSG; #       Say so
-    else                                                                        #    << found >>
-      "db/$[sBuf]"                                                        -MSG; #       Say so
-    end                                                                         #    <<
-  end                                                                           #  <<
-end                                                                             # <<
+"db" "" -CFG_get sDb =;                                                         # Get database name
+"\n// Database        : $[sDb]"                                           -MSG; # Protocol
 -DB_version sDBrev =;                                                           # Get database version
 ( sDBrev "" != ) ( sDBrev "?" != ) &&  if                                       # String rev number exists  >>  
   "\n//                   Revision $[sDBrev]"                              -MSG;#   Protocol svn version if existing 
 end                                                                             # <<
+
+"\n// Plug-in script  : "                                                 -MSG; # Protocol
+( "info"    "S"       -CFG_get_path ) sDirInfo -sset;                           # Get data directory
+( "scripts" "S"       -CFG_get_path ) sDirScr  -sset;                           # Get scripts directory
+( "db.include" "" "S" -CFG_get_ex   ) sBuf     -sset;                           # Get configured database include file
+sBuf if                                                                         # Include was configured >>
+  sBuf /noerror include ?error if                                               #   Include it, failed >>
+    "FATAL: cannot load database include file.\n" -ERROR; quit;                 #     EL FATAL
+  end                                                                           #   <<
+  "$[sBuf]"                                                               -MSG; #   Protocol
+else                                                                            # << include was not configured >>
+  "$[sDirScr]/dlabpro/$[sDb].itp" /noerror include ?error not if                #   Std. database include file found >>
+    "$[sDirScr]/dlabpro/$[sDb].itp"                                       -MSG; #     Say so
+  else                                                                          #   << not found >>
+    "$[sDirInfo]/$[sDb].itp" /noerror include ?error if                         #     Try at old location, not found >>
+      "n/a"                                                               -MSG; #       Say so
+    else                                                                        #    << found >>
+      "$[sDirInfo]/$[sDb].itp"                                            -MSG; #       Say so
+    end                                                                         #    <<
+  end                                                                           #  <<
+end                                                                             # <<
+
 "customize" "" "S" -CFG_get_ex sBuf =;                                          # Get custom include file
 sBuf if "\n// Customization   : $[sBuf]" -MSG; sBuf include; end                # If configured, include it
 "exp" "" "S" -CFG_get_ex sBuf =;                                                # Silently get experiment code

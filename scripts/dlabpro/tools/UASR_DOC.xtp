@@ -1011,6 +1011,23 @@ function -doc_package(idS,nS0,nXS,idCd,iDgn)
   end                                                                           # <<
 }
 
+## Copies a file.
+##
+## @param sSrcDir
+##          The source directory.
+## @param sDstDir
+##          The destintion directory.
+## @param sFile
+##          The file name.
+function -doc_copy(sSrcDir,sDstDir,sFile)
+{
+  sSrcDir sDstDir == if leave; end
+  data idAux; "" ( -type char ) idAux -addcomp;
+  "\n   c- $[sDstDir]/$[sFile]"                                           -MSG;
+  "$[sSrcDir]/$[sFile]" "raw" idAux stdfile -import ?error if leave; end
+  "$[sDstDir]/$[sFile]" "raw" idAux stdfile -export;
+}
+
 ## == MAIN PROGRAM ==                                                           # =====================================
 
 "\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
@@ -1051,9 +1068,9 @@ var  sParser;                                                                   
 "$UASR_HOME/manual/reference" "?\\?/" "replace" -VAR_strop sHpath -sset;        # UASR ref. page path (norm'd for Win.)
 $$ 1 ==  if                                                                     # Have DB name as argument >>
   var sDhd; ( "$UASR_HOME-data/$1" "?\\?/" "replace" -VAR_strop ) sDhd =;       #   The database home directory
-  sDhd "/scripts" +          sSpath =;                                          #   Script files
-  sDhd "/manual/automatic" + sDpath =;   |                                      #   Manual files
-  sDhd "/manual/reference" + sHpath =;   |                                      #   Reference HTML pages
+  sDhd "/common/scripts"   + sSpath =;                                          #   Script files
+  sDhd "/manual/automatic" + sDpath =;                                          #   Manual files
+  sDhd "/manual/reference" + sHpath =;                                          #   Reference HTML pages
 end                                                                             # <<  
 "\n// UASR scripts    : ${sSpath}"                                        -MSG; # Protocol
 "\n// UASR manual     : ${sDpath}"                                        -MSG; # Protocol
@@ -1169,6 +1186,20 @@ iDgn -reset;                                                                    
   "<!--{{ TOC -->" "<!--}} TOC -->" .__udc_iToc.gen "replace"                   #   |
     iDgn -edit_section;                                                         #   Replace TOC
   "${sDpath}/../toc.html" iDgn -write;                                          #   Write back JS file
+end                                                                             # <<
+
+## Copy common files
+$$ 1 ==  if                                                                     # Have DB name as argument >>
+  "$UASR_HOME/manual" "?\\?/" "replace" -VAR_strop var sUpath;                  #   UASR doc.path (norm'd for Windows!)
+  sUpath ( sDpath "/.." + ) "default.css" -doc_copy; 
+  sUpath ( sDpath "/.." + ) "default.js"  -doc_copy; 
+  sUpath ( sDpath "/.." + ) "index.html"  -doc_copy; 
+  sUpath ( sDpath "/.." + ) "print.css"   -doc_copy; 
+  sUpath ( sDpath "/.." + ) "toc.css"     -doc_copy; 
+  "/resources" sUpath +=;
+  sUpath ( sDpath "/../resources" + ) "blank_stc.gif" -doc_copy; 
+  sUpath ( sDpath "/../resources" + ) "head_bgnd.png" -doc_copy; 
+  sUpath ( sDpath "/../resources" + ) "print.gif"     -doc_copy; 
 end                                                                             # <<
 
 "\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n"           -MSG; # Protocol

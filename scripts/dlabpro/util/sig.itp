@@ -65,21 +65,17 @@
 ## @param idSig data
 ##          Will be filled with the signal
 ## @return <code>TRUE</code> if successful, <code>FALSE</code> otherwise.
-## @global .__sDirLab            CRW
-## @global .__sDirSig            CRW
-## @global &lt;uasr.dir.lab.&gt; R
-## @global &lt;uasr.dir.sig.&gt; R
+## @global .__sDirLab             CRW
+## @global .__sDirSig             CRW
+## @global &lt;uasr.dir.lab&gt;   R
+## @global &lt;uasr.dir.sig&gt;   R
+## @global &lt;uasr.sig.label&gt; R
 function -SIG_get(iF,sSns,idSig)
 {
   ## Check/create session persistent variables                                  # -------------------------------------
-  ".__sDirSig" "var" ?instance not if                                           # Is there a global __sDirSig? No >>
-    var .__sDirSig;                                                             #   Create one
-    ( "sig" "S" -CFG_get_path ) .__sDirSig -sset;                               #   Silently get signal files path
-  end                                                                           # <<
-  ".__sDirLab" "var" ?instance not if                                           # Is there a global __sDirLab? No >>
-    var .__sDirLab;                                                             #   Create one
-    ( "lab" "S" -CFG_get_path ) .__sDirLab -sset;                               #   Silently get label files path
-  end                                                                           # <<
+  ".__sDirSig" "sig" "S" -CFG_get_path_persistent;                              # Silently get signal files path
+  ".__sDirLab" "lab" "S" -CFG_get_path_persistent;                              # Silently get label files path
+  ".__sUasrSigLabel" "sig.label" "auto" "S" -CFG_get_ex_persistent;             # Silently get label mode 
 
   ## Local variables                                                            # -------------------------------------
   data idLab;                                                                   # Label(s)
@@ -102,16 +98,24 @@ function -SIG_get(iF,sSns,idSig)
 
   ## Obtain labels                                                              # -------------------------------------
   "\n     - labeling: "                                                3 -MSGX; # Protocol
-  iF.recfile.dim 1 > if                                                         # If labels are in file list >>
-    "from file list \"${iF.recfile[0,1]}\" ."                          3 -MSGX; # Protocol
-    1 1 iF.recfile -xfetch idLab =;                                             #   Label with label from file list
-  else                                                                          # << else >>
-    "from file $[.__sDirLab]/$[sF].* ."                                3 -MSGX; #   Protocol
-    .__sDirLab sF idLab -LAB_import;                                            #   Load label data
-  end                                                                "." -MSG2; # <<
-  idLab idLab -LAB_map;                                              "." -MSG2; # Map labels
-  idLab TRUE idSig -SIG_label;                                       "." -MSG2; # Label signal
-  idLab -is_empty if " NO LABELS\n     " else " ok\n     " end         3 -MSGX; # Protocol
+  .__sUasrSigLabel "none" != if                                                 # Labeling enabled >>
+    var bFile;                                                                  #   Label file mode enabled
+    var bFlist;                                                                 #   File list mode enabled
+    ( .__sUasrSigLabel "flist" == ) ( .__sUasrSigLabel "auto" == ) || bFlist =; #   Get label file mode enabled
+    ( .__sUasrSigLabel "file"  == ) ( .__sUasrSigLabel "auto" == ) || bFile  =; #   Get file list mode enabled
+    bFlist ( iF.recfile.dim 1 > ) && if                                         #   File list enabled and cont.labels>>
+      "from file list \"${iF.recfile[0,1]}\" ."                        3 -MSGX; #     Protocol
+      1 1 iF.recfile -xfetch idLab =;                                           #     Label with label from file list
+    else bFile if                                                               #   << else if label files enabled >>
+      "from file $[.__sDirLab]/$[sF].* ."                              3 -MSGX; #     Protocol
+      .__sDirLab sF idLab -LAB_import;                                          #     Load label data
+    end end                                                          "." -MSG2; #   <<
+    idLab idLab -LAB_map;                                            "." -MSG2; #   Map labels
+    idLab TRUE idSig -SIG_label;                                     "." -MSG2; #   Label signal
+    idLab -is_empty if " NO LABELS " else " ok " end                   3 -MSGX; #   Protocol
+  else                                                                          # << Labeling disabled >>
+    "disabled "                                                        3 -MSGX; #   Protocol
+  end                                                                           # <<
 
   ## Preprocessing signal file                                                  # -------------------------------------
   "\n     - preprocessing: $[.__sDirSig]/$[sF].* ..."                  3 -MSGX; # Protocol

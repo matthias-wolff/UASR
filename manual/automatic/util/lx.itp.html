@@ -148,6 +148,11 @@
       </td>
     </tr>
     <tr>
+      <td><a href="#clp_-LX_unify"><code class="link">-LX_unify</code></a></td>
+      <td><code><b>-LX_unify</b>(itSrc,itDst)</code><br>&nbsp;<br> Unifies and minimizes a lexical transducer.
+      </td>
+    </tr>
+    <tr>
       <td><a href="#clp_-LX_close"><code class="link">-LX_close</code></a></td>
       <td><code><b>-LX_close</b>(itSrc,itDst)</code><br>&nbsp;<br> Unifies, minimizes and closes a lexical transducer.
       </td>
@@ -758,7 +763,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/lx.itp(235)</td>
+      <td class="hidden">util/lx.itp(236)</td>
     </tr>
   </table>
   </div>
@@ -815,6 +820,12 @@
       <td class="hidden"><code>&lt;am.sil&gt;</code></td>
       <td class="hidden">&nbsp;&nbsp;</td>
       <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;lex.filler.pwght&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
     </tr>  </table>
   </div>
   </div>
@@ -851,7 +862,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/lx.itp(289)</td>
+      <td class="hidden">util/lx.itp(292)</td>
     </tr>
   </table>
   </div>
@@ -941,7 +952,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/lx.itp(340)</td>
+      <td class="hidden">util/lx.itp(343)</td>
     </tr>
   </table>
   </div>
@@ -1036,6 +1047,79 @@
     </tr>  </table>
   </div>
   </div>
+  <div id="clp_-LX_unify">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-LX_unify</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-LX_unify','-LX_unify','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-LX_unify</b>(itSrc,itDst)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/lx.itp(384)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Unifies and minimizes a lexical transducer.
+ <h4>Remarks</h4>
+ <p>Some lexicon entries (like the filler model "&lt;OOV&gt;") are not
+ minimizable. Hence <code>idSrc [...] -minimize</code> will fail. This
+ function only minimizes ordinary entries (e. g. words whose names do
+ <em>not</em> begin with "&lt;") and leaves all other entries alone.</p>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itSrc</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Source transducer, is expected to contain one unit per lexicon entry
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itDst</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Filled with a phoneme-to-word transducer, may be indentical with
+          <code>itSrc</code>
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
   <div id="clp_-LX_close">
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
@@ -1069,19 +1153,15 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/lx.itp(383)</td>
+      <td class="hidden">util/lx.itp(441)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
     <h3>Description</h3> Unifies, minimizes and closes a lexical transducer. The resulting transducer
  translates phoneme into word sequences and may be composed with a language
- model acceptor or transducer.
- <h4>Remarks</h4>
- <p>Some lexicon entries (like the filler model "&lt;OOV&gt;") are not
- minimizable. Hence <code>idSrc [...] -minimize</code> will fail. This
- function only minimizes ordinary entries (e. g. words whose names do
- <em>not</em> begin with "&lt;") and leaves all other entries alone.</p>
+ model acceptor or transducer. For unify and minimization the function
+ -FS_unify is used.
  
 
   <h3>Parameters</h3>
@@ -1144,7 +1224,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/lx.itp(437)</td>
+      <td class="hidden">util/lx.itp(455)</td>
     </tr>
   </table>
   </div>

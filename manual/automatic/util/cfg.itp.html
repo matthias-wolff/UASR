@@ -117,15 +117,20 @@
     <tr><th>Key</th><th>Type</th><th>Default</th><th>Description</th></tr>
     <tr><td><code>uasr.customize </code></td><td>string</td><td> </td><td>Custom include script (path absolute or relative to script accessing the key)</td></tr>
     <tr><td><code>uasr.db        </code></td><td>string</td><td>"vm"</td><td>Data base name</td></tr>
-    <tr><td><code>uasr.db.include</code></td><td>string</td><td><nobr>("&lt;uasr.dir.info&gt;/&lt;uasr.db&gt;.itp")</nobr></td><td>Database dependent include script (absolute path)</td></tr>
+    <tr><td><code>uasr.db.include</code></td><td>string</td><td>"&lt;uasr.dir.scripts&gt;/dlabpro/&lt;uasr.db&gt;.itp"</td><td>Database dependent include script (path absolute or relative to script accessing the key)</td></tr>
     <tr><td><code>uasr.exp</code></td><td>string</td><td>""</td><td>Experiment code</td></tr>
     <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
     <tbody><!-- Signal, preprocessing and feature settings -->
     <tr><td class="rowgroup" colspan="4">Signal and feature settings</td></tr>
     <tr><td><code>uasr.sig.aquant        </code></td><td>number </td><td>16     </td><td>Signal quantization resultion [bits]</td></tr>
     <tr><td><code>uasr.sig.gain          </code></td><td>number </td><td>1.0    </td><td>Gain factor (<a href="sig.itp.html#clp_-SIG_import_raw" class="code">-SIG_import_raw</a> only!)</td></tr>
+    <tr><td><code>uasr.sig.label         </code></td><td>string </td><td>"auto" </td><td>Signal label source (<a href="sig.itp.html#clp_-SIG_get" class="code">-SIG_get</a>)<pre>
+  "none"  - Do not label
+  "file"  - Label from label files
+  "flist" - Label from second column of file list
+  "auto"  - First try "flist", then "file"</pre></td></tr>
     <tr><td><code>uasr.sig.srate         </code></td><td>number </td><td>16000  </td><td>Signal sampling rate [Hz]</td></tr>
-    <tr><td><code>uasr.spp               </code></td><td>string</td><td>"none"  </td><td>Signal preprocessing type<pre>
+    <tr><td><code>uasr.spp               </code></td><td>string </td><td>"none" </td><td>Signal preprocessing type<pre>
   "none"     - No preprocessing
   "preemph"  - Preemphasis
   "residual" - Residual signal</pre></td></tr>
@@ -383,16 +388,21 @@ The file extensions are:
     <tbody><!-- Paths -->
     <tr><td class="rowgroup" colspan="4">Paths (fully qualified)<br>
       <span style="font-weight:normal">see function <a href="#clp_-CFG_get_path"><code class="link">-CFG_get_path</code></a> for details</span></td></tr>
-    <tr><td><code>uasr.dir.data  </code></td><td>string</td><td>("$UASR_HOME-data")</td><td>Data root directory</td></tr>
-    <tr><td><code>uasr.dir.f0    </code></td><td>string</td><td> </td><td>Path to fundamental frequency contour files</td></tr>
-    <tr><td><code>uasr.dir.fea   </code></td><td>string</td><td> </td><td>Path to feature files</td></tr>
-    <tr><td><code>uasr.dir.flists</code></td><td>string</td><td> </td><td>Path to file lists</td></tr>
-    <tr><td><code>uasr.dir.info  </code></td><td>string</td><td> </td><td>Path to database info files</td></tr>
-    <tr><td><code>uasr.dir.lab   </code></td><td>string</td><td> </td><td>Path to label files</td></tr>
-    <tr><td><code>uasr.dir.log   </code></td><td>string</td><td> </td><td>Path to log files</td></tr>
-    <tr><td><code>uasr.dir.model </code></td><td>string</td><td> </td><td>Path to feainfo/HMM/... files</td></tr>
-    <tr><td><code>uasr.dir.pm    </code></td><td>string</td><td> </td><td>Path to pitch mark files</td></tr>
-    <tr><td><code>uasr.dir.sig   </code></td><td>string</td><td> </td><td>Path to signal files</td></tr>
+    <tr><td><code>uasr.dir.data   </code></td><td>string</td><td>("$UASR_HOME-data")</td><td>Data root directory</td></tr>
+    <tr><td><code>uasr.dir.f0     </code></td><td>string</td><td> </td><td>Path to fundamental frequency contour files</td></tr>
+    <tr><td><code>uasr.dir.fea    </code></td><td>string</td><td> </td><td>Path to feature files</td></tr>
+    <tr><td><code>uasr.dir.flists </code></td><td>string</td><td> </td><td>Path to file lists</td></tr>
+    <tr><td><code>uasr.dir.info   </code></td><td>string</td><td> </td><td>Path to database info files</td></tr>
+    <tr><td><code>uasr.dir.into   </code></td><td>string</td><td> </td><td>Path to intonation files</td></tr>
+    <tr><td><code>uasr.dir.inv    </code></td><td>string</td><td> </td><td>Path to synthesis inventory files</td></tr>
+    <tr><td><code>uasr.dir.lab    </code></td><td>string</td><td> </td><td>Path to label files</td></tr>
+    <tr><td><code>uasr.dir.log    </code></td><td>string</td><td> </td><td>Path to log files</td></tr>
+    <tr><td><code>uasr.dir.midi   </code></td><td>string</td><td> </td><td>Path to MIDI files</td></tr>
+    <tr><td><code>uasr.dir.model  </code></td><td>string</td><td> </td><td>Path to feainfo/HMM/... files</td></tr>
+    <tr><td><code>uasr.dir.pm     </code></td><td>string</td><td> </td><td>Path to pitch mark files</td></tr>
+    <tr><td><code>uasr.dir.sig    </code></td><td>string</td><td> </td><td>Path to signal files</td></tr>
+    <tr><td><code>uasr.dir.scripts</code></td><td>string</td><td> </td><td>Path to script files</td></tr>
+    <tr><td><code>uasr.dir.syn    </code></td><td>string</td><td> </td><td>Path to synthesis files</td></tr>
     <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
     </tbody>
 
@@ -1105,6 +1115,11 @@ The file extensions are:
       </td>
     </tr>
     <tr>
+      <td><a href="#clp_-CFG_get_path_persistent"><code class="link">-CFG_get_path_persistent</code></a></td>
+      <td><code><b>-CFG_get_path_persistent</b>(sVar,sKey,sMode)</code><br>&nbsp;<br> Stores the path to data files persistently in a (global) variable.
+      </td>
+    </tr>
+    <tr>
       <td><a href="#clp_-CFG_set"><code class="link">-CFG_set</code></a></td>
       <td><code><b>-CFG_set</b>(sKey,sValue)</code><br>&nbsp;<br> Sets the value for a key in the UASR configuration.
       </td>
@@ -1603,7 +1618,7 @@ The file extensions are:
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/cfg.itp(318)</td>
+      <td class="hidden">util/cfg.itp(317)</td>
     </tr>
   </table>
   </div>
@@ -1691,7 +1706,7 @@ The file extensions are:
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/cfg.itp(362)</td>
+      <td class="hidden">util/cfg.itp(361)</td>
     </tr>
   </table>
   </div>
@@ -1866,6 +1881,107 @@ The file extensions are:
     </tr>  </table>
     <h3>Return value</h3> The path name
 
+  <h3>See also</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><a href="#clp_-CFG_get_path_persistent">-CFG_get_path_persistent</a>
+    </td>
+  </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-CFG_get_path_persistent">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CFG_get_path_persistent</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CFG_get_path_persistent','-CFG_get_path_persistent','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CFG_get_path_persistent</b>(sVar,sKey,sMode)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/cfg.itp(575)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Stores the path to data files persistently in a (global) variable. The
+ function does nothing if the variable already exists. See {@link -CFG_get_path}
+ for details on how UASR determines paths to data files.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sVar</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Name of the global Variable as string (should start with <code>.</code>)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sKey</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Identifier of the path to return (see {@link -CFG_get_path} for details.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sMode</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Empty string (default operation) or any combination of the following characters
+          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+            <tr><th>Character     </th><th>Description</th></tr>
+            <tr><td><code>F</code></td><td>Force: do not fallback to common directory</td></tr>
+            <tr><td><code>S</code></td><td>Silent: do not print messages (except errors)</td></tr>
+          </table>
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> The path name
+
+  <h3>See also</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><a href="#clp_-CFG_get_path">-CFG_get_path</a>
+    </td>
+  </tr>  </table>
   </div>
   </div>
   <div id="clp_-CFG_set">
@@ -1901,7 +2017,7 @@ The file extensions are:
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/cfg.itp(570)</td>
+      <td class="hidden">util/cfg.itp(590)</td>
     </tr>
   </table>
   </div>
@@ -1968,7 +2084,7 @@ The file extensions are:
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/cfg.itp(590)</td>
+      <td class="hidden">util/cfg.itp(610)</td>
     </tr>
   </table>
   </div>
@@ -2024,7 +2140,7 @@ The file extensions are:
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/cfg.itp(606)</td>
+      <td class="hidden">util/cfg.itp(626)</td>
     </tr>
   </table>
   </div>

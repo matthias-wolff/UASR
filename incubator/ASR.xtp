@@ -39,28 +39,40 @@
 
 ## -- Overloadable functions ---------------------------------------------------
 
-## Standard speech recognition confidence computation.
+## Standard speech recognition confidence computation for a segment of the
+## recognition result.
 ##
 ## @param idRes data
 ##          The post-processed recognition result as returned by
 ##          {@link -ASR_postprocess}.
 ## @param iSi object
 ##          The recognizer session information.
+## @param nFirstFrame integer
+##          The zero-based first frame index, inclusive. 
+## @param nLastFrame integer
+##          The zero-based last frame index, inclusive; -1 for "end of sequence".
 ## @global nNadT R
 ## @return
 ##   The recognizer confidence ranging from -1 for "sure to reject" to 1 for
 ##   "sure to accept". If a positive value is returned, the recognition result
 ##   should be accepted.
-function -ASR_confidence(idRes,iSi)
+function -ASR_confidence(idRes,iSi,nFirstFrame,nLastFrame)
 {
+  data idRes2;                                                                  # Copy of recognition result
+
   ## HACK: Magic confidence parameters; better implementation pending...        # From Leonard Foerster's BA thesis
   ".__CNF_nNadM" "rej.nad.mean" 0.0612 -CFG_get_persistent;                     # NAD mean
   ".__CNF_nNadS" "rej.nad.sdev" 0.0260 -CFG_get_persistent;                     # NAD std. dev.
   ".__CNF_sNadO" "rej.nad.op"   "neg"  -CFG_get_persistent;                     # NAD standardization extra operation
   ".__CNF_nNadT" "rej.nad.thrs" 0.36   -CFG_get_persistent;                     # NAD threshold
 
+  ## Copy subsequence of recognition result                                     # -------------------------------------
+  nLastFrame 0 < if idRes.nrec nLastFrame =; end                                # Handle "until end of sequence"
+  idRes nFirstFrame ( nLastFrame nFirstFrame - ) idRes2 /rec -select;           # Select frames
+  idRes.nrec 0 == if NAN return; end                                            # No frames left --> conf.=NAN
+
   ## Compute recognition confidence                                             # -------------------------------------
-  var nNad; ( idRes iSi -CNFS_nad ) nNad  =;                                    # Normalized acoustic distance
+  var nNad; ( idRes2 iSi -CNFS_nad ) nNad  =;                                   # Normalized acoustic distance
   :nNad = $[.__CNF_sNadO](nNad-.__CNF_nNadM)/.__CNF_nNadS;                      # Standardize score
   ( nNad isnan ) if -1 return; end                                              # Nan scores -> to be rejected
   :min(max(nNad-.__CNF_nNadT,-1),1): return;                                    # Compute and return confidence
@@ -87,13 +99,17 @@ function -ASR_confidence(idRes,iSi)
 ##     <tr><td>PHNr</th><th>Phoneme indices of reference recognition</th></tr>
 ##     <tr><td>NLL </th><th>Neg. log. likelihoods of speech recognition</th></tr>
 ##     <tr><td>NLLr</th><th>Neg. log. likelihoods of reference recognition</th></tr>
+##     <tr><td>dNLL</th><th>Neg. log. likelihood difference</th></tr>
 ##     <tr><td>PLB </th><th>Phoneme labels of speech recognition</th></tr>
 ##     <tr><td>PLBr</th><th>Phoneme labels of reference recognition</th></tr>
+##     <tr><td>OLB </th><th>Output labels of speech recognition</th></tr>
 ##   </table>
+##   A text representation of the speech recognition result is stored in
+##   <code>ftext</code>.
 function -ASR_postprocess(itRR,itRRr,idNld,iSi)
 {
   ## Local functions and instances                                              # -------------------------------------
-  function -relabel(itGP,itRes)                                                 # Recover per-frame phoneme labels
+  function -phnlabel(itGP,itRes)                                                # Recover per-frame phoneme labels
   {                                                                             # >>
     fst itAux;                                                                  #   Auxiliary transducer
     data idAux;                                                                 #   Auxiliary data
@@ -102,9 +118,36 @@ function -ASR_postprocess(itRR,itRRr,idNld,iSi)
     itAux itGP 0 0 itAux -compose;                                              #   Compose with labeling transducer
     itAux 0 1 -1 itAux -best_n;                                                 #   Best path (if solution not unique)
     :itAux.td["~TOS"]: idAux -copy;                                             #   Copy recovered labels
-    idAux.nrec itRes.td.nrec != if "Re-label: " .S_WRONGNOFRAMES + -ERROR; end  #   Wrong # of recovered labels
+    idAux.nrec itRes.td.nrec != if "phnlabel: " .S_WRONGNOFRAMES + -ERROR; end  #   Wrong # of recovered labels
     0 "~PHN" idAux -set_cname;                                                  #   Name label component
     idAux itRes.td -join;                                                       #   Join to recognition result
+  }                                                                             # <<
+  function -outlabel(itRes)                                                     # Get per-frame output labels
+  {                                                                             # >>
+    data idAux;                                                                 #   Auxiliary data
+    var  nR;                                                                    #   Record counter
+    var  nXR;                                                                   #   Last non-epsilon-input record
+    var  sL;                                                                    #   Aggregated label
+    var  sOut; "" sOut =;                                                       #   Output string
+  
+    :itRes.td["~TOS"]: 0 itRes.os 0 1 idAux -lookup;                            #   Get transition output labels
+    "" sL =; -1 nXR =; 0 nR =; nR idAux.nrec < while                            #   Loop over result transitions >>
+      :sL+=idAux[nR,0];                                                         #     Aggregate output label
+      :sOut+=idAux[nR,0];                                                       #     Aggregate output string
+      :itRes.td[nR,"~TIS"]<0: if                                                #     Transition input is epsilon >>
+        :idAux[nR,0]="";                                                        #       No output label
+      else                                                                      #     << Trans. input is not epsilon >>
+        :idAux[nR,0]=sL;                                                        #       Store aggregated output label
+        "" sL =;                                                                #       Clear aggregated output label
+        nR nXR =;                                                               #       Remember transition index
+      end                                                                       #     <<
+      nR ++=;                                                                   #     Next transition
+    end                                                                         #   <<
+    ( sL "" != ) ( nXR 0 >= ) && if                                             #   Remaining aggregated label >>
+      :idAux[nXR,0]+=sL;                                                        #     Append to last label written
+    end                                                                         #   <<
+    0 "~OUT" idAux -set_cname; idAux itRes.td -join;                            #   Join output labels to rec. result
+    sOut return;                                                                #   Return output string
   }                                                                             # <<
   function -epsremove(idSrc,idDst)                                              # Removes epsilon transitions
   {                                                                             # >>
@@ -126,10 +169,12 @@ function -ASR_postprocess(itRR,itRRr,idNld,iSi)
   data idRRr;                                                                   # Per-frame reference recog. result
   data idRes;                                                                   # Post-processed recognition result
   data idAux;                                                                   # Auxiliary data
+  var  sOut;                                                                    # Output string of speech recognition
 
-  ## Recover per-frame phoneme labels of recognition results                    # -------------------------------------
-  iSi.itGP itRR  -relabel;                                                      # ... of speech recognition result 
-  iSi.itGP itRRr -relabel;                                                      # ... of reference recognition result 
+  ## Get per-frame labels of recognition results                                # -------------------------------------
+  iSi.itGP itRR  -phnlabel;                                                     # Phonemes of speech recognition 
+  iSi.itGP itRRr -phnlabel;                                                     # Phonemes of reference recognition
+  ( itRR -outlabel ) sOut =;                                                    # Output symbols of speech recognition 
 
   ## Remove epsilon transitions                                                 # ------------------------------------- 
   itRR.td  idRR  -epsremove;                                                    # ... from speech recognition result
@@ -147,12 +192,96 @@ function -ASR_postprocess(itRR,itRRr,idNld,iSi)
   :idRRr["~PHN"]: idRes -join;                                                  # Phoneme indices of ref. recog. res.
   :idRR["~NLL"]:  idRes -join;                                                  # Neg.log.likelihoods of sp. rec. res.
   :idRRr["~NLL"]: idRes -join;                                                  # Neg.log.likelihoods of ref. rec. res.
+  :idRes[4]-idRes[5]: idRes -join;                                              # Add NLL difference component...
   :idRR["~PHN"]:  0 iSi.itRNr.os 0 1 idAux -lookup; idAux idRes -join;          # Phoneme labels of speech recog. rec.
   :idRRr["~PHN"]: 0 iSi.itRNr.os 0 1 idAux -lookup; idAux idRes -join;          # Phoneme labels of ref. recog. rec.
-  { "GMM" "GMMr" "PHN" "PHNr" "NLL" "NLLr" "PLB"  "PLBr" } '                    # |
+  :idRR["~OUT"]:  idRes -join;                                                  # Output  labels of speech recog. rec.
+  { "GMM" "GMMr" "PHN" "PHNr" "NLL" "NLLr" "dNLL" "PLB"  "PLBr" "OLB" } '       # |
     0 idRes -set_cnames;                                                        # Rename result components 
 
+  ## Finish                                                                     # -------------------------------------
+  idNld.rinc idRes -set rinc;                                                   # Copy record increment from NLL array
+  sOut idRes -set ftext;                                                        # Store output string
+  "0,Oscillogram\n0,Oscillogram\n0,Oscillogram\n0,Oscillogram\n"                # |
+  "1,Oscillogram\n1,Oscillogram\n-1,Oscillogram\n" +                            # |
+  "-1,LabelDisplay\n-1,LabelDisplay\n-1,LabelDisplay" + idRes -set rtext;       # Make display hint for Eclipse
   idRes return;                                                                 # Return post-processed recog. result
+}
+
+## TODO: ...
+##
+## @param idRes data
+##          The post-processed recognition result as returned by 
+##          {@link -ASR_postprocess}.
+## @return TODO: ...
+function -FVR_fromrecresult(idRes)
+{
+1 brk;
+## -- BOWZ -->
+  data idTok;                                                                   # Output token sequence
+  data idLvl;                                                                   # Bracket level data
+  data idAux;                                                                   # Auxiliary data
+  var  nTok;                                                                    # Current token index
+  var  nBlvl;                                                                   # Current bracket level
+  var  nBeginFrame;                                                             # Beginning frame for confidence comp.
+  var  nEndFrame;                                                               # Ending frame for confidence comp.
+  var  nLabFrame;                                                               # Label frame to store confidence in
+  var  nConf;                                                                   # Segment confidence
+  var  sWfvr;                                                                   # The result string
+  
+  ## Create output token sequence                                               # -------------------------------------
+  :idRec["~OUT"]: "[]" "splitd" idTok -strop;                                   # Split output preserving brackets
+  ( type long ) idTok.dim idTok.nrec idAux -array; 0 1 idAux -fill;             # Create frame index
+  idTok ' ( idTok.dim idTok.nrec * ) 1 idTok -reshape;                          # Sequence output tokens
+  idAux ' ( idAux.dim idAux.nrec * ) 1 idAux -reshape;                          # Sequence frame index
+  idAux idTok -join;                                                            # Join frame index to token sequence
+  :idTok[0]: "" "len" idAux -strop; :idAux.==0: idTok -dmark;                   # Mark empty tokens...
+  idTok 0 0 idTok /mark -delete;                                                # ... and delete them
+  :-ones(1,idTok.nrec): idTok -join;                                            # Add opening bracket's record index
+  :-ones(1,idTok.nrec): idTok -join;                                            # Add label's record index
+  { "TOK" "FRM" "[@" "LAB@" } ' 0 idTok -set_cnames;                            # Name components
+  #idTok -print; 1 brk;                                                          # Break point
+
+  ## Create bracket level data                                                  # -------------------------------------
+  :idTok[0]: "[" "cmp" idAux -strop;                                            # Count opening brackets
+  :idAux.==0: NULL 0 "sum" idAux /rec -aggregate;                               # ...
+  :idLvl=-ones(2,idAux[0,0]+1);                                                 # Most recent '[' and label on level
+  #idLvl -print; 1 brk;                                                          # Break point
+  
+  ## Loop over tokens                                                           # -------------------------------------
+  0  nBlvl =;                                                                   # Initialize bracket level counter
+  0 nTok =; nTok idTok.nrec < while                                             # Loop over tokens >>
+    :idTok[nTok,0]=="[": if                                                     #   Current token is "[" >>
+      nBlvl ++=;                                                                #     Increase bracket level
+      :idLvl[nBlvl,0]=nTok;                                                     #     Remember bracket token index
+    else :idTok[nTok,0]=="]": if                                                #   << Current token is "]" >>
+      :idTok[nTok,2]=idLvl[nBlvl,0];                                            #     Matching opening bracket
+      :idTok[nTok,3]=idLvl[nBlvl,1];                                            #     (Last) label token
+      :nBeginFrame=idTok[idLvl[nBlvl,0],1];                                     #     Get begin frame
+      :nEndFrame=idTok[nTok,1];                                                 #     Get end frame
+      ( idRec idRef nBeginFrame nEndFrame -RRES_confidence ) nConf =;           #     Compute confidence
+      :nLabFrame=idTok[nTok,3];                                                 #     Get label frame
+      "${idTok[nLabFrame,0]}:${round(nConf*100)/100}" nLabFrame 0 idTok -store; #     Store confidence in token
+      :idLvl[nBlvl,0]=-1;                                                       #     Clear matching opening bracket
+      nBlvl --=;                                                                #     Decrease bracket level
+    else                                                                        #   << Current token is a label >>
+      :idLvl[nBlvl,1]=nTok;                                                     #     Remember label token index
+    end end                                                                     #   <<
+    nTok ++=;                                                                   #   Next token 
+  end                                                                           # <<
+  nBlvl 0 < if "Error: FVR string contains too many ']'" -echo; end             # Syntax error 
+  nBlvl 0 > if "Error: FVR string contains too many '['" -echo; end             # Syntax error 
+  #idTok /list -print; "\n" sWfvr + "\n\n" + -echo; 1 brk;                       # Break point
+
+  ## Collect wFVR string                                                        # -------------------------------------
+  "" sWfvr =;                                                                   # Initialize result string
+  0 nTok =; nTok idTok.nrec < while                                             # Loop over tokens >>
+    "${idTok[nTok,0]}" sWfvr +=;                                                #   Collect output
+    nTok ++=;                                                                   #   Next token 
+  end                                                                           # <<
+  
+  sWfvr return;                                                                 # Return result 
+## <-- EOWZ --
 }
 
 ## -- Utility functions --------------------------------------------------------
@@ -177,7 +306,7 @@ function -SI_hash(iSi)
 ## @param sFlist string
 ##          Name of recognition file list (see {@link -CFG_get_flist}).
 ## @param sLogMode string
-##          Controlles writing log files for each recognized turn; Empty (no 
+##          Controlls writing log files for each recognized turn; Empty (no 
 ##          logging) or any combination of the following letters:
 ##          <table>
 ##            <tr></td>N</td><td>Gaussian neg. log. densities</td></tr>
@@ -185,7 +314,15 @@ function -SI_hash(iSi)
 ##            <tr></td>R</td><td>Recognition result          </td></tr>
 ##            <tr></td>S</td><td>Secondary feature vectors   </td></tr>
 ##          </table>
-function -ASR_recognizer(sFlist,sLogMode)
+## @param sReuMode string
+##          Controlls loading previous log files and re-using the respective 
+##          data for each recognized turn; Empty (re-compute everyting) or any
+##          combination of the following letters:
+##          <table>
+##            <tr></td>R</td><td>Recognition result (skips the decoding and 
+##                               {@link -ASR_postprocess})</td></tr>
+##          </table>
+function -ASR_recognizer(sFlist,sLogMode,sReuMode)
 {
   ## Local functions and instances                                              # -------------------------------------
   function -label(idRes,idVs)                                                   # Label vector sequence with rec.result
@@ -209,15 +346,7 @@ function -ASR_recognizer(sFlist,sLogMode)
   {                                                                             # >>
     ( sMode sID "search" -VAR_strop ) 0 < if leave; end                         #   Abort if this log is disabled
     "\n     - " 3 -MSGX; "L" -MSG2; ": $[sFname]"                      3 -MSGX; #   Screen protocol
-    ( sID "R" == ) ( idData.dim 9 == ) && if                                    #   Std. post-processed rec. result >>
-      data idAux; idData idAux -copy;                                           #     Make a copy
-      "0,Oscillogram\n0,Oscillogram\n0,Oscillogram\n0,Oscillogram\n"            #     |
-      "1,Oscillogram\n1,Oscillogram\n2,LabelDisplay\n3,LabelDisplay\n" +        #     |
-      "4,Oscillogram" + idAux -set rtext;                                       #     Make display hint for Eclipse
-      sFname idAux -save;                                                       #     Save tuned copy
-    else                                                                        #   << all other logs >>
-      sFname idData -save;                                                      #    Just save data
-    end                                                                         #   <<
+    sFname idData -save;                                                        #   Save log data
   }                                                                             # <<
 
   ## Define instances                                                           # ------------------------------------- 
@@ -255,7 +384,8 @@ function -ASR_recognizer(sFlist,sLogMode)
   "\n   - Session info  : $[sModDir]/sesinfo.object"                      -MSG; # Screen protocol
   "\n                     #$[sSiHash]"                                    -MSG; # Screen protocol
   "\n   - GMMs          : $[sModDir]/$[sAmMod].gmm"                       -MSG; # Screen protocol
-  "\n   - Log mode      : $[sLogMode]"                                    -MSG; # Screen protocol
+  "\n   - Log mode      : " sLogMode not if "(none)" else sLogMode end +  -MSG; # Screen protocol
+  "\n   - Re-use mode   : " sReuMode not if "(none)" else sReuMode end +  -MSG; # Screen protocol
 
   ## Initialize decoders                                                        # -------------------------------------
   "tp"  iRR -set algo; "tp" iRRr -set algo;                                     # Use token passing algorithm
@@ -272,9 +402,8 @@ function -ASR_recognizer(sFlist,sLogMode)
 
     ## - Try loading previous recognition result                                #   - - - - - - - - - - - - - - - - - -
     "$[sLogDir]/SI-$[sSiHash]/$[iF.sfile]" sLogFn =;                            #   Make log file name
-    #( "$[sLogFn].res.dn3" sLogMode idRes -load_res ) not if                     #   Load result; failed (or disabled)>>
-    TRUE if
-  
+    ( "$[sLogFn].res.dn3" sReuMode idRes -load_res ) not if                     #   Load result; failed (or disabled)>>
+    
       ## - Do speech recognition                                                #     - - - - - - - - - - - - - - - - -
       ( iF NULL "" idPfv -FEA_get ) not if " SKIP" -MSG2; continue; end         #     Do primary feature analysis
       idPfv iFi iGmm.mean.dim idSfv NULL -FEA_sfa;                   "." -MSG2; #     Do secondary feature analysis
@@ -282,11 +411,6 @@ function -ASR_recognizer(sFlist,sLogMode)
       iSi.itRN  nRNU idNld itRR  iRR  -search;                       "." -MSG2; #     Recognition with grammar
       iSi.itRNr 0    idNld itRRr iRRr -search;                       "." -MSG2; #     Reference recognition
       ( itRR itRRr idNld iSi -ASR_postprocess ) idRes =;             "." -MSG2; #     Post-process recognition result
-      idPfv.rinc idRes -set rinc;                                               #     Copy record increment from features
-      :idRes["NLL"]-idRes["NLLr"]: idRes -join;                                 #     Add NLL difference component...
-      :idRes.dim-1: "dNLL" idRes -set_cname;                                    #     ... and name it
-      :itRR.td["~TOS"]: 0 iSi.idLMtos 0 1 idAux -lookup;                        #     Get word labels of speech recog.
-      idAux " " "rcat" idAux -strop; ( 0 0 idAux -fetch ) idRes -set rtext;     #     Concat. to recognized word string
 
       ## - Log                                                                  #     - - - - - - - - - - - - - - - - -
       "$[sLogFn].res.dn3" idRes sLogMode "R" -log;                              #     Log recognition result
@@ -295,16 +419,20 @@ function -ASR_recognizer(sFlist,sLogMode)
       idRes idNld -label; "$[sLogFn].nld.dn3" idNld sLogMode "N" -log           #     Log neg. log. densities
 
     end                                                                         #   <<
+#    ( idRes -FVR_fromrecresult ) iFvr  =;                            "." -MSG2; #   Get weighted feature-value rel.
+#    " REC=\"" iFvr.sComment + "\"" +                                     -MSG2; #   Screen protocol
+    " REC=\"" idRes.ftext + "\"" +                                       -MSG2; #   Screen protocol
+
     ( 0 1 iF.recfile -fetch ) sWlbr =;                                          #   Get reference word label string
     sWlbr not if                                                                #   No word labels in file list >>
       sTrlDir iF.sfile idAux -TRL_import;                                       #     Load transliteration
       idAux ' " " "ccat" idAux -strop; ( 0 0 idAux -fetch ) sWlbr =;            #     Convert to string
     end                                                                         #   <<
-    idRes.rtext sWlb  =;                                                        #   Get word labels of speech recog.
-    " REC=\"" sWlb + "\" REF=\"" + sWlbr + "\"" +                        -MSG2; #   Protocol
+    " REF=\"" sWlbr + "\"" +                                             -MSG2; #   Protocol
 
     ## - Post-processing                                                        #   - - - - - - - - - - - - - - - - - -
-    ( idRes iSi -ASR_confidence ) nConf =;  " C=" ( nConf 4 2 ) -FMT_f + -MSG2; #   Compule confidence
+    ( idRes iSi 0 -1 -ASR_confidence ) nConf =; 
+    " C=" ( nConf 4 2 ) -FMT_f +                                         -MSG2; #   Compule confidence
         
   end                                                                           # <<
   "\n   " -MSG2; "done\n"                                                 -MSG; # Finish progress bar
@@ -326,8 +454,11 @@ var sCfgFile; "$1"sCfgFile =;                                                   
 "\n// Configuration   : $[sCfgFile]"                                      -MSG; # Screen protocol
 sCfgFile TRUE -CFG_init;                                                        # Configure session
 "$UASR_HOME/scripts/dlabpro/util/uasr_session.itp" include;                     # Include UASR session startup script
-"\n\n// OOT REJECTION TEST PROGRAM"                                       -MSG; # Screen protocol
+"\n\n// AUTOMATIC SPEECH RECOGNITION"                                     -MSG; # Screen protocol
+"sig.label" "none" -CFG_set;                                                    # Disable signal labeling
 
-"asr" "R" -ASR_recognizer;
+"asr" "R" "" -ASR_recognizer;
+
+quit
 
 ## EOF

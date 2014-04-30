@@ -265,7 +265,7 @@ function -CFG_get_ex(sKey,default,sMode)
 ##         errors
 function -CFG_get_persistent(sVar,sKey,default)
 {
-  sVar "" ?instance not if;
+  sVar "var" ?instance not if;
     sKey default "S" -CFG_get_ex var $[sVar];
   end;
   $[sVar] return;
@@ -290,7 +290,7 @@ function -CFG_get_persistent(sVar,sKey,default)
 ##         errors
 function -CFG_get_ex_persistent(sVar,sKey,default,sMode)
 {
-  sVar "" ?instance not if;
+  sVar "var" ?instance not if;
     sKey default sMode -CFG_get_ex var $[sVar];
   end;
   $[sVar] return;
@@ -460,6 +460,7 @@ function -CFG_get_flist(sKey,sMode)
 ##            <tr><td><code>S</code></td><td>Silent: do not print messages (except errors)</td></tr>
 ##          </table>
 ## @return The path name
+## @see -CFG_get_path_persistent
 function -CFG_get_path(sKey,sMode)
 {
   ## Local functions                                                            # -------------------------------------
@@ -517,13 +518,6 @@ function -CFG_get_path(sKey,sMode)
     "$[sDirData]/$[sDb]" sRoot =;                                               #  Make data base root directory
   else                                                                          # << UASR data dir. not configured >>
     "$[sUasrHome]-data/$[sDb]" sRoot =;                                         #  Standard data base root
-    ## TODO: To be removed later -->                                            #  -->
-    sRoot stdfile /dir -exists not if                                           #  Does not exist >>
-      "$[sUasrHome]/data/$[sDb]" stdfile /dir -exists if                        #    Old std. data root does exist >>
-        "$[sUasrHome]/data/$[sDb]" sRoot =;                                     #      Use the old one
-      end                                                                       #    <<
-    end                                                                         #  <<
-    ## <--                                                                      #  <--
   end                                                                           # <<
   sKey "data" == if sRoot return; end                                           # Data root req.? -> return it
   sRoot ( sExp "" == if "/common" else "/$[sExp]" end ) + sEroot -sset;         # Get experiment data root directory
@@ -545,18 +539,45 @@ function -CFG_get_path(sKey,sMode)
   end                                                                           # <<
 
   ## Standard paths                                                             # -------------------------------------
-  sKey "flists" == if "File list"  sName =; end                                 # File list directory 
-  sKey "info"   == if "Info"       sName =; end                                 # Info files directory
-  sKey "lab"    == if "Label"      sName =; end                                 # Label files directory
-  sKey "log"    == if "Log"        sName =; end                                 # Log directory
-  sKey "model"  == if "Model"      sName =; end                                 # Model directory
-  sKey "pm"     == if "Pitch mark" sName =; end                                 # Pitch mark files directory
-  sKey "sig"    == if "Signal"     sName =; end                                 # Signal files directory
-  sKey "syn"    == if "Synthesis"  sName =; end                                 # Synthesis files directory
-  sKey "into"   == if "Into"       sName =; end                                 # Intonation files directory
-  sKey "midi"   == if "Midi"       sName =; end                                 # Midi files directory
-  sKey "inv"    == if "Inventory"  sName =; end                                 # Synthesis inventory files directory
+  sKey "flists"  == if "File list"  sName =; end                                # File list directory 
+  sKey "info"    == if "Info"       sName =; end                                # Info files directory
+  sKey "lab"     == if "Label"      sName =; end                                # Label files directory
+  sKey "log"     == if "Log"        sName =; end                                # Log directory
+  sKey "model"   == if "Model"      sName =; end                                # Model directory
+  sKey "pm"      == if "Pitch mark" sName =; end                                # Pitch mark files directory
+  sKey "sig"     == if "Signal"     sName =; end                                # Signal files directory
+  sKey "syn"     == if "Synthesis"  sName =; end                                # Synthesis files directory
+  sKey "scripts" == if "Scripts"    sName =; end                                # Script files directory
+  sKey "into"    == if "Into"       sName =; end                                # Intonation files directory
+  sKey "midi"    == if "Midi"       sName =; end                                # Midi files directory
+  sKey "inv"     == if "Inventory"  sName =; end                                # Synthesis inventory files directory
   "dir.${sKey}" "/${sKey}" "" "${sName} dir" -CFG_get_path_int return;          # Get and return path
+}
+
+## Stores the path to data files persistently in a (global) variable. The
+## function does nothing if the variable already exists. See {@link -CFG_get_path}
+## for details on how UASR determines paths to data files.
+##
+## @cgen:index
+## @param sVar string
+##          Name of the global Variable as string (should start with <code>.</code>)
+## @param sKey string
+##          Identifier of the path to return (see {@link -CFG_get_path} for details.
+## @param sMode string
+##          Empty string (default operation) or any combination of the following characters
+##          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+##            <tr><th>Character     </th><th>Description</th></tr>
+##            <tr><td><code>F</code></td><td>Force: do not fallback to common directory</td></tr>
+##            <tr><td><code>S</code></td><td>Silent: do not print messages (except errors)</td></tr>
+##          </table>
+## @return The path name
+## @see -CFG_get_path
+function -CFG_get_path_persistent(sVar,sKey,sMode)
+{
+  sVar "var" ?instance not if                                                   # Variable does not exist >>
+    ( sKey sMode -CFG_get_path ) var $[sVar];                                   #   Create it and store path
+  end                                                                           # <<
+  $[sVar] return;                                                               # Return path
 }
 
 ## Sets the value for a key in the UASR configuration.
