@@ -1198,7 +1198,11 @@ $$ 1 ==  if                                                                     
   sUpath ( sDpath "/.." + ) "toc.css"     -doc_copy; 
   "/resources" sUpath +=;
   sUpath ( sDpath "/../resources" + ) "blank_stc.gif" -doc_copy; 
+  sUpath ( sDpath "/../resources" + ) "book_obj.gif"  -doc_copy; 
+  sUpath ( sDpath "/../resources" + ) "exe_obj.gif"   -doc_copy; 
   sUpath ( sDpath "/../resources" + ) "head_bgnd.png" -doc_copy; 
+  sUpath ( sDpath "/../resources" + ) "lib_obj.gif"   -doc_copy; 
+  sUpath ( sDpath "/../resources" + ) "pkg_obj.gif"   -doc_copy; 
   sUpath ( sDpath "/../resources" + ) "print.gif"     -doc_copy; 
 end                                                                             # <<
 
