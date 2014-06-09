@@ -173,10 +173,12 @@ function -FEA_analyze(idLtb,iFI,sSns)
 
   ## Standardization statistics                                                 # -------------------------------------
   "sfa" "std" "," -CFG_get_item 0 >= if                                         # Doing standardization >>
-    "\n\n   Vector standardization statistics"                            -MSG; # Protocol
+    "\n\n   Vector standardization statistics"                            -MSG; #   Protocol
     iF sSns NULL iFI iS -FEA_stat;                                              #   Gather feature pool statistics
     idAux iS -mean; :iFI.idX = -1*idAux;                                        #   Get feature offset vector
     idAux iS -sdev; :iFI.idW = diag(1./idAux);                                  #   Get initial feature trafo. matrix
+  else                                                                          # << Doing nothing >>
+    "\n\n   - none -\n"                                                   -MSG; #   Protocol
   end                                                                           # <<
 
   ## Continue feature transformation matrix                                     # -------------------------------------
@@ -588,13 +590,14 @@ function -HMM_assess(itHMM,sSns,nSpl,nIte)
   sPre sSxt itHMM.ud idF idAsc -XXM_assess_hist;                                # Create/continue assmnt. histrograms
 
   "\n   Total sample time: ${nTst/60000} min"                            -MSG2; # Protocol
-  nCor 0 >= if                                                                  # Have computed correctness >>
+  :real(nCor)>=0: if                                                            # Have computed correctness >>
     "\n\n   Evaluation result:"                                           -MSG; #   Protocol
-    "\n   - Label corr.    : ${ent(nCor*1000+0.5)/10} %"                  -MSG; #   Protocol (label correctness)
-    " ( HMM $[nSpl]_$[nIte]" ( sSns if ", $[sSns]" + end ) " )" +        - MSG; #   Protocol (HMM and sensor IDs)
+    "\n   - Label corr.    : ${ent(real(nCor)*1000+0.5)/10} "             -MSG; #   Protocol (label correctness)
+    "+- ${ent(imag(nCor)*1000+0.5)/10} %"                                 -MSG; #   Protocol (95% confidence interv.)
+    " ( HMM $[nSpl]_$[nIte]" ( sSns if ", $[sSns]" + end ) " )" +         -MSG; #   Protocol (HMM and sensor IDs)
   end                                                                           # <<
   NULL iP -end_timer; "   Time: ${ent(iP.time/1000+0.5)} s\n  "           -MSG; # End timer
-  nCor 0 >= if nCor else 1. end return;                                         # Return label correctness or 1
+  :real(nCor)>=0: if :real(nCor): else 1. end return;                           # Return label correctness or 1
 }
 
 ## Result function to <code>-HMM_process</code> for the evaluation of HMMs.
@@ -1390,7 +1393,10 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
 ##          <code>idF.nrec</code> records. Extra components will be ignored. The cells <code>idAsc[nF,nM]</code>
 ##          contains a distance value (e.g. neglog. likelihood or neglog. probability) of file <code>nF</code> from
 ##          the model <code>nM</code>.
-## @return The label recognition rate or -1 if no correct labels are known.
+## @return A complex number. The real part is the label recognition rate, the 
+##         imaginary part is the 95% confidence interval of the label 
+##         recognition rate. Both, real and imaginary part, are -1 if no correct
+##         labels are known.
 ## @global &lt;uasr.am.eval.assess&gt; R
 ## @global &lt;uasr.am.gbg&gt;         R
 ## @global &lt;uasr.am.gbg.thrsh&gt;   R
@@ -1412,6 +1418,7 @@ function -XXM_assess_log(sFilePref,sFileSuff,idLtb,idFlst,idAsc)
   var  sLogFile;                                                                # Log file name
   var  sCmxFile;                                                                # Confusion matrix file name
   var  nCor;      -1                                              nCor      =;  # Label correctness  
+  var  nC95;      -1                                              nC95      =;  # 95% confidence interval of nCor
   var  sLog;                                                                    # String buffer
   var  sCmx;                                                                    # String buffer
   var  i;                                                                       # Loop counter
@@ -1450,6 +1457,7 @@ function -XXM_assess_log(sFilePref,sFileSuff,idLtb,idFlst,idAsc)
     end                                                                         #   <<
     :idAux2.==idAux: NULL 0 "sum" idAux2 /rec -aggregate;                       #   Count correct recognitions
     :nCor=idAux2[0,0]/idAsc.nrec;                                               #   Compute label recognition rate
+    :nC95=2*sqrt((nCor-nCor*nCor)/(idAsc.nrec-1));                              #   Compute 95% confidence interval
     idAux 0 idLtb 0 1 idLab -lookup; 0 "RES" idLab -set_cname;                  #   Get recognized labels
     :idFlst[1]: idLab -join;         1 "REF" idLab -set_cname;                  #   Join reference labels
   end                                                                           # <<
@@ -1483,7 +1491,7 @@ function -XXM_assess_log(sFilePref,sFileSuff,idLtb,idFlst,idAsc)
     end                                                                         #   <<
   end                                                                           # <<
 
-  nCor return;
+  $[nCor]+$[nC95]i return;
 }
 
 ## Creates per-model NLL histograms.
@@ -1800,7 +1808,7 @@ function -HMM_ite(iF,sSns,iFI,bBw,bLab,itHMM)
     0 nL =; label L_LABEL; nL idAxs.nrec < if                                   #   Loop over labels >>
       .__UTL_nVlevel 3 >= if                                                    #     On verbose lvl. 3 (optimized!) >>
         "\n       label ${nL+1}/$[idAxs.nrec], frame ${idAxs[nL,2]}: "          #       |
-        "'${idAxs[nL,1]}'" +                                              -MSG; #       Protocol
+        "'${idAxs[nL,1]}' (${idAxs[nL,3]} frames)" +                      -MSG; #       Protocol
       end                                                                       #     <<
       ( nL 0 idAxs -dfetch ) nU =;                                              #     Get current AM index
       nU 0 >= if                                                                #     Current model index valid >>
@@ -1835,7 +1843,7 @@ function -HMM_ite(iF,sSns,iFI,bBw,bLab,itHMM)
     end                                                              "." -MSG2; #   <<
 
     "" stdprof -end_timer;                                                      #   Stop measurung time
-    " ok (RTF $[stdprof.time nRinc / idMsf.nrec /])"                     -MSG2; #   Protocol
+    " ok (RTF ${ent(stdprof.time/nRinc/idMsf.nrec*1000)/1000})"          -MSG2; #   Protocol
     nRinc idMsf.nrec * nTst +=;                                                 #   Accumulate total sample time
     goto L_FILE;                                                                #   End of file loop
   end                                                                           # <<
