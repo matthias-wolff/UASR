@@ -280,11 +280,12 @@ function -FEA_save(sFile,idSrc)
 ##          Will be filled with the feature vector sequence
 ## @return <code>TRUE</code> if successful, <code>FALSE</code> otherwise.
 ## @global .__bCprFea                      CRW
-## @global .__bDirFea                      CRW
-## @global .__bDirSig                      CRW
 ## @global .__bF0Fea                       CRW
-## @global .__bExtFea                      CRW
 ## @global .__bPmFea                       CRW
+## @global .__sDirFea                      CRW
+## @global .__sDirSig                      CRW
+## @global .__sExtFea                      CRW
+## @global .__sPfa                         CRW
 ## @global &lt;uasr.dir.fea.&gt;           R
 ## @global &lt;uasr.dir.sig.&gt;           R
 ## @global &lt;uasr.fea.ext&gt;            R
@@ -292,36 +293,24 @@ function -FEA_save(sFile,idSrc)
 ## @global &lt;uasr.fea.pm&gt;             R
 ## @global &lt;uasr.fea.pm.level&gt;       R
 ## @global &lt;uasr.fea.savecompressed&gt; R
+## @global &lt;uasr.pfa&gt;                R
 ## @global &lt;uasr.sig.srate&gt;          R
 function -FEA_get(iF,sSns,sMode,idFea)
 {
   ## Check/create session persistent variables                                  # -------------------------------------
-  ".__bCprFea" "var" ?instance not if                                           # Is there a global __bCprFea? No >>
-    var .__bCprFea;                                                             #   Create one
-    ( "fea.savecompressed" FALSE -CFG_get ) .__bCprFea =;                       #   Get compress feature files option
-  end                                                                           # <<
-  ".__sDirFea" "var" ?instance not if                                           # Is there a global __sDirFea? No >>
-    var .__sDirFea;                                                             #   Create one
-    ( "fea" "S" -CFG_get_path ) .__sDirFea =;                                   #   Silently get feature files path
-  end                                                                           # <<
-  ".__sDirSig" "var" ?instance not if                                           # Is there a global __sDirSig? No >>
-    var .__sDirSig;                                                             #   Create one
-    ( "sig" "S" -CFG_get_path ) .__sDirSig =;                                   #   Silently get signal files path
-  end                                                                           # <<
-  ".__bF0Fea" "var" ?instance not if                                            # Is there a global __bF0Fea? No >>
-    var .__bF0Fea;                                                              #   Create one
-    ( "fea.f0" FALSE -CFG_get ) .__bF0Fea =;                                    #   Get F0-as-feature option
-  end                                                                           # <<
+  ".__sPfa"    "pfa"                "MEL" "S" -CFG_get_ex_persistent;           # Get PFA type
+  ".__bPmFea"  "fea.pm"             FALSE "S" -CFG_get_ex_persistent;           # Get pitch sync. fea. extr. option
+  ".__bF0Fea"  "fea.f0"             FALSE "S" -CFG_get_ex_persistent;           # Get F0-as-feature option
+  ".__bCprFea" "fea.savecompressed" FALSE "S" -CFG_get_ex_persistent;           # Get compress feature files option
+  ".__sDirSig" "sig"                      "S" -CFG_get_path_persistent;         # Get signal files path
+  ".__sDirFea" "fea"                      "S" -CFG_get_path_persistent;         # Get feature files path
+
   ".__sExtFea" "var" ?instance not if                                           # Is there a global __sExtFea? No >>
     var .__sExtFea;                                                             #   Create one
     ( "fea.ext" "" -CFG_get ) .__sExtFea =;                                     #   Get feature files extension
     ( .__sExtFea "1" "left" -VAR_strop ) "." == if                              #   Extension has heading period >>
       .__sExtFea "-1" "right" -VAR_strop ) .__sExtFea =;                        #     Remove it
     end                                                                         #   <<
-  end                                                                           # <<
-  ".__bPmFea" "var" ?instance not if                                            # Is there a global __bPmFea? No >>
-    var .__bPmFea;                                                              #   Create one
-    ( "fea.pm" FALSE -CFG_get ) .__bPmFea =;                                    #   Get pitch sync. fea. extr. option
   end                                                                           # <<
 
   ## Initialize                                                                 # -------------------------------------
@@ -339,6 +328,11 @@ function -FEA_get(iF,sSns,sMode,idFea)
     "\n     - loading: $[sF] ..."                                      3 -MSGX; #   Protocol
     sF idFea /noerror -restore;                                                 #   Try to load features from file
   end                                                                           # <<
+  ( .__sPfa "ext" == ) ( idFea -is_empty ) && if 
+      "Cannot obtain external features. Re-run with option -v3!" 2 -WARNING;    #
+      FALSE return;                                                             #
+  end
+
   idFea -is_empty if                                                            # Force pfa or load failed >>
 
     sMode "S" != if                                                             #   Feature extaction not forced >>
@@ -537,7 +531,6 @@ function -FEA_import_raw(sFile,idFea)
     " done (${idFea.nrec*idFea.rinc} ms)"                                -echo; #   Protocol
   end                                                                           # <<
 }
-
 
 ## == PRIMARY FEATURE ANALYSIS/SYNTHESIS ==                                     # =====================================
 

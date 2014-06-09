@@ -6,7 +6,7 @@
 ## PACKAGE: uasr/scripts/dlabpro/tools
 ##
 ## ARGUMENTS:
-##   $1: - reserved for: UASR database name (optional) -
+##   $1: - UASR database name (optional)
 
 ## Copyright 2013 UASR contributors (see COPYRIGHT file)
 ## - Chair of System Theory and Speech Technology, TU Dresden
@@ -1105,7 +1105,7 @@ idH -reset;                                                                     
 "\n   s (dir ) - ${sHpath}"                                               -MSG; #   Protocol
 sHpath "*.html" TRUE idH -SH_find;                                              #   Find HTML files
 idH "?${sHpath}/?" "replace" idH -strop;                                        #   Normalize path names
-idH 0 idH -sortup;                                                              #   Sort by file name
+idH 0 idH /noerror -sortup;                                                     #   Sort by file name
 
 ## Scan scripts and documentation HTML pages (automatically generated)          # -------------------------------------
 0 nS =; nS idS.nrec < while                                                     # Loop over scripts >>

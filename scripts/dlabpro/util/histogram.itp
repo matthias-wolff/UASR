@@ -45,7 +45,7 @@ function -HIST_to_data(iH,sUnit,idH)
   idH iH.bins iH.nhist idH -reshape;                                            # Former blocks now components :)
   bLog if :idH=max(.log(idH),-1)+1; end                                         # Log histogram counts
 
-  iH.labtab 0 idH -set_cnames;                                                  # Give 'em the model names
+  iH.labtab 0 idH /noerror -set_cnames;                                         # Give 'em the model names
   sUnit                           idH -set runit;                               # Physical unit : sUnit
   iH.min                          idH -set rofs;                                # Axis offset   : histogram minimum
   :(iH.max-iH.min)/iH.bins:       idH -set rinc;                                # Axis increment: bin width

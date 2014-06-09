@@ -589,7 +589,7 @@ function -CFG_get_path_persistent(sVar,sKey,sMode)
 ##          Value assigned to key
 function -CFG_set(sKey,sValue)
 {
-  "$sKey" "uasr." "search" -VAR_strop 0 == not if                               # Key not starting with "uasr." >>
+  sKey "uasr." "search" -VAR_strop 0 == not if                                  # Key not starting with "uasr." >>
     "uasr." sKey + sKey =;                                                      #   Prefix with "uasr."
   end                                                                           # <<
   .__CFG_idCfg.dim 0 == if                                                      # Initialize key/value list >>

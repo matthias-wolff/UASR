@@ -492,7 +492,8 @@ function -CMD_trn()
       "svm-" idF idLtb idDts idRes -SVM_labeval_log nCor =;                     #   Create/continue log file 
     end      
     "\n\n   Evaluation result:"                                           -MSG; #   Protocol
-    "\n   - Label corr.    : ${ent(nCor*1000+0.5)/10} %"                  -MSG; #   Protocol (label correctness)
+    "\n   - Label corr.    : ${ent(real(nCor)*1000+0.5)/10} "             -MSG; #   Protocol (label correctness)
+    :imag(nCor)!=0: if "+- ${ent(imag(nCor)*1000+0.5)/10}" -MSG; end " %" -MSG; #   Protocol (95% confidence inverv.)
 
     ## End of sensor loop                                                       #   - - - - - - - - - - - - - - - - - -
     nN ++=; nN idSns.nrec < if goto L_SNS; end                                  #   End of loop

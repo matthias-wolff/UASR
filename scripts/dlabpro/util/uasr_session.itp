@@ -30,7 +30,7 @@ var sDirScr;                                                                    
 var sDBrev;                                                                     # Database revision                            
 
 ## Default function overloads                                                   # -------------------------------------
-"\n// Overloads       : "                                                -MSG2; # Protocol (on verbose level 2)
+"\n// Auto-overloads  : "                                                -MSG2; # Protocol (on verbose level 2)
 "-FEA_pfa" "function" ?instance if                                              # Function -FEA_pfa present >>
   "pfa" "" -CFG_get sBuf =;                                                     #   Get primary feature type
   sBuf if                                                                       #   Primary features specified >>
