@@ -216,7 +216,70 @@ function -ASR_postprocess(itRR,itRRr,idNld,iSi)
 ## @return TODO: ...
 function -FVR_fromrecresult(idRes)
 {
-1 brk;
+  fst  itFvr;                                                                   # Feature-value-relation
+  data idTok;                                                                   # Output token sequence
+  data idStk;                                                                   # State stack
+  data idAux;                                                                   # Auxiliary data
+  data idAux2;                                                                  # Auxiliary data #2
+  var  nTok;                                                                    # Token counter
+  var  nPlv;   0  nPlv =;                                                       # Parentheses level
+  var  sCmt;   "" sCmt =;                                                       # Agregated FVR comment string
+
+  ## Create output token sequence                                               # -------------------------------------
+  :idRes["OLB"]: "[]()" "splitd" idTok -strop;                                  # Split output preserving brackets
+  ( type long ) idTok.dim idTok.nrec idAux -array; 0 1 idAux -fill;             # Create frame index
+  idTok ' ( idTok.dim idTok.nrec * ) 1 idTok -reshape;                          # Sequence output tokens
+  idAux ' ( idAux.dim idAux.nrec * ) 1 idAux -reshape;                          # Sequence frame index
+  idAux idTok -join;                                                            # Join frame index to token sequence
+  :idTok[0]: "" "len" idAux -strop; :idAux.==0: idTok -dmark;                   # Mark empty tokens...
+  idTok 0 0 idTok /mark -delete;                                                # ... and delete them
+  { "TOK" "FRM" } ' 0 idTok -set_cnames;                                        # Name components
+  #idTok /list -print; 1 brk;                                                    # Break point
+
+  ## Build FVR tree                                                             # -------------------------------------
+  "wFVR" itFvr -addunit;                                                        # Add a unit
+  "FFRM" ( -type long ) itFvr.sd -addcomp;                                      # First feature vector of state
+  "LFRM" ( -type long ) itFvr.sd -addcomp;                                      # Last feature vector of state
+  "LAB"  255            itFvr.sd -addcomp;                                      # State label (temporary)
+  0 nTok =; nTok idTok.nrec < while                                             # Loop over tokens >>
+    :idTok[nTok,"TOK"]=="[": if                                                 #   Open state >>
+      0 1 itFvr -addstates;                                                     #     Add new state
+      idStk.nrec 0 > if 0 :idStk[0,0]: :itFvr.sd.nrec-1: itFvr -addtrans; end   #     Connect to parent
+      :itFvr.sd[itFvr.sd.nrec-1,"FFRM"]=idTok[nTok,"FRM"];                      #     Store first speech frame index
+      { ${itFvr.sd.nrec-1} } idStk -cat; idStk 1 idStk /rec -rotate;            #     Push state
+    else :idTok[nTok,"TOK"]=="]": if                                            #   << Close state >>
+      idStk.nrec 0 > if                                                         #     Stack not empty >>
+        :itFvr.sd[idStk[0,0],"LFRM"]=idTok[nTok,"FRM"];                         #       Store last speech frame index
+        idStk 0 1 idStk /rec -delete;                                           #       Pop state
+      else                                                                      #     << Stack empty >>
+        "Too many ']' in FVR string" 1 -WARNING;                                #       Syntax error
+      end                                                                       #     <<
+    else :idTok[nTok,"TOK"]=="(": if                                            #   << Begin comment sequence >>
+      nPlv ++=;                                                                 #     Increment parentheses level
+      :sCmt+=idTok[nTok,"TOK"];                                                 #     Append token to comment
+    else :idTok[nTok,"TOK"]==")": if                                            #   << End comment sequence >>
+      nPlv 0 > if nPlv --=; else "Too many ')' in FVR string" 1 -WARNGING; end  #     Decrement parentheses level
+      :sCmt+=idTok[nTok,"TOK"];                                                 #     Append token to comment
+    else                                                                        #   << Fill in state or comment >>
+      nPlv 0 > if                                                               #     Fill in comment >>
+        :sCmt+=idTok[nTok,"TOK"];                                               #       Append token to comment
+      else                                                                      #     << Fill in state >>
+        idStk.nrec 0 > if :itFvr.sd[idStk[0,0],"LAB"]+=idTok[nTok,"TOK"]; end   #       Append token to state label
+      end                                                                       #     <<
+    end end end end                                                             #   <<
+    nTok ++=;                                                                   #   Next token
+  end                                                                           # <<
+  idStk -is_empty not if "Too many '[' in FVR string" 1 -WARNING; end           # Stack not empty: syntax error
+  nPlv 0 >            if "Too many '(' in FVR string" 1 -WARNING; end           # Parentheses open: syntax error
+  
+  "\n***sCmt=\"" sCmt + "\"" + -echo; "FVR.svg" NULL NULL 0 itFvr -FST_render;  # Debug protocol
+  itFvr -print; 1 brk;                                                          # Break point
+
+  ## TODO: Cascade equally labelled siblings!
+}
+
+function -FVR_fromrecresult_(idRes)
+{
 ## -- BOWZ -->
   data idTok;                                                                   # Output token sequence
   data idLvl;                                                                   # Bracket level data
@@ -230,7 +293,7 @@ function -FVR_fromrecresult(idRes)
   var  sWfvr;                                                                   # The result string
   
   ## Create output token sequence                                               # -------------------------------------
-  :idRec["~OUT"]: "[]" "splitd" idTok -strop;                                   # Split output preserving brackets
+  :idRes["OLB"]: "[]" "splitd" idTok -strop;                                    # Split output preserving brackets
   ( type long ) idTok.dim idTok.nrec idAux -array; 0 1 idAux -fill;             # Create frame index
   idTok ' ( idTok.dim idTok.nrec * ) 1 idTok -reshape;                          # Sequence output tokens
   idAux ' ( idAux.dim idAux.nrec * ) 1 idAux -reshape;                          # Sequence frame index
@@ -240,7 +303,7 @@ function -FVR_fromrecresult(idRes)
   :-ones(1,idTok.nrec): idTok -join;                                            # Add opening bracket's record index
   :-ones(1,idTok.nrec): idTok -join;                                            # Add label's record index
   { "TOK" "FRM" "[@" "LAB@" } ' 0 idTok -set_cnames;                            # Name components
-  #idTok -print; 1 brk;                                                          # Break point
+  idTok /list -print; 1 brk;                                                    # Break point
 
   ## Create bracket level data                                                  # -------------------------------------
   :idTok[0]: "[" "cmp" idAux -strop;                                            # Count opening brackets
@@ -259,7 +322,8 @@ function -FVR_fromrecresult(idRes)
       :idTok[nTok,3]=idLvl[nBlvl,1];                                            #     (Last) label token
       :nBeginFrame=idTok[idLvl[nBlvl,0],1];                                     #     Get begin frame
       :nEndFrame=idTok[nTok,1];                                                 #     Get end frame
-      ( idRec idRef nBeginFrame nEndFrame -RRES_confidence ) nConf =;           #     Compute confidence
+      0.99 nConf =;
+      #( idRes iSi nBeginFrame nEndFrame -ASR_confidence ) nConf =;              #     Compute confidence
       :nLabFrame=idTok[nTok,3];                                                 #     Get label frame
       "${idTok[nLabFrame,0]}:${round(nConf*100)/100}" nLabFrame 0 idTok -store; #     Store confidence in token
       :idLvl[nBlvl,0]=-1;                                                       #     Clear matching opening bracket
@@ -271,7 +335,7 @@ function -FVR_fromrecresult(idRes)
   end                                                                           # <<
   nBlvl 0 < if "Error: FVR string contains too many ']'" -echo; end             # Syntax error 
   nBlvl 0 > if "Error: FVR string contains too many '['" -echo; end             # Syntax error 
-  #idTok /list -print; "\n" sWfvr + "\n\n" + -echo; 1 brk;                       # Break point
+  idTok /list -print; 1 brk;                                                    # Break point
 
   ## Collect wFVR string                                                        # -------------------------------------
   "" sWfvr =;                                                                   # Initialize result string
@@ -279,6 +343,7 @@ function -FVR_fromrecresult(idRes)
     "${idTok[nTok,0]}" sWfvr +=;                                                #   Collect output
     nTok ++=;                                                                   #   Next token 
   end                                                                           # <<
+  "\n" sWfvr + "\n\n" + -echo; 1 brk;                                           # Break point
   
   sWfvr return;                                                                 # Return result 
 ## <-- EOWZ --
@@ -419,7 +484,7 @@ function -ASR_recognizer(sFlist,sLogMode,sReuMode)
       idRes idNld -label; "$[sLogFn].nld.dn3" idNld sLogMode "N" -log           #     Log neg. log. densities
 
     end                                                                         #   <<
-#    ( idRes -FVR_fromrecresult ) iFvr  =;                            "." -MSG2; #   Get weighted feature-value rel.
+    ( idRes -FVR_fromrecresult ) iFvr  =;                            "." -MSG2; #   Get weighted feature-value rel.
 #    " REC=\"" iFvr.sComment + "\"" +                                     -MSG2; #   Screen protocol
     " REC=\"" idRes.ftext + "\"" +                                       -MSG2; #   Screen protocol
 
