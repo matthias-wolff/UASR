@@ -241,20 +241,28 @@ function -HMM_create(nDim,itHMM)
 ## counters
 ##
 ## @param itHMM hmm
-##          The HMM to set up
-## @global %lt;am.train&gt;  R
-## @global %lt;am.mapexp&gt; R
+##          The HMM to set up.
+## @global %lt;am.train&gt;   R
+## @global %lt;am.mapexp&gt;  R
+## @global %lt;gmm.mindet&gt; R
 function -HMM_setup(itHMM)
 {
   var sOptions; "" sOptions =;                                                  # Extra options for hmm -setup_gmm
-	( "am.train" "var" "," -CFG_get_item ) 0 >= if "/var" sOptions -sset; end     # Get xtra options for hmm -setup_gmm 
+	( "am.train" "var" "," -CFG_get_item ) 0 >= if "/var" sOptions -sset; end     # Get xtra options for hmm -setup_gmm
+  var nMindet; ( "gmm.mindet" -1 "S" -CFG_get_ex ) nMindet =;                   # Min. determinant of cov. matrices
 
   .__UTL_nVlevel 1 > if itHMM.pfsm -status; end                                 # Protocol  (verbose level 2)
-  "uasr.am.mapexp" 0 -CFG_get itHMM -set mapexp;                                # set MAP-exp from config file (default: MAP off)
+  "uasr.am.mapexp" 0 -CFG_get itHMM -set mapexp;                                # set MAP-exp from cfg. (def.: MAP off)
   -1 itHMM /usemap -probs;                                                      # Re-estimate transition weights
 #  -1 itHMM -priors;                                                            # Re-estimate HMM unigram probs.
-  .__UTL_nVlevel 1 > if "$[sOptions] /noerror" sOptions =; end                  # On verbose level 1: no errors
-  itHMM $[sOptions] -setup_gmm;                                                 # Setup Gaussians
+  .__UTL_nVlevel 2 < if "$[sOptions] /noerror" sOptions =; end                  # On verbose level 1: no errors
+  .__UTL_nVlevel 2 > if 1 itHMM -set check; end                                 # Verbose lvl. >2: Details on HMM setup
+  nMindet itHMM $[sOptions] -setup_gmm;                                         # Setup Gaussians
+  ( itHMM.gm -get_n_valid_gauss ) 0 == if                                       # No valid Gaussians >>
+    "There are no valid Gaussians. Re-run with option -v2!" -ERROR;             #   Error message
+  else ( itHMM.gm -get_n_valid_gauss ) itHMM.gm.cdet.nrec 2 / < if              # << Less than 50% valid Gaussians >>
+    "Most Gaussians are invalid. Re-run with option -v2!" 1 -WARNING;           #   Warning message
+  end end                                                                       # <<
   itHMM.pfsl if itHMM.lsmean itHMM.pfsl -mean; end                              # Extract mean of least sign. comps.
   .__UTL_nVlevel 1 > if itHMM.gm -status; end                                   # Protocol
 }
