@@ -540,6 +540,7 @@ function -HMM_assess(itHMM,sSns,nSpl,nIte)
   data    idMsf;                                                                # Most sign. feature vector sequence
   data    idAsc;                                                                # Assessment scores of one file
   data    idAux;                                                                # Auxiliary data instance
+  data    idAux2;                                                               # Auxiliary data instance #2
   var     sDirModel;                                                            # Model directory
   var     nRinc;                                                                # Time incr. between two feature vects.
   var     nTst;                                                                 # Cummulative time
@@ -584,8 +585,14 @@ function -HMM_assess(itHMM,sSns,nSpl,nIte)
     idMsf iFI itHMM -1 "1A" itRres -AM_decode;                       "." -MSG2; #   Decode
     :itRres.ud[0]   : idAux -copy;                                              #   Copy unit names from recog. result
     :itRres.ud["GW"]: idAux -join;                                              #   Copy weights from rec. result
+    .__UTL_nVlevel 1 > if                                                       #   Verbose level >1
+      :idAux[1]: NULL 0 "imin" idAux2 /rec -aggregate;                          #     Do argmin classification
+      " -> \"${idAux[idAux2[0,0],0]}\""                                  -echo; #     Protocol (recognized class label)
+      " NLx=${round(idAux[idAux2[0,0],1]*1000)/1000}"                    -echo; #     Protocol (NLL)
+    end                                                                         #   <<
     ( idAux ' ) idAsc -cat;                                                     #   Transpose and append to log
-    "" stdprof -end_timer; " (RTF ${stdprof.time/nRinc/idMsf.nrec})"     -MSG2; #   Stop measurung time, protocol
+    "" stdprof -end_timer;                                                      #   Stop measuring time
+    " (RTF ${round(stdprof.time/nRinc/idMsf.nrec*1000)/1000})"           -MSG2; #   Protocol (real time percentage)
     ( nRinc idMsf.nrec * ) nTst +=;                                             #   Accumulate total sample time
     goto L_FILE;                                                                #   End of file loop
   end                                                                           # <<
