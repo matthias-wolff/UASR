@@ -484,9 +484,11 @@ function -ASR_recognizer(sFlist,sLogMode,sReuMode)
       idRes idNld -label; "$[sLogFn].nld.dn3" idNld sLogMode "N" -log           #     Log neg. log. densities
 
     end                                                                         #   <<
-    ( idRes -FVR_fromrecresult ) iFvr  =;                            "." -MSG2; #   Get weighted feature-value rel.
-#    " REC=\"" iFvr.sComment + "\"" +                                     -MSG2; #   Screen protocol
+## --- BOWZ -->
+    #( idRes -FVR_fromrecresult ) iFvr  =;                            "." -MSG2; #   Get weighted feature-value rel.
+    #" REC=\"" iFvr.sComment + "\"" +                                     -MSG2; #   Screen protocol
     " REC=\"" idRes.ftext + "\"" +                                       -MSG2; #   Screen protocol
+## <-- EOWZ ---
 
     ( 0 1 iF.recfile -fetch ) sWlbr =;                                          #   Get reference word label string
     sWlbr not if                                                                #   No word labels in file list >>
