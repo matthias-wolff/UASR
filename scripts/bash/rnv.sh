@@ -60,6 +60,8 @@ UASR_DATA_SSMG=/home/wolff/uasr-data/ssmg
 
 # == Initialization ============================================================
 
+MAIN_DIR="$0"
+MAIN_DIR=${MAIN_DIR%rnv.sh}
 UASR_HOME="$0"
 [ "${UASR_HOME#/}" = "$UASR_HOME" ] && UASR_HOME=`pwd`"/$UASR_HOME"
 UASR_HOME=${UASR_HOME%rnv.sh}
@@ -146,9 +148,27 @@ function svn_log
 	NAME=$1
 	DIR=$2
 	echo; echo "// $NAME SVN log ------------------------------------------------------"
-	DATE=`date -d yesterday "+%F"`
-	REV=`svn info -r "{$DATE}" "$DIR" | sed -e '/^Revision:/!d;s/^.*: *//'`
+	REV=""
+	[ -f "$MAIN_DIR/rnv_svnrev_$NAME.txt" ] && REV=`cat "$MAIN_DIR/rnv_svnrev_$NAME.txt"`
+	[ "$REV" ] || REV="BASE"
 	svn log -v -r "$[REV+1]:BASE" "$DIR" 2>/dev/null
+}
+
+function svn_saverev
+{
+	[ "$SEND_EMAIL" != "yes" ] && return
+	NAME=$1
+	DIR=$2
+	echo; echo "// $NAME SVN save rev -------------------------------------------------"
+	svn info "$DIR" | sed -e '/^Revision:/!d;s/^.*: *//' >"$MAIN_DIR/rnv_svnrev_$NAME.txt"
+}
+
+function svn_chkauthors
+{
+	NAME=$1
+	DIR=$2
+	NOEMAIL=`svn log "$DIR" | grep '^r[0-9]*\ |' | cut -d '|' -f 2 | tr -d ' ' | sort -u | sed -f $MAIN_DIR/rnv_mailrpl.txt | sort -u | grep -v '@' | tr '\n' ' '`
+	[ "$NOEMAIL" ] && check_error 1 "Unknown authors in $NAME: $NOEMAIL (Please edit $MAIN_DIR/rnv_mailrpl.txt)"
 }
 
 function send_email
@@ -169,12 +189,12 @@ function send_email
 			svn_log VM      $UASR_HOME-data/vm.de
 			echo; echo "r0 | $MAINTAINER | MAINTAINER"
 		} >"$SVNLOG"
-		RECIPIENTS=`grep '^r[0-9]*\ |' $SVNLOG | cut -d '|' -f 2 | tr -d ' ' | sort -u | tr '\n' ' '`
+		RECIPIENTS=`grep '^r[0-9]*\ |' $SVNLOG | cut -d '|' -f 2 | tr -d ' ' | sort -u | sed -f $MAIN_DIR/rnv_mailrpl.txt | sort -u | tr '\n' ' '`
 	fi
     echo -e "\n\nMailing log to $RECIPIENTS \n\n"
     for RECIPIENT in $RECIPIENTS ; do
        echo "Send svn.log to $RECIPIENT"
-	   mailx -n -s "$HEAD" $RECIPIENT <"$SVNLOG"
+#	   mailx -n -s "$HEAD" $RECIPIENT <"$SVNLOG"
     done
 }
 
@@ -182,6 +202,9 @@ function finalize_error
 {
 	if [ ! "$ERRTXT" ]; then
 		HEAD="RNV script run successful"
+		svn_saverev dLabPro $DLABPRO_HOME
+		svn_saverev UASR    $UASR_HOME
+		svn_saverev VM      $UASR_HOME-data/vm.de
 	else
 		HEAD="RNV script failed"
 	fi
@@ -216,6 +239,7 @@ function svn_update
 		svn up -r "$REV" "$DIR"
 		check_error $? "SVN Update $NAME"
 	fi
+	svn_chkauthors "$NAME" "$DIR"
 }
 
 function lnk_db
@@ -231,9 +255,8 @@ function prj_build
 	NAME="$1"
 	DIR="$2"
 	echo "   - Building $NAME in $DIR ..."
-	cd "$DIR"
-	make -s CLEANALL
-	make -s RELEASE
+	make -sC "$DIR" CLEANALL
+	make -sC "$DIR" RELEASE
 	check_error $? "Build of $NAME"
 }
 
@@ -277,6 +300,7 @@ function test_rec_SSMG
 function test_rec_PCUS11
 {
   echo; echo "// Running recognizer verify experiment -----------------"
+  LPWD="`pwd`"
   cd $UASR_HOME-data/pcus11
   rm -rf log
   run_xtp "Recognizer pack data" tools/REC_PACKDATA.xtp rec PCUS11.cfg -Pout=log
@@ -286,6 +310,7 @@ function test_rec_PCUS11
     -data.sesinfo log/sesinfo.object \
     -data.vadinfo "" \
     PCUS11_test.flst
+  cd "$LPWD"
 }
 
 # == MAIN PROGRAM ==============================================================
