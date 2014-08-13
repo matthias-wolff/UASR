@@ -52,7 +52,7 @@
 ## along with UASR. If not, see <http://www.gnu.org/licenses/>.
 
 ## Maintainer gets notification in any case
-MAINTAINER=matthias.wolff@tu-cottbus.de
+MAINTAINER=matthias.wolff@tu-cottbus.de frank.duckhorn@tu-dresden.de
 
 ## Uasr common data directores
 UASR_DATA_VM_COMMON=/home/wolff/uasr-data/vm.de/common
@@ -73,6 +73,7 @@ export PATH=$DLABPRO_HOME/bin.release:$PATH
 export RECOGNIZER_SUBDIR=
 DLABPRO=${UASR_HOME%uasr}dLabPro/bin.release/dlabpro
 RECOGNIZER=${UASR_HOME%uasr}dLabPro/bin.release/recognizer
+AUTHORMAP="$MAIN_DIR/rnv_mailrpl.txt"
 
 UR="HEAD"
 DR="HEAD"
@@ -167,8 +168,12 @@ function svn_chkauthors
 {
 	NAME=$1
 	DIR=$2
-	NOEMAIL=`svn log "$DIR" | grep '^r[0-9]*\ |' | cut -d '|' -f 2 | tr -d ' ' | sort -u | sed -f $MAIN_DIR/rnv_mailrpl.txt | sort -u | grep -v '@' | tr '\n' ' '`
-	[ "$NOEMAIL" ] && check_error 1 "Unknown authors in $NAME: $NOEMAIL (Please edit $MAIN_DIR/rnv_mailrpl.txt)"
+  if [ -f $AUTHORMAP ]; then
+  	NOEMAIL=`svn log "$DIR" | grep '^r[0-9]*\ |' | cut -d '|' -f 2 | tr -d ' ' | sort -u | sed -f $AUTHORMAP | sort -u | grep -v '@' | tr '\n' ' '`
+	  [ "$NOEMAIL" ] && check_error 1 "Unknown authors in $NAME: $NOEMAIL (Please edit $AUTHORMAP)"
+  else
+	  check_error 1 "Author email mapping file not found: $AUTHORMAP"
+  fi
 }
 
 function send_email
@@ -177,7 +182,7 @@ function send_email
 	HEAD="$1"
 	SVNLOG=${UASR_HOME%uasr}svn.log
 	if [ ! "$ERRTXT" ]; then
-		RECIPIENTS=$MAINTAINER
+		RECIPIENTS=
 		>"$SVNLOG"
 	else
 		{
@@ -189,13 +194,14 @@ function send_email
 			svn_log VM      $UASR_HOME-data/vm.de
 			echo; echo "r0 | $MAINTAINER | MAINTAINER"
 		} >"$SVNLOG"
-		RECIPIENTS=`grep '^r[0-9]*\ |' $SVNLOG | cut -d '|' -f 2 | tr -d ' ' | sort -u | sed -f $MAIN_DIR/rnv_mailrpl.txt | sort -u | tr '\n' ' '`
+		RECIPIENTS=`grep '^r[0-9]*\ |' $SVNLOG | cut -d '|' -f 2 | tr -d ' ' | sort -u | sed -f $AUTHORMAP | sort -u | tr '\n' ' '`
 	fi
-    echo -e "\n\nMailing log to $RECIPIENTS \n\n"
-    for RECIPIENT in $RECIPIENTS ; do
-       echo "Send svn.log to $RECIPIENT"
-#	   mailx -n -s "$HEAD" $RECIPIENT <"$SVNLOG"
-    done
+  RECIPIENTS=$MAINTAINER $RECIPIENTS
+  echo -e "\n\nMailing log to $RECIPIENTS \n\n"
+  for RECIPIENT in $RECIPIENTS ; do
+     echo "Send svn.log to $RECIPIENT"
+     mailx -n -s "$HEAD" $RECIPIENT <"$SVNLOG"
+  done
 }
 
 function finalize_error
@@ -330,7 +336,7 @@ rm -rf $DLABPRO_HOME/bin.*
 prj_build dcg              $DLABPRO_HOME/programs/dcg
 prj_build dlapro           $DLABPRO_HOME/programs/dlabpro
 prj_build recognizer       $DLABPRO_HOME/programs/recognizer
-prj_build synthesizer_hmm  $DLABPRO_HOME-synthesizer/hmm-diphone
+#prj_build synthesizer_hmm  $DLABPRO_HOME-synthesizer/hmm-diphone
 
 test_HMM_trn
 test_rec_SSMG
