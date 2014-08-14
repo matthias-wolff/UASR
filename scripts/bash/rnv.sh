@@ -52,7 +52,7 @@
 ## along with UASR. If not, see <http://www.gnu.org/licenses/>.
 
 ## Maintainer gets notification in any case
-MAINTAINER=matthias.wolff@tu-cottbus.de frank.duckhorn@tu-dresden.de
+MAINTAINER="matthias.wolff@tu-cottbus.de frank.duckhorn@tu-dresden.de"
 
 ## Uasr common data directores
 UASR_DATA_VM_COMMON=/home/wolff/uasr-data/vm.de/common
@@ -192,7 +192,6 @@ function send_email
 			svn_log dLabPro $DLABPRO_HOME
 			svn_log UASR    $UASR_HOME
 			svn_log VM      $UASR_HOME-data/vm.de
-			echo; echo "r0 | $MAINTAINER | MAINTAINER"
 		} >"$SVNLOG"
 		RECIPIENTS=`grep '^r[0-9]*\ |' $SVNLOG | cut -d '|' -f 2 | tr -d ' ' | sort -u | sed -f $AUTHORMAP | sort -u | tr '\n' ' '`
 	fi
