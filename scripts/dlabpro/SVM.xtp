@@ -482,18 +482,26 @@ function -CMD_trn()
     .__UTL_nVlevel 1 > if iSVM -status; end                                     #   Show status of SVM (verbose lvl. 2)
     
     ## Aftermath                                                                #   - - - - - - - - - - - - - - - - - -
-    idLtb 0 idRes -set_cnames;                                                  # Name components after classes
-    bSig bSv || if                                                              # Signal mode or supervector mode (one vector per file) >>
-      idRes :idRes.dim-1: 1 idRes -delete;                                      #   Remove recognized class labels
-      :idRes = -.ln(max(idRes,exp(-500)));                                      #   Convert to log semirig
-      "svm-" sSxt idLtb idF idRes -XXM_assess_log nCor =;                       #   Create/continue log file
-      "svm-" sSxt idLtb idF idRes -XXM_assess_hist;                             #   Create/continue assmnt. histrograms
-    else                                                                        # <<no signal or supervector mode >>
-      "svm-" idF idLtb idDts idRes -SVM_labeval_log nCor =;                     #   Create/continue log file 
-    end      
-    "\n\n   Evaluation result:"                                           -MSG; #   Protocol
-    "\n   - Label corr.    : ${ent(real(nCor)*1000+0.5)/10} "             -MSG; #   Protocol (label correctness)
-    :imag(nCor)!=0: if "+- ${ent(imag(nCor)*1000+0.5)/10}" -MSG; end " %" -MSG; #   Protocol (95% confidence inverv.)
+    idLtb 0 idRes -set_cnames;                                                  #   Name components after classes
+    bSig bSv || if                                                              #   Signal mode or supervector mode >>
+      idRes :idRes.dim-1: 1 idRes -delete;                                      #     Remove recognized class labels
+      :idRes = -.ln(max(idRes,exp(-500)));                                      #     Convert to log semirig
+      "svm-" sSxt idLtb idF idRes -XXM_assess_log nCor =;                       #     Create/continue log file
+      "svm-" sSxt idLtb idF idRes -XXM_assess_hist;                             #     Create/continue assmnt. hstgrms.
+    else                                                                        #   << no signal or supervector mode >>
+      "svm-" idF idLtb idDts idRes -SVM_labeval_log nCor =;                     #     Create/continue log file 
+    end                                                                         #   <<
+    nCor 0 >= if                                                                #   Have computed correctness >>
+      var K; :K=idF.nrec;                                                       #     Sample size
+      var n; :n=round(nCor*K);                                                  #     Number of hits
+      "\n\n   Evaluation result:"                                         -MSG; #     Protocol
+      "\n   - Correct        : $[n] of $[K]"                              -MSG; #     Protocol (# hits, # samples)
+      "\n   - Correctness    : ${round(n/K*1000)/10} %"                   -MSG; #     Protocol (Label correctness)
+      " (+${round((1-betaquant(0.025,K-n,n+1)-n/K)*1000)/10}"             -MSG; #     Protocol (95% confidence interv.)
+      " -${round((n/K-1+betaquant(0.975,K-n+1,n))*1000)/10}) %"           -MSG; #     Protocol (95% confidence interv.)
+      " ( HMM $[nSpl]_$[nIte]" ( sSns if ", $[sSns]" + end ) " )" +       -MSG; #     Protocol (HMM and sensor IDs)
+      "\n   - Confidence lvl.: 95 %"                                      -MSG; #     Protocol (Confidence level)
+    end                                                                         #   <<
 
     ## End of sensor loop                                                       #   - - - - - - - - - - - - - - - - - -
     nN ++=; nN idSns.nrec < if goto L_SNS; end                                  #   End of loop

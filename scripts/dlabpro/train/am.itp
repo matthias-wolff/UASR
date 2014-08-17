@@ -605,14 +605,20 @@ function -HMM_assess(itHMM,sSns,nSpl,nIte)
   sPre sSxt itHMM.ud idF idAsc -XXM_assess_hist;                                # Create/continue assmnt. histrograms
 
   "\n   Total sample time: ${nTst/60000} min"                            -MSG2; # Protocol
-  :real(nCor)>=0: if                                                            # Have computed correctness >>
+  nCor 0 >= if                                                                  # Have computed correctness >>
+    var K; :K=idF.nrec;                                                         #   Sample size
+    var n; :n=round(nCor*K);                                                    #   Number of hits
     "\n\n   Evaluation result:"                                           -MSG; #   Protocol
-    "\n   - Label corr.    : ${ent(real(nCor)*1000+0.5)/10} "             -MSG; #   Protocol (label correctness)
-    "+- ${ent(imag(nCor)*1000+0.5)/10} %"                                 -MSG; #   Protocol (95% confidence interv.)
+    "\n   - Correct        : $[n] of $[K]"                                -MSG; #   Protocol (# hits, # samples)
+    "\n   - Correctness    : ${round(n/K*1000)/10} %"                     -MSG; #   Protocol (Label correctness)
+    " (+${round((1-betaquant(0.025,K-n,n+1)-n/K)*1000)/10}"               -MSG; #   Protocol (95% confidence interv.)
+    " -${round((n/K-1+betaquant(0.975,K-n+1,n))*1000)/10}) %"             -MSG; #   Protocol (95% confidence interv.)
     " ( HMM $[nSpl]_$[nIte]" ( sSns if ", $[sSns]" + end ) " )" +         -MSG; #   Protocol (HMM and sensor IDs)
+    "\n   - Confidence lvl.: 95 %"                                        -MSG; #   Protocol (Confidence level)
   end                                                                           # <<
-  NULL iP -end_timer; "   Time: ${ent(iP.time/1000+0.5)} s\n  "           -MSG; # End timer
-  :real(nCor)>=0: if :real(nCor): else 1. end return;                           # Return label correctness or 1
+  NULL iP -end_timer;                                                           # End timer
+  "\n   Time: ${round(iP.time/1000)} s\n  "                               -MSG; # Protocol (elapsed time)
+  nCor 0 >= if nCor else 1. end return;                                         # Return label correctness or 1
 }
 
 ## Result function to <code>-HMM_process</code> for the evaluation of HMMs.
@@ -1408,10 +1414,7 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
 ##          <code>idF.nrec</code> records. Extra components will be ignored. The cells <code>idAsc[nF,nM]</code>
 ##          contains a distance value (e.g. neglog. likelihood or neglog. probability) of file <code>nF</code> from
 ##          the model <code>nM</code>.
-## @return A complex number. The real part is the label recognition rate, the 
-##         imaginary part is the 95% confidence interval of the label 
-##         recognition rate. Both, real and imaginary part, are -1 if no correct
-##         labels are known.
+## @return The label recognition rate or -1 if no reference labels are known.
 ## @global &lt;uasr.am.eval.assess&gt; R
 ## @global &lt;uasr.am.gbg&gt;         R
 ## @global &lt;uasr.am.gbg.thrsh&gt;   R
@@ -1433,7 +1436,6 @@ function -XXM_assess_log(sFilePref,sFileSuff,idLtb,idFlst,idAsc)
   var  sLogFile;                                                                # Log file name
   var  sCmxFile;                                                                # Confusion matrix file name
   var  nCor;      -1                                              nCor      =;  # Label correctness  
-  var  nC95;      -1                                              nC95      =;  # 95% confidence interval of nCor
   var  sLog;                                                                    # String buffer
   var  sCmx;                                                                    # String buffer
   var  i;                                                                       # Loop counter
@@ -1472,7 +1474,6 @@ function -XXM_assess_log(sFilePref,sFileSuff,idLtb,idFlst,idAsc)
     end                                                                         #   <<
     :idAux2.==idAux: NULL 0 "sum" idAux2 /rec -aggregate;                       #   Count correct recognitions
     :nCor=idAux2[0,0]/idAsc.nrec;                                               #   Compute label recognition rate
-    :nC95=2*sqrt((nCor-nCor*nCor)/(idAsc.nrec-1));                              #   Compute 95% confidence interval
     idAux 0 idLtb 0 1 idLab -lookup; 0 "RES" idLab -set_cname;                  #   Get recognized labels
     :idFlst[1]: idLab -join;         1 "REF" idLab -set_cname;                  #   Join reference labels
   end                                                                           # <<
@@ -1506,7 +1507,7 @@ function -XXM_assess_log(sFilePref,sFileSuff,idLtb,idFlst,idAsc)
     end                                                                         #   <<
   end                                                                           # <<
 
-  $[nCor]+$[nC95]i return;
+  nCor return;                                                                  # Return label correctness
 }
 
 ## Creates per-model NLL histograms.

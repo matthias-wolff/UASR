@@ -436,12 +436,17 @@ function -CCC_assess()
   "ccc-" "" idLtb idF idAsc -XXM_assess_log nCor =;                             # Create/continue log file
   "ccc-" "" idLtb idF idAsc -XXM_assess_hist;                                   # Create/continue assmnt. histrograms
 
-  :real(nCor>=0): if                                                            # Have computed correctness >>
+  nCor 0 >= if                                                                  # Have computed correctness >>
+    var K; :K=idF.nrec;                                                         #   Sample size
+    var n; :n=round(nCor*K);                                                    #   Number of hits
     "\n\n   Evaluation result:"                                           -MSG; #   Protocol
-    "\n   - Label corr.    : ${ent(real(nCor)*1000+0.5)/10} "             -MSG; #   Protocol (label correctness)
-    "+- ${ent(imag(nCor)*1000+0.5)/10} %"                                 -MSG; #   Protocol (95% confidence interv.)
+    "\n   - Correct        : $[n] of $[K]"                                -MSG; #   Protocol (# hits, # samples)
+    "\n   - Correctness    : ${round(n/K*1000)/10} %"                     -MSG; #   Protocol (Label correctness)
+    " (+${round((1-betaquant(0.025,K-n,n+1)-n/K)*1000)/10}"               -MSG; #   Protocol (95% confidence interv.)
+    " -${round((n/K-1+betaquant(0.975,K-n+1,n))*1000)/10}) %"             -MSG; #   Protocol (95% confidence interv.)
+    "\n   - Confidence lvl.: 95 %"                                        -MSG; #   Protocol (Confidence level)
   end                                                                           # <<
-  :real(nCor>=0): if :real(nCor): else 1. end return;                           # Return label correctness or 1
+  nCor 0 >= if nCor else 1. end return;                              # Return label correctness or 1
 }
 
 ## Training command
