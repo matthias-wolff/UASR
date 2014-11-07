@@ -570,7 +570,7 @@ function -HMM_assess(itHMM,sSns,nSpl,nIte)
   :iF.flist_data[0]: idF =; 0 "FILE" idF -set_cname;                            # Get file names
   iF.flist_data.dim 1 > if                                                      # File list contains labels >>
     :iF.flist_data[1]: idAux =;                                                 #   Get 'em
-    idAux idAux -LAB_map;                                                       #   Map them to UASR labels
+    idAux "a" idAux -LAB_map_ex;                                                #   Map them to UASR labels
     0 "LAB" idAux -set_cname;                                                   #   Rename label component
     idAux idF -join;                                                            #   Join to file list
   end                                                                           # <<

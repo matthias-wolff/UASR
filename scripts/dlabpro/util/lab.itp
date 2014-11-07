@@ -24,7 +24,9 @@
 ## along with UASR. If not, see <http://www.gnu.org/licenses/>.
 
 ## Global instances
-data __LAB_idLmap;                                                              # Label mapping table
+data __LAB_idLmaps;                                                             # Label mapping table sig
+data __LAB_idLmapf;                                                             # Label mapping table fea
+data __LAB_idLmapa;                                                             # Label mapping table all
 var  __LAB_sSilLab; "" __LAB_sSilLab =;                                         # Silence label
 
 ## Separates symbolic and numeric components
@@ -126,37 +128,66 @@ function -LAB_acceptor(idLab,idLtab,nUnk,itLab)
 
 ## Returns the database-2-UASR label map. The map is a data instance containing
 ## two columns: (0) the database dependent label and (1) the UASR label mapped to the database dependent label.
+## There are two label maps: labmap.txt is applied on signal labels and labmappost.txt is applied on feature labels.
+## The second one allows you to use different maps without dupplicating the feature files.
 ## <p>The function proceeds as follows:</p>
 ## <ol>
-##   <li>Try to load the ASCII file named "labmap.txt" located in the <a href="cfg.itp.html#index:datadirs">info
+##   <li>Try to load the ASCII file named "labmap.txt" resp. "labmappost.txt" located in the <a href="cfg.itp.html#index:datadirs">info
 ##     directory</a> or specified by the <a href="cfg.itp.html#index:cfgk">configuration key
-##     <code>&lt;uasr.lab.map&gt;</code></a>. If either of these files exists, return a map containing its
+##     <code>&lt;uasr.lab.map&gt;</code> resp. <code>&lt;uasr.lab.map.post&gt;</code></a>. If either of these files exists, return a map containing its
 ##     contents.</li>
 ##   <li>Call <a href="#clp_-LAB_get_tab" class="code">-LAB_get_tab</a> and a data instance containing two identical
 ##     components mapping the UASR labels to themselves.</li>
 ## </ol>
 ##
 ## @cgen:index
+## @param sMap string
+##          Select label map (s: signal map, f: feature map, a: combined map)
 ## @global &lt;uasr.lab.map&gt; R
 ## @return The label map (<code>data</code> instance)
+function -LAB_get_map_ex(sMap)
+{
+  .__LAB_idLmaps -is_empty .__LAB_idLmapf -is_empty || if                       # Phoneme map empty >>
+    var sDirInfo; "info" "S" -CFG_get_path sDirInfo =;                          #   Get info directory
+    var sFs; "lab.map" "${sDirInfo}/labmap.txt" "S" -CFG_get_ex sFs =;          #   Get label map file name
+    var sFf; "lab.map.post" "${sDirInfo}/labmappost.txt" "S" -CFG_get_ex sFf =; #   Get label map post file name
+    sFf stdfile -exists if                                                      #   Label map exists >>
+      "lab"  255 .__LAB_idLmapf -addcomp;                                       #     Add data base label component
+      "labn" 255 .__LAB_idLmapf -addcomp;                                       #     Add UASR label component
+      sFf "ascii" .__LAB_idLmapf stdfile -import;                               #     Load label mapping table
+    else                                                                        #   << Label map does not exist >>
+      -LAB_get_tab .__LAB_idLmapf =;                                            #     Load label table
+      .__LAB_idLmapf 0 1 .__LAB_idLmapf -select;                                #     Keep only label component
+      .__LAB_idLmapf .__LAB_idLmapf -join;                                      #     Duplicate label component
+    end                                                                         #   >>
+    .__LAB_idLmapf -is_empty if "Could not load label map post." -ERROR; end    #   No label map? --> error
+    sFs stdfile -exists if                                                      #   Label map exists >>
+      "lab"  255 .__LAB_idLmaps -addcomp;                                       #     Add data base label component
+      "labn" 255 .__LAB_idLmaps -addcomp;                                       #     Add UASR label component
+      sFs "ascii" .__LAB_idLmaps stdfile -import;                               #     Load label mapping table
+    else                                                                        #   << Label map does not exist >>
+      .__LAB_idLmapf 0 1 .__LAB_idLmaps -select;                                #     Use input of post map
+      .__LAB_idLmaps .__LAB_idLmaps -join;                                      #     Duplicate label component
+    end                                                                         #   >>
+    .__LAB_idLmaps -is_empty if "Could not load label map." -ERROR; end         #   No label map? --> error
+    data idAux;                                                                 #   Create aux object
+    .__LAB_idLmaps 0 1 .__LAB_idLmapa -select;                                  #   Copy input labels of sig to all map
+    .__LAB_idLmaps .__LAB_idLmapf 1 0 idAux -gen_index;                         #   Map output labels of sig through fea map
+    idAux 0 .__LAB_idLmapf 1 1 idAux -lookup;                                   #   |
+    idAux .__LAB_idLmapa -join;                                                 #   Cat output labels to all map
+    -1 .__LAB_idLmaps -LAB_shrink;                                              #   Shrink label components
+    -1 .__LAB_idLmapf -LAB_shrink;                                              #   Shrink label components
+    -1 .__LAB_idLmapa -LAB_shrink;                                              #   Shrink label components
+  end                                                                           # <<
+  sMap "s" == if; .__LAB_idLmaps return; end;                                   # Return sig label map
+  sMap "f" == if; .__LAB_idLmapf return; end;                                   # Return fea label map
+  sMap "a" == if; .__LAB_idLmapa return; end;                                   # Return all label map
+}
+
+## @cgen:index
 function -LAB_get_map()
 {
-  .__LAB_idLmap -is_empty if                                                    # Phoneme map empty >>
-    var sDirInfo; "info" "S" -CFG_get_path sDirInfo =;                          #   Get info directory
-    var sFile;    "lab.map" "${sDirInfo}/labmap.txt" "S" -CFG_get_ex sFile =;   #   Get label map file name
-    sFile stdfile -exists if                                                    #   Label map exists >>
-      "lab"  255 .__LAB_idLmap -addcomp;                                        #     Add data base label component
-      "labn" 255 .__LAB_idLmap -addcomp;                                        #     Add UASR label component
-      sFile "ascii" .__LAB_idLmap stdfile -import;                              #     Load label mapping table
-    else                                                                        #   << Label map does not exist >>
-      -LAB_get_tab .__LAB_idLmap =;                                             #     Load label table
-      .__LAB_idLmap 0 1 .__LAB_idLmap -select;                                  #     Keep only label component
-      .__LAB_idLmap .__LAB_idLmap -join;                                        #     Duplicate label component
-    end                                                                         #   >>
-    .__LAB_idLmap -is_empty if "Could not load label map." -ERROR; end          #   No label map? --> error
-    -1 .__LAB_idLmap -LAB_shrink;                                               #   Shrink label components
-  end                                                                           # <<
-  .__LAB_idLmap return;                                                         # Return label map
+  "s" -LAB_get_map_ex return;                                                   # Call extendend function with signal map
 }
 
 ## Returns the database specific UASR label table.
@@ -532,7 +563,7 @@ function -LAB_sc2ts(idSC,idTS)
 }
 
 ## @cgen:index
-function -LAB_map(idLab,idLabMapped)
+function -LAB_map_ex(idLab,sMap,idLabMapped)
 {
   idLab -is_empty if idLab idLabMapped -copy; leave; end                        # No labels, (alomost) no service!
 
@@ -542,13 +573,19 @@ function -LAB_map(idLab,idLabMapped)
   data idAux2;                                                                  # Auxilary data instance
 
   ## Initialize                                                                 # -------------------------------------
-  -LAB_get_map idLmap =;                                                        # Load phoneme mapping table
+  sMap -LAB_get_map_ex idLmap =;                                                # Load phoneme mapping table
   ## Map labels                                                                 # -------------------------------------
   idLab idLmap 0 0 idAux1 -gen_index;                                           # Find label in mapping table
   idAux1 0 idLmap 1 1 idAux1 -lookup { "#" };                                   # Map labels
   idLab 1 idLab.dim -- idAux2 -select;                                          # Update label component
   idAux1 idLabMapped =;                                                         # Copy label to output instance
   idAux2 idLabMapped -join;                                                     # Join start end length of labels
+}
+
+## @cgen:index
+function -LAB_map(idLab,idLabMapped)
+{
+  idLab "s" idLabMapped -LAB_map_ex;                                            # Call extendend function with signal map
 }
 
 ## Creates a (phoneme) labelling transducer from a set of acoustic models (AMs).

@@ -386,20 +386,15 @@ function -FEA_get(iF,sSns,sMode,idFea)
   "($[idFea.nrec] frames)"                                             3 -MSGX; # Protocol
   "."                                                                    -MSG2; # Protocol
 
-	".idLabMap2" "data" ?instance not if;                                         # Try to load second label map >>
-		data .idLabMap2;                                                            #   |
-    255 2 .idLabMap2 -addncomps;
-		"info" "S" -CFG_get_path "/labmap2.txt" + "ascii" .idLabMap2                #   |
-      stdfile /noerror -import;                                                 #   |
-	end                                                                           # <<
-	.idLabMap2 -is_empty not if;                                                  # Use second label map >>
-		data idAux;                                                                 #   Auxiliary data instance
-		idFea .idLabMap2 idFea.dim 1 - 0 idAux -gen_index;                          #   Find label indices
-		idAux 0 .idLabMap2 1 1 idAux -lookup;                                       #   Map labels
-		0 idFea.dim 1 - idFea -get_cname idAux -set_cname;                          #   Restore component name
+  idFea.dim -- idFea -get_comp_type 256 < if;                                   # Check if there are labels >>
+    data idLab;                                                                 #   Create label object
+    idFea.dim -- 1 idFea -xfetch idLab =;                                       #   Extract labels
+    idLab "f" idLab -LAB_map_ex;                                                #   Map labels with post map
+    0 idFea.dim -- idFea -get_cname idLab -set_cname;                           #   Copy component name
 		idFea idFea.dim 1 - 1 idFea -delete;                                        #   Delete old labels
-		idAux idFea -join;                                                          #   Add new labels
-	end                                                                           # <<
+		idLab idFea -join;                                                          #   Add new labels
+  end;                                                                          # <<
+    
   TRUE return;                                                                  # Ok
 }
 
