@@ -105,6 +105,7 @@ function -PACK_keytab()
 		{ "LA"  80 } # left
 		{ "DA"  81 } # down
 		{ "UA"  82 } # up
+		{ "MEN" 101 } # menu
 		{ ""     0 } # this is the last one, do not remove!
 	} dKey =;
 	0 1 dKey -mark; dKey 8 dKey /force /mark -tconvert; dKey -unmark;
