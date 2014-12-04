@@ -1,0 +1,34 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Data packaging tool for hardware recognizer
+##
+## AUTHOR : Frank Duckhorn
+
+1024  var nF_SFA_MEAN;
+32768 var nF_SFA_W;
+
+function -PACK_sfa(iFI,nDim)
+{
+	nDim  1 "sfa.dim"  "u16" -PACK1;
+	3     1 "sfa.anum" "u16" -PACK1;
+	{ 1 iFI.idDltW.dim           ${iFI.idDltW.dim*2-1} } 1 .nMAX_SFA_A_NUM "sfa.alen" "u16" -PACK; # alen
+	{ 0 ${ent(iFI.idDltW.dim/2)} ${iFI.idDltW.dim-1}   } 1 .nMAX_SFA_A_NUM "sfa.aoff" "u16" -PACK; # aoff
+
+	iFI.idX; #TODO
+
+	# Expand delta weight vector to A matrix bands ( normal,delta,delta2 )
+	data idDW1;
+	data idDW2;
+	data idAux;
+	iFI.idDltW ' idDW1 =;
+	.nMAX_SFA_A_LEN idDW1 -reallocate;
+	0 var x; x iFI.idDltW.dim < while;
+		idDW1 x idAux /rec -shift;
+		:idDW2=idDW2+idAux*idDW1[x,0];
+	x ++=; end;
+	{ 1 2 } ' idAux =; .nMAX_SFA_A_LEN idAux -reallocate;
+	idDW1 idAux -join;
+	idDW2 idAux -join;
+	idAux 1 :.nMAX_SFA_A_LEN*.nMAX_SFA_A_NUM: "sfa.a" "s16" -PACK;
+
+	iFI.idW; #TODO
+}

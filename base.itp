@@ -1,0 +1,76 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Data packaging tool for hardware recognizer
+##
+## AUTHOR : Frank Duckhorn
+
+0 var nPos;
+
+function -QUANT_s16(idSrc,nF,idDst)
+{
+	nF 0 == if; 32767 nF =; end;
+	idSrc nF .* round idDst =;
+	idDst 32767 min -32767 max idDst =;
+	idDst -type short idDst -tconvert;
+}
+
+function -QUANT_u16(idSrc,nF,idDst)
+{
+	nF 0 == if; 65535 nF =; end;
+	idSrc nF .* round idDst =;
+	idDst 65535 min 0 max idDst =;
+	idDst -type UINT16 idDst -tconvert;
+}
+
+function -QUANT_s32(idSrc,nF,idDst)
+{
+	nF 0 == if; 2147483647 nF =; end;
+	idSrc nF .* round idDst =;
+	idDst 2147483647 min -2147483647 max idDst =;
+	idDst -type int idDst -tconvert;
+}
+
+function -QUANT_u32(idSrc,nF,idDst)
+{
+	nF 0 == if; 4294967295 nF =; end;
+	idSrc nF .* round idDst =;
+	idDst 4294967295 min 0 max idDst =;
+	idDst -type int idDst -tconvert;
+}
+
+function -PACK(idVal,nF,nL,sName,sType)
+{
+	function -hex(v)
+	{
+		"" var s;
+		0 var sl;
+		var v1;
+		v while;
+			v 16 mod v1 =;
+			v 16 / ent v =;
+			v1 10 <  if; "$[v1]$[s]" s =; end;
+			v1 10 == if; "A$[s]" s =; end;
+			v1 11 == if; "B$[s]" s =; end;
+			v1 12 == if; "C$[s]" s =; end;
+			v1 13 == if; "D$[s]" s =; end;
+			v1 14 == if; "E$[s]" s =; end;
+			v1 15 == if; "F$[s]" s =; end;
+			sl ++=;
+		end;
+		sl 0 == if; "0" s =; sl ++=; end;
+		"0x$[s]" s =;
+		sl 6 < while; " $[s]" s =; sl ++=; end;
+		s return;
+	}
+	data dV;
+	idVal :idVal.dim*idVal.nrec: 1 dV -reshape;
+	nL dV -reallocate;
+	dV nF dV -QUANT_$[sType];
+	.sFDsp "raw" dV stdfile /append -export;
+	"\n  packing from $[.nPos -hex] len $[dV.reclen dV.nrec * -hex] type $[sType]: $[sName]" -echo;
+	:.nPos=.nPos+dV.reclen*dV.nrec;
+}
+
+function -PACK1(nVal,nF,sName,sType)
+{
+	{ nVal } nF 1 sName sType -PACK;
+}
