@@ -3,15 +3,6 @@
 ##
 ## AUTHOR : Frank Duckhorn
 
-function -PACK_log()
-{
-	data dLOG;
-	-type double 1 65536 dLOG -array;
-	0 16 dLOG -fill; # TODO: ??16??
-	dLOG .ln dLOG =;
-	dLOG :65535/dLOG[dLOG.nrec-1,0]: dLOG.nrec "pfa.log" "u16" -PACK;
-}
-
 function -PACK_fil()
 {
 	data dMELN;
@@ -38,6 +29,15 @@ function -PACK_fil()
 	dMELM 0 :.nMAX_PFA_DIM*.nMAX_FIL_DIM: "pfa.fil_m" "u16" -PACK;
 }
 
+function -PACK_log()
+{
+	data dLOG;
+	-type double 1 65536 dLOG -array;
+	0 16 dLOG -fill; # TODO: ??16??
+	dLOG .ln dLOG =;
+	dLOG :65535/dLOG[dLOG.nrec-1,0]: dLOG.nrec "pfa.log" "u16" -PACK;
+}
+
 function -PACK_pfa(idWnd)
 {
 	"uasr.sig.srate" 16000 -CFG_get 1 "pfa.srate" "u32" -PACK1;
@@ -48,6 +48,6 @@ function -PACK_pfa(idWnd)
 	"uasr.pfa.dim"   30    -CFG_get 1 "pfa.dim"   "u16" -PACK1;
 	0                               1 "_blank1"   "u16" -PACK1;
 	idWnd 0 .nMAX_FRAME_DIM           "pfa.wnd"   "u16" -PACK;
-	-PACK_log;
 	-PACK_fil;
+	-PACK_log;
 }
