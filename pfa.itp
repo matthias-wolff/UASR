@@ -13,29 +13,28 @@ function -PACK_fil()
 
 	data dL; { 6 6  6  6  6  6  6  6  6  6  8  8  8  8  8  8  8  8  8  8  8 12 16  20  24  28  32  36  40  44 44 } dL =;
 	data dO; { 6 9 12 15 18 21 24 27 30 33 37 41 45 49 53 57 61 65 69 73 77 83 91 101 113 127 143 161 181 203 } dO =;
-	-type double .nMAX_PFA_DIM .nMAX_FIL_DIM dMELM -array;
+	-type double 257 30 dMELM -array;
 	var k;
 	0 var i; i dO.dim < while;
 		0 k =; k :dL[0,i]: < while;
-			:dMELM[i,dO[0,i]-dL[0,i  ]+1+k]=(k+1)/dL[0,i];
+			:dMELM[i,dO[0,i]-dL[0,i  ]+1+k]=(k+1)/dL[0,i]/dMELN[0,i];
 		k ++=; end;
 		0 k =; k :dL[0,i+1]: < while;
-			:dMELM[i,dO[0,i]+dL[0,i+1]-1-k]=(k+1)/dL[0,i+1];
+			:dMELM[i,dO[0,i]+dL[0,i+1]-1-k]=(k+1)/dL[0,i+1]/dMELN[0,i];
 		k ++=; end;
 	i ++=; end;
 
-	:1./dMELN: dMELN =;
-	dMELN 0 .nMAX_FIL_DIM                 "pfa.fil_n" "u16" -PACK;
-	dMELM 0 :.nMAX_PFA_DIM*.nMAX_FIL_DIM: "pfa.fil_m" "u16" -PACK;
+	dMELM ' 0 :.nMAX_PFA_DIM*.nMAX_FIL_DIM: "pfa.fil" "u16" -PACK;
 }
 
 function -PACK_log()
 {
 	data dLOG;
-	-type double 1 65536 dLOG -array;
-	0 16 dLOG -fill; # TODO: ??16??
+	-type double 1 32768 dLOG -array;
+	0 256 dLOG -fill; # TODO: fftdim/2 => 256
+	:dLOG[0,0]=dLOG[1,0]/2;
 	dLOG .ln dLOG =;
-	dLOG :65535/dLOG[dLOG.nrec-1,0]: dLOG.nrec "pfa.log" "u16" -PACK;
+	dLOG :32768/dLOG[dLOG.nrec-1,0]: dLOG.nrec "pfa.log" "s16" -PACK;
 }
 
 function -PACK_pfa(idWnd)
