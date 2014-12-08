@@ -8,7 +8,7 @@ function -PACK_fil()
 	data dMELN;
 	data dMELM;
 
-	# TODO: extract data from .__FEA_iPfa => m_lpCnvc (.norm, .z, .a)
+	# TODO: extract data from .__FEA_iPfa => m_lpCnvc (.norm, .a)
 	{ 6 6 6 6 6 6 6 6 6 7 8 8 8 8 8 8 8 8 8 8 10 14 18 22 26 30 34 38 42 44 } dMELN =;
 
 	data dL; { 6 6  6  6  6  6  6  6  6  6  8  8  8  8  8  8  8  8  8  8  8 12 16  20  24  28  32  36  40  44 44 } dL =;
@@ -27,26 +27,33 @@ function -PACK_fil()
 	dMELM ' 0 :.nMAX_PFA_DIM*.nMAX_FIL_DIM: "pfa.fil" "u16" -PACK;
 }
 
-function -PACK_log()
+function -PACK_log(nrm)
 {
+	32768 var ni;
+	32768 var no;
+	:2^(-16+1): var quant_energy;
 	data dLOG;
-	-type double 1 32768 dLOG -array;
-	0 256 dLOG -fill; # TODO: fftdim/2 => 256
+	-type double 1 ni dLOG -array;
+	0 :nrm/quant_energy/ni: dLOG -fill;
 	:dLOG[0,0]=dLOG[1,0]/2;
 	dLOG .ln dLOG =;
-	dLOG :32768/dLOG[dLOG.nrec-1,0]: dLOG.nrec "pfa.log" "s16" -PACK;
+	dLOG :no/dLOG[dLOG.nrec-1,0]: dLOG.nrec "pfa.log" "s16" -PACK;
+	:dLOG[dLOG.nrec-1,0]: return;
 }
 
-function -PACK_pfa(idWnd)
+function -PACK_pfa(nrm,idWnd)
 {
+	"uasr.pfa.len"   512   -CFG_get var flen;
 	"uasr.sig.srate" 16000 -CFG_get 1 "pfa.srate" "u32" -PACK1;
 	"uasr.pfa.crate" 160   -CFG_get 1 "pfa.crate" "u16" -PACK1;
 	"uasr.pfa.wlen"  400   -CFG_get 1 "pfa.wlen"  "u16" -PACK1;
-	"uasr.pfa.len"   512   -CFG_get 1 "pfa.len"   "u16" -PACK1;
+	flen                            1 "pfa.len"   "u16" -PACK1;
 	.nPFA_TYP_FFT .nPFA_TYP_LOG .nPFA_TYP_FIL + + 1 "pfa.typ"   "u16" -PACK1; # TODO: from uasr.pfa
 	"uasr.pfa.dim"   30    -CFG_get 1 "pfa.dim"   "u16" -PACK1;
 	0                               1 "_blank1"   "u16" -PACK1;
 	idWnd 0 .nMAX_FRAME_DIM           "pfa.wnd"   "u16" -PACK;
+	:flen/2: nrm =; # norm after FFT
 	-PACK_fil;
-	-PACK_log;
+	nrm -PACK_log nrm =;
+	nrm return;
 }
