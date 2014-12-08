@@ -6,29 +6,52 @@
 1024  var nF_SFA_MEAN;
 32768 var nF_SFA_W;
 
-function -PACK_sfa(iFI,nDim)
+function -PACK_sfa(nrm,iFI,nDim)
 {
-	nDim  1 "sfa.dim"  "u16" -PACK1;
-	3     1 "sfa.anum" "u16" -PACK1;
-	{ 1 iFI.idDltW.dim           ${iFI.idDltW.dim*2-1} } 1 .nMAX_SFA_A_NUM "sfa.alen" "u16" -PACK; # alen
-	{ 0 ${ent(iFI.idDltW.dim/2)} ${iFI.idDltW.dim-1}   } 1 .nMAX_SFA_A_NUM "sfa.aoff" "u16" -PACK; # aoff
+	data idAux;
 
-	iFI.idX; #TODO
+	# Calc context length's for A matrix bands
+	:(iFI.idDltW.dim-1)/2: var nACL;
+	data idALen; { 1 nACL ${nACL*2} } idALen =;
+	idALen NULL 0 "max" idAux -aggregate; :idAux[0,0]: var nACLx;
+	:.nMAX_SFA_A_CL*2+1: var nMAX_SFA_A_LEN;
+	
+	# Save dimension and context length's for A matrix bands
+	nDim  1 "sfa.dim" "u16" -PACK1;
+	3     1 "sfa.an"  "u16" -PACK1;
+	nACLx 1 "sfa.alx" "u16" -PACK1;
+	0     1 "_blank1" "u16" -PACK1;
+	idALen 1 .nMAX_SFA_A_NUM "sfa.al" "u16" -PACK; # alen
 
 	# Expand delta weight vector to A matrix bands ( normal,delta,delta2 )
 	data idDW1;
 	data idDW2;
-	data idAux;
 	iFI.idDltW ' idDW1 =;
-	.nMAX_SFA_A_LEN idDW1 -reallocate;
+	nMAX_SFA_A_LEN idDW1 -reallocate;
 	0 var x; x iFI.idDltW.dim < while;
 		idDW1 x idAux /rec -shift;
 		:idDW2=idDW2+idAux*idDW1[x,0];
 	x ++=; end;
-	{ 1 2 } ' idAux =; .nMAX_SFA_A_LEN idAux -reallocate;
+	{ 1 2 } ' idAux =; nMAX_SFA_A_LEN idAux -reallocate;
 	idDW1 idAux -join;
 	idDW2 idAux -join;
-	idAux 1 :.nMAX_SFA_A_LEN*.nMAX_SFA_A_NUM: "sfa.a" "s16" -PACK;
+	idAux 1 :nMAX_SFA_A_LEN*.nMAX_SFA_A_NUM: "sfa.a" "s16" -PACK;
 
-	iFI.idW; #TODO
+	# Prepare map for mean+pca expand over unused delta+delta2
+	data idMap;
+	iFI.idDlt NULL 0 "sum" idAux -aggregate;
+	:iFI.idX.dim-idAux[0,0]-idAux[1,0]: var nBase;
+	1 nBase ones idMap =;
+	iFI.idDlt ' :iFI.idDlt.dim*iFI.idDlt.nrec: 1 idAux -reshape; idAux idMap -cat;
+	0 var id; 0 var r; r idMap.nrec < while;
+		:idMap[r,0]: if; :idMap[r,0]=id; id ++=; else; :idMap[r,0]=-1; end;
+	r ++=; end;
+
+	# Map+pack mean vector
+	data idM; idMap 0 iFI.idX ' 0 1 idM -lookup;
+	idM :2^31/nrm: :.nMAX_PFA_DIM*.nMAX_SFA_A_NUM: "sfa.m" "s32" -PACK;
+
+	# Map+pack pca matrix
+	data idW; idMap 0 iFI.idW ' 0 nDim idW -lookup;
+	idW 0 :.nMAX_PFA_DIM*.nMAX_SFA_A_NUM*.nMAX_SFA_DIM: "sfa.w" "s32" -PACK;
 }
