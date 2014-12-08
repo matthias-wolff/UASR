@@ -24,7 +24,7 @@ function -PACK_fil()
 		k ++=; end;
 	i ++=; end;
 
-	dMELM ' 0 :.nMAX_PFA_DIM*.nMAX_FIL_DIM: "pfa.fil" "u16" -PACK;
+	dMELM ' 0 :.nMAX_PFA_DIM*.nMAX_FIL_DIM: "pfa.fil" "s16" -PACK;
 }
 
 function -PACK_log(nrm)
