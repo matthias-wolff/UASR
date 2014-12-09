@@ -3,52 +3,43 @@
 ##
 ## AUTHOR : Frank Duckhorn
 
-:16*65536: var nF_GMMW;
-:16*65536: var nF_GMMS;
-4096       var nDim_GMMS;
-
-function -PACK_gmm(iMmap,sExt)
+function -PACK_gau(nrm,itGm)
 {
-	"$[.sDirDsp]/GMM$[sExt]_TI.BIN" var sGMMTI;
-	"$[.sDirDsp]/GMM$[sExt]_TW.BIN" var sGMMTW;
-	"\n   Packing mixture model file ($[.sDirDsp]/GMM$[sExt]_T[IW].BIN)."         -MSG; # Protocol
-
-	iMmap.weak_tmx -is_empty if;
-		" FAILED (mmap.weak_tmx is empty)" -MSG;
-		leave;
-	end;
+	data idICov;
+	data idMean;
+	idMean idICov itGm -extract;
+	idICov.nblock idMean -set nblock;
+	idMean -type double idMean -tconvert;
+	idICov -type double idICov -tconvert;
 	
-	data idMark; -type int 1 iMmap.weak_tmx.dim idMark -array;
-	0 1 idMark -fill; :idMark%2: ' idMark =;
+	data idGamma; 
+		idMean ' idICov * idMean *
+		itGm.cdet .ln :ln(2*PI)*idMean.dim: + +
+		-0.5 .* idGamma =;
+	data idBeta;  idICov idMean * idBeta =;
+	data idIV; itGm.ivar -0.5 .* -type double idIV -tconvert;
+	data idIC; itGm.icov -type double idIC -tconvert;
 
-	idMark iMmap.weak_tmx -dmark;
-	data dGMMTW; iMmap.weak_tmx 0 0 dGMMTW /mark -select;
-	data dGMMTI; iMmap.weak_tmx 0 0 dGMMTI /mark -delete;
+	-type double :.nMAX_SFA_DIM-idBeta.dim: idBeta -addncomps;
+	-type double :.nMAX_SFA_DIM-idIV.dim: idIV -addncomps;
+	-type double :.nMAX_SFA_DIM*(.nMAX_SFA_DIM-1)/2-idIC.dim: idIC -addncomps;
 
-	dGMMTW ' .nF_GMMW dGMMTW -QUANT_int;
-	sGMMTW "raw" dGMMTW stdfile -export;
+	data dGAU;
+	:idGamma./1:        dGAU -join;
+	1 idMean.nrec zeros dGAU -join;
+	:idBeta./2:         dGAU -join;
+	:idIV./4:           dGAU -join;
+	:idIC./2:           dGAU -join;
 
-	dGMMTI ' 1 dGMMTI -QUANT_ushort;
-	sGMMTI "raw" dGMMTI stdfile -export;
+	idMean.nrec 1 "gau.num" "u16" -PACK1;
+	0           1 "_blank1" "u16" -PACK1;
+	dGAU 0 :.nMAX_GAU_NUM*dGAU.dim: "gau.g" "s16" -PACK; # alen
 
-	" ok"                                                   -MSG; # Protocol
+	nrm return;
 }
 
-function -PACK_gmms()
+function -PACK_mix(nrm,iMmap)
 {
-	"$[.sDirDsp]/GMM_S.BIN"  var sGMMS;
-	"$[.sDirDsp]/GMM0_S.BIN" var sGMM0S;
-	"\n   Packing log-add table ($[.sDirDsp]/GMM(0)_S.BIN)."         -MSG; # Protocol
 
-	data dGMMS;
-	-type double 1 .nDim_GMMS dGMMS -array;
-	0 :-16/.nDim_GMMS: dGMMS -fill;
-	dGMMS .exp 1 + .ln dGMMS =;
-
-	dGMMS .nF_GMMS dGMMS -QUANT_int;
-	sGMMS  "raw" dGMMS stdfile -export;
-	sGMM0S "raw" dGMMS stdfile -export;
-
-	" ok"                                                   -MSG; # Protocol
+	nrm return;
 }
-

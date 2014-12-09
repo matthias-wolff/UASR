@@ -10,8 +10,8 @@
    4 var nMAX_SFA_A_NUM;
   15 var nMAX_SFA_A_CL;
   32 var nMAX_SFA_DIM;
-1024 var nMAX_MAHA_NUM;
- 128 var nMAX_GMM_NUM;
+1024 var nMAX_GAU_NUM;
+ 128 var nMAX_MIX_NUM;
   64 var nMAX_FSTU_NUM;
 2048 var nMAX_FSTS_NUM;
 8192 var nMAX_FSTT_NUM;

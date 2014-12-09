@@ -3,9 +3,6 @@
 ##
 ## AUTHOR : Frank Duckhorn
 
-1024  var nF_SFA_MEAN;
-32768 var nF_SFA_W;
-
 function -PACK_sfa(nrm,iFI,nDim)
 {
 	data idAux;
@@ -68,4 +65,6 @@ function -PACK_sfa(nrm,iFI,nDim)
 	data idW; idMap 0 iFI.idW 0 nDim idW -lookup;
 	idW idVN ./ idW =;
 	idW 0 :.nMAX_PFA_DIM*.nMAX_SFA_A_NUM*.nMAX_SFA_DIM: "sfa.w" "s16" -PACK;
+
+	nrm return;
 }
