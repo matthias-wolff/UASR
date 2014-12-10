@@ -61,10 +61,12 @@ function -PACK(idVal,nF,nL,sName,sType)
 		sl 6 < while; " $[s]" s =; sl ++=; end;
 		s return;
 	}
-	data dV;
-	idVal :idVal.dim*idVal.nrec: 1 dV -reshape;
-	nL dV -reallocate;
-	dV nF dV -QUANT_$[sType];
+	data dV; idVal dV =;
+	sType "mix" != if;
+		dV :dV.dim*dV.nrec: 1 dV -reshape;
+		nL dV -reallocate;
+		dV nF dV -QUANT_$[sType];
+	end;
 	.sFDsp "raw" dV stdfile /append -export;
 	"\n  packing from $[.nPos -hex] len $[dV.reclen dV.nrec * -hex] type $[sType]: $[sName]" -echo;
 	:.nPos=.nPos+dV.reclen*dV.nrec;

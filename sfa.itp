@@ -37,7 +37,7 @@ function -PACK_sfa(nrm,iFI,nDim)
 	idAux :2^(15-nSFA_A_SHF): :nMAX_SFA_A_LEN*.nMAX_SFA_A_NUM: "sfa.a" "s16" -PACK;
 	
 	# Save shift coeffs for A matrix
-	data idShf; { nSFA_A_SHF ${nSFA_A_SHF+1} ${nSFA_A_SHF+2} } idShf =;
+	data idShf; { nSFA_A_SHF ${nSFA_A_SHF+1} ${nSFA_A_SHF+1} } idShf =;
 	idShf 1 .nMAX_SFA_A_NUM "sfa.ashf" "s16" -PACK;
 
 	# Prepare map for mean+pca expand over unused delta+delta2

@@ -5,6 +5,15 @@
 
 function -PACK_gau(nrm,itGm)
 {
+	function -max(idDat)
+	{
+		data idAux;
+		idDat abs NULL 0 "max" idAux /rec -aggregate;
+		idAux NULL 0 "max" idAux -aggregate;
+		:idAux[0,0]: return;
+	}
+
+	# Extract data
 	data idICov;
 	data idMean;
 	idMean idICov itGm -extract;
@@ -12,30 +21,45 @@ function -PACK_gau(nrm,itGm)
 	idMean -type double idMean -tconvert;
 	idICov -type double idICov -tconvert;
 	
+	# Precalculate
 	data idGamma; 
 		idMean ' idICov * idMean *
 		itGm.cdet .ln :ln(2*PI)*idMean.dim: + +
-		-0.5 .* idGamma =;
-	data idBeta;  idICov idMean * idBeta =;
-	data idIV; itGm.ivar -0.5 .* -type double idIV -tconvert;
+		0.5 .* idGamma =;
+	data idBeta;  idICov idMean * -1 .* idBeta =;
+	data idIV; itGm.ivar 0.5 .* -type double idIV -tconvert;
 	data idIC; itGm.icov -type double idIC -tconvert;
 
+	# Norm calc
+	idIV -max var vnrm;
+	idIC -max var cnrm;
+	cnrm vnrm > if; cnrm vnrm =; end;
+	:idIV=idIV./vnrm;
+	:idIC=idIC./vnrm;
+	:vnrm=nrm*vnrm;
+	:idBeta=idBeta./vnrm;
+	:vnrm=nrm*vnrm;
+	:idGamma=idGamma./vnrm;
+
+	# Expand to max size
 	-type double :.nMAX_SFA_DIM-idBeta.dim: idBeta -addncomps;
 	-type double :.nMAX_SFA_DIM-idIV.dim: idIV -addncomps;
 	-type double :.nMAX_SFA_DIM*(.nMAX_SFA_DIM-1)/2-idIC.dim: idIC -addncomps;
 
+	# Quant + join
 	data dGAU;
-	:idGamma./1:        dGAU -join;
-	1 idMean.nrec zeros dGAU -join;
-	:idBeta./2:         dGAU -join;
-	:idIV./4:           dGAU -join;
-	:idIC./2:           dGAU -join;
+	idGamma 0 idGamma -QUANT_s32; idGamma dGAU -join;
+	idBeta  0 idBeta  -QUANT_s32; idBeta  dGAU -join;
+	idIV    0 idIV    -QUANT_s16; idIV    dGAU -join;
+	idIC    0 idIC    -QUANT_s16; idIC    dGAU -join;
 
+	# Pack it
 	idMean.nrec 1 "gau.num" "u16" -PACK1;
 	0           1 "_blank1" "u16" -PACK1;
-	dGAU 0 :.nMAX_GAU_NUM*dGAU.dim: "gau.g" "s16" -PACK; # alen
+	.nMAX_GAU_NUM dGAU -reallocate;
+	dGAU 0 0 "gau.g" "mix" -PACK;
 
-	nrm return;
+	vnrm return;
 }
 
 function -PACK_mix(nrm,iMmap)
