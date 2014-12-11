@@ -77,7 +77,9 @@ function -PACK(idVal,nF,nL,sName,sType)
 		dV nF dV -QUANT_$[sType];
 	end;
 	.sFDsp "raw" dV stdfile /append -export;
-	"\n  packing from $[.nPos -hex] len $[dV.reclen dV.nrec * -hex] type $[sType]: $[sName]" -echo;
+	sName "1" "left" -VAR_strop "_" != if;
+		"\n  packing from $[.nPos -hex] len $[dV.reclen dV.nrec * -hex] type $[sType]: $[sName]" -echo;
+	end;
 	:.nPos=.nPos+dV.reclen*dV.nrec;
 }
 
@@ -85,3 +87,12 @@ function -PACK1(nVal,nF,sName,sType)
 {
 	{ nVal } nF 1 sName sType -PACK;
 }
+
+function -MAX(idDat)
+{
+	data idAux;
+	idDat abs NULL 0 "max" idAux /rec -aggregate;
+	idAux NULL 0 "max" idAux -aggregate;
+	:idAux[0,0]: return;
+}
+
