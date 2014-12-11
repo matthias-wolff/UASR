@@ -42,7 +42,7 @@ function -PACK_gau(nrm,itGm)
 	# Quant + join
 	data dGAU;
 	idGamma 0 idGamma -QUANT_s32; idGamma dGAU -join;
-	idBeta  0 idBeta  -QUANT_s32; idBeta  dGAU -join;
+	idBeta  0 idBeta  -QUANT_s16; idBeta  dGAU -join;
 	idIV    0 idIV    -QUANT_s16; idIV    dGAU -join;
 	idIC    0 idIC    -QUANT_s16; idIC    dGAU -join;
 
