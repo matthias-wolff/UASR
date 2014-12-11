@@ -5,36 +5,44 @@
 
 0 var nPos;
 
+function -WARNOV(idMk,sTxt)
+{
+	data idAux;
+	idMk NULL 0 "sum" idAux /rec -aggregate;
+	idAux NULL 0 "sum" idAux -aggregate;
+	:idAux[0,0]: if;
+		"\n  WARN: ${idAux[0,0]} times $[sTxt]flow" -echo;
+	end;
+}
+
+function -QUANT(idSrc,nF,nNl,nNh,nT,idDst)
+{
+	nF 0 == if; nNh nF =; end;
+	idSrc nF .* round idDst =;
+	:idDst.>nNh: "Over"  -WARNOV;
+	:idDst.<nNl: "Under" -WARNOV;
+	idDst nNh min nNl max idDst =;
+	idDst nT idDst -tconvert;
+}
+
 function -QUANT_s16(idSrc,nF,idDst)
 {
-	nF 0 == if; 32767 nF =; end;
-	idSrc nF .* round idDst =;
-	idDst 32767 min -32767 max idDst =;
-	idDst -type short idDst -tconvert;
+	idSrc nF -32767 32767 -type short idDst -QUANT;
 }
 
 function -QUANT_u16(idSrc,nF,idDst)
 {
-	nF 0 == if; 65535 nF =; end;
-	idSrc nF .* round idDst =;
-	idDst 65535 min 0 max idDst =;
-	idDst -type UINT16 idDst -tconvert;
+	idSrc nF 0 65535 -type UINT16 idDst -QUANT;
 }
 
 function -QUANT_s32(idSrc,nF,idDst)
 {
-	nF 0 == if; 2147483647 nF =; end;
-	idSrc nF .* round idDst =;
-	idDst 2147483647 min -2147483647 max idDst =;
-	idDst -type int idDst -tconvert;
+	idSrc nF -2147483647 2147483647 -type int idDst -QUANT;
 }
 
 function -QUANT_u32(idSrc,nF,idDst)
 {
-	nF 0 == if; 4294967295 nF =; end;
-	idSrc nF .* round idDst =;
-	idDst 4294967295 min 0 max idDst =;
-	idDst -type int idDst -tconvert;
+	idSrc nF 0 4294967295 -type int idDst -QUANT;
 }
 
 function -PACK(idVal,nF,nL,sName,sType)
