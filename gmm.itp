@@ -61,7 +61,7 @@ function -PACK_gau(nrm,itGm)
 function -PACK_mix(nrm,iMmap)
 {
 	iMmap.weak_tmx -is_empty if;
-		" FAILED (mmap.weak_tmx is empty)" -MSG;
+		"\n  FAILED (mmap.weak_tmx is empty)" -MSG;
 		leave;
 	end;
 	
