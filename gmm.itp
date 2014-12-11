@@ -26,6 +26,7 @@ function -PACK_gau(nrm,itGm)
 		idMean ' idICov * idMean *
 		itGm.cdet .ln :ln(2*PI)*idMean.dim: + +
 		0.5 .* idGamma =;
+	idGamma :itGm.cdet.!=0: .* :itGm.cdet.==0: 500 .* + idGamma =; # set for invalid Gaussians gamma=500
 	data idBeta;  idICov idMean * -1 .* idBeta =;
 	data idIV; itGm.ivar 0.5 .* -type double idIV -tconvert;
 	data idIC; itGm.icov -type double idIC -tconvert;
@@ -53,9 +54,12 @@ function -PACK_gau(nrm,itGm)
 	idIV    0 idIV    -QUANT_s16; idIV    dGAU -join;
 	idIC    0 idIC    -QUANT_s16; idIC    dGAU -join;
 
+	# Norm to nGMM_MIN_CLIP
+	0 var nShf; vnrm :.nGMM_MIN_CLIP*2: > while; :vnrm=vnrm/2; nShf ++=; end;
+
 	# Pack it
 	idMean.nrec 1 "gau.num" "u16" -PACK1;
-	0           1 "_blank1" "u16" -PACK1;
+	nShf        1 "gau.shf" "s16" -PACK1;
 	.nMAX_GAU_NUM dGAU -reallocate;
 	dGAU 0 0 "gau.g" "mix" -PACK;
 

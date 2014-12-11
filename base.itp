@@ -7,8 +7,9 @@
 
 function -WARNOV(idMk,sTxt)
 {
-	data idAux;
-	idMk NULL 0 "sum" idAux /rec -aggregate;
+	data idAux; idMk idAux =;
+	1 idAux -set nblock;
+	idAux NULL 0 "sum" idAux /rec -aggregate;
 	idAux NULL 0 "sum" idAux -aggregate;
 	:idAux[0,0]: if;
 		"\n  WARN: ${idAux[0,0]} times $[sTxt]flow" -echo;

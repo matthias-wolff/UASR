@@ -20,3 +20,5 @@
  256 var nPFA_TYP_LOG; # 0x0100
  512 var nPFA_TYP_FIL; # 0x0200
 
+ 256 var nGMM_MIN_CLIP;
+
