@@ -10,9 +10,10 @@ function -PACK_gau(nrm,itGm)
 	data idMean;
 	idMean idICov itGm -extract;
 	idICov.nblock idMean -set nblock;
+	idICov.nblock itGm.cdet -set nblock;
 	idMean -type double idMean -tconvert;
 	idICov -type double idICov -tconvert;
-	
+
 	# Precalculate
 	data idGamma; 
 		idMean ' idICov * idMean *
