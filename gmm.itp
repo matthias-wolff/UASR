@@ -55,6 +55,7 @@ function -PACK_gau(nrm,itGm)
 	nShf        1 "gau.shf" "s16" -PACK1;
 	.nMAX_GAU_NUM dGAU -reallocate;
 	dGAU 0 0 "gau.g" "mix" -PACK;
+	"\n  norm gau: $[vnrm]" -MSG2;
 
 	vnrm return;
 }
@@ -99,6 +100,7 @@ function -PACK_mix(nrm,iMmap)
 	dNGAU   1 .nMAX_MIX_NUM                   "mix.ngau" "u16" -PACK;
 	dMIXI ' 1 :.nMAX_MIX_NUM*.nMAX_MIX_GAU*2: "mix.m"    "u16" -PACK;
 	dLADD   :32768/nrm: .nMAX_LAD_NUM         "mix.lad"  "s16" -PACK;
+	"\n  norm mix: $[nrm]" -MSG2;
 
 	nrm return;
 }

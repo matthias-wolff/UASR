@@ -3,7 +3,7 @@
 ##
 ## AUTHOR : Frank Duckhorn
 
-function -PACK_fil()
+function -PACK_fil(nrm)
 {
 	data dMELN;
 	data dMELM;
@@ -24,7 +24,11 @@ function -PACK_fil()
 		k ++=; end;
 	i ++=; end;
 
+	dMELM :2^.nFIL_SHF: .* dMELM =;
+
 	dMELM ' 0 :.nMAX_PFA_DIM*.nMAX_FIL_DIM: "pfa.fil" "s16" -PACK;
+
+	:nrm/2^.nFIL_SHF: return;
 }
 
 function -PACK_log(nrm)
@@ -37,6 +41,7 @@ function -PACK_log(nrm)
 	0 :nrm/quant_energy/ni: dLOG -fill;
 	:dLOG[0,0]=dLOG[1,0]/2;
 	dLOG .ln dLOG =;
+	"\n  log min: ${dLOG[0,0]}" -MSG2;
 	dLOG :no/dLOG[dLOG.nrec-1,0]: dLOG.nrec "pfa.log" "s16" -PACK;
 	:dLOG[dLOG.nrec-1,0]: return;
 }
@@ -50,11 +55,14 @@ function -PACK_pfa(nrm,idWnd)
 	flen                            1 "pfa.len"    "u16" -PACK1;
 	.nPFA_TYP_FFT .nPFA_TYP_LOG .nPFA_TYP_FIL + + 1 "pfa.typ"   "u16" -PACK1; # TODO: from uasr.pfa
 	"uasr.pfa.dim"   30    -CFG_get 1 "pfa.dim"    "u16" -PACK1;
-	.nFFT_SHF                       1 "pfa.fftshf" "s8"  -PACK1;
-	.nFIL_SHF                       1 "pfa.filshf" "s8"  -PACK1;
+	.nFFT_SHF                       1 "pfa.fftshf" "s16" -PACK1;
 	idWnd 0 .nMAX_FRAME_DIM           "pfa.wnd"    "u16" -PACK;
-	:flen/2: nrm =; # norm after FFT
-	-PACK_fil;
+	"\n  norm frm: $[nrm]" -MSG2;
+	:nrm=nrm*flen/2/2^.nFFT_SHF; # norm after FFT
+	"\n  norm fft: $[nrm]" -MSG2;
+	nrm -PACK_fil nrm =;
+	"\n  norm fil: $[nrm]" -MSG2;
 	nrm -PACK_log nrm =;
+	"\n  norm log: $[nrm]" -MSG2;
 	nrm return;
 }

@@ -39,6 +39,7 @@ function -PACK_sfa(nrm,iFI,nDim)
 	# Save shift coeffs for A matrix
 	data idShf; { nSFA_A_SHF ${nSFA_A_SHF+1} ${nSFA_A_SHF+1} } idShf =;
 	idShf 1 .nMAX_SFA_A_NUM "sfa.ashf" "s16" -PACK;
+	"\n  norm dlt: $[nrm]" -MSG2;
 
 	# Prepare map for mean+pca expand over unused delta+delta2
 	data idMap;
@@ -60,11 +61,13 @@ function -PACK_sfa(nrm,iFI,nDim)
 	data idM; idMap 0 iFI.idX ' 0 1 idM -lookup;
 	idM idVN .* idM =;
 	idM :2^15/nrm: :.nMAX_PFA_DIM*.nMAX_SFA_A_NUM: "sfa.m" "s16" -PACK;
+	"\n  norm mea: $[nrm]" -MSG2;
 
 	# Map+pack pca matrix
 	data idW; idMap 0 iFI.idW 0 nDim idW -lookup;
 	idW idVN ./ idW =;
 	idW 0 :.nMAX_PFA_DIM*.nMAX_SFA_A_NUM*.nMAX_SFA_DIM: "sfa.w" "s16" -PACK;
+	"\n  norm pca: $[nrm]" -MSG2;
 
 	nrm return;
 }
