@@ -26,6 +26,16 @@ function -QUANT(idSrc,nF,nNl,nNh,nT,idDst)
 	idDst nT idDst -tconvert;
 }
 
+function -QUANT_s8(idSrc,nF,idDst)
+{
+	idSrc nF -127 127 -type char idDst -QUANT;
+}
+
+function -QUANT_u8(idSrc,nF,idDst)
+{
+	idSrc nF 0 255 -type UINT8 idDst -QUANT;
+}
+
 function -QUANT_s16(idSrc,nF,idDst)
 {
 	idSrc nF -32767 32767 -type short idDst -QUANT;

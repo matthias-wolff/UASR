@@ -44,14 +44,15 @@ function -PACK_log(nrm)
 function -PACK_pfa(nrm,idWnd)
 {
 	"uasr.pfa.len"   512   -CFG_get var flen;
-	"uasr.sig.srate" 16000 -CFG_get 1 "pfa.srate" "u32" -PACK1;
-	"uasr.pfa.crate" 160   -CFG_get 1 "pfa.crate" "u16" -PACK1;
-	"uasr.pfa.wlen"  400   -CFG_get 1 "pfa.wlen"  "u16" -PACK1;
-	flen                            1 "pfa.len"   "u16" -PACK1;
+	"uasr.sig.srate" 16000 -CFG_get 1 "pfa.srate"  "u32" -PACK1;
+	"uasr.pfa.crate" 160   -CFG_get 1 "pfa.crate"  "u16" -PACK1;
+	"uasr.pfa.wlen"  400   -CFG_get 1 "pfa.wlen"   "u16" -PACK1;
+	flen                            1 "pfa.len"    "u16" -PACK1;
 	.nPFA_TYP_FFT .nPFA_TYP_LOG .nPFA_TYP_FIL + + 1 "pfa.typ"   "u16" -PACK1; # TODO: from uasr.pfa
-	"uasr.pfa.dim"   30    -CFG_get 1 "pfa.dim"   "u16" -PACK1;
-	0                               1 "_blank1"   "u16" -PACK1;
-	idWnd 0 .nMAX_FRAME_DIM           "pfa.wnd"   "u16" -PACK;
+	"uasr.pfa.dim"   30    -CFG_get 1 "pfa.dim"    "u16" -PACK1;
+	.nFFT_SHF                       1 "pfa.fftshf" "s8"  -PACK1;
+	.nFIL_SHF                       1 "pfa.filshf" "s8"  -PACK1;
+	idWnd 0 .nMAX_FRAME_DIM           "pfa.wnd"    "u16" -PACK;
 	:flen/2: nrm =; # norm after FFT
 	-PACK_fil;
 	nrm -PACK_log nrm =;
