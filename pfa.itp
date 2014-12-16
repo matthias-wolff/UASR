@@ -33,7 +33,7 @@ function -PACK_fil(nrm)
 
 function -PACK_log(nrm)
 {
-	32768 var ni;
+	65536 var ni;
 	32767 var no;
 	:2^(-16+1): var quant_energy;
 	data dLOG;
