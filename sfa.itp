@@ -7,7 +7,9 @@ function -PACK_sfa(nrm,iFI,nDim)
 {
 	data idAux;
 
-	7 var nSFA_A_SHF; # TODO > autocalc
+	7 var nSFA_A_SHF;  # TODO > autocalc
+	7 var nSFA_A_SHF1; # TODO > autocalc
+	7 var nSFA_A_SHF2; # TODO > autocalc
 
 	# Calc context length's for A matrix bands
 	:(iFI.idDltW.dim-1)/2: var nACL;
@@ -37,7 +39,7 @@ function -PACK_sfa(nrm,iFI,nDim)
 	idAux :2^(15-nSFA_A_SHF): :nMAX_SFA_A_LEN*.nMAX_SFA_A_NUM: "sfa.a" "s16" -PACK;
 	
 	# Save shift coeffs for A matrix
-	data idShf; { nSFA_A_SHF ${nSFA_A_SHF+1} ${nSFA_A_SHF+1} } idShf =;
+	data idShf; { nSFA_A_SHF nSFA_A_SHF1 nSFA_A_SHF2 } idShf =;
 	idShf 1 .nMAX_SFA_A_NUM "sfa.ashf" "s16" -PACK;
 	"\n  norm dlt: $[nrm]" -MSG2;
 
