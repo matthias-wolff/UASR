@@ -8,8 +8,8 @@ function -PACK_sfa(nrm,iFI,nDim)
 	data idAux;
 
 	7 var nSFA_A_SHF;  # TODO > autocalc
-	7 var nSFA_A_SHF1; # TODO > autocalc
-	7 var nSFA_A_SHF2; # TODO > autocalc
+	8 var nSFA_A_SHF1; # TODO > autocalc
+	8 var nSFA_A_SHF2; # TODO > autocalc
 
 	# Calc context length's for A matrix bands
 	:(iFI.idDltW.dim-1)/2: var nACL;
