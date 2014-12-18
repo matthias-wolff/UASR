@@ -19,10 +19,9 @@ function -PACK_sfa(nrm,iFI,nDim)
 	
 	# Save dimension and context length's for A matrix bands
 	nDim  1 "sfa.dim" "u16" -PACK1;
-	3     1 "sfa.an"  "u16" -PACK1;
-	nACLx 1 "sfa.alx" "u16" -PACK1;
-	0     1 "_blank1" "u16" -PACK1;
-	idALen 1 .nMAX_SFA_A_NUM "sfa.al" "u16" -PACK; # alen
+	3     1 "sfa.an"  "u8"  -PACK1;
+	nACLx 1 "sfa.alx" "u8"  -PACK1;
+	idALen 1 .nMAX_SFA_A_NUM "sfa.al" "u8" -PACK; # alen
 
 	# Expand delta weight vector to A matrix bands ( normal,delta,delta2 )
 	data idDW1;
@@ -40,7 +39,7 @@ function -PACK_sfa(nrm,iFI,nDim)
 	
 	# Save shift coeffs for A matrix
 	data idShf; { nSFA_A_SHF nSFA_A_SHF1 nSFA_A_SHF2 } idShf =;
-	idShf 1 .nMAX_SFA_A_NUM "sfa.ashf" "s16" -PACK;
+	idShf 1 .nMAX_SFA_A_NUM "sfa.ashf" "s8" -PACK;
 	"\n  norm dlt: $[nrm]" -MSG2;
 
 	# Prepare map for mean+pca expand over unused delta+delta2

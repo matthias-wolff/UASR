@@ -1,0 +1,59 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Data packaging tool for hardware recognizer
+##
+## AUTHOR : Frank Duckhorn
+
+function -PACK_fst(nrm,itRN,nU)
+{
+	data idAux;
+	fst iRN;
+	itRN NULL nU iRN -copy_ui;
+	iRN 0 iRN -push_weights;
+
+	# extract transitions
+	data iT;
+	:iRN.td["~INI"]: iT -join;
+	:iRN.td["~TER"]: iT -join;
+	:iRN.td["~TIS"]: iT -join;
+	:iRN.td["~TOS"]: iT -join;
+	"~LSR" iRN.td -find_comp 0 >= if; :iRN.td["~LSR"]: iT -join; else "~LSR" -type long iT -addcomp; end;
+	"~STK" iRN.td -find_comp 0 >= if; :iRN.td["~STK"]: iT -join; else "~STK" -type long iT -addcomp; end;
+	iT 1 iT -sortup; iT 0 iT -sortup;
+
+	# extract state offset
+	data iS; :iRN.sd["~FLG"]: iS =;
+	"" -1 iS -rindex;
+	iS iT 1 0 idAux -gen_index;
+	iS 1 1 iS -delete; idAux iS -join;
+	:iS[1]: -1 idAux /rec -shift; :idAux[idAux.nrec-1,0]=iT.nrec;
+	:idAux-iS[1]: iS -join;
+
+	# quant states
+	data dS;
+	:iS[1]: 1 idAux -QUANT_u16; idAux dS -join;
+	:iS[2]: 1 idAux -QUANT_u8;  idAux dS -join;
+	:iS[0]: 1 idAux -QUANT_u8;  idAux dS -join;
+	.nMAX_FSTS_NUM dS -reallocate;
+
+	# quant transitions
+	data dT;
+	:iT["~TER"]: 1           idAux -QUANT_u16; idAux dT -join;
+	:iT["~TIS"]: 1           idAux -QUANT_s8;  idAux dT -join;
+	:iT["~TOS"]: 1           idAux -QUANT_s8;  idAux dT -join;
+	:iT["~LSR"]: :32768/nrm: idAux -QUANT_s16; idAux dT -join;
+	:iT["~STK"]: 1           idAux -QUANT_s8;  idAux dT -join;
+	1 iT.nrec zeros 1        idAux -QUANT_s8;  idAux dT -join;
+	.nMAX_FSTT_NUM dT -reallocate;
+
+	# perpare os
+	data dOS; iRN.os .nMAX_FSTO_LEN dOS /force -tconvert;
+	.nMAX_FSTO_NUM dOS -reallocate;
+
+	# Pack it
+	iS.nrec 1 "fst.xs" "u16" -PACK1;
+	iT.nrec 1 "fst.xt" "u16" -PACK1;
+	dS    0 0 "fst.s"  "mix" -PACK;
+	dT    0 0 "fst.t"  "mix" -PACK;
+	dOS   0 0 "fst.os" "mix" -PACK;
+}
+

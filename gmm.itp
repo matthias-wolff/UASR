@@ -52,7 +52,8 @@ function -PACK_gau(nrm,itGm)
 
 	# Pack it
 	idMean.nrec 1 "gau.num" "u16" -PACK1;
-	nShf        1 "gau.shf" "s16" -PACK1;
+	nShf        1 "gau.shf" "s8"  -PACK1;
+	0           1 "_blank1" "u8"  -PACK1;
 	.nMAX_GAU_NUM dGAU -reallocate;
 	dGAU 0 0 "gau.g" "mix" -PACK;
 	"\n  norm gau: $[vnrm]" -MSG2;
