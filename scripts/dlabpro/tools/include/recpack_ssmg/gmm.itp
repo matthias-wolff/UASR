@@ -1,0 +1,54 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Data packaging tool for hardware recognizer
+##
+## AUTHOR : Frank Duckhorn
+
+:16*65536: var nF_GMMW;
+:16*65536: var nF_GMMS;
+4096       var nDim_GMMS;
+
+function -PACK_gmm(iMmap,sExt)
+{
+	"$[.sDirDsp]/GMM$[sExt]_TI.BIN" var sGMMTI;
+	"$[.sDirDsp]/GMM$[sExt]_TW.BIN" var sGMMTW;
+	"\n   Packing mixture model file ($[.sDirDsp]/GMM$[sExt]_T[IW].BIN)."         -MSG; # Protocol
+
+	iMmap.weak_tmx -is_empty if;
+		" FAILED (mmap.weak_tmx is empty)" -MSG;
+		leave;
+	end;
+	
+	data idMark; -type int 1 iMmap.weak_tmx.dim idMark -array;
+	0 1 idMark -fill; :idMark%2: ' idMark =;
+
+	idMark iMmap.weak_tmx -dmark;
+	data dGMMTW; iMmap.weak_tmx 0 0 dGMMTW /mark -select;
+	data dGMMTI; iMmap.weak_tmx 0 0 dGMMTI /mark -delete;
+
+	dGMMTW ' .nF_GMMW dGMMTW -QUANT_int;
+	sGMMTW "raw" dGMMTW stdfile -export;
+
+	dGMMTI ' 1 dGMMTI -QUANT_ushort;
+	sGMMTI "raw" dGMMTI stdfile -export;
+
+	" ok"                                                   -MSG; # Protocol
+}
+
+function -PACK_gmms()
+{
+	"$[.sDirDsp]/GMM_S.BIN"  var sGMMS;
+	"$[.sDirDsp]/GMM0_S.BIN" var sGMM0S;
+	"\n   Packing log-add table ($[.sDirDsp]/GMM(0)_S.BIN)."         -MSG; # Protocol
+
+	data dGMMS;
+	-type double 1 .nDim_GMMS dGMMS -array;
+	0 :-16/.nDim_GMMS: dGMMS -fill;
+	dGMMS .exp 1 + .ln dGMMS =;
+
+	dGMMS .nF_GMMS dGMMS -QUANT_int;
+	sGMMS  "raw" dGMMS stdfile -export;
+	sGMM0S "raw" dGMMS stdfile -export;
+
+	" ok"                                                   -MSG; # Protocol
+}
+
