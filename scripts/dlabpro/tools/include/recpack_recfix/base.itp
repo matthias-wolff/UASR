@@ -12,7 +12,7 @@ function -WARNOV(idMk,sTxt)
 	idAux NULL 0 "sum" idAux /rec -aggregate;
 	idAux NULL 0 "sum" idAux -aggregate;
 	:idAux[0,0]: if;
-		"\n  WARN: ${idAux[0,0]} times $[sTxt]flow" -echo;
+		"\n  WARN: ${idAux[0,0]} times $[sTxt]flow" 0 -WARNING;
 	end;
 }
 
@@ -88,7 +88,7 @@ function -PACK(idVal,nF,nL,sName,sType)
 	end;
 	.sFDsp "raw" dV stdfile /append -export;
 	sName "1" "left" -VAR_strop "_" != if;
-		"\n  packing from $[.nPos -hex] len $[dV.reclen dV.nrec * -hex] type $[sType]: $[sName]" -echo;
+		"\n  packing from $[.nPos -hex] len $[dV.reclen dV.nrec * -hex] type $[sType]: $[sName]" -MSG;
 	end;
 	:.nPos=.nPos+dV.reclen*dV.nrec;
 }

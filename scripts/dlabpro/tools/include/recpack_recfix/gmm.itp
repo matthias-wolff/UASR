@@ -92,7 +92,7 @@ function -PACK_mix(nrm,iMmap)
 	dLADD -1 .* .exp 1 + .ln -1 .* dLADD =;
 	data dNLADD; dLADD :-0.5*nrm/32768: .<= NULL 0 "sum" dNLADD /rec -aggregate;
 	:dNLADD[0,0]==.nMAX_LAD_NUM: if;
-		"\n  WARN: ladd table maximum size exceeded (.nMAX_LAD_NUM)" -echo;
+		"\n  WARN: ladd table maximum size exceeded (.nMAX_LAD_NUM)" 0 -WARNING;
 	end;
 	
 	# Pack it
