@@ -1,0 +1,34 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Data packaging tool for hardware recognizer
+##
+## AUTHOR : Frank Duckhorn
+
+1024  var nF_MAHALA;
+
+function -PACK_mahala(itGm,sExt)
+{
+	"$[.sDirDsp]/MAHALA$[sExt].BIN" var sMAHALA;
+	"\n   Packing mahala parameter file ($[sMAHALA])."         -MSG; # Protocol
+	
+	data idICov;
+	data idMean;
+	idMean idICov itGm -extract;
+	idICov.nblock idMean -set nblock;
+	
+	data idAlpha; idMean ' idICov * idMean * idAlpha =;
+	data idBeta;  idICov idMean * idBeta =;
+	data idDelta; itGm.cdet .ln :ln(2*PI)*idMean.dim: + -0.5 .* idDelta =;
+
+	data dMAHALA;
+	:idAlpha./8:   dMAHALA -join;
+	:idBeta./2:    dMAHALA -join;
+	idDelta        dMAHALA -join;
+	:itGm.ivar./8: dMAHALA -join;
+	:itGm.icov./2: dMAHALA -join;
+
+	dMAHALA .nF_MAHALA dMAHALA -QUANT_short;
+	sMAHALA "raw" dMAHALA stdfile -export;
+
+	" ok"                                                   -MSG; # Protocol
+}
+
