@@ -528,8 +528,15 @@ function -PACK_sesinfo(bSave)
   .sCmd "dlg" == if                                                             # Dialog mode >>
     "\n   - Writing \"$[sDlgFile]\" ..."                                 -MSG2; #   Protocol
     .__CFG_bNwr not if                                                          #   Not write-protected >>
-      sDlgFile itDlg /zip -save                                                 #     Save session info file
+      sDlgFile itDlg /zip -save                                                 #     Save dialog file
       ?error if " FAILED" -COLOR_red -MSG; 0 nRet =; end " ok" -MSG2; "." -MSG; #     Check for errors
+    else                                                                        #   << Write protected >>
+      " SKIPPED (write protection on!)" -COLOR_yellow                    -MSG2; #     Protocol
+    end                                                                         #   <<
+  else                                                                          # << Normal mode >>
+    "\n   - Remove \"$[sDlgFile]\" ..."                                  -MSG2; #   Protocol
+    .__CFG_bNwr not if                                                          #   Not write-protected >>
+      sDlgFile -SH_rm;                                                          #     Remove dialog file
     else                                                                        #   << Write protected >>
       " SKIPPED (write protection on!)" -COLOR_yellow                    -MSG2; #     Protocol
     end                                                                         #   <<
@@ -676,9 +683,15 @@ end                                                                             
 
 ## Output type specific includes                                                # -------------------------------------
 sOutTyp "S" == if;                                                              # For ssmg demonstrator >>
+  sCmd "vad" == if;                                                             #   Command 'vad' >>
+   "UNSUPPORTED command $[sCMD] for output type $[sOutTyp]" 0 -WARNING; quit;   #     Warn unsupported
+  end;                                                                          #   <<
   # TODO: include
 end;                                                                            # <<
 sOutTyp "F" == if;                                                              # For recfix >>
+  sCmd "dlg" == sCmd "vad" == || if;                                            #   Commands 'dlg' and 'vad' >>
+   "UNSUPPORTED command $[sCmd] for output type $[sOutTyp]" 0 -WARNING; quit;   #     Warn unsupported
+  end;                                                                          #   <<
   "dsp.fft_shf"   0 -CFG_get var nFFT_SHF;                                      #   Shift offset after FFT
   "dsp.fil_shf"   0 -CFG_get var nFIL_SHF;                                      #   Shift offset after filter
   "$[.sDirOut]/recfix.cfg"   var sFDsp;                                         #   Output file name
