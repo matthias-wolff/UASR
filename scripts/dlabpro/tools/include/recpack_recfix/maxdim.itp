@@ -1,0 +1,28 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Data packaging tool for hardware recognizer
+##
+## AUTHOR : Frank Duckhorn
+
+   1 var nMAX_SIG_CHS;
+2048 var nMAX_FRAME_DIM;
+1024 var nMAX_PFA_DIM;
+  64 var nMAX_FIL_DIM;
+   4 var nMAX_SFA_A_NUM;
+  15 var nMAX_SFA_A_CL;
+  32 var nMAX_SFA_DIM;
+1024 var nMAX_GAU_NUM;
+  16 var nMAX_MIX_GAU;
+ 128 var nMAX_MIX_NUM;
+2048 var nMAX_LAD_NUM;
+2048 var nMAX_FSTS_NUM;
+4096 var nMAX_FSTT_NUM;
+ 128 var nMAX_FSTO_NUM;
+  16 var nMAX_FSTO_LEN;
+
+   1 var nPFA_TYP_FFT; # 0x01
+  64 var nPFA_TYP_FIL; # 0x40
+ 128 var nPFA_TYP_LOG; # 0x80
+
+ 256 var nGMM_MIN_CLIP;
+
+   2 var nFST_NUM;

@@ -1,0 +1,108 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Data packaging tool for hardware recognizer
+##
+## AUTHOR : Frank Duckhorn
+
+0 var nPos;
+
+function -WARNOV(idMk,sTxt)
+{
+	data idAux; idMk idAux =;
+	1 idAux -set nblock;
+	idAux NULL 0 "sum" idAux /rec -aggregate;
+	idAux NULL 0 "sum" idAux -aggregate;
+	:idAux[0,0]: if;
+		"\n  WARN: ${idAux[0,0]} times $[sTxt]flow" -echo;
+	end;
+}
+
+function -QUANT(idSrc,nF,nNl,nNh,nT,idDst)
+{
+	nF 0 == if; nNh nF =; end;
+	idSrc nF .* round idDst =;
+	:idDst.>nNh: "Over"  -WARNOV;
+	:idDst.<nNl: "Under" -WARNOV;
+	idDst nNh min nNl max idDst =;
+	idDst nT idDst -tconvert;
+}
+
+function -QUANT_s8(idSrc,nF,idDst)
+{
+	idSrc nF -127 127 -type char idDst -QUANT;
+}
+
+function -QUANT_u8(idSrc,nF,idDst)
+{
+	idSrc nF 0 255 -type UINT8 idDst -QUANT;
+}
+
+function -QUANT_s16(idSrc,nF,idDst)
+{
+	idSrc nF -32767 32767 -type short idDst -QUANT;
+}
+
+function -QUANT_u16(idSrc,nF,idDst)
+{
+	idSrc nF 0 65535 -type UINT16 idDst -QUANT;
+}
+
+function -QUANT_s32(idSrc,nF,idDst)
+{
+	idSrc nF -2147483647 2147483647 -type int idDst -QUANT;
+}
+
+function -QUANT_u32(idSrc,nF,idDst)
+{
+	idSrc nF 0 4294967295 -type int idDst -QUANT;
+}
+
+function -PACK(idVal,nF,nL,sName,sType)
+{
+	function -hex(v)
+	{
+		"" var s;
+		0 var sl;
+		var v1;
+		v while;
+			v 16 mod v1 =;
+			v 16 / ent v =;
+			v1 10 <  if; "$[v1]$[s]" s =; end;
+			v1 10 == if; "A$[s]" s =; end;
+			v1 11 == if; "B$[s]" s =; end;
+			v1 12 == if; "C$[s]" s =; end;
+			v1 13 == if; "D$[s]" s =; end;
+			v1 14 == if; "E$[s]" s =; end;
+			v1 15 == if; "F$[s]" s =; end;
+			sl ++=;
+		end;
+		sl 0 == if; "0" s =; sl ++=; end;
+		"0x$[s]" s =;
+		sl 6 < while; " $[s]" s =; sl ++=; end;
+		s return;
+	}
+	data dV; idVal dV =;
+	sType "mix" != if;
+		dV :dV.dim*dV.nrec: 1 dV -reshape;
+		nL dV -reallocate;
+		dV nF dV -QUANT_$[sType];
+	end;
+	.sFDsp "raw" dV stdfile /append -export;
+	sName "1" "left" -VAR_strop "_" != if;
+		"\n  packing from $[.nPos -hex] len $[dV.reclen dV.nrec * -hex] type $[sType]: $[sName]" -echo;
+	end;
+	:.nPos=.nPos+dV.reclen*dV.nrec;
+}
+
+function -PACK1(nVal,nF,sName,sType)
+{
+	{ nVal } nF 1 sName sType -PACK;
+}
+
+function -MAX(idDat)
+{
+	data idAux;
+	idDat abs NULL 0 "max" idAux /rec -aggregate;
+	idAux NULL 0 "max" idAux -aggregate;
+	:idAux[0,0]: return;
+}
+

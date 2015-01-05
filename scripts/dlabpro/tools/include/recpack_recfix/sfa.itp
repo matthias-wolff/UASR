@@ -1,0 +1,74 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Data packaging tool for hardware recognizer
+##
+## AUTHOR : Frank Duckhorn
+
+function -PACK_sfa(nrm,iFI,nDim)
+{
+	data idAux;
+
+	7 var nSFA_A_SHF;  # TODO > autocalc
+	8 var nSFA_A_SHF1; # TODO > autocalc
+	8 var nSFA_A_SHF2; # TODO > autocalc
+
+	# Calc context length's for A matrix bands
+	:(iFI.idDltW.dim-1)/2: var nACL;
+	data idALen; { 0 nACL ${nACL*2} } idALen =;
+	idALen NULL 0 "max" idAux -aggregate; :idAux[0,0]: var nACLx;
+	:.nMAX_SFA_A_CL*2+1: var nMAX_SFA_A_LEN;
+	
+	# Save dimension and context length's for A matrix bands
+	nDim  1 "sfa.dim" "u16" -PACK1;
+	3     1 "sfa.an"  "u8"  -PACK1;
+	nACLx 1 "sfa.alx" "u8"  -PACK1;
+	idALen 1 .nMAX_SFA_A_NUM "sfa.al" "u8" -PACK; # alen
+
+	# Expand delta weight vector to A matrix bands ( normal,delta,delta2 )
+	data idDW1;
+	data idDW2;
+	iFI.idDltW ' idDW1 =;
+	nMAX_SFA_A_LEN idDW1 -reallocate;
+	0 var x; x iFI.idDltW.dim < while;
+		idDW1 x idAux /rec -shift;
+		:idDW2=idDW2+idAux*idDW1[x,0];
+	x ++=; end;
+	{ 1 } ' idAux =; nMAX_SFA_A_LEN idAux -reallocate;
+	idDW1 idAux -join;
+	idDW2 idAux -join;
+	idAux :2^(15-nSFA_A_SHF): :nMAX_SFA_A_LEN*.nMAX_SFA_A_NUM: "sfa.a" "s16" -PACK;
+	
+	# Save shift coeffs for A matrix
+	data idShf; { nSFA_A_SHF nSFA_A_SHF1 nSFA_A_SHF2 } idShf =;
+	idShf 1 .nMAX_SFA_A_NUM "sfa.ashf" "s8" -PACK;
+	"\n  norm dlt: $[nrm]" -MSG2;
+
+	# Prepare map for mean+pca expand over unused delta+delta2
+	data idMap;
+	iFI.idDlt NULL 0 "sum" idAux -aggregate;
+	:iFI.idX.dim-idAux[0,0]-idAux[1,0]: var nBase;
+	1 nBase ones idMap =;
+	iFI.idDlt ' :iFI.idDlt.dim*iFI.idDlt.nrec: 1 idAux -reshape; idAux idMap -cat;
+	0 var id; 0 var r; r idMap.nrec < while;
+		:idMap[r,0]: if; :idMap[r,0]=id; id ++=; else; :idMap[r,0]=-1; end;
+	r ++=; end;
+
+	# Generate vector norm
+	data idVN;
+	1 nBase ones idVN =;
+	1 nBase ones :2^(idShf[0,1]-idShf[0,0]): .* idVN -cat;
+	1 nBase ones :2^(idShf[0,2]-idShf[0,0]): .* idVN -cat;
+
+	# Map+pack mean vector
+	data idM; idMap 0 iFI.idX ' 0 1 idM -lookup;
+	idM idVN .* idM =;
+	idM :2^15/nrm: :.nMAX_PFA_DIM*.nMAX_SFA_A_NUM: "sfa.m" "s16" -PACK;
+	"\n  norm mea: $[nrm]" -MSG2;
+
+	# Map+pack pca matrix
+	data idW; idMap 0 iFI.idW 0 nDim idW -lookup;
+	idW idVN ./ idW =;
+	idW 0 :.nMAX_PFA_DIM*.nMAX_SFA_A_NUM*.nMAX_SFA_DIM: "sfa.w" "s16" -PACK;
+	"\n  norm pca: $[nrm]" -MSG2;
+
+	nrm return;
+}

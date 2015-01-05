@@ -1,0 +1,69 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Data packaging tool for hardware recognizer
+##
+## AUTHOR : Frank Duckhorn
+
+function -PACK_fil(nrm)
+{
+	data dMELN;
+	data dMELM;
+
+	# TODO: extract data from .__FEA_iPfa => m_lpCnvc (.norm, .a)
+	{ 6 6 6 6 6 6 6 6 6 7 8 8 8 8 8 8 8 8 8 8 10 14 18 22 26 30 34 38 42 44 } dMELN =;
+
+	data dL; { 6 6  6  6  6  6  6  6  6  6  8  8  8  8  8  8  8  8  8  8  8 12 16  20  24  28  32  36  40  44 44 } dL =;
+	data dO; { 6 9 12 15 18 21 24 27 30 33 37 41 45 49 53 57 61 65 69 73 77 83 91 101 113 127 143 161 181 203 } dO =;
+	-type double 257 30 dMELM -array;
+	var k;
+	0 var i; i dO.dim < while;
+		0 k =; k :dL[0,i]: < while;
+			:dMELM[i,dO[0,i]-dL[0,i  ]+1+k]=(k+1)/dL[0,i]/dMELN[0,i];
+		k ++=; end;
+		0 k =; k :dL[0,i+1]: < while;
+			:dMELM[i,dO[0,i]+dL[0,i+1]-1-k]=(k+1)/dL[0,i+1]/dMELN[0,i];
+		k ++=; end;
+	i ++=; end;
+
+	dMELM :2^.nFIL_SHF: .* dMELM =;
+
+	dMELM ' 0 :.nMAX_PFA_DIM*.nMAX_FIL_DIM: "pfa.fil" "s16" -PACK;
+
+	:nrm/2^.nFIL_SHF: return;
+}
+
+function -PACK_log(nrm)
+{
+	65536 var ni;
+	32767 var no;
+	:2^(-16+1): var quant_energy;
+	data dLOG;
+	-type double 1 ni dLOG -array;
+	0 :nrm/quant_energy/ni: dLOG -fill;
+	:dLOG[0,0]=dLOG[1,0]/2;
+	dLOG .ln dLOG =;
+	"\n  log min: ${dLOG[0,0]}" -MSG2;
+	dLOG :no/dLOG[dLOG.nrec-1,0]: dLOG.nrec "pfa.log" "s16" -PACK;
+	:dLOG[dLOG.nrec-1,0]: return;
+}
+
+function -PACK_pfa(nrm,idWnd)
+{
+	"uasr.pfa.len"   512   -CFG_get var flen;
+	"uasr.sig.srate" 16000 -CFG_get 1 "pfa.srate"  "u32" -PACK1;
+	"uasr.pfa.crate" 160   -CFG_get 1 "pfa.crate"  "u16" -PACK1;
+	"uasr.pfa.wlen"  400   -CFG_get 1 "pfa.wlen"   "u16" -PACK1;
+	flen                            1 "pfa.len"    "u16" -PACK1;
+	.nPFA_TYP_FFT .nPFA_TYP_LOG .nPFA_TYP_FIL + + 1 "pfa.typ"   "u8" -PACK1; # TODO: from uasr.pfa
+	.nFFT_SHF                       1 "pfa.fftshf" "s8"  -PACK1;
+	"uasr.pfa.dim"   30    -CFG_get 1 "pfa.dim"    "u16" -PACK1;
+	0                               1 "_blank1"    "u16" -PACK1;
+	idWnd 0 .nMAX_FRAME_DIM           "pfa.wnd"    "u16" -PACK;
+	"\n  norm frm: $[nrm]" -MSG2;
+	:nrm=nrm*flen/2/2^.nFFT_SHF; # norm after FFT
+	"\n  norm fft: $[nrm]" -MSG2;
+	nrm -PACK_fil nrm =;
+	"\n  norm fil: $[nrm]" -MSG2;
+	nrm -PACK_log nrm =;
+	"\n  norm log: $[nrm]" -MSG2;
+	nrm return;
+}
