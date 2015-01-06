@@ -1,2 +1,4 @@
 /_work
 /.project
+cscope*
+.*.swp

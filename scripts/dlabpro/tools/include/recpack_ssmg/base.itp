@@ -1,0 +1,26 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Data packaging tool for hardware recognizer
+##
+## AUTHOR : Frank Duckhorn
+
+
+function -QUANT_short(idSrc,nF,idDst)
+{
+	idSrc nF .* 0.5 + idDst =;
+	idDst 32767 min -32767 max idDst =;
+	idDst -type short idDst -tconvert;
+}
+
+function -QUANT_ushort(idSrc,nF,idDst)
+{
+	idSrc nF .* 0.5 + idDst =;
+	idDst 65535 min 0 max idDst =;
+	idDst -type UINT16 idDst -tconvert;
+}
+
+function -QUANT_int(idSrc,nF,idDst)
+{
+	idSrc nF .* 0.5 + idDst =;
+	idDst 2147483647 min -2147483647 max idDst =;
+	idDst -type int idDst -tconvert;
+}

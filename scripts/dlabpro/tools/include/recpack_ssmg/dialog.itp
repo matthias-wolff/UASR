@@ -5,9 +5,13 @@
 
 function -PACK_dialog(itDlg)
 {
-	itDlg.ud.nrec 1 != if leave endif;
-
 	"$[.sDirDsp]/dialog.bin" var sDlg;
+	itDlg.ud.nrec 1 != if;
+		"\n   Removing dialog file ($[sDlg])."                                        -MSG; # Protocol
+		sDlg -SH_rm;
+		leave;
+	endif;
+
 	"\n   Packing dialog file ($[sDlg])."                                        -MSG; # Protocol
   
 	data idAux;

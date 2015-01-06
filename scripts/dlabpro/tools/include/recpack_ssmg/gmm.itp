@@ -7,7 +7,7 @@
 :16*65536: var nF_GMMS;
 4096       var nDim_GMMS;
 
-function -PACK_gmm(iMmap,sExt)
+function -PACK_gmmmix(iMmap,sExt)
 {
 	"$[.sDirDsp]/GMM$[sExt]_TI.BIN" var sGMMTI;
 	"$[.sDirDsp]/GMM$[sExt]_TW.BIN" var sGMMTW;
