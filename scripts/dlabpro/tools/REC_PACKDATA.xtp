@@ -71,6 +71,7 @@ function -usage(sCmd)
       "\n       syn.model     Synthesis model (default: 3_20)"            -MSG;
       "\n       recfix.fftshf shift offset after FFT (default: 0)"        -MSG; 
       "\n       recfix.filshf shift offset after filter (default: 0)"     -MSG; 
+      "\n       recfix.prnw   Weight pruing threshold (default: 0)"       -MSG; 
       "\n       render        yes/no: render dialog and grammar FSTs "    -MSG;
                               "(default: no)"                             -MSG;
       "\n       skip          Combination of the following letters"       -MSG;
@@ -741,6 +742,7 @@ sOutTyp "F" == if;                                                              
   end;                                                                          #   <<
   "recfix.fftshf"  0 -CFG_get var nFFT_SHF;                                     #   Shift offset after FFT
   "recfix.filshf"  0 -CFG_get var nFIL_SHF;                                     #   Shift offset after filter
+  "recfix.prnw"    0 -CFG_get var nPRNW;                                        #   Weight pruning threshold
   "$[.sDirOut]/recfix.cfg"   var sFDsp;                                         #   Output file name
   "../util/fea.itp"                                                    include; #   Include
   "include/recpack_recfix/maxdim.itp"                                  include; #   |

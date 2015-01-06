@@ -70,10 +70,12 @@ function -PACK_fst(nrm,itRN,nU)
 	.nMAX_FSTO_NUM dOS -reallocate;
 
 	# Pack it
-	iS.nrec 1 "fst.xs" "u16" -PACK1;
-	iT.nrec 1 "fst.xt" "u16" -PACK1;
-	dS    0 0 "fst.s"  "mix" -PACK;
-	dT    0 0 "fst.t"  "mix" -PACK;
-	dOS   0 0 "fst.os" "mix" -PACK;
+	iS.nrec 1 "fst.xs"  "u16" -PACK1;
+	iT.nrec 1 "fst.xt"  "u16" -PACK1;
+	.nPRNW :32768/nrm: "fst.prnw" "s16" -PACK1;
+	0       1 "_blank1" "u16" -PACK1;
+	dS    0 0 "fst.s"   "mix" -PACK;
+	dT    0 0 "fst.t"   "mix" -PACK;
+	dOS   0 0 "fst.os"  "mix" -PACK;
 }
 
