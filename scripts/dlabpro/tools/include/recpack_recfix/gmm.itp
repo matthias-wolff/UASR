@@ -60,12 +60,22 @@ function -PACK_gau(nrm,itGm)
 	-type double :.nMAX_SFA_DIM-idIV.dim: idIV -addncomps;
 	-type double :.nMAX_SFA_DIM*(.nMAX_SFA_DIM-1)/2-idIC.dim: idIC -addncomps;
 
-	# Quant + join
+	# Quant
+	idGamma 0 idGamma -QUANT_s32;
+	idBeta  0 idBeta  -QUANT_s16;
+	idIV    0 idIV    -QUANT_s16;
+	idIC    0 idIC    -QUANT_s16;
+
+  # Remove -32768 because of saturation error in mmx optimized multiply
+  idIV :idIV.==-32768: + idIV =;
+  idIC :idIC.==-32768: + idIC =;
+
+	# Join to dGAU
 	data dGAU;
-	idGamma 0 idGamma -QUANT_s32; idGamma dGAU -join;
-	idBeta  0 idBeta  -QUANT_s16; idBeta  dGAU -join;
-	idIV    0 idIV    -QUANT_s16; idIV    dGAU -join;
-	idIC    0 idIC    -QUANT_s16; idIC    dGAU -join;
+	idGamma dGAU -join;
+	idBeta  dGAU -join;
+	idIV    dGAU -join;
+	idIC    dGAU -join;
 
 	# Norm to nGMM_MIN_CLIP
 	0 var nShf; vnrm :.nGMM_MIN_CLIP*2: > while; :vnrm=vnrm/2; nShf ++=; end;
