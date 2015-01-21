@@ -564,6 +564,7 @@ function -HMM_assess(itHMM,sSns,nSpl,nIte)
     "\n FAILED"                                                           -MSG; #   Protocol
     leave;                                                                      #   Leave function
   end                                                                           # <<
+  NULL NULL itHMM -1 "1L" NULL -AM_decode;                           "." -MSG2; # Init decoder
 
   ## Assessment                                                                 # -------------------------------------
   iP -begin_timer;                                                              # Start timer
@@ -601,6 +602,7 @@ function -HMM_assess(itHMM,sSns,nSpl,nIte)
   "done\n"                                                                -MSG; # Protocol
 
   ## Aftermath                                                                  # -------------------------------------
+  NULL NULL itHMM -1 "1F" NULL -AM_decode;                           "." -MSG2; # Free decoder
   sPre sSxt itHMM.ud idF idAsc -XXM_assess_log nCor =;                          # Create/continue log file
   sPre sSxt itHMM.ud idF idAsc -XXM_assess_hist;                                # Create/continue assmnt. histrograms
 
@@ -1225,7 +1227,7 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
   var        nCrate;  ( "pfa.crate" 160       -CFG_get      ) nCrate  -vset;    # Frame rate
   var        nSrate;  ( "sig.srate" 16000     -CFG_get      ) nSrate  -vset;    # Sampling rate
   var        nRinc;   ( nCrate nSrate / 1000 *              ) nRinc   -vset;    # Compute feature vector distance in ms
-  var        sDmd;    ( sMd2 "F" == if "F" else "D" end     ) sDmd    -sset;    # Algorithm of -AM_decode
+  var        sDmd;    ( sMd2 "F" == if "F" else "T" end     ) sDmd    -sset;    # Algorithm of -AM_decode
   var        nRet;                                                              # Function return value
   var        nCnt;                                                              # Number successfully processed turns
   var        bAux;                                                              # Auxiliary boolean buffer
@@ -1263,6 +1265,7 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
       itRN 0 itRN /lazy -minimize;                                              #     Lazy minimization of rec. net.
     end                                                             " ok" -MSG; #   <<
   end                                                                           # <<
+  sMd1 "O" == if NULL NULL itRN -1 "3L$[sDmd]" NULL -AM_decode end;             # Init decoder
 
   ## HMM process                                                                # -------------------------------------
   itHMM sSns nSpl nIte "F" NULL NULL iL $[sResFnc];                             # Initialize result function
@@ -1375,6 +1378,7 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
   end                                                                           # <<
   "\n   "                                                                -MSG2; # Protocol
   "done\n"                                                                -MSG; # Protocol
+  sMd1 "O" == if NULL NULL itRN -1 "3F$[sDmd]" NULL -AM_decode end;             # Free decoder
   nCnt iF.len < if                                                              # Not all turns have been processed >>
     "${iF.len-nCnt} of $[iF.len] samples not processed." sAux =;                #   Make warning text
     .__UTL_nVlevel 2 < if "$[sAux] Re-run with option -v2!" sAux =; end         #   Include extra hint
