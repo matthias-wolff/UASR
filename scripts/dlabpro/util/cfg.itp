@@ -363,9 +363,10 @@ function -CFG_get_flist(sKey,sMode)
   ## Local functions                                                            # -------------------------------------
   function -CFG_get_flist_fallback(sDefault,sFallback)                          # Fall back to other file lisz
   {                                                                             # >>
+    "flist.${sFallback}" "$[sFallback].flst" "S" -CFG_get_ex sFallback =;       #   Get configured file list name
     "${sDir}/${sDefault}.flst" stdfile -exists if leave; end                    #   Default file list exists -> ok
-    "${sDir}/${sFallback}.flst" stdfile -exists if                              #   Fall back file exists >>
-      "${sDir}/${sFallback}.flst" sFlist =;                                     #     Fall back to it
+    "${sDir}/${sFallback}" stdfile -exists if                                   #   Fall back file exists >>
+      "${sDir}/${sFallback}" sFlist =;                                          #     Fall back to it
       ( "fallback" -COLOR_yellow ) sType =;                                     #     Remember "fallback file list"
       leave;                                                                    #     That's it
     end                                                                         #   <<
