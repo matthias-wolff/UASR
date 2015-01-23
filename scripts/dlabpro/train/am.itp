@@ -1227,7 +1227,7 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
   var        nCrate;  ( "pfa.crate" 160       -CFG_get      ) nCrate  -vset;    # Frame rate
   var        nSrate;  ( "sig.srate" 16000     -CFG_get      ) nSrate  -vset;    # Sampling rate
   var        nRinc;   ( nCrate nSrate / 1000 *              ) nRinc   -vset;    # Compute feature vector distance in ms
-  var        sDmd;    ( sMd2 "F" == if "F" else "T" end     ) sDmd    -sset;    # Algorithm of -AM_decode
+  var        sDmd;    ( sMd2 "F" == if "F" else "" end     ) sDmd    -sset;     # Algorithm of -AM_decode
   var        nRet;                                                              # Function return value
   var        nCnt;                                                              # Number successfully processed turns
   var        bAux;                                                              # Auxiliary boolean buffer
@@ -1265,7 +1265,7 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
       itRN 0 itRN /lazy -minimize;                                              #     Lazy minimization of rec. net.
     end                                                             " ok" -MSG; #   <<
   end                                                                           # <<
-  sMd1 "O" == if NULL NULL itRN -1 "3L$[sDmd]" NULL -AM_decode end;             # Init decoder
+  sMd1 "0" == if NULL NULL itRN -1 "3L$[sDmd]" NULL -AM_decode end;             # Init decoder
 
   ## HMM process                                                                # -------------------------------------
   itHMM sSns nSpl nIte "F" NULL NULL iL $[sResFnc];                             # Initialize result function
@@ -1321,6 +1321,13 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
       idFea iFI itRN -1 "1A$[sDmd]" itRes -AM_decode;                           #     Decode
     end                                                                         #   <<
     NULL stdprof -end_timer;                                                    #   End timer
+    :itRes.ud.nrec==0: if;                                                      #   HACK: Create dummy result if empty >>
+      itRN.ud itRes.ud -scopy itRN.sd itRes.sd -scopy itRN.td itRes.td -scopy;  #   HACK:   Copy record structures
+      itRN.is itRes.is =; itRN.os itRes.os =;                                   #   HACK:   Copy symbol tables
+      1 itRes.ud -reallocate; :itRes.ud[0,0]=itRN.ud[0,0];                      #   HACK:   Create a unit
+      1 idNld -is_empty if idFea.nrec else idNld.nrec end                       #   HACK:   Get frame count
+        ones -2 .* 0 -1 -1 0 itRes -addseq;                                     #   HACK:   Create dummy path
+    end                                                                         #   HACK: <<
     ( stdprof.time nRinc / idFea.nrec / ) itRes.ud -set descr0;                 #   Store real time factor
     stdprof -reset_timer;                                                       #   Reset timer
     idFea.rinc itRes.td -set rinc;                                   "." -MSG2; #   Store frame rate
@@ -1355,7 +1362,7 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
         "~PLBI" -1 idPlbi -rindex;                                              #       Add reference indize
         idPlbi 3 1 2 idPlbi -expand;                                            #       Get indize for every frame
       end;                                                                      #     <<
-      :itRes.td["~TIS"].>=0: NULL 0 "sum" idAux /rec -aggregate;                #     Count number of input symbols
+      :itRes.td["~TIS"].!=-1: NULL 0 "sum" idAux /rec -aggregate;               #     Count number of input symbols
       :idAux[0,0]>0: if;                                                        #     Proceed only with some i.s. >>
         idLab itHMM.ud 0 0 idLab /label -gen_index;                             #       Convert to numeric labels
         .__bLabIdx if idPlbi idLab -join end;                                   #       Add phoneme indize
@@ -1378,7 +1385,7 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
   end                                                                           # <<
   "\n   "                                                                -MSG2; # Protocol
   "done\n"                                                                -MSG; # Protocol
-  sMd1 "O" == if NULL NULL itRN -1 "3F$[sDmd]" NULL -AM_decode end;             # Free decoder
+  sMd1 "0" == if NULL NULL itRN -1 "3F$[sDmd]" NULL -AM_decode end;             # Free decoder
   nCnt iF.len < if                                                              # Not all turns have been processed >>
     "${iF.len-nCnt} of $[iF.len] samples not processed." sAux =;                #   Make warning text
     .__UTL_nVlevel 2 < if "$[sAux] Re-run with option -v2!" sAux =; end         #   Include extra hint
