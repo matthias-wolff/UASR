@@ -295,11 +295,11 @@ function test_rec_SSMG
   run_xtp "Command recognition verify experiemnt #1" HMM.xtp evl $UASR_HOME-data/ssmg/common/info/SAMURAI_0.cfg \
     -Pdir.model=$UASR_HOME-data/vm.de/VMV_RNV/model \
     -Pam.model=1_4 \
-    -Pam.eval.wrd.ite-1_-1=0.956,0.936,1.011
+    -Pam.eval.wrd.ite-1_-1=0.960,0.951,1.001
   run_xtp "Command recognition verify experiemnt #2" HMM.xtp evl $UASR_HOME-data/ssmg/common/info/MYUSE_0.cfg \
     -Pdir.model=$UASR_HOME-data/vm.de/VMV_RNV/model \
     -Pam.model=1_4 \
-    -Pam.eval.wrd.ite-1_-1=0.951,0.942,1.002
+    -Pam.eval.wrd.ite-1_-1=0.952,0.946,1.000
 }
 
 function test_rec_PCUS11
