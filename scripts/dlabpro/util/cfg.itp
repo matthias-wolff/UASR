@@ -30,12 +30,11 @@ var  __CFG_bFce;  FALSE __CFG_bFce =;                                           
 var  __CFG_bCol;  FALSE __CFG_bCol =;                                           # Colorize output 
 var  __CFG_sCfgfilename;                                                        # Configuration file name
 
-## Configures an UASR session. The function creates a list of key/value pairs
+## Addionally loads a another config file. The function adds a list of key/value pairs
 ## from the following sources (with descending priority):
 ## <ol>
 ##   <li><code>-P&lt;key&gt;=&lt;value&gt;</code> command line options,</li>
 ##   <li>the custom configuration file <code>sFile</code> and </li>
-##   <li>the default configuration file <code>config/default.cfg</code>.</li>
 ## </ol>
 ##
 ## <h4>Remarks</h4>
@@ -43,6 +42,7 @@ var  __CFG_sCfgfilename;                                                        
 ##   <li>Custom configuration files only need to modify present or add new
 ##     key/value pairs. They do not need to repeat key/value pairs contained in
 ##     the default configuration.</li>
+##   <li>Command line options are reloaded to preserve their precedence.</li>
 ## </ul>
 ##
 ## @cgen:index
@@ -55,7 +55,7 @@ var  __CFG_sCfgfilename;                                                        
 ##          If <code>TRUE</code>, the function will terminate the dLabPro
 ##          session if <code>sFile</code> could not be loaded
 ## @return <code>TRUE</code> if successful, <code>FALSE</code> otherwise
-function -CFG_init(sFile,bTerm)
+function -CFG_add(sFile,bTerm)
 {
   ## Local functions                                                            # -------------------------------------
   function -CFG_init_fil(sFile)                                                 # Load Java property file
@@ -136,20 +136,8 @@ function -CFG_init(sFile,bTerm)
 
   ## Local variables                                                            # -------------------------------------
   var bRet;    TRUE bRet =;                                                     # Return value
-  var sDefCfg;                                                                  # Default configuration file name
   var nArg;                                                                     # Counter of command line arguments
-  data idAux;                                                                   # Auxilary data instance
   data idFiles;                                                                 # Configuration files to load
-
-  ## Save configuration file name                                               # -------------------------------------
-  { { "$[sFile]" } } "" "splitp" idAux -strop;                                  # | 
-  :idAux[0,idAux.dim-1]: "." "split" -VAR_strop .__CFG_sCfgfilename =;          # |
-
-  ## Load default configuration                                                 # -------------------------------------
-  .__CFG_idCfg -reset;                                                          # Reset configuration kay/value list
-  this :sfl[0,0]: "" "splitp" -VAR_strop sDefCfg =;                             # Get path of current script
-  sDefCfg "/../../../default.cfg" + sDefCfg =;                                  # Get path of default config. file
-  sDefCfg -CFG_init_fil;                                                        # Load default configuration file
 
   ## Find included config files                                                 # -------------------------------------
   0 var nF;                                                                     # Number of configuration files
@@ -166,11 +154,13 @@ function -CFG_init(sFile,bTerm)
     sFile "." == if "" sFile =; end                                             #   '.' -> default configuration
     sFile if                                                                    #   sFile not empty >>
       sFile -CFG_init_fil not if                                                #     Load custom config., if failed >>
-        bTerm if "FATAL: cannot load configuration file.\n" -ERROR; quit; end   #       Terminate session (if bTerm)
+        bTerm if "FATAL: cannot load configuration file ($[sFile]).\n" -ERROR;  #       Terminate session (if bTerm)
+          quit; end                                                             #       |
         FALSE bRet =;                                                           #       Return false
       end                                                                       #     <<
     end                                                                         #   <<
   nF --=; end                                                                   # <<
+  bTerm "def" == if bRet return end;                                            # For default config file: leave
 
   ## Analyze command line options (to find the exp-key)                         # -------------------------------------
   0 nArg =; nArg $$ < while                                                     # Loop over command line arguments >>
@@ -191,6 +181,51 @@ function -CFG_init(sFile,bTerm)
   ## Aftermath                                                                  # -------------------------------------
   .__UTL_nVlevel .__UTL_nElevel =;                                              # Set error level
   bRet return;                                                                  # Return success
+}
+
+## Configures an UASR session. The function creates a list of key/value pairs
+## from the following sources (with descending priority):
+## <ol>
+##   <li><code>-P&lt;key&gt;=&lt;value&gt;</code> command line options,</li>
+##   <li>the custom configuration file <code>sFile</code> and </li>
+##   <li>the default configuration file <code>config/default.cfg</code>.</li>
+## </ol>
+##
+## <h4>Remarks</h4>
+## <ul>
+##   <li>Custom configuration files only need to modify present or add new
+##     key/value pairs. They do not need to repeat key/value pairs contained in
+##     the default configuration.</li>
+## </ul>
+##
+## @cgen:index
+## @global __CFG_nJobs CW
+## @global __CFG_bNwr  CW
+## @global __CFG_bFcc  CW
+## @param sFile string
+##          Path to UASR configuration file to be loaded
+## @param bTerm boolean
+##          If <code>TRUE</code>, the function will terminate the dLabPro
+##          session if <code>sFile</code> could not be loaded
+## @return <code>TRUE</code> if successful, <code>FALSE</code> otherwise
+function -CFG_init(sFile,bTerm)
+{
+  ## Local variables                                                            # -------------------------------------
+  var sDefCfg;                                                                  # Default configuration file name
+  data idAux;                                                                   # Auxilary data instance
+
+  ## Save configuration file name                                               # -------------------------------------
+  { { "$[sFile]" } } "" "splitp" idAux -strop;                                  # | 
+  :idAux[0,idAux.dim-1]: "." "split" -VAR_strop .__CFG_sCfgfilename =;          # |
+
+  ## Load default configuration                                                 # -------------------------------------
+  .__CFG_idCfg -reset;                                                          # Reset configuration kay/value list
+  this :sfl[0,0]: "" "splitp" -VAR_strop sDefCfg =;                             # Get path of current script
+  sDefCfg "/../../../default.cfg" + sDefCfg =;                                  # Get path of default config. file
+  sDefCfg "def" -CFG_add;                                                       # Load default configuration file
+
+  ## Load new configuration                                                     # -------------------------------------
+  sFile bTerm -CFG_add;                                                         # Add new file to config
 }
 
 ## <p>Returns the value for a key from the session's configuration.</p>
