@@ -23,27 +23,15 @@
 ## You should have received a copy of the GNU Lesser General Public License
 ## along with UASR. If not, see <http://www.gnu.org/licenses/>.
 
-   4 var nMAX_SIG_CHS;
-8192 var nMAX_SIG_DELAY;
-2048 var nMAX_FRAME_DIM;
-1024 var nMAX_PFA_DIM;
-  64 var nMAX_FIL_DIM;
-   4 var nMAX_SFA_A_NUM;
-  15 var nMAX_SFA_A_CL;
-  32 var nMAX_SFA_DIM;
-1024 var nMAX_GAU_NUM;
-  16 var nMAX_MIX_GAU;
- 128 var nMAX_MIX_NUM;
-2048 var nMAX_LAD_NUM;
-2048 var nMAX_FSTS_NUM;
-4096 var nMAX_FSTT_NUM;
- 128 var nMAX_FSTO_NUM;
-  16 var nMAX_FSTO_LEN;
+function -PACK_sig(nrm)
+{
+  data dDELAY; { 0 0 0 0 } dDELAY =;
+  data dGAIN;  { 1 0 0 0 } dGAIN  =;
 
-   1 var nPFA_TYP_FFT; # 0x01
-  64 var nPFA_TYP_FIL; # 0x40
- 128 var nPFA_TYP_LOG; # 0x80
+  1 1 "sig.nch" "u8" -PACK1;
+  0 1  "_blank1" "u8"   -PACK1;                                                 # Pack blank
+  0 1  "_blank2" "u16"   -PACK1;                                                # Pack blank
+  dDELAY 1 .nMAX_SIG_CHS "sig.delay" "u16" -PACK;
+  dGAIN  0 .nMAX_SIG_CHS "sig.gain"  "u16" -PACK;
 
- 256 var nGMM_MIN_CLIP;
-
-   2 var nFST_NUM;
+}

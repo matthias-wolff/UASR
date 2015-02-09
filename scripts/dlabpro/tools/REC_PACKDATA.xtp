@@ -605,8 +605,9 @@ function -PACK_recfix()
   ## Pack it                                                                    # -------------------------------------
   1 var nrm;                                                                    # Init nomalization value
   .sFDsp -SH_rm;                                                                # Remove old output file
-  1 1  "version" "u16"   -PACK1;                                                # Pack version number
+  2 1  "version" "u16"   -PACK1;                                                # Pack version number
   0 1  "_blank1" "u16"   -PACK1;                                                # Pack blank
+  nrm                    -PACK_sig;                                             # Pack frontend information
   nrm .__FEA_iPfa.window -PACK_pfa nrm =;                                       # Pack primary feature analysis parameters
   nrm iFI itGm.mean.dim  -PACK_sfa nrm =;                                       # Pack secondary feature analysis parameters
   nrm itGm               -PACK_gau nrm =;                                       # Pack gaussian parameters
@@ -747,6 +748,7 @@ sOutTyp "F" == if;                                                              
   "../util/fea.itp"                                                    include; #   Include
   "include/recpack_recfix/maxdim.itp"                                  include; #   |
   "include/recpack_recfix/base.itp"                                    include; #   |
+  "include/recpack_recfix/sig.itp"                                     include; #   |
   "include/recpack_recfix/pfa.itp"                                     include; #   |
   "include/recpack_recfix/sfa.itp"                                     include; #   |
   "include/recpack_recfix/gmm.itp"                                     include; #   |
