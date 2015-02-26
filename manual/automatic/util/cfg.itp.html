@@ -272,6 +272,17 @@ The file extensions are:
    0 - disable MAP Approximation
    1 - set MAP to minimize Entropy
   -1 - set MAP to maximize Entropy</pre></td></tr>
+    <tr><td><code>uasr.am.train.split.minrc</code></td><td>number</td><td>-1    </td><td>Minimal Gaussian reference counter for state splitting</td></tr>
+    <tr><td><code>uasr.am.train.split.num</code></td><td>number</td><td>0     </td><td>Number of Gaussians to split (0 for all, negativ values are used as percentage)</td></tr>
+    <tr><td><code>uasr.am.train.split.krit</code></td><td>string</td><td>var    </td><td>Kriterium for selecting Gaussians ("var"-Variance, "rc"-Reference Counter, "pd"-Probability density, "ipd"-Inverse probability density</td></tr>
+    <tr><td><code>uasr.am.train.tprun.thresh</code></td><td>number</td><td>1000</td><td>Weight threshold for transition pruning</td></tr>
+    <tr><td><code>uasr.am.train.prun.pathit</code></td><td>number</td><td>3</td><td>Maximal path length for path weight calcluation</td></tr>
+    <tr><td><code>uasr.am.train.prun.tpers</code></td><td>number</td><td>8</td><td>Number of transitions to remain in model as multiple of state count</td></tr>
+    <tr><td><code>uasr.am.train.uprc.num</code></td><td>number</td><td>0</td><td>Number of transitions to remain in all models (0 for as much as possible (limited by number of used paths), negative for multiple of state count)</td></tr>
+    <tr><td><code>uasr.am.train.bn.num</code></td><td>number</td><td>-1</td><td>Number of best paths to remain in model (-1 for all)</td></tr>
+    <tr><td><code>uasr.am.train.bn.len</code></td><td>number</td><td>-1</td><td>Length of best paths to remain in model (-1 for shorttest possible, "mean" for meanage path length in training set)</td></tr>
+    <tr><td><code>uasr.am.train.up.num</code></td><td>number</td><td>-1</td><td>Number of best used paths to remain in model (-1 for all used paths)</td></tr>
+    <tr><td><code>uasr.am.train.2trainlst</code></td><td>string</td><td>"dev"</td><td>2. Trainingsfilelist for optimization methods for: split(pd,ipd),prun,uprc,bn,up</td></tr>
     <tr><td><code>uasr.am.decode.prune   </code></td><td>number</td><td>0</td><td>Pruning constant for decoding (see <code>fst.prn_const</code>).</td></tr>
     <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
     </tbody>
