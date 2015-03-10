@@ -65,9 +65,6 @@ function -PACK_syn(sSynDir,sSynMod)
 	"\n   Packing syn unit string file ($[sUNIT])."         -MSG; # Protocol
 	data idUnits; "$[sSynDir]/allUnits.txt" "ascii" idUnits stdfile -import;
 
-	data dNU; -type int 1 1 dNU -array; :dNU[0,0]=idUnits.nrec;
-	sUNIT "raw" dNU stdfile -export;
-
 	data dUNIT;
 	idUnits 0 1 dUNIT -select;
 	dUNIT 64 dUNIT /force -tconvert;
@@ -86,6 +83,18 @@ function -PACK_syn(sSynDir,sSynMod)
 		:idU["~F0"]:  dF0 -cat;
 		:idU["~INT"]: dI0 -cat;
 	nU ++=; end;
+
+	dID.nrec 2 % if; ## FIX correct alignment of floats in dF0 and dI0
+		{ 0 } dID -cat;
+		{ 0 } dF0 -cat;
+		{ 0 } dI0 -cat;
+		dUNIT.nrec ++ dUNIT -reallocate;
+		:dUNIT[dUNIT.nrec-1,0]="[FILL]";
+		:dUNIT[dUNIT.nrec-1,1]=1;
+	end;
+
+	data dNU; -type int 1 1 dNU -array; :dNU[0,0]=dUNIT.nrec;
+	sUNIT "raw" dNU stdfile -export;
 	sUNIT "raw" dUNIT stdfile /append -export;
 	sUNIT "raw" dID   stdfile /append -export;
 	sUNIT "raw" dF0   stdfile /append -export;
