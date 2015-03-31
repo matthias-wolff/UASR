@@ -353,8 +353,62 @@ function -WM_mazeworld(idMaze,idAct,sMode,itWm)
 ## @return void
 function -WM_qlearn(idAct,nDefQ,nXIte,itWm,itIwm)
 {
-  function -AOL(nIni,idAct,nDefQ,itIwm)                                         # Lists possible actions from state nIni
+  # Lists possible actions from state nIni
+  function -AOL(nIni,idAct,nDefQ,itIwm) # 3 of 19 s
+  {
+".__iP_AOL" "profile" ?instance not if profile .__iP_AOL; end .__iP_AOL -cont_timer;
+    data idRes;                                                                 #   Result (transition list)
+    data idRes2;                                                                #   List transitions from nIni in itIwm
+    data idAux;                                                                 #   Auxiliary data instance
+    var  nIcTdTis; ( itIwm.NC_TD_TIS itIwm.td -find_comp ) nIcTdTis =;          #   Transducer input symbol comp. index
+
+    itIwm.td idRes =; 1 idRes -allocate;                                        #   Make one empty dummy transition
+    :idRes[0,itIwm.IC_TD_INI]=nIni;                                             #   Set initial state
+    :idRes[0,itIwm.IC_TD_TER]=-1;                                               #   Set terminal state
+    :idRes[0,.__wm_sNcTdQR]=nDefQ;                                              #   Set initial Q-value
+    ( 1  idAct.nrec zeros ) 0 idRes 0 idRes.dim idRes -lookup;                  #   Duplicate trans. idAct.nrec times
+    itIwm.NC_TD_TIS nIcTdTis idRes -rindex;                                     #   Fill in action indices
+    :itIwm.td[itIwm.IC_TD_INI].==nIni: itIwm.td /comp -dmark;                   #   Mark existing transitions from nIni
+    itIwm.td 0 0 idRes2 /mark -select; itIwm.td -unmark;                        #   Copy marked transitions and unmark
+    idRes2 -is_empty not if                                                     #   Found existing transitions >>
+      idRes idRes2 nIcTdTis nIcTdTis idAux -gen_index;                          #     Find actions in default result
+      :idAux.>=0: idRes /comp -dmark; idRes 0 0 idRes /mark -delete;            #     Delete them
+      idRes2 idRes -cat;                                                        #     Append existing trans. to result
+    end                                                                         #   <<
+.__iP_AOL -break_timer;
+    idRes return;                                                               #   Return result
+  }                                                                             # <<
+  function -AOLb(nIni,idAct,nDefQ,itIwm) # 9 of 25 s
+  {
+".__iP_AOL" "profile" ?instance not if profile .__iP_AOL; end .__iP_AOL -cont_timer;
+    data idRes;
+    data idRes2;
+    data idAux;
+    fst  itAux;
+
+    :ones(1,idAct.nrec)*nIni: idRes =;
+    :ones(1,idAct.nrec)*-1:   idRes -join;
+    NULL -1 idRes -rindex;
+    :ones(1,idAct.nrec)*nDefQ: idRes -join;
+
+    itIwm 0 { $[nIni] } 0 NULL 1 itAux /forward /noerror -excerpt;
+    itAux.td -is_empty not if
+      idRes :itAux.td[itAux.NC_TD_TIS]: 2 0 idAux -gen_index;
+      :idAux.>=0: idRes /comp -dmark; 
+      idRes 0 0 idRes /mark -delete;
+      itAux.td itAux.IC_TD_INI itAux.sd 1 1 idRes2 -lookup;
+      itAux.td itAux.IC_TD_TER itAux.sd 1 1 idAux -lookup; idAux idRes2 -join;
+      :itAux.td[itAux.NC_TD_TIS]: 0 1 idAux -select; idAux idRes2 -join;
+      :itAux.td[.__wm_sNcTdQR]:   0 1 idAux -select; idAux idRes2 -join;
+      idRes2 ( -type double ) idRes2 /force -tconvert; idRes2 idRes -cat;
+    end
+    { "~INI" "~TER" "~TIS" "$[.__wm_sNcTdQR]" } ' 0 idRes -set_cnames;          #   Name components
+.__iP_AOL -break_timer;
+    idRes return;                                                               #   Return result
+  }
+  function -AOLa(nIni,idAct,nDefQ,itIwm) # 22 of 38 s
   {                                                                             # >>
+".__iP_AOL" "profile" ?instance not if profile .__iP_AOL; end .__iP_AOL -cont_timer;
     data idRes;                                                                 #   Result
     var  nAct;                                                                  #   Current action
     var  nT;                                                                    #   Transition index in inner world model
@@ -375,7 +429,8 @@ function -WM_qlearn(idAct,nDefQ,nXIte,itWm,itIwm)
       nAct ++=;                                                                 #     Next action
     end                                                                         #   <<
     "\n     "                                                          3 -MSGX; #   Protocol
-    { "nIni" "nTer" "nAct" "nQ" } ' 0 idRes -set_cnames;                        #   Name components (for beauty's sake)
+    { "~INI" "~TER" "~TIS" "$[.__wm_sNcTdQR]" } ' 0 idRes -set_cnames;          #   Name components
+.__iP_AOL -break_timer;
     idRes return;                                                               #   Return result
   }                                                                             # <<
 
@@ -396,6 +451,7 @@ function -WM_qlearn(idAct,nDefQ,nXIte,itWm,itIwm)
   ## Q-learning iteration                                                       # -------------------------------------
   "\n\n   Q-Learning ($[nXIte] iterations)"                               -MSG; # Protocol
     "\n   - Initial Q-value: $[nDefQ]"                                    -MSG; # Protocol
+profile iP; iP -begin_timer;
   0 1 -PBAR;                                                                    # Begin progress bar
   0 nIte =; nIte nXIte < while                                                  # Q-learning iteration >>
     ( itWm -WM_setrandomstate ) nIni =;                                         #   Randomly set a new world state
@@ -404,11 +460,11 @@ function -WM_qlearn(idAct,nDefQ,nXIte,itWm,itIwm)
     :(nIte+1)/nXIte: 1 -PBAR;                                                   #   Display progress
 
     ## List and rank action options, then choose and perform action             #   - - - - - - - - - - - - - - - - - -
-    ( nIni idAct nDefQ itIwm -AOL ) idAol =;                                    #   Get action option from nIni
-    :idAol[3]: NULL 0 "max" idAux /rec -aggregate;                              #   Get maximal Q-value
-    :idAol[3].==idAux[0,0]: idAol /comp -dmark;                                 #   Mark maximal Q-values
+    ( nIni idAct nDefQ itIwm -AOL ) idAol =;                                    #   Get action options from nIni
+    :idAol[.__wm_sNcTdQR]: NULL 0 "max" idAux /rec -aggregate;                              #   Get maximal Q-value
+    :idAol[.__wm_sNcTdQR].==idAux[0,0]: idAol /comp -dmark;                                 #   Mark maximal Q-values
     idAol 0 0 idAol /mark -select; idAol -unmark;                               #   Delete non-maxima
-    idAol 2 nRAct -rset; nRAct nAct =;                                          #   Randomly choose from remaining opts
+    idAol ( itIwm.NC_TD_TIS idAol -find_comp ) nRAct -rset; nRAct nAct =;                                          #   Randomly choose from remaining opts
     ", act=$[nAct] (\"${idAct[nAct,0]}\")"                               -MSG2; #   Protocol
     ( nAct itWm -WM_action ) idObs =;                                           #   Perform action
     :idObs[0,1]: nTer =;                                                        #   New world state
@@ -416,16 +472,17 @@ function -WM_qlearn(idAct,nDefQ,nXIte,itWm,itIwm)
     " -> ter=$[nTer], reward=$[nDrw]"                                    -MSG2; #   Protocol
 
     ## Extend inner world model and compute new Q-values                        #   - - - - - - - - - - - - - - - - - -
-    ( nTer idAct nDefQ itIwm -AOL ) idAol =;                                    #   Get action option from nTer
-    :idAol[3]: NULL 0 "max" idAux /rec -aggregate;                              #   Get maximal Q-value
+    ( nTer idAct nDefQ itIwm -AOL ) idAol =;                                    #   Get action options from nTer
+    :idAol[.__wm_sNcTdQR]: NULL 0 "max" idAux /rec -aggregate;                              #   Get maximal Q-value
     ( nIni nTer nAct :nDrw>0: itIwm -WM_addtrans ) nT =;                        #   Log action in inner world model
     :itIwm.td[nT,.__wm_sNcTdQR]=0.9*idAux[0,0]+nDrw;                            #   Set Q-value of action transition
     ", Q=${itIwm.td[nT,.__wm_sNcTdQR]}"                                  -MSG2; #   Protocol
 
     nIte ++=;                                                                   #   Next iteration step
   end                                                                           # <<
-  "\n  "                                                                 -MSG2; # Protocol (verbose level 2)
-  "done\n\n"                                                              -MSG; # Protocol
+  "\n  " -MSG2; "done\n\n"                                                -MSG; # Protocol
+".__iP_AOL" "profile" ?instance if "\nAOL ($[.__iP_AOL.calls]x): " .__iP_AOL -end_timer; end
+"\ntotal: " iP -end_timer; "\n" -echo;
 }
 
 ## World function. The function is invoked by the Q-learning algorithm <a 
