@@ -461,10 +461,10 @@ profile iP; iP -begin_timer;
 
     ## List and rank action options, then choose and perform action             #   - - - - - - - - - - - - - - - - - -
     ( nIni idAct nDefQ itIwm -AOL ) idAol =;                                    #   Get action options from nIni
-    :idAol[.__wm_sNcTdQR]: NULL 0 "max" idAux /rec -aggregate;                              #   Get maximal Q-value
-    :idAol[.__wm_sNcTdQR].==idAux[0,0]: idAol /comp -dmark;                                 #   Mark maximal Q-values
+    :idAol[.__wm_sNcTdQR]: NULL 0 "max" idAux /rec -aggregate;                  #   Get maximal Q-value
+    :idAol[.__wm_sNcTdQR].==idAux[0,0]: idAol /comp -dmark;                     #   Mark maximal Q-values
     idAol 0 0 idAol /mark -select; idAol -unmark;                               #   Delete non-maxima
-    idAol ( itIwm.NC_TD_TIS idAol -find_comp ) nRAct -rset; nRAct nAct =;                                          #   Randomly choose from remaining opts
+    idAol ( itIwm.NC_TD_TIS idAol -find_comp ) nRAct -rset; nRAct nAct =;       #   Randomly choose from remaining opts
     ", act=$[nAct] (\"${idAct[nAct,0]}\")"                               -MSG2; #   Protocol
     ( nAct itWm -WM_action ) idObs =;                                           #   Perform action
     :idObs[0,1]: nTer =;                                                        #   New world state
@@ -473,7 +473,7 @@ profile iP; iP -begin_timer;
 
     ## Extend inner world model and compute new Q-values                        #   - - - - - - - - - - - - - - - - - -
     ( nTer idAct nDefQ itIwm -AOL ) idAol =;                                    #   Get action options from nTer
-    :idAol[.__wm_sNcTdQR]: NULL 0 "max" idAux /rec -aggregate;                              #   Get maximal Q-value
+    :idAol[.__wm_sNcTdQR]: NULL 0 "max" idAux /rec -aggregate;                  #   Get maximal Q-value
     ( nIni nTer nAct :nDrw>0: itIwm -WM_addtrans ) nT =;                        #   Log action in inner world model
     :itIwm.td[nT,.__wm_sNcTdQR]=0.9*idAux[0,0]+nDrw;                            #   Set Q-value of action transition
     ", Q=${itIwm.td[nT,.__wm_sNcTdQR]}"                                  -MSG2; #   Protocol
