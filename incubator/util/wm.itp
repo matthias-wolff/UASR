@@ -28,6 +28,8 @@
 
 var __wm_sNcTdQR; "~QR" __wm_sNcTdQR =;                                         # Q-value/reward component
 
+## -- World model editing and rendering functions --
+
 ## Creates a new empty world automaton.
 ##
 ## @param itWm fst
@@ -41,51 +43,6 @@ function -WM_init(itWm)
   "NAME" 255 itWm.sd -addcomp;                                                  # State name
   itWm.NC_TD_RC ( -type int    ) itWm.td -addcomp;                              # Add trans. reference counter comp.
   .__wm_sNcTdQR ( -type double ) itWm.td -addcomp;                              # Add Q-value/reward component
-}
-
-## Returns the current state of a world automaton.
-##
-## @param itWm fst
-##          The world model in unit 0. 
-## @return The zero-based index of the current state.
-## @see -WM_setstate
-function -WM_getstate(itWm)
-{
-  itWm.ud.descr0 return;                                                        # State stored in ud.descr0
-}
-
-## Sets the current state of a world automaton.
-##
-## @param nS int
-##          The zero-based index of the current state. There are no checks 
-##          performed.
-## @param itWm fst
-##          The world model in unit 0. 
-## @return void
-## @see -WM_getstate
-## @see -WM_setrandomstate
-function -WM_setstate(nS,itWm)
-{
-  nS itWm.ud -set descr0;                                                       # State stored in ud.descr0
-}
-
-## Randomly sets a new current state of a world automaton.
-##
-## @param itWm fst
-##          The world model in unit 0. 
-## @return The zero-based index of the newly selected state.
-## @see -WM_getstate
-## @see -WM_setstate
-function -WM_setrandomstate(itWm)
-{
-  fst  itAux;                                                                   # Auxiliary transducer
-  data idAux;                                                                   # Auxiliary data instance
-  var  nRS;                                                                     # Random state
-  itWm 0 { 0 } 0 NULL 1 itAux /forward -excerpt;                                # Go one transition from beginning
-  itAux.td itAux.IC_TD_TER itAux.sd 1 1 idAux -lookup;                          # Get world state IDs
-  idAux 0 nRS -rset;                                                            # Select random world state (name)
-  $[nRS] itWm.ud -set descr0;                                                   # Convert to int and set current state
-  itWm.ud.descr0 return;                                                        # Return current state
 }
 
 ## Ensures the presence of the specified state ID in a world automaton.
@@ -194,6 +151,8 @@ function -WM_render(sFname,sFormat,sMode,itWm)
   :itAux.td[itAux.NC_TD_LSR]=itAux.td[.__wm_sNcTdQR];                           # Q-values -> weights
   sFname itWm.is NULL 0 sFormat itAux -FST_render_ex;
 }
+
+## -- Special worlds --
 
 ## Creates a maze world automaton.
 ##
@@ -335,14 +294,98 @@ function -WM_mazeworld(idMaze,idAct,sMode,itWm)
   end                                                                           # <<
 }
 
-## Simple Q-learning. The function invokes <a href="#clp_-WM_wfn">-WM_wfn</a> to
-## interact with the world. Applications must overload that function and provide
-## a world function.
+## -- World model execution functions --
+
+## Returns the current state of a world automaton.
+##
+## @param itWm fst
+##          The world model in unit 0. 
+## @return The zero-based index of the current state.
+## @see -WM_setstate
+function -WM_getstate(itWm)
+{
+  itWm.ud.descr0 return;                                                        # State stored in ud.descr0
+}
+
+## Sets the current state of a world automaton.
+##
+## @param nS int
+##          The zero-based index of the current state. There are no checks 
+##          performed.
+## @param itWm fst
+##          The world model in unit 0. 
+## @return void
+## @see -WM_getstate
+## @see -WM_setrandomstate
+function -WM_setstate(nS,itWm)
+{
+  nS itWm.ud -set descr0;                                                       # State stored in ud.descr0
+}
+
+## Randomly sets a new current state of a world automaton.
+##
+## @param itWm fst
+##          The world model in unit 0. 
+## @return The zero-based index of the newly selected state.
+## @see -WM_getstate
+## @see -WM_setstate
+function -WM_setrandomstate(itWm)
+{
+  fst  itAux;                                                                   # Auxiliary transducer
+  data idAux;                                                                   # Auxiliary data instance
+  var  nRS;                                                                     # Random state
+  itWm 0 { 0 } 0 NULL 1 itAux /forward -excerpt;                                # Go one transition from beginning
+  itAux.td itAux.IC_TD_TER itAux.sd 1 1 idAux -lookup;                          # Get world state IDs
+  idAux 0 nRS -rset;                                                            # Select random world state (name)
+  $[nRS] itWm.ud -set descr0;                                                   # Convert to int and set current state
+  itWm.ud.descr0 return;                                                        # Return current state
+}
+
+## Performs one action in a finite state world.
+## 
+## @param nAct int
+##          Zero-based index of the action to be performed, -1 for no action.
+## @param itWm fst
+##          The world model in unit 0. 
+## @return A data instance with exactly one record of the following structure:
+##    <table>
+##      <tr><th>Component</th><th>Type</th><th>Description</th></tr>
+##      <tr><td>0</td><td><code>int</code></td><td>State before performing <code>nAct</code></td></tr>
+##      <tr><td>1</td><td><code>int</code></td><td>State after performing <code>nAct</code></td></tr>
+##      <tr><td>2</td><td><code>int</code></td><td><code>nAct</code></td></tr>
+##      <tr><td>3</td><td><code>double</code></td><td>The direct reward of <code>nAct</code></td></tr>
+##    </table>
+## @see -WM_qlearn
+function -WM_act(nAct,itWm)
+{
+  data idRes;                                                                   # Result
+  var  nDRw; 0 nDRw =;                                                          # Direct reward of action
+  var  nIni; itWm.ud.descr0 nIni =;                                             # Current world state
+  var  nTer; nIni nTer =;                                                       # World state after action (default)
+  var  nT; ( nIni -1 nAct itWm -WM_findtrans ) nT =;                            # Get action transition
+  :(nT>=0) && (nAct>=0): if                                                     # Action transition found >>
+    :itWm.td[nT,itWm.IC_TD_TER]: nTer =;                                        #   Get world state after action
+    :itWm.td[nT,.__wm_sNcTdQR]:  nDRw =;                                        #   Get direct reward of action
+  end                                                                           # <<
+  nTer itWm.ud -set descr0;                                                     # Set new world state
+  { $[nIni] $[nTer] $[nAct] $[nDRw] } idRes =;                                  # Prepare result
+  { "nIni" "nTer" "nAct" "nR" } ' 0 idRes -set_cnames;                          # ...
+  idRes return;                                                                 # Return result
+}
+
+## -- Learning functions --
+
+## Simple Q-learning. The function interacts with the world model
+## <code>itWm</code> only by invoking <a href="#clp_-WM_setrandomstate"
+## >-WM_setrandomstate</a> and <a href="#clp_-WM_act">-WM_act</a>. These 
+## functions may be overloaded to implement other worlds.
 ##
 ## @param idAct data
 ##         A list of actions which can be performed in the world.
 ## @param nDefQ double
 ##         Initial Q-value, 3 is a reasonable choice.
+## @param nDctQ double
+##         Q discount factor, 0.9 is a reasonable choice.
 ## @param nXIte int
 ##         Number of iterations.
 ## @param itWm fst
@@ -351,12 +394,10 @@ function -WM_mazeworld(idMaze,idAct,sMode,itWm)
 ##           Filled with the inner world model of the cognitive agent after 
 ##           Q-learning.
 ## @return void
-function -WM_qlearn(idAct,nDefQ,nXIte,itWm,itIwm)
+function -WM_qlearn(idAct,nDefQ,nDctQ,nXIte,itWm,itIwm)
 {
-  # Lists possible actions from state nIni
-  function -AOL(nIni,idAct,nDefQ,itIwm) # 3 of 19 s
-  {
-".__iP_AOL" "profile" ?instance not if profile .__iP_AOL; end .__iP_AOL -cont_timer;
+  function -LPA(nIni,idAct,nDefQ,itIwm)                                         # List possible actions at nIni
+  {                                                                             # >>
     data idRes;                                                                 #   Result (transition list)
     data idRes2;                                                                #   List transitions from nIni in itIwm
     data idAux;                                                                 #   Auxiliary data instance
@@ -375,66 +416,22 @@ function -WM_qlearn(idAct,nDefQ,nXIte,itWm,itIwm)
       :idAux.>=0: idRes /comp -dmark; idRes 0 0 idRes /mark -delete;            #     Delete them
       idRes2 idRes -cat;                                                        #     Append existing trans. to result
     end                                                                         #   <<
-.__iP_AOL -break_timer;
-    idRes return;                                                               #   Return result
-  }                                                                             # <<
-  function -AOLb(nIni,idAct,nDefQ,itIwm) # 9 of 25 s
-  {
-".__iP_AOL" "profile" ?instance not if profile .__iP_AOL; end .__iP_AOL -cont_timer;
-    data idRes;
-    data idRes2;
-    data idAux;
-    fst  itAux;
-
-    :ones(1,idAct.nrec)*nIni: idRes =;
-    :ones(1,idAct.nrec)*-1:   idRes -join;
-    NULL -1 idRes -rindex;
-    :ones(1,idAct.nrec)*nDefQ: idRes -join;
-
-    itIwm 0 { $[nIni] } 0 NULL 1 itAux /forward /noerror -excerpt;
-    itAux.td -is_empty not if
-      idRes :itAux.td[itAux.NC_TD_TIS]: 2 0 idAux -gen_index;
-      :idAux.>=0: idRes /comp -dmark; 
-      idRes 0 0 idRes /mark -delete;
-      itAux.td itAux.IC_TD_INI itAux.sd 1 1 idRes2 -lookup;
-      itAux.td itAux.IC_TD_TER itAux.sd 1 1 idAux -lookup; idAux idRes2 -join;
-      :itAux.td[itAux.NC_TD_TIS]: 0 1 idAux -select; idAux idRes2 -join;
-      :itAux.td[.__wm_sNcTdQR]:   0 1 idAux -select; idAux idRes2 -join;
-      idRes2 ( -type double ) idRes2 /force -tconvert; idRes2 idRes -cat;
-    end
-    { "~INI" "~TER" "~TIS" "$[.__wm_sNcTdQR]" } ' 0 idRes -set_cnames;          #   Name components
-.__iP_AOL -break_timer;
-    idRes return;                                                               #   Return result
-  }
-  function -AOLa(nIni,idAct,nDefQ,itIwm) # 22 of 38 s
-  {                                                                             # >>
-".__iP_AOL" "profile" ?instance not if profile .__iP_AOL; end .__iP_AOL -cont_timer;
-    data idRes;                                                                 #   Result
-    var  nAct;                                                                  #   Current action
-    var  nT;                                                                    #   Transition index in inner world model
-    var  nIcTer; itIwm.IC_TD_TER nIcTer =;                                      #   Index of terminal state component
-    var  nIcQ; ( .__wm_sNcTdQR itIwm.td -find_comp ) nIcQ =;                    #   Index of Q-values component
-    nIcQ 0 < if "No Q-weights found in inner world model" -ERROR; end           #   No weights --> error message
-    "\n     Possible actions from state $[nIni]:"                      3 -MSGX; #   Protocol
-    0 nAct =; nAct idAct.nrec < while                                           #   Loop over actions >>
-      ( nIni -1 nAct itIwm -WM_findtrans ) nT =;                                #     Find action trans. in inner wm.
-      nT 0 < if                                                                 #     Not found >>
-        { $[nIni] -1 $[nAct] $[nDefQ] }                                         #       Unknown action option ...
-      else                                                                      #     << found >>
-        { $[nIni] ${itIwm.td[nT,nIcTer]} $[nAct] ${itIwm.td[nT,nIcQ]} }         #       Known action option ...
+    -UASR_get_vlevel 3 >= if                                                    #   Verbose level 3 and higher >>
+      "\n     Possible actions at state $[nIni]"                         -echo; #     Protocol
+      var nR; nR idRes.nrec < while                                             #     Loop over action list >>
+        "\n     - ${idRes[nR,itIwm.NC_TD_TIS]}"                          -echo; #       Protocol
+        " (\"${idAct[idRes[nR,itIwm.NC_TD_TIS],0]}\"):"                  -echo; #       Protocol
+        " -> ter=" :idRes[nR,itIwm.IC_TD_TER]<0: if "?"                         #       Protocol
+          else "${idRes[nR,itIwm.IC_TD_TER]}" end +                      -echo; #       ...
+        ", Q=${idRes[nR,.__wm_sNcTdQR]}"                                 -echo; #       Protocol
+        nR ++=;                                                                 #       Next possible action
       end                                                                       #     <<
-      idRes -cat;                                                               #     ... appended to list
-      "\n     - $[nAct] (\"${idAct[nAct,0]}\")"                        3 -MSGX; #     Protocol
-      " -> ter=${idRes[idRes.nrec-1,1]}, Q=${idRes[idRes.nrec-1,3]}"   3 -MSGX; #     Protocol
-      nAct ++=;                                                                 #     Next action
+      "\n     "                                                          -echo; #   Protocol
     end                                                                         #   <<
-    "\n     "                                                          3 -MSGX; #   Protocol
-    { "~INI" "~TER" "~TIS" "$[.__wm_sNcTdQR]" } ' 0 idRes -set_cnames;          #   Name components
-.__iP_AOL -break_timer;
-    idRes return;                                                               #   Return result
+    idRes return;                                                               #   Return a transition list
   }                                                                             # <<
 
-  data idAol;                                                                   # Action options list
+  data idLpa;                                                                   # List of possible actions
   data idObs;                                                                   # Observation of the world
   data idAux;                                                                   # Auxiliary data instance
   var  nRAct;                                                                   # Random action
@@ -448,74 +445,47 @@ function -WM_qlearn(idAct,nDefQ,nXIte,itWm,itIwm)
   ## Initialization                                                             # -------------------------------------  
   itIwm -WM_init;                                                               # Reset agent's inner world model
   
+profile iP; profile iXP; iXP -begin_timer;
+iP -cont_timer; # == PROFILE SNIPPET =>
+iP -break_timer; # <= PROFILE SNIPPET ==
   ## Q-learning iteration                                                       # -------------------------------------
   "\n\n   Q-Learning ($[nXIte] iterations)"                               -MSG; # Protocol
     "\n   - Initial Q-value: $[nDefQ]"                                    -MSG; # Protocol
-profile iP; iP -begin_timer;
+    "\n   - Q discount     : $[nDctQ]"                                    -MSG; # Protocol
   0 1 -PBAR;                                                                    # Begin progress bar
   0 nIte =; nIte nXIte < while                                                  # Q-learning iteration >>
-    ( itWm -WM_setrandomstate ) nIni =;                                         #   Randomly set a new world state
-    0 nIni -1 FALSE itIwm -WM_addtrans;                                         #   This is a possible start state
+    ( itWm -WM_setrandomstate ) nIni =;                                         #   15% # Randomly set a new world state
+    0 nIni -1 FALSE itIwm -WM_addtrans;                                         #   17% # This is a possible start state
     "\n   - ${nIte+1}/$[nXIte]: ini=$[nIni]"                             -MSG2; #   Protocol
     :(nIte+1)/nXIte: 1 -PBAR;                                                   #   Display progress
 
-    ## List and rank action options, then choose and perform action             #   - - - - - - - - - - - - - - - - - -
-    ( nIni idAct nDefQ itIwm -AOL ) idAol =;                                    #   Get action options from nIni
-    :idAol[.__wm_sNcTdQR]: NULL 0 "max" idAux /rec -aggregate;                  #   Get maximal Q-value
-    :idAol[.__wm_sNcTdQR].==idAux[0,0]: idAol /comp -dmark;                     #   Mark maximal Q-values
-    idAol 0 0 idAol /mark -select; idAol -unmark;                               #   Delete non-maxima
-    idAol ( itIwm.NC_TD_TIS idAol -find_comp ) nRAct -rset; nRAct nAct =;       #   Randomly choose from remaining opts
+    ## List and rank action options, then choose and perform action             #   35% # - - - - - - - - - - - - - - - - - -
+    ( nIni idAct nDefQ itIwm -LPA ) idLpa =;                                    #   11% # Get action options from nIni
+    :idLpa[.__wm_sNcTdQR]: NULL 0 "max" idAux /rec -aggregate;                  #   Get maximal Q-value
+    :idLpa[.__wm_sNcTdQR].==idAux[0,0]: idLpa /comp -dmark;                     #   Mark maximal Q-values
+    idLpa 0 0 idLpa /mark -select; idLpa -unmark;                               #   Delete non-maxima
+    idLpa ( itIwm.NC_TD_TIS idLpa -find_comp ) nRAct -rset; nRAct nAct =;       #   Randomly choose from remaining opts
     ", act=$[nAct] (\"${idAct[nAct,0]}\")"                               -MSG2; #   Protocol
-    ( nAct itWm -WM_action ) idObs =;                                           #   Perform action
+    ( nAct itWm -WM_act ) idObs =;                                              #   17% # Perform action
     :idObs[0,1]: nTer =;                                                        #   New world state
     :idObs[0,3]: nDrw =;                                                        #   Direct reward from world
     " -> ter=$[nTer], reward=$[nDrw]"                                    -MSG2; #   Protocol
 
-    ## Extend inner world model and compute new Q-values                        #   - - - - - - - - - - - - - - - - - -
-    ( nTer idAct nDefQ itIwm -AOL ) idAol =;                                    #   Get action options from nTer
-    :idAol[.__wm_sNcTdQR]: NULL 0 "max" idAux /rec -aggregate;                  #   Get maximal Q-value
-    ( nIni nTer nAct :nDrw>0: itIwm -WM_addtrans ) nT =;                        #   Log action in inner world model
-    :itIwm.td[nT,.__wm_sNcTdQR]=0.9*idAux[0,0]+nDrw;                            #   Set Q-value of action transition
-    ", Q=${itIwm.td[nT,.__wm_sNcTdQR]}"                                  -MSG2; #   Protocol
+    ## Extend inner world model and compute new Q-values                        #   31% # - - - - - - - - - - - - - - - - - -
+    ( nTer idAct nDefQ itIwm -LPA ) idLpa =;                                    #   12% # Get action options from nTer
+    :idLpa[.__wm_sNcTdQR]: NULL 0 "max" idAux /rec -aggregate;                  #   Get maximal Q-value
+    ( nIni nTer nAct :nDrw>0: itIwm -WM_addtrans ) nT =;                        #   17% # Log action in inner world model
+    :itIwm.td[nT,.__wm_sNcTdQR]=nDctQ*idAux[0,0]+nDrw;                          #   Set Q-value of action transition
+    ", maxQ=${idAux[0,0]} -> Q=$[nDctQ]*${idAux[0,0]}+$[nDrw]"           -MSG2; #   Protocol
+    "=${itIwm.td[nT,.__wm_sNcTdQR]}"                                     -MSG2; #   Protocol
 
     nIte ++=;                                                                   #   Next iteration step
   end                                                                           # <<
   "\n  " -MSG2; "done\n\n"                                                -MSG; # Protocol
-".__iP_AOL" "profile" ?instance if "\nAOL ($[.__iP_AOL.calls]x): " .__iP_AOL -end_timer; end
-"\ntotal: " iP -end_timer; "\n" -echo;
-}
-
-## World function. The function is invoked by the Q-learning algorithm <a 
-## href="#clp_-WM_qlearn">-WM_qlearn</a>.
-## 
-## @param nAct int
-##    Zero-based index of the action to be performed, -1 for no action.
-## @param itWm fst
-##          The world model in unit 0. 
-## @return A data instance with exactly one record of the following structure:
-##    <table>
-##      <tr><th>Component</th><th>Type</th><th>Description</th></tr>
-##      <tr><td>0</td><td><code>int</code></td><td>State before performing <code>nAct</code></td></tr>
-##      <tr><td>1</td><td><code>int</code></td><td>State after performing <code>nAct</code></td></tr>
-##      <tr><td>2</td><td><code>int</code></td><td><code>nAct</code></td></tr>
-##      <tr><td>3</td><td><code>double</code></td><td>The direct reward of <code>nAct</code></td></tr>
-##    </table>
-## @see -WM_qlearn
-function -WM_action(nAct,itWm)
-{
-  data idRes;                                                                   # Result
-  var  nDRw; 0 nDRw =;                                                          # Direct reward of action
-  var  nIni; itWm.ud.descr0 nIni =;                                             # Current world state
-  var  nTer; nIni nTer =;                                                       # World state after action (default)
-  var  nT; ( nIni -1 nAct itWm -WM_findtrans ) nT =;                            # Get action transition
-  :(nT>=0) && (nAct>=0): if                                                     # Action transition found >>
-    :itWm.td[nT,itWm.IC_TD_TER]: nTer =;                                        #   Get world state after action
-    :itWm.td[nT,.__wm_sNcTdQR]:  nDRw =;                                        #   Get direct reward of action
-  end                                                                           # <<
-  nTer itWm.ud -set descr0;                                                     # Set new world state
-  { $[nIni] $[nTer] $[nAct] $[nDRw] } idRes =;                                  # Prepare result
-  { "nIni" "nTer" "nAct" "nR" } ' 0 idRes -set_cnames;                          # ...
-  idRes return;                                                                 # Return result
+iXP -break_timer;
+"   Profile\n   - Snippet: $[iP.time] ms"                                -echo;
+", ${round(iP.time/iXP.time*1000)/10} %, $[iP.calls]x"                   -echo;
+"\n   - Total  : $[iXP.time] ms\n"                                       -echo;
 }
 
 ## EOF
