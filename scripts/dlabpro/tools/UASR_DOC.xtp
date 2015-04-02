@@ -156,6 +156,22 @@ function -fnc_add(sScr,sFid,sSgn,sSyn)
   sSyn nR 3 .__udc_idFnc -sstore;
 }
 
+## Checks a source file for ignorance
+##
+## Searches for a line with: "#@uasrdoc: ignore"
+##
+## @param sFn string
+##          Name of file to be checked
+function -check_ignore(sFn)
+{
+  file iF;                                                                      # File processor
+  data idTag;                                                                   # Import destination
+  ""           iF -set comment;                                                 # Don't ignore comments
+  "#@uasrdoc: ignore" iF -set line_flt;                                         # Find ignore tag
+  sFn "ascii" idTag iF /noerror -import;                                        # Import the file
+  idTag -is_empty not return;                                                   # Return whether tag not found
+}
+
 ## Scans custom HTML code from a documentation file.
 ##
 ## @param sFname string
@@ -1113,13 +1129,19 @@ idH 0 idH /noerror -sortup;                                                     
 	:idS[nS,2]: sLname =;                                                         #   Get language name
 	:idS[nS,3]: sParser =;                                                        #   Get parser name
   "\n   s ($[sParser]) - ${sSpath}/${sLname}/${sFname}"                   -MSG; #   Protocol
-  DGen idS.iDgn${nS};                                                           #   Create document scanner
-  data idS.idCd${nS};                                                           #   Create custom documentation
-  "${sSpath}/${sLname}/${sFname}" sParser NULL idS.iDgn${nS} -scan;             #   Scan script
-  "${sDpath}/${sFname}.html"        idS.idCd${nS} -scan_cdc;                    #   Scan custom HTML form doc. file
-  :idS[nS,0]: 0 1 idS.iDgn${nS}.spl -sstore;                                    #   HACK: Correct package name
-  nS ++=;                                                                       #   End of loop
+  "${sSpath}/${sLname}/${sFname}" -check_ignore if;                             #   Check for ignorance >>
+    " - ignored"                                                          -MSG; #     Protocol
+    idS nS 1 idS /rec -delete;                                                  #     Remove from script list
+  else;                                                                         #   << Do not ignore >>
+    DGen idS.iDgn${nS};                                                         #     Create document scanner
+    data idS.idCd${nS};                                                         #     Create custom documentation
+    "${sSpath}/${sLname}/${sFname}" sParser NULL idS.iDgn${nS} -scan;           #     Scan script
+    "${sDpath}/${sFname}.html"        idS.idCd${nS} -scan_cdc;                  #     Scan custom HTML form doc. file
+    :idS[nS,0]: 0 1 idS.iDgn${nS}.spl -sstore;                                  #     HACK: Correct package name
+    nS ++=;                                                                     #     End of loop
+  end;                                                                          #   <<
 end                                                                             # <<
+idS 0 idP -compress;                                                            # Update package list after ignorance
 
 ## Scan HTML reference pages                                                    # -------------------------------------
 0 nS =; nS idH.nrec < while                                                     # Loop over reference pages >>

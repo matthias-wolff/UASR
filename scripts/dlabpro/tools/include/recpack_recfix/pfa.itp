@@ -23,6 +23,8 @@
 ## You should have received a copy of the GNU Lesser General Public License
 ## along with UASR. If not, see <http://www.gnu.org/licenses/>.
 
+#@uasrdoc: ignore
+
 function -PACK_fil(nrm)
 {
 	data dMELN;
