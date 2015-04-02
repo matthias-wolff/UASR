@@ -528,6 +528,15 @@ function -UASR_silence()
   end                                                                           # <<
 }
 
+## Returns the verbose level (command line option -vx).
+##
+## @cgen:index
+## @return The verbose level.
+function -UASR_get_vlevel()
+{
+  .__UTL_nVlevel return;
+}
+
 ## Saves an object to a file regarding the global write-protect flag. The global
 ## write-protect flag is stored in the variable <code>.__CFG_bNwr</code> and
 ## toggled through the command line option "-n".

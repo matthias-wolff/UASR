@@ -335,7 +335,7 @@ function -FST_render(sFname,idTisTab,idTosTab,nUnit,itSrc)
 ## @return void
 function -FST_render_ex(sFname,idTisTab,idTosTab,nUnit,sFormat,itSrc)
 {
-  function -sym_lookup(idS,idSTab,itAux)
+  function -sym_lookup(idS,idSTab,sEps,itAux)
   {
     data idRet;
     idSTab -is_empty if
@@ -343,9 +343,9 @@ function -FST_render_ex(sFname,idTisTab,idTosTab,nUnit,sFormat,itSrc)
     else
       idSTab.dim itAux.ud.dim == if
         itAux.ud itAux.IC_UD_NAME itAux.IC_UD_FT itAux.IC_UD_XT idRet -expand;
-        idS 0 idRet 0 itAux.is idRet -lookup_2 { "-" };
+        idS 0 idRet 0 itAux.is idRet -lookup_2 { "$[sEps]" };
       else
-        idS 0 idSTab 0 1 idRet -lookup { "-" };
+        idS 0 idSTab 0 1 idRet -lookup { "$[sEps]" };
       end
     end
     idRet return;
@@ -357,6 +357,7 @@ function -FST_render_ex(sFname,idTisTab,idTosTab,nUnit,sFormat,itSrc)
   var  nIcTos;                                                                  # Output symbol comp.in transition tab.
   var  nIcW;                                                                    # Weight component in transition table
   var  nIcStk;                                                                  # Stack token component in trans. table
+  var  sEps;   "svg" sFormat == if "&epsilon;" else "-" end sEps =;             # Rendering of epsilon 
   
   ## Copy unit to render and get some component indices                         # -------------------------------------
   nUnit 0 >= if                                                                 # Render particulat unit ? (Yes) >>
@@ -372,7 +373,7 @@ function -FST_render_ex(sFname,idTisTab,idTosTab,nUnit,sFormat,itSrc)
   ## Replace symols and rearrange transition table components                   # -------------------------------------
   nIcTis 0 >= if
     idTisTab NULL != if idTisTab itAux.is = end;
-    :itAux.td[nIcTis]: itAux.is itAux -sym_lookup idTd -join;
+    :itAux.td[nIcTis]: itAux.is sEps itAux -sym_lookup idTd -join;
   end  
   nIcTos 0 >= if
     nIcTis 0 >= if
@@ -381,12 +382,12 @@ function -FST_render_ex(sFname,idTisTab,idTosTab,nUnit,sFormat,itSrc)
       idAux idTd -join;
     end
     idTosTab NULL != if idTosTab itAux.os = end;
-    :itAux.td[nIcTos]: itAux.os itAux -sym_lookup idTd -join;
+    :itAux.td[nIcTos]: itAux.os sEps itAux -sym_lookup idTd -join;
   end  
   nIcStk 0 >= if                                                                # Have stack tokens >>
     :sign(itAux.td[nIcStk])+1: 0 { ":-" "" ":+" } ' 0 1 idAux -lookup { "" };   #   Make pop, no-op, or push prefix
     idAux idTd -join;                                                           #   Join to transition description
-    :abs(itAux.td[nIcStk]): itAux.stk itAux -sym_lookup idTd -join;             #   Look up stack token name
+    :abs(itAux.td[nIcStk]): itAux.stk sEps itAux -sym_lookup idTd -join;        #   Look up stack token name
   end                                                                           # <<
   nIcW 0 >= if                                                                  # Weighted automaton? Yes >>
     nIcTis 0 >= nIcTos 0 >= || nIcStk 0 >= || if                                #   Have any symbols? Yes >>

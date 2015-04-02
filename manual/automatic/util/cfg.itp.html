@@ -1083,6 +1083,11 @@ The file extensions are:
       <td class="rowgroup" colSpan="2">Functions</td>
     </tr>
     <tr>
+      <td><a href="#clp_-CFG_add"><code class="link">-CFG_add</code></a></td>
+      <td><code><b>-CFG_add</b>(sFile,bTerm)</code><br>&nbsp;<br> Addionally loads a another config file.
+      </td>
+    </tr>
+    <tr>
       <td><a href="#clp_-CFG_init"><code class="link">-CFG_init</code></a></td>
       <td><code><b>-CFG_init</b>(sFile,bTerm)</code><br>&nbsp;<br> Configures an UASR session.
       </td>
@@ -1149,6 +1154,108 @@ The file extensions are:
   </table>
   </div>
   </div>
+  <div id="clp_-CFG_add">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CFG_add</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CFG_add','-CFG_add','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CFG_add</b>(sFile,bTerm)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/cfg.itp(58)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Addionally loads a another config file. The function adds a list of key/value pairs
+ from the following sources (with descending priority):
+ <ol>
+   <li><code>-P&lt;key&gt;=&lt;value&gt;</code> command line options,</li>
+   <li>the custom configuration file <code>sFile</code> and </li>
+ </ol>
+ <h4>Remarks</h4>
+ <ul>
+   <li>Custom configuration files only need to modify present or add new
+     key/value pairs. They do not need to repeat key/value pairs contained in
+     the default configuration.</li>
+   <li>Command line options are reloaded to preserve their precedence.</li>
+ </ul>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFile</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Path to UASR configuration file to be loaded
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">boolean&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>bTerm</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          If <code>TRUE</code>, the function will terminate the dLabPro
+          session if <code>sFile</code> could not be loaded
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> <code>TRUE</code> if successful, <code>FALSE</code> otherwise
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>__CFG_nJobs</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>__CFG_bNwr</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>__CFG_bFcc</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
   <div id="clp_-CFG_init">
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
@@ -1182,7 +1289,7 @@ The file extensions are:
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/cfg.itp(58)</td>
+      <td class="hidden">util/cfg.itp(211)</td>
     </tr>
   </table>
   </div>
@@ -1284,7 +1391,7 @@ The file extensions are:
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/cfg.itp(210)</td>
+      <td class="hidden">util/cfg.itp(245)</td>
     </tr>
   </table>
   </div>
@@ -1359,7 +1466,7 @@ The file extensions are:
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/cfg.itp(237)</td>
+      <td class="hidden">util/cfg.itp(272)</td>
     </tr>
   </table>
   </div>
@@ -1451,7 +1558,7 @@ The file extensions are:
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/cfg.itp(266)</td>
+      <td class="hidden">util/cfg.itp(301)</td>
     </tr>
   </table>
   </div>
@@ -1533,7 +1640,7 @@ The file extensions are:
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/cfg.itp(291)</td>
+      <td class="hidden">util/cfg.itp(326)</td>
     </tr>
   </table>
   </div>
@@ -1630,7 +1737,7 @@ The file extensions are:
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/cfg.itp(317)</td>
+      <td class="hidden">util/cfg.itp(352)</td>
     </tr>
   </table>
   </div>
@@ -1718,7 +1825,7 @@ The file extensions are:
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/cfg.itp(361)</td>
+      <td class="hidden">util/cfg.itp(396)</td>
     </tr>
   </table>
   </div>
@@ -1812,7 +1919,7 @@ The file extensions are:
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/cfg.itp(464)</td>
+      <td class="hidden">util/cfg.itp(500)</td>
     </tr>
   </table>
   </div>
@@ -1935,7 +2042,7 @@ The file extensions are:
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/cfg.itp(575)</td>
+      <td class="hidden">util/cfg.itp(611)</td>
     </tr>
   </table>
   </div>
@@ -2029,7 +2136,7 @@ The file extensions are:
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/cfg.itp(590)</td>
+      <td class="hidden">util/cfg.itp(626)</td>
     </tr>
   </table>
   </div>
@@ -2096,7 +2203,7 @@ The file extensions are:
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/cfg.itp(610)</td>
+      <td class="hidden">util/cfg.itp(646)</td>
     </tr>
   </table>
   </div>
@@ -2152,7 +2259,7 @@ The file extensions are:
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/cfg.itp(626)</td>
+      <td class="hidden">util/cfg.itp(662)</td>
     </tr>
   </table>
   </div>

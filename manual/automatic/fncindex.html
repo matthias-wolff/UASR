@@ -99,6 +99,11 @@
 </td>
     </tr>
     <tr>
+      <td><a href="util/cfg.itp.html#clp_-CFG_add"><code class="link">-CFG_add</code></a></td>
+      <td><code>util/cfg.itp</code></td>
+      <td><code><b>-CFG_add</b>(sFile,bTerm)</code><br>&nbsp;<br> Addionally loads a another config file</td>
+    </tr>
+    <tr>
       <td><a href="util/cfg.itp.html#clp_-CFG_del"><code class="link">-CFG_del</code></a></td>
       <td><code>util/cfg.itp</code></td>
       <td><code><b>-CFG_del</b>(sKey)</code><br>&nbsp;<br> Deletes the topmost key in the UASR configuration</td>
@@ -707,7 +712,13 @@ decomposition
     <tr>
       <td><a href="util/lab.itp.html#clp_-LAB_get_map"><code class="link">-LAB_get_map</code></a></td>
       <td><code>util/lab.itp</code></td>
-      <td><code><b>-LAB_get_map</b></code><br>&nbsp;<br> Returns the database-2-UASR label map</td>
+      <td><code><b>-LAB_get_map</b></code><br>&nbsp;<br> @cgen:index
+</td>
+    </tr>
+    <tr>
+      <td><a href="util/lab.itp.html#clp_-LAB_get_map_ex"><code class="link">-LAB_get_map_ex</code></a></td>
+      <td><code>util/lab.itp</code></td>
+      <td><code><b>-LAB_get_map_ex</b>(sMap)</code><br>&nbsp;<br> Returns the database-2-UASR label map</td>
     </tr>
     <tr>
       <td><a href="util/lab.itp.html#clp_-LAB_get_tab"><code class="link">-LAB_get_tab</code></a></td>
@@ -749,6 +760,12 @@ decomposition
       <td><a href="util/lab.itp.html#clp_-LAB_map"><code class="link">-LAB_map</code></a></td>
       <td><code>util/lab.itp</code></td>
       <td><code><b>-LAB_map</b>(idLab,idLabMapped)</code><br>&nbsp;<br> @cgen:index
+</td>
+    </tr>
+    <tr>
+      <td><a href="util/lab.itp.html#clp_-LAB_map_ex"><code class="link">-LAB_map_ex</code></a></td>
+      <td><code>util/lab.itp</code></td>
+      <td><code><b>-LAB_map_ex</b>(idLab,sMap,idLabMapped)</code><br>&nbsp;<br> @cgen:index
 </td>
     </tr>
     <tr>
@@ -1058,6 +1075,11 @@ decomposition
       <td><code><b>-TRL_import</b>(sDir,sTid,idTrl)</code><br>&nbsp;<br> Imports the transliteration of one turn</td>
     </tr>
     <tr>
+      <td><a href="util/uasr.itp.html#clp_-UASR_get_vlevel"><code class="link">-UASR_get_vlevel</code></a></td>
+      <td><code>util/uasr.itp</code></td>
+      <td><code><b>-UASR_get_vlevel</b></code><br>&nbsp;<br> Returns the verbose level (command line option -vx)</td>
+    </tr>
+    <tr>
       <td><a href="util/uasr.itp.html#clp_-UASR_help"><code class="link">-UASR_help</code></a></td>
       <td><code>util/uasr.itp</code></td>
       <td><code><b>-UASR_help</b></code><br>&nbsp;<br> Determines if the user requested help through one of the command line options
@@ -1100,6 +1122,21 @@ decomposition
       <td><a href="util/os.itp.html#clp_-WIN_convert_path"><code class="link">-WIN_convert_path</code></a></td>
       <td><code>util/os.itp</code></td>
       <td><code><b>-WIN_convert_path</b>(sPathName)</code><br>&nbsp;<br> Converts a path name for calling MS DOS command line utilities</td>
+    </tr>
+    <tr>
+      <td><a href="util/wm.itp.html#clp_-WM_addtrans"><code class="link">-WM_addtrans</code></a></td>
+      <td><code>util/wm.itp</code></td>
+      <td><code><b>-WM_addtrans</b>(nIni,nTer,nAct,bFinal,itWm)</code><br>&nbsp;<br> Adds a transition to a world automaton</td>
+    </tr>
+    <tr>
+      <td><a href="util/wm.itp.html#clp_-WM_mazeworld"><code class="link">-WM_mazeworld</code></a></td>
+      <td><code>util/wm.itp</code></td>
+      <td><code><b>-WM_mazeworld</b>(idMaze,idAct,sMode,itWm)</code><br>&nbsp;<br> Creates a maze world automaton</td>
+    </tr>
+    <tr>
+      <td><a href="util/wm.itp.html#clp_-WM_render"><code class="link">-WM_render</code></a></td>
+      <td><code>util/wm.itp</code></td>
+      <td><code><b>-WM_render</b>(sFname,sFormat,sMode,itWm)</code><br>&nbsp;<br> Renders a world automaton using the GraphViz toolkit</td>
     </tr>
     <tr>
       <td><a href="train/am.itp.html#clp_-XVL_partition"><code class="link">-XVL_partition</code></a></td>
