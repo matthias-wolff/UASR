@@ -111,6 +111,12 @@ function -usage(sCmd)
       "\n       out.feainfo   output file (default: <out>/feainfo.object)"-MSG; 
       "\n       out.gmm       output file (default: <out>/<am.model>.gmm)"-MSG; 
       "\n       out.sesinfo   output file (default: <out>/sesinfo.object)"-MSG; 
+      "\n       vad.model     VAD file name (default: <out>/3_10_mod.vad)"-MSG;
+      "\n       syn.dir       Synthesis directory (default: <out>/syn)"   -MSG;
+      "\n       syn.model     Synthesis model (default: 3_20)"            -MSG;
+      "\n       recfix.fftshf shift offset after FFT (default: 0)"        -MSG; 
+      "\n       recfix.filshf shift offset after filter (default: 0)"     -MSG; 
+      "\n       recfix.prnw   Weight pruing threshold (default: 0)"       -MSG; 
       "\n       render        yes/no: render dialog and grammar FSTs "    -MSG;
                               "(default: no)"                             -MSG;
       "\n       skip          Combination of the following letters"       -MSG;

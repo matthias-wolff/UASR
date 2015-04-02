@@ -394,6 +394,15 @@
           <td>Folder to place generated recognizer data files in</td>
         </tr>
         <tr>
+          <td><code>uasr.outtyp</code></td>
+          <td>string</td>
+          <td>"R"</td>
+          <td>Output type:<br>
+            "R" - files for recognizer<br>
+            "S" - files for SSMG demonstrator<br>
+            "F" - file for recfix</td>
+        </tr>
+        <tr>
           <td><code>uasr.out.feainfo</code></td>
           <td>string</td>
           <td>"&lt;uasr.out&gt;/feainfo.object"</td>
@@ -410,6 +419,42 @@
           <td>string</td>
           <td>"&lt;uasr.out&gt;/sesinfo.object"</td>
           <td><a href="#index:iSI">Session information</a> file to generate</td>
+        </tr>
+        <tr>
+          <td><code>uasr.vad.model</code></td>
+          <td>string</td>
+          <td>"&lt;uasr.out&gt;/3_10_mod.vad"</td>
+          <td>VAD object file (only used with &lt;uasr.outtyp&gt;="S")</td>
+        </tr>
+        <tr>
+          <td><code>uasr.syn.dir</code></td>
+          <td>string</td>
+          <td>"&lt;uasr.out&gt;/syn"</td>
+          <td>Synthesis database directory (only used with &lt;uasr.outtyp&gt;="S")</td>
+        </tr>
+        <tr>
+          <td><code>uasr.syn.model</code></td>
+          <td>string</td>
+          <td>"3_20"</td>
+          <td>Synthesis model (only used with &lt;uasr.outtyp&gt;="S")</td>
+        </tr>
+        <tr>
+          <td><code>uasr.recfix.fftshf</code></td>
+          <td>number</td>
+          <td>0</td>
+          <td>Shift offset after FFT</td>
+        </tr>
+        <tr>
+          <td><code>uasr.recfix.filshf</code></td>
+          <td>number</td>
+          <td>0</td>
+          <td>Shift offset after filtering</td>
+        </tr>
+        <tr>
+          <td><code>uasr.recfix.prnw</code></td>
+          <td>number</td>
+          <td>0</td>
+          <td>Weight pruning threshold</td>
         </tr>
         <tr>
           <td><code>uasr.render</code></td>
