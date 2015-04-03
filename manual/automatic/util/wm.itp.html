@@ -90,6 +90,68 @@
     <p>Utility functions: Finite state world modeling
  </p>
   <!--{{ CUSTOM_DOC -->
+  <a name="example"></a><h3>Example</h3>
+  <table cellpadding="10"><tr>
+    <td class="hidden" style="width:33em;"><pre class="code">
+ "$UASR_HOME/scripts/dlabpro/util/wm.itp" <a href="javascript:__goDlabpro('automatic/function.html','mth_include')">include</a>;
+</pre></td>
+    <td class="hidden">
+    </td>
+  </tr></table>
+  <p>First we create a simple maze world.</p>
+  <table cellpadding="10"><tr>
+    <td class="hidden" style="width:33em;"><pre class="code">
+ <a href="javascript:__goDlabpro('automatic/data.html')">data</a> idMaze;
+ { { 1 1 1 2 }
+   { 1 0 0 0 }
+   { 1 0 1 1 }
+   { 1 1 1 1 }
+ } idMaze =;
+ <a href="javascript:__goDlabpro('automatic/data.html')">data</a> idAct; { "N" "E" "S" "W" } ' idAct =;
+ <a href="javascript:__goDlabpro('automatic/fst.html')">fst</a>  itWm; idMaze idAct "" itWm <a href="#clp_-WM_mazeworld">-WM_mazeworld</a>;
+ "itWm.svg" "svg" NULL itWm <a href="#clp_-WM_render">-WM_render</a>;
+</pre></td>
+    <td class="hidden">
+      <img src="../../resources/figures/wm/itWm.png" width="418" height="339" alt="Rendering of itWm">
+    </td>
+  </tr></table>
+  <p>Then we perform some actions in this world and log the world's reactions.</p>
+  <table cellpadding="10"><tr>
+    <td class="hidden" style="width:33em;"><pre class="code">
+<a href="javascript:__goDlabpro('automatic/data.html')">data</a> idLog;
+13 itWm <a href="#clp_-WM_setstate">-WM_setstate</a>;
+( 0 itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
+( 0 itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
+( 0 itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
+( 1 itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
+( 1 itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
+( 1 itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
+idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-print</a>;
+</pre></td>
+    <td class="hidden"><pre>
+
+  data idLog
+ ---------------------------
+           0  1  2  3  4  5 
+          .. .. .. .. .. .. 
+  0 nIni: 13  9  5  1  2  3 
+  1 nTer:  9  5  1  2  3  4 
+  2 nAct:  0  0  0  1  1  1 
+  3   nR:  0  0  0  0  0  1 
+ ---------------------------
+</pre></td>
+  </tr></table>
+  <p>And finally we do a Q-learning.</p>
+  <table cellpadding="10"><tr>
+    <td class="hidden" style="width:33em;"><pre class="code">
+ <a href="javascript:__goDlabpro('automatic/fst.html')">fst</a> itIwm;
+ idAct 3 0.9 500 itWm itIwm <a href="#clp_-WM_qlearn">-WM_qlearn</a>;
+ "itIwm.svg" "svg" NULL itIwm <a href="#clp_-WM_render">-WM_render</a>;
+</pre></td>
+    <td class="hidden">
+      <img src="../../resources/figures/wm/itIwm.png" width="497" height="321" alt="Rendering of itIwm">
+    </td>
+  </tr></table>
   <!--}} CUSTOM_DOC -->
   <a name="functions"></a><h3>Functions</h3>
   <table cellSpacing="0" cellPadding="4" border="0">
@@ -187,12 +249,13 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(39)</td>
+      <td class="hidden">util/wm.itp(40)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
     <h3>Description</h3> Creates a new empty world automaton.
+ 
 
   <h3>Parameters</h3>
   <table>
@@ -245,12 +308,13 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(58)</td>
+      <td class="hidden">util/wm.itp(60)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
     <h3>Description</h3> Ensures the presence of the specified state ID in a world automaton.
+ 
 
   <h3>Parameters</h3>
   <table>
@@ -316,12 +380,13 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(86)</td>
+      <td class="hidden">util/wm.itp(89)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
     <h3>Description</h3> Finds a transition in a world automaton.
+ 
 
   <h3>Parameters</h3>
   <table>
@@ -407,7 +472,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(119)</td>
+      <td class="hidden">util/wm.itp(122)</td>
     </tr>
   </table>
   </div>
@@ -512,7 +577,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(147)</td>
+      <td class="hidden">util/wm.itp(150)</td>
     </tr>
   </table>
   </div>
@@ -605,7 +670,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(175)</td>
+      <td class="hidden">util/wm.itp(178)</td>
     </tr>
   </table>
   </div>
@@ -702,12 +767,13 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(305)</td>
+      <td class="hidden">util/wm.itp(309)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
     <h3>Description</h3> Returns the current state of a world automaton.
+ 
 
   <h3>Parameters</h3>
   <table>
@@ -766,12 +832,13 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(320)</td>
+      <td class="hidden">util/wm.itp(325)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
     <h3>Description</h3> Sets the current state of a world automaton.
+ 
 
   <h3>Parameters</h3>
   <table>
@@ -847,12 +914,13 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(332)</td>
+      <td class="hidden">util/wm.itp(338)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
     <h3>Description</h3> Randomly sets a new current state of a world automaton.
+ 
 
   <h3>Parameters</h3>
   <table>
@@ -916,12 +984,13 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(359)</td>
+      <td class="hidden">util/wm.itp(366)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
     <h3>Description</h3> Performs one action in a finite state world.
+ 
 
   <h3>Parameters</h3>
   <table>
@@ -998,7 +1067,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(397)</td>
+      <td class="hidden">util/wm.itp(405)</td>
     </tr>
   </table>
   </div>
@@ -1007,6 +1076,7 @@
  <code>itWm</code> only by invoking <a href="#clp_-WM_setrandomstate"
  >-WM_setrandomstate</a> and <a href="#clp_-WM_act">-WM_act</a>. These
  functions may be overloaded to implement other worlds.
+ 
 
   <h3>Parameters</h3>
   <table>

@@ -32,6 +32,7 @@ var __wm_sNcTdQR; "~QR" __wm_sNcTdQR =;                                         
 
 ## Creates a new empty world automaton.
 ##
+## @cgen:index
 ## @param itWm fst
 ##          Filled with the new world automaton. Any present data will be 
 ##          deleted.
@@ -47,6 +48,7 @@ function -WM_init(itWm)
 
 ## Ensures the presence of the specified state ID in a world automaton.
 ##
+## @cgen:index
 ## @param nS integer
 ##          The zero-based index of the state to ensure. If the world model in
 ##          <code>itWm</code> contains fewer than <code>nS</code>+1 states, the
@@ -73,6 +75,7 @@ function -WM_ensurestate(nS,itWm)
 
 ## Finds a transition in a world automaton.
 ##
+## @cgen:index
 ## @param nIni integer
 ##          The initial state of the transition.
 ## @param nTer integer
@@ -298,6 +301,7 @@ function -WM_mazeworld(idMaze,idAct,sMode,itWm)
 
 ## Returns the current state of a world automaton.
 ##
+## @cgen:index
 ## @param itWm fst
 ##          The world model in unit 0. 
 ## @return The zero-based index of the current state.
@@ -309,6 +313,7 @@ function -WM_getstate(itWm)
 
 ## Sets the current state of a world automaton.
 ##
+## @cgen:index
 ## @param nS int
 ##          The zero-based index of the current state. There are no checks 
 ##          performed.
@@ -324,6 +329,7 @@ function -WM_setstate(nS,itWm)
 
 ## Randomly sets a new current state of a world automaton.
 ##
+## @cgen:index
 ## @param itWm fst
 ##          The world model in unit 0. 
 ## @return The zero-based index of the newly selected state.
@@ -343,6 +349,7 @@ function -WM_setrandomstate(itWm)
 
 ## Performs one action in a finite state world.
 ## 
+## @cgen:index
 ## @param nAct int
 ##          Zero-based index of the action to be performed, -1 for no action.
 ## @param itWm fst
@@ -380,6 +387,7 @@ function -WM_act(nAct,itWm)
 ## >-WM_setrandomstate</a> and <a href="#clp_-WM_act">-WM_act</a>. These 
 ## functions may be overloaded to implement other worlds.
 ##
+## @cgen:index
 ## @param idAct data
 ##         A list of actions which can be performed in the world.
 ## @param nDefQ double
