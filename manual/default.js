@@ -162,6 +162,7 @@ function __goDlabpro(sUrl,sHash)
 	sLocation = __sRootPath;
   }
   catch (e) {}
+  alert(location.href);
   sLocation += "/../dLabPro/manual/index.html";
   if (sUrl ) sLocation += "?"+sUrl;
   if (sHash) sLocation += ";"+sHash;
