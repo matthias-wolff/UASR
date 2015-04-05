@@ -162,8 +162,11 @@ function __goDlabpro(sUrl,sHash)
 	sLocation = __sRootPath;
   }
   catch (e) {}
-  alert(location.href);
-  sLocation += "/../dLabPro/manual/index.html";
+  if (location.href.indexOf("matthias-wolff")>=0)
+    // for rawgit.com
+    sLocation += "/../dLabPro/manual/index.html";
+  else
+	sLocation += "/../../dLabPro/master/manual/index.html";
   if (sUrl ) sLocation += "?"+sUrl;
   if (sHash) sLocation += ";"+sHash;
   var iWnd = window.open(sLocation,"dLabPro");
