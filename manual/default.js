@@ -162,7 +162,7 @@ function __goDlabpro(sUrl,sHash)
 	sLocation = __sRootPath;
   }
   catch (e) {}
-  if (location.href.indexOf("matthias-wolff")>=0)
+  if (location.href.indexOf("matthias-wolff")<0)
     // for rawgit.com
     sLocation += "/../dLabPro/manual/index.html";
   else
