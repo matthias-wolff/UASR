@@ -28,6 +28,7 @@
    4 var nMAX_SIG_CHS;
 8192 var nMAX_SIG_DELAY;
 2048 var nMAX_FRAME_DIM;
+  16 var nMAX_WVL_NUM;
 1024 var nMAX_PFA_DIM;
   64 var nMAX_FIL_DIM;
    4 var nMAX_SFA_A_NUM;
@@ -43,6 +44,8 @@
   16 var nMAX_FSTO_LEN;
 
    1 var nPFA_TYP_FFT; # 0x01
+   2 var nPFA_TYP_WVL; # 0x02
+   4 var nPFA_TYP_CEP; # 0x04
   64 var nPFA_TYP_FIL; # 0x40
  128 var nPFA_TYP_LOG; # 0x80
 

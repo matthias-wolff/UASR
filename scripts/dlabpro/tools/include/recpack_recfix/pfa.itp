@@ -68,6 +68,26 @@ function -PACK_log(nrm)
 	:dLOG[dLOG.nrec-1,0]: return;
 }
 
+function -PACK_wvl(len,typ)
+{
+	data dWVL;
+	typ "d4" == if;
+		{
+			${(1+sqrt(3))/4/sqrt(2)}
+			${(3+sqrt(3))/4/sqrt(2)}
+			${(3-sqrt(3))/4/sqrt(2)}
+			${(1-sqrt(3))/4/sqrt(2)}
+		} ' dWVL =;
+	end;
+		} ' dWVL =;
+	end;
+	typ "haar" == if;
+		{ 0.5 0.5 } ' dWVL =;
+	end;
+	dWVL.nrec          1 "pfa.wvlnum" "s8"  -PACK1;
+	dWVL 0 .nMAX_WVL_NUM "pfa.wvl"    "s16" -PACK;
+}
+
 function -PACK_pfa(nrm,idWnd)
 {
 	"uasr.pfa.len"   512   -CFG_get var flen;
@@ -78,7 +98,8 @@ function -PACK_pfa(nrm,idWnd)
 	.nPFA_TYP_FFT .nPFA_TYP_LOG .nPFA_TYP_FIL + + 1 "pfa.typ"   "u8" -PACK1; # TODO: from uasr.pfa
 	.nFFT_SHF                       1 "pfa.fftshf" "s8"  -PACK1;
 	"uasr.pfa.dim"   30    -CFG_get 1 "pfa.dim"    "u16" -PACK1;
-	0                               1 "_blank1"    "u16" -PACK1;
+	0                               1 "_blank1"    "s8"  -PACK1;
+	flen "d4" -PACK_wvl;                                                     # TODO: typ from config
 	idWnd 0 .nMAX_FRAME_DIM           "pfa.wnd"    "u16" -PACK;
 	"\n  norm frm: $[nrm]" -MSG2;
 	:nrm=nrm*flen/2/2^.nFFT_SHF; # norm after FFT
