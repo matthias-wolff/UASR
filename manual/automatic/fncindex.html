@@ -1124,9 +1124,34 @@ decomposition
       <td><code><b>-WIN_convert_path</b>(sPathName)</code><br>&nbsp;<br> Converts a path name for calling MS DOS command line utilities</td>
     </tr>
     <tr>
+      <td><a href="util/wm.itp.html#clp_-WM_act"><code class="link">-WM_act</code></a></td>
+      <td><code>util/wm.itp</code></td>
+      <td><code><b>-WM_act</b>(nAct,itWm)</code><br>&nbsp;<br> Performs one action in a finite state world</td>
+    </tr>
+    <tr>
       <td><a href="util/wm.itp.html#clp_-WM_addtrans"><code class="link">-WM_addtrans</code></a></td>
       <td><code>util/wm.itp</code></td>
       <td><code><b>-WM_addtrans</b>(nIni,nTer,nAct,bFinal,itWm)</code><br>&nbsp;<br> Adds a transition to a world automaton</td>
+    </tr>
+    <tr>
+      <td><a href="util/wm.itp.html#clp_-WM_ensurestate"><code class="link">-WM_ensurestate</code></a></td>
+      <td><code>util/wm.itp</code></td>
+      <td><code><b>-WM_ensurestate</b>(nS,itWm)</code><br>&nbsp;<br> Ensures the presence of the specified state ID in a world automaton</td>
+    </tr>
+    <tr>
+      <td><a href="util/wm.itp.html#clp_-WM_findtrans"><code class="link">-WM_findtrans</code></a></td>
+      <td><code>util/wm.itp</code></td>
+      <td><code><b>-WM_findtrans</b>(nIni,nTer,nAct,itWm)</code><br>&nbsp;<br> Finds a transition in a world automaton</td>
+    </tr>
+    <tr>
+      <td><a href="util/wm.itp.html#clp_-WM_getstate"><code class="link">-WM_getstate</code></a></td>
+      <td><code>util/wm.itp</code></td>
+      <td><code><b>-WM_getstate</b>(itWm)</code><br>&nbsp;<br> Returns the current state of a world automaton</td>
+    </tr>
+    <tr>
+      <td><a href="util/wm.itp.html#clp_-WM_init"><code class="link">-WM_init</code></a></td>
+      <td><code>util/wm.itp</code></td>
+      <td><code><b>-WM_init</b>(itWm)</code><br>&nbsp;<br> Creates a new empty world automaton</td>
     </tr>
     <tr>
       <td><a href="util/wm.itp.html#clp_-WM_mazeworld"><code class="link">-WM_mazeworld</code></a></td>
@@ -1134,9 +1159,24 @@ decomposition
       <td><code><b>-WM_mazeworld</b>(idMaze,idAct,sMode,itWm)</code><br>&nbsp;<br> Creates a maze world automaton</td>
     </tr>
     <tr>
+      <td><a href="util/wm.itp.html#clp_-WM_qlearn"><code class="link">-WM_qlearn</code></a></td>
+      <td><code>util/wm.itp</code></td>
+      <td><code><b>-WM_qlearn</b>(idAct,nDefQ,nDctQ,nXIte,itWm,itIwm)</code><br>&nbsp;<br> Simple Q-learning</td>
+    </tr>
+    <tr>
       <td><a href="util/wm.itp.html#clp_-WM_render"><code class="link">-WM_render</code></a></td>
       <td><code>util/wm.itp</code></td>
       <td><code><b>-WM_render</b>(sFname,sFormat,sMode,itWm)</code><br>&nbsp;<br> Renders a world automaton using the GraphViz toolkit</td>
+    </tr>
+    <tr>
+      <td><a href="util/wm.itp.html#clp_-WM_setrandomstate"><code class="link">-WM_setrandomstate</code></a></td>
+      <td><code>util/wm.itp</code></td>
+      <td><code><b>-WM_setrandomstate</b>(itWm)</code><br>&nbsp;<br> Randomly sets a new current state of a world automaton</td>
+    </tr>
+    <tr>
+      <td><a href="util/wm.itp.html#clp_-WM_setstate"><code class="link">-WM_setstate</code></a></td>
+      <td><code>util/wm.itp</code></td>
+      <td><code><b>-WM_setstate</b>(nS,itWm)</code><br>&nbsp;<br> Sets the current state of a world automaton</td>
     </tr>
     <tr>
       <td><a href="train/am.itp.html#clp_-XVL_partition"><code class="link">-XVL_partition</code></a></td>

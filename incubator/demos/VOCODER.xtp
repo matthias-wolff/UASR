@@ -21,7 +21,7 @@
 var  sWDir;                                                                     # Working directory
 var  sConfigDir;                                                                # Directory of config files
 var  sConfig;                                                                   # Configuration file
-this :sfl[0,0]: "" "splitp" -VAR_strop sWDir =;                                 # Get path of current script
+-UTL_spath sWDir =;                                                             # Get path of current script
 
 ## Variables                                                                    # -------------------------------------
 PMproc iPM;

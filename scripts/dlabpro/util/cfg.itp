@@ -220,7 +220,8 @@ function -CFG_init(sFile,bTerm)
 
   ## Load default configuration                                                 # -------------------------------------
   .__CFG_idCfg -reset;                                                          # Reset configuration kay/value list
-  this :sfl[0,0]: "" "splitp" -VAR_strop sDefCfg =;                             # Get path of current script
+  ( ( this :sfl[0,0]: ) "" "splitp" -VAR_strop ) sDefCfg =;                     # Get path of current script
+  ( sDefCfg "?\\?/" "replace" -VAR_strop ) sDefCfg =;                           # Convert to canonical form
   sDefCfg "/../../../default.cfg" + sDefCfg =;                                  # Get path of default config. file
   sDefCfg "def" -CFG_add;                                                       # Load default configuration file
 

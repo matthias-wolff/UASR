@@ -21,7 +21,7 @@ var  sPath;                                                                     
 var  sBuf;                                                                      # Configuration file
 
 # Configure session                                                             # -------------------------------------
-this :sfl[0,0]: "" "splitp" -VAR_strop sBuf =;                                  # Get path of current script
+-UTL_spath sBuf =;                                                              # Get path of current script
 sBuf "/BSS/BSS.cfg" + sBuf =;                                                   # Get path of config. file
 sBuf TRUE -CFG_init;                                                            # Initialize configuration
 "\n" -echo;                                                                     # Protocol
