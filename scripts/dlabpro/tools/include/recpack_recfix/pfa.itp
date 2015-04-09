@@ -79,8 +79,6 @@ function -PACK_wvl(len,typ)
 			${(1-sqrt(3))/4/sqrt(2)}
 		} ' dWVL =;
 	end;
-		} ' dWVL =;
-	end;
 	typ "haar" == if;
 		{ 0.5 0.5 } ' dWVL =;
 	end;
