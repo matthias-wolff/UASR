@@ -91,6 +91,8 @@ function -PACK_pfa(nrm,idWnd)
 	.nFFT_SHF                       1 "pfa.fftshf" "s8"  -PACK1;
 	"uasr.pfa.dim"   30    -CFG_get 1 "pfa.dim"    "u16" -PACK1;
 	0                               1 "_blank1"    "s8"  -PACK1;
+	-0.5 -1 *                       1 "pfa.mgcgam" "u16" -PACK1;
+	0.47                            1 "pfa.mgclam" "u16" -PACK1;
 	flen -PACK_wvl;
 	idWnd 0 .nMAX_FRAME_DIM           "pfa.wnd"    "u16" -PACK;
 	"\n  norm frm: $[nrm]" -MSG2;

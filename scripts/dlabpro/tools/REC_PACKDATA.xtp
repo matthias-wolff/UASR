@@ -611,7 +611,7 @@ function -PACK_recfix()
   ## Pack it                                                                    # -------------------------------------
   1 var nrm;                                                                    # Init nomalization value
   .sFDsp -SH_rm;                                                                # Remove old output file
-  2 1  "version" "u16"   -PACK1;                                                # Pack version number
+  3 1  "version" "u16"   -PACK1;                                                # Pack version number
   0 1  "_blank1" "u16"   -PACK1;                                                # Pack blank
   nrm                    -PACK_sig;                                             # Pack frontend information
   nrm .__FEA_iPfa.window -PACK_pfa nrm =;                                       # Pack primary feature analysis parameters
