@@ -699,7 +699,7 @@ not ( $$ 2 < ) || if                                                            
   1 return;                                                                     #   Terminate with error code
 end                                                                             # <<
 "\n// Configuration   : $2"                                               -MSG; # Protocol
-"$2" FALSE -CFG_init;                                                            # Configure session
+"$2" FALSE -CFG_init;                                                           # Configure session
 
 ## Start up                                                                     # -------------------------------------
 "\n\n// RECOGNIZER DATA PACKAGING: "                                      -MSG; # Protocol
