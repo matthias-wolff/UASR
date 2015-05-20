@@ -92,6 +92,11 @@ function -SVM_load_dataset(sDts,bShf,idF)
   "\n   Loading data set '$[sDts]' ..."                                   -MSG; # Protocol
   ( "flist.sep" "\t " "S" -CFG_get_ex ) iF set sep;                             # Set file list separator(s)  
 	( sDts "" -CFG_get_flist ) "ascii" idF iF /strings -import;                   # Load file list
+  idF.dim 1 > if                                                                # File list contains labels >>
+    data idAux; :idF[1]: idAux =;                                               #   Aux data object
+    idAux "a" idAux -LAB_map_ex;                                                #   Map them to UASR labels
+    idF 0 1 idF -select; idAux idF -join;                                       #   Join to file list
+  end                                                                           # <<
 	bShf if idF idF.nrec idF -SET_rss; end                                        # Shuffle
 	"\n   done ($[idF.nrec] entries)"                                       -MSG; # Protocol
 }
@@ -499,7 +504,7 @@ function -CMD_trn()
       "\n   - Correctness    : ${round(n/K*1000)/10} %"                   -MSG; #     Protocol (Label correctness)
       " (+${round((1-betaquant(0.025,K-n,n+1)-n/K)*1000)/10}"             -MSG; #     Protocol (95% confidence interv.)
       " -${round((n/K-1+betaquant(0.975,K-n+1,n))*1000)/10}) %"           -MSG; #     Protocol (95% confidence interv.)
-      " ( HMM $[nSpl]_$[nIte]" ( sSns if ", $[sSns]" + end ) " )" +       -MSG; #     Protocol (HMM and sensor IDs)
+#      " ( HMM $[nSpl]_$[nIte]" ( sSns if ", $[sSns]" + end ) " )" +       -MSG; #     Protocol (HMM and sensor IDs)
       "\n   - Confidence lvl.: 95 %"                                      -MSG; #     Protocol (Confidence level)
     end                                                                         #   <<
 
