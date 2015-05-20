@@ -153,6 +153,17 @@ function -usage(sCmd)
       "\n"                                                                -MSG;
     leave;
   end
+  sCmd "xtpx" == if
+    "\n\n   SYNOPSIS:"                                                    -MSG;
+      "\n     Create $__SFILE__.xtpx self-contained program archive"      -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp $[sCmd]"                             -MSG;
+    "\n\n   REMARKS:"                                                     -MSG;
+      "\n     Archive can be used lust like $__SFILE__.xtp itself:"       -MSG;
+      "\n       dlabpro $__SFILE__.xtpx $__SFILE__.xtp"                   -MSG;
+      "\n"                                                                -MSG;
+    leave;
+  end
   "\n\n   SYNOPSIS:"                                                      -MSG;
     "\n     Data packaging tool for the dLabPro speech recognizer"        -MSG;
   "\n\n     The recognizer requires data files to operate. You must"      -MSG;   
@@ -161,9 +172,10 @@ function -usage(sCmd)
   "\n\n   USAGE:"                                                         -MSG;
     "\n     dlabpro $__SFILE__.xtp <command> <cfgfile> [options]"         -MSG;
   "\n\n   COMMANDS:"                                                      -MSG;
-    "\n     dlg - Pack recognition data (dialog)"                         -MSG;
-    "\n     rec - Pack recognition data (simple grammar)"                 -MSG;
-    "\n     vad - Pack voice activity detection data"                     -MSG;
+    "\n     dlg  - Pack recognition data (dialog)"                        -MSG;
+    "\n     rec  - Pack recognition data (simple grammar)"                -MSG;
+    "\n     vad  - Pack voice activity detection data"                    -MSG;
+    "\n     xtpx - Create $__SFILE__.xtpx program archive"                -MSG;
   "\n\n  Type 'dlabpro $__SFILE__.xtp help <command>' for help on a "     -MSG;
          "specific command.\n"                                            -MSG;
 }
@@ -666,6 +678,10 @@ function -PACK_vadinfo()
 
 ## == MAIN PROGRAM ==                                                           # =====================================
 
+( "$1" "xtpx" == ) if                                                           # Create self-contained prg. archive >> 
+  "$__FILE__" "x" + this /zip -save;                                            #   Write xtpx file
+  ( "$1" "xtpx" == ) if quit; end                                               #   Quit after saving archive
+end                                                                             # <<
 -UASR_silence;                                                                  # Detect silent mode
 "\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
 "\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
@@ -683,7 +699,7 @@ not ( $$ 2 < ) || if                                                            
   1 return;                                                                     #   Terminate with error code
 end                                                                             # <<
 "\n// Configuration   : $2"                                               -MSG; # Protocol
-"$2" TRUE -CFG_init;                                                            # Configure session
+"$2" FALSE -CFG_init;                                                           # Configure session
 
 ## Start up                                                                     # -------------------------------------
 "\n\n// RECOGNIZER DATA PACKAGING: "                                      -MSG; # Protocol

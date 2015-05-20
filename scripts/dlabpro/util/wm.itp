@@ -152,7 +152,7 @@ function -WM_render(sFname,sFormat,sMode,itWm)
   ## TODO: Do special rendering as for Coping paper of ESSV'15!
   fst itAux; itWm itAux =;
   :itAux.td[itAux.NC_TD_LSR]=itAux.td[.__wm_sNcTdQR];                           # Q-values -> weights
-  sFname itWm.is NULL 0 sFormat itAux -FST_render_ex;
+  sFname :itWm.is[0]: NULL 0 sFormat itAux -FST_render_ex;
 }
 
 ## -- Special worlds --
@@ -350,8 +350,8 @@ function -WM_setrandomstate(itWm)
 ## Performs one action in a finite state world.
 ## 
 ## @cgen:index
-## @param nAct int
-##          Zero-based index of the action to be performed, -1 for no action.
+## @param sAct strring
+##          Name of action to be performed, <code>NULL</code> for no action.
 ## @param itWm fst
 ##          The world model in unit 0. 
 ## @return A data instance with exactly one record of the following structure:
@@ -363,12 +363,14 @@ function -WM_setrandomstate(itWm)
 ##      <tr><td>3</td><td><code>double</code></td><td>The direct reward of <code>nAct</code></td></tr>
 ##    </table>
 ## @see -WM_qlearn
-function -WM_act(nAct,itWm)
+function -WM_act(sAct,itWm)
 {
   data idRes;                                                                   # Result
   var  nDRw; 0 nDRw =;                                                          # Direct reward of action
   var  nIni; itWm.ud.descr0 nIni =;                                             # Current world state
   var  nTer; nIni nTer =;                                                       # World state after action (default)
+  data idAux; { { "$[sAct]" } } itWm.is 0 0 idAux /noerror -gen_index;          # Look up action index for name
+  var  nAct;  :idAux[0,0]: nAct =;                                              # Store action index in nAct
   var  nT; ( nIni -1 nAct itWm -WM_findtrans ) nT =;                            # Get action transition
   :(nT>=0) && (nAct>=0): if                                                     # Action transition found >>
     :itWm.td[nT,itWm.IC_TD_TER]: nTer =;                                        #   Get world state after action
@@ -452,6 +454,7 @@ function -WM_qlearn(idAct,nDefQ,nDctQ,nXIte,itWm,itIwm)
   
   ## Initialization                                                             # -------------------------------------  
   itIwm -WM_init;                                                               # Reset agent's inner world model
+  idAct itIwm.is -copy;                                                         # Copy action set (input symbols)
   
 profile iP; profile iXP; iXP -begin_timer;
 iP -cont_timer; # == PROFILE SNIPPET =>
@@ -474,7 +477,7 @@ iP -break_timer; # <= PROFILE SNIPPET ==
     idLpa 0 0 idLpa /mark -select; idLpa -unmark;                               #   Delete non-maxima
     idLpa ( itIwm.NC_TD_TIS idLpa -find_comp ) nRAct -rset; nRAct nAct =;       #   Randomly choose from remaining opts
     ", act=$[nAct] (\"${idAct[nAct,0]}\")"                               -MSG2; #   Protocol
-    ( nAct itWm -WM_act ) idObs =;                                              #   17% # Perform action
+    ( :idAct[nAct,0]: itWm -WM_act ) idObs =;                                   #   17% # Perform action
     :idObs[0,1]: nTer =;                                                        #   New world state
     :idObs[0,3]: nDrw =;                                                        #   Direct reward from world
     " -> ter=$[nTer], reward=$[nDrw]"                                    -MSG2; #   Protocol
