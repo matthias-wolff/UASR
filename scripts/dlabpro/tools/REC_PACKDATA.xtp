@@ -160,7 +160,7 @@ function -usage(sCmd)
       "\n     dlabpro $__SFILE__.xtp $[sCmd]"                             -MSG;
     "\n\n   REMARKS:"                                                     -MSG;
       "\n     Archive can be used lust like $__SFILE__.xtp itself:"       -MSG;
-      "\n       dlabpro $__SFILE__.xtpx $__SFILE__.xtp"                   -MSG;
+      "\n       dlabpro $__SFILE__.xtpx <command> <cfgfile> [options]"    -MSG;
       "\n"                                                                -MSG;
     leave;
   end
