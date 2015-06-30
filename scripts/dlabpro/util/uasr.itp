@@ -4,7 +4,7 @@
 ## AUTHOR : Matthias Wolff
 ## PACKAGE: uasr/scripts/dlabpro/util
 
-## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## Copyright 2013-2015 UASR contributors (see COPYRIGHT file)
 ## - Chair of System Theory and Speech Technology, TU Dresden
 ## - Chair of Communications Engineering, BTU Cottbus
 ##
@@ -535,6 +535,16 @@ function -UASR_silence()
 function -UASR_get_vlevel()
 {
   .__UTL_nVlevel return;
+}
+
+## Sets the verbose level.
+##
+## @cgen:index
+## @param nVlevel integer
+##          The new verbose level (a non-negative integer).
+function -UASR_set_vlevel(nVlevel)
+{
+  nVlevel .__UTL_nVlevel =;
 }
 
 ## Saves an object to a file regarding the global write-protect flag. The global

@@ -30,7 +30,7 @@
 
 var __wm_sNcTdQR; "~QR" __wm_sNcTdQR =;                                         # Q-value/reward component
 
-## -- World model editing and rendering functions --
+## -- World model/inner map editing, rendering and auxiliary functions --
 
 ## Creates a new empty world automaton.
 ##
@@ -77,6 +77,29 @@ function -WM_getactionid(act,itWm)
   itWm.is.nrec -- return;
 }
 
+## Determines if an action is ineffective. An action is ineffective iff it never
+## changes the state of the world, i.e. no transition or only self loops accept 
+## the action.
+##
+## @cgen:index
+## @param act number or string
+##          The zero-based action index or the action name.
+## @param itWm fst
+##          The world automaton.
+## @return <code>TRUE</code> if the action is ineffective, <code>FALSE</code>
+##         otherwise.
+function -WM_isineffective(act,itWm)
+{
+  var nAct; ( act itWm -WM_getactionid ) nAct =;                                # Get the action index
+  data idTd; itWm.td idTd -copy;                                                # Copy transition table of world
+  :idTd[itWm.NC_TD_TIS].!=nAct: idTd -dmark;                                    # Mark transitions not accepting action
+  idTd 0 0 idTd /mark -delete;                                                  # Delete them
+  idTd -is_empty if TRUE return; end                                            # Action not used at all -> ineffective
+  :idTd[itWm.IC_TD_INI].==idTd[itWm.IC_TD_TER]: idTd =;                         # Find loops among remaining trans.
+  idTd NULL 0 "min" idTd /rec -aggregate;                                       # Test whether they are ALL loops
+  :idTd[0,0]==1: return;                                                        # Return that
+}
+
 ## Ensures the presence of the specified state ID in a world automaton.
 ##
 ## @cgen:index
@@ -106,16 +129,17 @@ function -WM_ensurestate(nS,itWm)
 
 ## Determines if a goal can be reached from a specified state. The function
 ## computes the state potentials. A state is forward-connected iff its state
-## potential is not infinity (world automata initialized through {@link -WM_init}
-## have logarithmic weights).
+## potential is not infinity (world automata initialized through <a 
+## href="#clp_-WM_init">-WM_init</a> have logarithmic weights).
 ##
 ## @cgen:index
 ## @param nS integer
 ##          The zero-based index of the state to check.
 ## @param itWm fst
-##          The world automaton.
+##          The world automaton or agent's inner map of the world.
 ## @return <code>TRUE</code> if a goal can be reached from the state, 
 ##         <code>FALSE</code> otherwise.
+## @see -WM_ismastered
 function -WM_pathtogoal(nS,itWm)
 {
   fst itAux; itWm itAux =;                                                      # Copy world automaton
@@ -171,7 +195,7 @@ function -WM_findtrans(nIni,nTer,nAct,itWm)
 ## @return The zero-based transition index of the added/updated transition.
 function -WM_addtrans(nIni,nTer,act,bFinal,itWm)
 {
-  var nAct; ( act itWm  -WM_getactionid ) nAct =;                               # Get the action index
+  var nAct; ( act itWm -WM_getactionid ) nAct =;                                # Get the action index
   :max(nIni,nTer): itWm -WM_ensurestate;                                        # Ensure states for new transition
   var nT; ( nIni nTer nAct itWm -WM_findtrans ) nT =;                           # Find specified transition
   nT 0 < if                                                                     # Does not yet exist >>
@@ -182,6 +206,24 @@ function -WM_addtrans(nIni,nTer,act,bFinal,itWm)
   end                                                                           # <<
   :itWm.td[nT,itWm.NC_TD_RC]++;                                                 # Increment trans. reference counter
   nT return;                                                                    # Return transition index
+}
+
+## Deletes all transitions accepting a given action from a world automaton. This
+## effectively removes the action itself. The function will <em>not</em> modify 
+## the input symbol table (i.e. the list of action symbols).
+##
+## @cgen:index
+## @param act number or string
+##          The zero-based action index or the action name.
+## @param itWm fst
+##          The world automaton.
+## @return void
+function -WM_delacttrans(act,itWm)
+{
+  var nAct; ( act itWm -WM_getactionid ) nAct =;                                # Get the action index
+  :itWm.td[itWm.NC_TD_TIS].==nAct: itWm.td -dmark;                              # Mark transitions acception action
+  itWm.td 0 0 itWm.td /mark -delete;                                            # Delete them
+  :itWm.ud[0,itWm.IC_UD_XT]=itWm.td.nrec;                                       # Adjust transition count of unit 0
 }
 
 ## Renders a world automaton using the GraphViz toolkit. The function expects
@@ -309,17 +351,17 @@ function -WM_render(sFname,sTool,sFormat,sMode,itWm)
   ## Render through GraphViz                                                    # -------------------------------------
   "dot" sFormat == if                                                           # Dot format >>
     sFname iDG -write;                                                          #   Write DOT to output file
-    "\n   - Generated $[sFname]\n  "                                      -MSG; #   Protocol
+    "\n   - Generated $[sFname]\n  "                                     -MSG2; #   Protocol
   else                                                                          # << Other formats >>
     var sTmpFile; ( "$__SFILE__" -SH_tmpfile ) sTmpFile =;                      #   Get a temporary file name
     sTmpFile iDG -write;                                                        #   Write DOT to temporary file
     "$[sTool] -T$[sFormat] -o$[sFname] " sTmpFile + -system;                    #   Render
     sTmpFile -SH_rm;                                                            #   Remove temporary file
-    "\n   - Generated $[sFname] using \"$[sTool]\"\n  "                   -MSG; #   Protocol
+    "\n   - Generated $[sFname] using \"$[sTool]\"\n  "                  -MSG2; #   Protocol
   end                                                                           # <<
 }
 
-## -- World model execution functions --
+## -- World model functions --
 
 ## Returns the current state of a world automaton.
 ##
@@ -406,16 +448,15 @@ function -WM_act(act,itWm)
   idRes return;                                                                 # Return result
 }
 
-## -- Learning functions --
+## -- Cognitive agents' inner map of world functions --
 
-## Simple Q-learning. The function interacts with the world model
-## <code>itWm</code> only by invoking <a href="#clp_-WM_setrandomstate"
-## >-WM_setrandomstate</a> and <a href="#clp_-WM_act">-WM_act</a>. These 
-## functions may be overloaded to implement other worlds.
+## Basic Q-learning of a cognitive agent's inner map of the world. The function 
+## interacts with the world model <code>itWm</code> only by invoking <a 
+## href="#clp_-WM_setrandomstate">-WM_setrandomstate</a> and <a 
+## href="#clp_-WM_act">-WM_act</a>. These functions may be overloaded to 
+## implement other worlds.
 ##
 ## @cgen:index
-## @param idAct data
-##         A list of actions which can be performed in the world.
 ## @param nDefQ double
 ##         Initial Q-value, 3 is a reasonable choice.
 ## @param nDctQ double
@@ -423,28 +464,32 @@ function -WM_act(act,itWm)
 ## @param nXIte int
 ##         Number of iterations.
 ## @param itWm fst
-##          The world model in unit 0. 
-## @param itIwm fst
-##           Filled with the inner world model of the cognitive agent after 
-##           Q-learning.
+##          The world model. 
+## @param itIm fst
+##          Filled with the cognitive agent's inner map of the world. Must have 
+##          been initialize through <a href="#clp_-WM_init">-WM_init</a> or be
+##          the result of a previous Q-learning. Actions performed during the 
+##          Q-learning are taken from the input symbol table 
+##          <code>itIm.is</code>. 
 ## @return void
-function -WM_qlearn(idAct,nDefQ,nDctQ,nXIte,itWm,itIwm)
+function -WM_qlearn(nDefQ,nDctQ,nXIte,itWm,itIm)
 {
-  function -LPA(nIni,idAct,nDefQ,itIwm)                                         # List possible actions at nIni
+  function -LPA(nIni,idAct,nDefQ,itIm)                                          # List possible actions at nIni
   {                                                                             # >>
     data idRes;                                                                 #   Result (transition list)
-    data idRes2;                                                                #   List transitions from nIni in itIwm
+    data idRes2;                                                                #   List transitions from nIni in itIm
     data idAux;                                                                 #   Auxiliary data instance
-    var  nIcTdTis; ( itIwm.NC_TD_TIS itIwm.td -find_comp ) nIcTdTis =;          #   Transducer input symbol comp. index
+    var  nIcTdTis; ( itIm.NC_TD_TIS itIm.td -find_comp ) nIcTdTis =;            #   Transducer input symbol comp. index
 
-    itIwm.td idRes =; 1 idRes -allocate;                                        #   Make one empty dummy transition
-    :idRes[0,itIwm.IC_TD_INI]=nIni;                                             #   Set initial state
-    :idRes[0,itIwm.IC_TD_TER]=-1;                                               #   Set terminal state
+    idAct -is_empty if idRes return; end                                        #   There are no actions -> return
+    itIm.td idRes =; 1 idRes -allocate;                                         #   Make one empty dummy transition
+    :idRes[0,itIm.IC_TD_INI]=nIni;                                              #   Set initial state
+    :idRes[0,itIm.IC_TD_TER]=-1;                                                #   Set terminal state
     :idRes[0,.__wm_sNcTdQR]=nDefQ;                                              #   Set initial Q-value
     ( 1  idAct.nrec zeros ) 0 idRes 0 idRes.dim idRes -lookup;                  #   Duplicate trans. idAct.nrec times
-    itIwm.NC_TD_TIS nIcTdTis idRes -rindex;                                     #   Fill in action indices
-    :itIwm.td[itIwm.IC_TD_INI].==nIni: itIwm.td /comp -dmark;                   #   Mark existing transitions from nIni
-    itIwm.td 0 0 idRes2 /mark -select; itIwm.td -unmark;                        #   Copy marked transitions and unmark
+    itIm.NC_TD_TIS nIcTdTis idRes -rindex;                                      #   Fill in action indices
+    :itIm.td[itIm.IC_TD_INI].==nIni: itIm.td /comp -dmark;                      #   Mark existing transitions from nIni
+    itIm.td 0 0 idRes2 /mark -select; itIm.td -unmark;                          #   Copy marked transitions and unmark
     idRes2 -is_empty not if                                                     #   Found existing transitions >>
       idRes idRes2 nIcTdTis nIcTdTis idAux -gen_index;                          #     Find actions in default result
       :idAux.>=0: idRes /comp -dmark; idRes 0 0 idRes /mark -delete;            #     Delete them
@@ -453,10 +498,10 @@ function -WM_qlearn(idAct,nDefQ,nDctQ,nXIte,itWm,itIwm)
     -UASR_get_vlevel 3 >= if                                                    #   Verbose level 3 and higher >>
       "\n     Possible actions at state $[nIni]"                         -echo; #     Protocol
       var nR; nR idRes.nrec < while                                             #     Loop over action list >>
-        "\n     - ${idRes[nR,itIwm.NC_TD_TIS]}"                          -echo; #       Protocol
-        " (\"${idAct[idRes[nR,itIwm.NC_TD_TIS],0]}\"):"                  -echo; #       Protocol
-        " -> ter=" :idRes[nR,itIwm.IC_TD_TER]<0: if "?"                         #       Protocol
-          else "${idRes[nR,itIwm.IC_TD_TER]}" end +                      -echo; #       ...
+        "\n     - ${idRes[nR,itIm.NC_TD_TIS]}"                           -echo; #       Protocol
+        " (\"${idAct[idRes[nR,itIm.NC_TD_TIS],0]}\"):"                   -echo; #       Protocol
+        " -> ter=" :idRes[nR,itIm.IC_TD_TER]<0: if "?"                          #       Protocol
+          else "${idRes[nR,itIm.IC_TD_TER]}" end +                       -echo; #       ...
         ", Q=${idRes[nR,.__wm_sNcTdQR]}"                                 -echo; #       Protocol
         nR ++=;                                                                 #       Next possible action
       end                                                                       #     <<
@@ -465,7 +510,8 @@ function -WM_qlearn(idAct,nDefQ,nDctQ,nXIte,itWm,itIwm)
     idRes return;                                                               #   Return a transition list
   }                                                                             # <<
 
-  data idLpa;                                                                   # List of possible actions
+  data idAct;                                                                   # Set of actions known to the agent
+  data idLpa;                                                                   # Possible actions at current state
   data idObs;                                                                   # Observation of the world
   data idAux;                                                                   # Auxiliary data instance
   var  nRAct;                                                                   # Random action
@@ -476,51 +522,77 @@ function -WM_qlearn(idAct,nDefQ,nDctQ,nXIte,itWm,itIwm)
   var  nT;                                                                      # Transition index in inner world model
   var  nIte;                                                                    # Current Q-learning iteration
   
-  ## Initialization                                                             # -------------------------------------  
-  itIwm -WM_init;                                                               # Reset agent's inner world model
-  idAct itIwm.is -copy;                                                         # Copy action set (input symbols)
+  ## Initialization                                                             # -------------------------------------
+  itIm.is idAct -copy;                                                          # Get agent's action set
   
-profile iP; profile iXP; iXP -begin_timer;
-iP -cont_timer; # == PROFILE SNIPPET =>
-iP -break_timer; # <= PROFILE SNIPPET ==
+#profile iP; profile iXP; iXP -begin_timer;
+#iP -cont_timer; # == PROFILE SNIPPET =>
+#iP -break_timer; # <= PROFILE SNIPPET ==
   ## Q-learning iteration                                                       # -------------------------------------
   "\n\n   Q-Learning ($[nXIte] iterations)"                               -MSG; # Protocol
+    "\n   - Agent's actions: { "                                          -MSG; # Protocol
+    0 var i; i idAct.nrec < while "${idAct[i,0]} " -MSG; i ++=; end "}"   -MSG; # Protocol
     "\n   - Initial Q-value: $[nDefQ]"                                    -MSG; # Protocol
     "\n   - Q discount     : $[nDctQ]"                                    -MSG; # Protocol
   0 1 -PBAR;                                                                    # Begin progress bar
   0 nIte =; nIte nXIte < while                                                  # Q-learning iteration >>
     ( itWm -WM_setrandomstate ) nIni =;                                         #   15% # Randomly set a new world state
-    0 nIni -1 FALSE itIwm -WM_addtrans;                                         #   17% # This is a possible start state
+    0 nIni -1 FALSE itIm -WM_addtrans;                                          #   17% # This is a possible start state
     "\n   - ${nIte+1}/$[nXIte]: ini=$[nIni]"                             -MSG2; #   Protocol
     :(nIte+1)/nXIte: 1 -PBAR;                                                   #   Display progress
 
-    ## List and rank action options, then choose and perform action             #   35% # - - - - - - - - - - - - - - - - - -
-    ( nIni idAct nDefQ itIwm -LPA ) idLpa =;                                    #   11% # Get action options from nIni
+    ## List and rank action options, then choose and perform action             #   35% # - - - - - - - - - - - - - - -
+    ( nIni idAct nDefQ itIm -LPA ) idLpa =;                                     #   11% # Get action options from nIni
+    idLpa -is_empty if nIte ++=; continue; end                                  #   Cannot do anything here...
     :idLpa[.__wm_sNcTdQR]: NULL 0 "max" idAux /rec -aggregate;                  #   Get maximal Q-value
     :idLpa[.__wm_sNcTdQR].==idAux[0,0]: idLpa /comp -dmark;                     #   Mark maximal Q-values
     idLpa 0 0 idLpa /mark -select; idLpa -unmark;                               #   Delete non-maxima
-    idLpa ( itIwm.NC_TD_TIS idLpa -find_comp ) nRAct -rset; nRAct nAct =;       #   Randomly choose from remaining opts
+    idLpa ( itIm.NC_TD_TIS idLpa -find_comp ) nRAct -rset; nRAct nAct =;        #   Randomly choose from remaining opts
     ", act=$[nAct] (\"${idAct[nAct,0]}\")"                               -MSG2; #   Protocol
-    ( :idAct[nAct,0]: itWm -WM_act ) idObs =;                                   #   17% # Perform action
+    ( ( :idAct[nAct,0]: itIm -WM_getactionid ) itWm -WM_act ) idObs =;          #   17% # Perform action
+#    ( nAct itWm -WM_act ) idObs =;                                              #   17% # Perform action
     :idObs[0,1]: nTer =;                                                        #   New world state
     :idObs[0,3]: nDrw =;                                                        #   Direct reward from world
     " -> ter=$[nTer], reward=$[nDrw]"                                    -MSG2; #   Protocol
 
-    ## Extend inner world model and compute new Q-values                        #   31% # - - - - - - - - - - - - - - - - - -
-    ( nTer idAct nDefQ itIwm -LPA ) idLpa =;                                    #   12% # Get action options from nTer
+    ## Update agent's inner map and compute new Q-values                        #   31% # - - - - - - - - - - - - - - -
+    ( nTer idAct nDefQ itIm -LPA ) idLpa =;                                     #   12% # Get action options from nTer
     :idLpa[.__wm_sNcTdQR]: NULL 0 "max" idAux /rec -aggregate;                  #   Get maximal Q-value
-    ( nIni nTer nAct :nDrw>0: itIwm -WM_addtrans ) nT =;                        #   17% # Log action in inner world model
-    :itIwm.td[nT,.__wm_sNcTdQR]=nDctQ*idAux[0,0]+nDrw;                          #   Set Q-value of action transition
+    ( nIni nTer nAct :nDrw>0: itIm -WM_addtrans ) nT =;                         #   17% # Log action in inner world model
+    :itIm.td[nT,.__wm_sNcTdQR]=nDctQ*idAux[0,0]+nDrw;                           #   Set Q-value of action transition
     ", maxQ=${idAux[0,0]} -> Q=$[nDctQ]*${idAux[0,0]}+$[nDrw]"           -MSG2; #   Protocol
-    "=${itIwm.td[nT,.__wm_sNcTdQR]}"                                     -MSG2; #   Protocol
+    "=${itIm.td[nT,.__wm_sNcTdQR]}"                                      -MSG2; #   Protocol
 
     nIte ++=;                                                                   #   Next iteration step
   end                                                                           # <<
   "\n  " -MSG2; "done\n\n"                                                -MSG; # Protocol
-iXP -break_timer;
-"   Profile\n   - Snippet: $[iP.time] ms"                                -echo;
-", ${round(iP.time/iXP.time*1000)/10} %, $[iP.calls]x"                   -echo;
-"\n   - Total  : $[iXP.time] ms\n"                                       -echo;
+#iXP -break_timer;
+#"   Profile\n   - Snippet: $[iP.time] ms"                                -echo;
+#", ${round(iP.time/iXP.time*1000)/10} %, $[iP.calls]x"                   -echo;
+#"\n   - Total  : $[iXP.time] ms\n"                                       -echo;
+}
+
+## Determines if the cognitive agent masters its world. The world is mastered,
+## iff there is at least one path from each state in the agents inner map of the
+## world to a final state (goal). The function computes the state potentials and
+## checks, whether all of them are finite (world automata initialized through 
+## <a href="#clp_-WM_init">-WM_init</a> have logarithmic weights, hence states 
+## with infinite potential are not conencted with the final state).
+##
+## @cgen:index
+## @param itIm fst
+##          The agent's inner map of the world.
+## @return <code>TRUE</code> if the world is mastered, <code>FALSE</code> 
+##         otherwise.
+## @see -WM_pathtogoal
+function -WM_ismastered(itIm)
+{
+  fst  itAux;                                                                   # Auxiliary finite state transducer
+  data idAux;                                                                   # Auxiliary data table
+  itIm itAux =;                                                                 # Copy world automaton
+  0 itAux -potential;                                                           # Compute state potentials
+  :itAux.sd["~POT"].>1e308: NULL 0 "sum" idAux /rec -aggregate;                 # Count infinite potentials ...
+  :idAux[0,0]==0: return;                                                       # ... world mastered if none
 }
 
 ## EOF
