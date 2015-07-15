@@ -77,8 +77,10 @@ function -CFG_add(sFile,bTerm)
     idKey "?\t?" "replace" idKey -strop;                                        #   Remove tabs from keys
     idKey idCfg -copy;                                                          #   Copy keys to config buffer
     idVal idCfg -join;                                                          #   Join values
-    .__CFG_idCfg idCfg -cat;                                                    #   Insert new keys before old ...
-    idCfg .__CFG_idCfg -copy;                                                   #   ... in .__CFG_idCfg
+    idCfg -is_empty not if;                                                     #   If there are keys >>
+      .__CFG_idCfg idCfg -cat;                                                  #     Insert new keys before old ...
+      idCfg .__CFG_idCfg -copy;                                                 #     ... in .__CFG_idCfg
+    end;                                                                        #   <<
     TRUE return;                                                                #   Configuration file loaded
   }                                                                             # <<
   function -CFG_get_include(sFile)                                              # Load included files
