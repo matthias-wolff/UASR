@@ -92,64 +92,100 @@
   <!--{{ CUSTOM_DOC -->
   <a name="example"></a><h3>Example</h3>
   <table cellpadding="10"><tr>
-    <td class="hidden" style="width:33em;"><pre class="code">
- "$UASR_HOME/scripts/dlabpro/util/wm.itp" <a href="javascript:__goDlabpro('automatic/function.html','mth_include')">include</a>;
+    <td class="hidden" style="width:40em;"><pre class="code">
+"$UASR_HOME/scripts/dlabpro/util/wm.itp" <a href="javascript:__goDlabpro('automatic/function.html','mth_include')">include</a>;
 </pre></td>
     <td class="hidden">
     </td>
   </tr></table>
   <p>First we create a simple maze world.</p>
   <table cellpadding="10"><tr>
-    <td class="hidden" style="width:33em;"><pre class="code">
- <a href="javascript:__goDlabpro('automatic/data.html')">data</a> idMaze;
- { { 1 1 1 2 }
-   { 1 0 0 0 }
-   { 1 0 1 1 }
-   { 1 1 1 1 }
- } idMaze =;
- <a href="javascript:__goDlabpro('automatic/data.html')">data</a> idAct; { "N" "E" "S" "W" } ' idAct =;
- <a href="javascript:__goDlabpro('automatic/fst.html')">fst</a>  itWm; idMaze idAct "" itWm <a href="#clp_-WM_mazeworld">-WM_mazeworld</a>;
- "itWm.svg" "svg" NULL itWm <a href="#clp_-WM_render">-WM_render</a>;
+    <td class="hidden" style="width:40em;"><pre class="code">
+## Initialize world model
+<a href="javascript:__goDlabpro('automatic/fst.html')">fst</a> itWm; itWm <a href="#clp_-WM_init">-WM_init</a>;
+"POSX" ( <a href="javascript:__goDlabpro('automatic/function.html','mth_-type')">-type</a> double ) itWm.sd <a href="javascript:__goDlabpro('automatic/data.html','mth_-addcomp')">-addcomp</a>; 
+"POSY" ( <a href="javascript:__goDlabpro('automatic/function.html','mth_-type')">-type</a> double ) itWm.sd <a href="javascript:__goDlabpro('automatic/data.html','mth_-addcomp')">-addcomp</a>; 
+
+## Add entry and fall-back transitions
+1 <a href="javascript:__goDlabpro('automatic/var.html')">var</a> i; i 9 <= <a href="javascript:__goDlabpro('automatic/function.html','mth_while')">while</a>
+  0 i -1 FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>; 
+  i i -2 FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>;
+  :itWm.sd[i,"POSX"]=1.25*(1+(i-1)%3);
+  :itWm.sd[i,"POSY"]=1.25*(3-ent((i-1)/3));
+  i ++=;
+<a href="javascript:__goDlabpro('automatic/function.html','mth_end')">end</a>
+
+## Add action transitions
+1 2 "E" FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>;
+1 4 "S" FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>;
+2 1 "W" FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>;
+2 3 "E" TRUE  itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>; 
+3 2 "W" FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>; 
+4 1 "N" FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>;
+4 7 "S" FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>;
+5 6 "E" FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>; 
+5 8 "S" FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>; 
+6 5 "W" FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>; 
+6 9 "S" FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>; 
+7 4 "N" FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>; 
+7 8 "E" FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>; 
+8 5 "N" FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>; 
+8 7 "W" FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>; 
+8 9 "E" FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>; 
+9 6 "N" FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>; 
+9 8 "W" FALSE itWm <a href="#clp_-WM_addtrans">-WM_addtrans</a>; 
+
+## Add rewards to non-entry transitions to final state 3
+:itWm.td["~QR"]=(itWm.td["~INI"].!=0).&&(itWm.td["~TER"].==3);
+
+## Render world automaton
+"world.eps" NULL "eps" "PQ" itWm <a href="#clp_-WM_render">-WM_render</a>;
 </pre></td>
     <td class="hidden">
-      <img src="../../resources/figures/wm/itWm.png" width="418" height="339" alt="Rendering of itWm">
+      <img src="../../resources/figures/wm/itWm.png" alt="Rendering of itWm">
+      <p>Rendering of world automaton (world.eps)</p>
     </td>
   </tr></table>
   <p>Then we perform some actions in this world and log the world's reactions.</p>
   <table cellpadding="10"><tr>
-    <td class="hidden" style="width:33em;"><pre class="code">
+    <td class="hidden" style="width:40em;"><pre class="code">
 <a href="javascript:__goDlabpro('automatic/data.html')">data</a> idLog;
-13 itWm <a href="#clp_-WM_setstate">-WM_setstate</a>;
-( 0 itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
-( 0 itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
-( 0 itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
-( 1 itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
-( 1 itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
-( 1 itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
+5 itWm <a href="#clp_-WM_setstate">-WM_setstate</a>;
+( "S" itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
+( "W" itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
+( "N" itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
+( "N" itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
+( "E" itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
+( "E" itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
+( "N" itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
+( "E" itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
+( "S" itWm <a href="#clp_-WM_act">-WM_act</a> ) idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-cat')">-cat</a>;
 idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-print</a>;
 </pre></td>
     <td class="hidden"><pre>
 
   data idLog
  ---------------------------
-           0  1  2  3  4  5 
-          .. .. .. .. .. .. 
-  0 nIni: 13  9  5  1  2  3 
-  1 nTer:  9  5  1  2  3  4 
-  2 nAct:  0  0  0  1  1  1 
-  3   nR:  0  0  0  0  0  1 
+         0 1 2 3 4 5 6 7 8 
+         . . . . . . . . . 
+ 0 nIni: 5 8 7 4 1 2 3 3 3 
+ 1 nTer: 8 7 4 1 2 3 3 3 3 
+ 2 nAct: 1 2 3 3 0 0 3 0 1 
+ 3   nR: 0 0 0 0 0 1 1 1 1 
  ---------------------------
 </pre></td>
   </tr></table>
   <p>And finally we do a Q-learning.</p>
   <table cellpadding="10"><tr>
-    <td class="hidden" style="width:33em;"><pre class="code">
- <a href="javascript:__goDlabpro('automatic/fst.html')">fst</a> itIwm;
- idAct 3 0.9 500 itWm itIwm <a href="#clp_-WM_qlearn">-WM_qlearn</a>;
- "itIwm.svg" "svg" NULL itIwm <a href="#clp_-WM_render">-WM_render</a>;
+    <td class="hidden" style="width:40em;"><pre class="code">
+ <a href="javascript:__goDlabpro('automatic/fst.html')">fst</a> itIm;
+ itIm <a href="#clp_-WM_init">-WM_init</a>; itWm.is itIm.is =;
+ 3 0.9 500 itWm itIm <a href="#clp_-WM_qlearn">-WM_qlearn</a>;
+ "innermap.eps" NULL "eps" "EL" itIm <a href="#clp_-WM_render">-WM_render</a>;
 </pre></td>
     <td class="hidden">
-      <img src="../../resources/figures/wm/itIwm.png" width="497" height="321" alt="Rendering of itIwm">
+      <img src="../../resources/figures/wm/itIm.png" alt="Rendering of itIm">
+      <p>Rendering of Q-learning result (innermap.eps)</p>
     </td>
   </tr></table>
   <!--}} CUSTOM_DOC -->
@@ -164,8 +200,24 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       </td>
     </tr>
     <tr>
+      <td><a href="#clp_-WM_getactionid"><code class="link">-WM_getactionid</code></a></td>
+      <td><code><b>-WM_getactionid</b>(act,itWm)</code><br>&nbsp;<br> Returns the zero-based index of an action in the input symbol table if the
+ world model.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-WM_isineffective"><code class="link">-WM_isineffective</code></a></td>
+      <td><code><b>-WM_isineffective</b>(act,itWm)</code><br>&nbsp;<br> Determines if an action is ineffective.
+      </td>
+    </tr>
+    <tr>
       <td><a href="#clp_-WM_ensurestate"><code class="link">-WM_ensurestate</code></a></td>
       <td><code><b>-WM_ensurestate</b>(nS,itWm)</code><br>&nbsp;<br> Ensures the presence of the specified state ID in a world automaton.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-WM_pathtogoal"><code class="link">-WM_pathtogoal</code></a></td>
+      <td><code><b>-WM_pathtogoal</b>(nS,itWm)</code><br>&nbsp;<br> Determines if a goal can be reached from a specified state.
       </td>
     </tr>
     <tr>
@@ -175,17 +227,17 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
     </tr>
     <tr>
       <td><a href="#clp_-WM_addtrans"><code class="link">-WM_addtrans</code></a></td>
-      <td><code><b>-WM_addtrans</b>(nIni,nTer,nAct,bFinal,itWm)</code><br>&nbsp;<br> Adds a transition to a world automaton.
+      <td><code><b>-WM_addtrans</b>(nIni,nTer,act,bFinal,itWm)</code><br>&nbsp;<br> Adds a transition to a world automaton.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-WM_delacttrans"><code class="link">-WM_delacttrans</code></a></td>
+      <td><code><b>-WM_delacttrans</b>(act,itWm)</code><br>&nbsp;<br> Deletes all transitions accepting a given action from a world automaton.
       </td>
     </tr>
     <tr>
       <td><a href="#clp_-WM_render"><code class="link">-WM_render</code></a></td>
-      <td><code><b>-WM_render</b>(sFname,sFormat,sMode,itWm)</code><br>&nbsp;<br> Renders a world automaton using the GraphViz toolkit.
-      </td>
-    </tr>
-    <tr>
-      <td><a href="#clp_-WM_mazeworld"><code class="link">-WM_mazeworld</code></a></td>
-      <td><code><b>-WM_mazeworld</b>(idMaze,idAct,sMode,itWm)</code><br>&nbsp;<br> Creates a maze world automaton.
+      <td><code><b>-WM_render</b>(sFname,sTool,sFormat,sMode,itWm)</code><br>&nbsp;<br> Renders a world automaton using the GraphViz toolkit.
       </td>
     </tr>
     <tr>
@@ -205,12 +257,17 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
     </tr>
     <tr>
       <td><a href="#clp_-WM_act"><code class="link">-WM_act</code></a></td>
-      <td><code><b>-WM_act</b>(nAct,itWm)</code><br>&nbsp;<br> Performs one action in a finite state world.
+      <td><code><b>-WM_act</b>(act,itWm)</code><br>&nbsp;<br> Performs one action in a finite state world.
       </td>
     </tr>
     <tr>
       <td><a href="#clp_-WM_qlearn"><code class="link">-WM_qlearn</code></a></td>
-      <td><code><b>-WM_qlearn</b>(idAct,nDefQ,nDctQ,nXIte,itWm,itIwm)</code><br>&nbsp;<br> Simple Q-learning.
+      <td><code><b>-WM_qlearn</b>(nDefQ,nDctQ,nXIte,itWm,itIm)</code><br>&nbsp;<br> Basic Q-learning of a cognitive agent's inner map of the world.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-WM_ismastered"><code class="link">-WM_ismastered</code></a></td>
+      <td><code><b>-WM_ismastered</b>(itIm)</code><br>&nbsp;<br> Determines if the cognitive agent masters its world.
       </td>
     </tr>
   </table>
@@ -249,7 +306,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(40)</td>
+      <td class="hidden">util/wm.itp(42)</td>
     </tr>
   </table>
   </div>
@@ -272,6 +329,152 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       </td>
     </tr>  </table>
     <h3>Return value</h3> void
+
+  </div>
+  </div>
+  <div id="clp_-WM_getactionid">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-WM_getactionid</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-WM_getactionid','-WM_getactionid','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-WM_getactionid</b>(act,itWm)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/wm.itp(64)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Returns the zero-based index of an action in the input symbol table if the
+ world model. If <code>act</code> is numeric or can be converted to a number,
+ the function returns the numeric value of <code>act</code>. Otherwise the
+ function will look up the action named <code>act</code> in the input symbol
+ table and return its zero-based index. If no action named <code>act</code> is
+ found, the function will add the action.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>act</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">or          The zero-based action index or the action name.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itWm</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The world automaton.
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> The zero-based index of the action in the input symbol table.
+
+  </div>
+  </div>
+  <div id="clp_-WM_isineffective">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-WM_isineffective</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-WM_isineffective','-WM_isineffective','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-WM_isineffective</b>(act,itWm)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/wm.itp(91)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Determines if an action is ineffective. An action is ineffective iff it never
+ changes the state of the world, i.e. no transition or only self loops accept
+ the action.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>act</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">or          The zero-based action index or the action name.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itWm</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The world automaton.
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> <code>TRUE</code> if the action is ineffective, <code>FALSE</code>
+         otherwise.
 
   </div>
   </div>
@@ -308,7 +511,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(60)</td>
+      <td class="hidden">util/wm.itp(114)</td>
     </tr>
   </table>
   </div>
@@ -347,6 +550,86 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
 
   </div>
   </div>
+  <div id="clp_-WM_pathtogoal">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-WM_pathtogoal</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-WM_pathtogoal','-WM_pathtogoal','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-WM_pathtogoal</b>(nS,itWm)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/wm.itp(143)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Determines if a goal can be reached from a specified state. The function
+ computes the state potentials. A state is forward-connected iff its state
+ potential is not infinity (world automata initialized through <a
+ href="#clp_-WM_init">-WM_init</a> have logarithmic weights).
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">integer&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nS</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The zero-based index of the state to check.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itWm</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The world automaton or agent's inner map of the world.
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> <code>TRUE</code> if a goal can be reached from the state,
+         <code>FALSE</code> otherwise.
+
+  <h3>See also</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><a href="#clp_-WM_ismastered">-WM_ismastered</a>
+    </td>
+  </tr>  </table>
+  </div>
+  </div>
   <div id="clp_-WM_findtrans">
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
@@ -380,7 +663,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(89)</td>
+      <td class="hidden">util/wm.itp(163)</td>
     </tr>
   </table>
   </div>
@@ -465,14 +748,14 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Signature</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden"><code><b>-WM_addtrans</b>(nIni,nTer,nAct,bFinal,itWm)</code></td>
+      <td class="hidden"><code><b>-WM_addtrans</b>(nIni,nTer,act,bFinal,itWm)</code></td>
     </tr>
     <tr>
       <td class="hidden"></td>
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(122)</td>
+      <td class="hidden">util/wm.itp(196)</td>
     </tr>
   </table>
   </div>
@@ -508,12 +791,12 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
     </tr>
     <tr>
       <td class="hidden">&nbsp;&nbsp;</td>
-      <td class="hidden">integer&nbsp;
+      <td class="hidden">number&nbsp;
       </td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden"><code><b>nAct</b></code></td>
+      <td class="hidden"><code><b>act</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">          The action.
+      <td class="hidden">or          The zero-based action index or the action name.
 
       </td>
     </tr>
@@ -544,6 +827,77 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
 
   </div>
   </div>
+  <div id="clp_-WM_delacttrans">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-WM_delacttrans</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-WM_delacttrans','-WM_delacttrans','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-WM_delacttrans</b>(act,itWm)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/wm.itp(221)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Deletes all transitions accepting a given action from a world automaton. This
+ effectively removes the action itself. The function will <em>not</em> modify
+ the input symbol table (i.e. the list of action symbols).
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>act</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">or          The zero-based action index or the action name.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itWm</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The world automaton.
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> void
+
+  </div>
+  </div>
   <div id="clp_-WM_render">
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
@@ -570,20 +924,20 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Signature</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden"><code><b>-WM_render</b>(sFname,sFormat,sMode,itWm)</code></td>
+      <td class="hidden"><code><b>-WM_render</b>(sFname,sTool,sFormat,sMode,itWm)</code></td>
     </tr>
     <tr>
       <td class="hidden"></td>
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(150)</td>
+      <td class="hidden">util/wm.itp(258)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
     <h3>Description</h3> Renders a world automaton using the GraphViz toolkit. The function expects
- GraphViz executables to be found in the path environment variable.
+ the GraphViz executables to be found in the path environment variable.
  
 
   <h3>Parameters</h3>
@@ -601,12 +955,26 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
     </tr>
     <tr>
       <td class="hidden">&nbsp;&nbsp;</td>
-      <td class="hidden">
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sTool</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The GraphViz rendering tool, can be <code>NULL</code> which is
+          equivalent to "fdp -Gmaxiter=10000".
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
       </td>
       <td class="hidden">&nbsp;</td>
       <td class="hidden"><code><b>sFormat</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">
+      <td class="hidden">          The output format; "svg", "eps", "png", or any of the file formats
+          supported by GraphViz.
+
       </td>
     </tr>
     <tr>
@@ -616,9 +984,19 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;</td>
       <td class="hidden"><code><b>sMode</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">          The output format; "svg", "eps", "png", or any of the file formats
-          supported by GraphViz.
-          -- reserved --
+      <td class="hidden">          Empty string (default operation) or any combination of the following
+          characters:
+          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
+            <tr><th>Character</th><th>Description</th></tr>
+            <tr><td>E</td><td>Skip entry transitions (for legibility)</td></tr>
+            <tr><td>L</td><td>Display Q-values/rewards as line widths<sup>1)</sup></td></tr>
+            <tr><td>P</td><td>Use fix state positions<sup>2)</sup></td></tr>
+            <tr><td>Q</td><td>Display Q-values/rewards in transition labels</td></tr>
+          </table>
+          <sup>1)</sup> Effective only if format is "eps"<br>
+          <sup>2)</sup> Requires that the state table <code>itWm.sd</code> of
+          the world automaton contains two numeric components named "POSX" and
+          "POSY" specifying the state positions.
 
       </td>
     </tr>
@@ -630,103 +1008,6 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden"><code><b>itWm</b></code></td>
       <td class="hidden">&nbsp;</td>
       <td class="hidden">          The world model to be rendered.
-
-      </td>
-    </tr>  </table>
-    <h3>Return value</h3> void
-
-  </div>
-  </div>
-  <div id="clp_-WM_mazeworld">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-    <tr>
-      <td nowrap width="25%" class="navbar">
-        Function <span class="mid">-WM_mazeworld</span>
-      </td>
-      <td nowrap width="75%" class="navbar" style="text-align:right;">
-        <a class="navbar" href="javascript:__PrintSection('clp_-WM_mazeworld','-WM_mazeworld','../..');"><img
-        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
-        alt="Print"></a> 
-        <a class="navbar" href="#functions">Functions</a>
-        <a class="navbar" href="#">Script</a>
-        <a class="navbar" href="index.html">Package</a>
-        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
-        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
-        <a class="navbar" href="../../home.html">Home</a>
-      </td>
-    </tr>
-  </table>
-  <div class="mframe">
-  <table cellSpacing="0" cellPadding="0" border="0"> 
-    <tr>
-      <td class="hidden"></td>
-      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">Signature</td>
-      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden"><code><b>-WM_mazeworld</b>(idMaze,idAct,sMode,itWm)</code></td>
-    </tr>
-    <tr>
-      <td class="hidden"></td>
-      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">Source</td>
-      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(178)</td>
-    </tr>
-  </table>
-  </div>
-  <div class="mframe2">
-    <h3>Description</h3> Creates a maze world automaton.
- 
-
-  <h3>Parameters</h3>
-  <table>
-    <tr>
-      <td class="hidden">&nbsp;&nbsp;</td>
-      <td class="hidden">data&nbsp;
-      </td>
-      <td class="hidden">&nbsp;</td>
-      <td class="hidden"><code><b>idMaze</b></code></td>
-      <td class="hidden">&nbsp;</td>
-      <td class="hidden">          A maze matrix consisting of the following values: 0 - obstacle,
-          1 - path, and 2 - exit.
-
-      </td>
-    </tr>
-    <tr>
-      <td class="hidden">&nbsp;&nbsp;</td>
-      <td class="hidden">data&nbsp;
-      </td>
-      <td class="hidden">&nbsp;</td>
-      <td class="hidden"><code><b>idAct</b></code></td>
-      <td class="hidden">&nbsp;</td>
-      <td class="hidden">          List of action names; "0", "N", "E", "S", "W", "NE", "SE", "SW", and
-          "NW" or any subset of these elements.
-
-      </td>
-    </tr>
-    <tr>
-      <td class="hidden">&nbsp;&nbsp;</td>
-      <td class="hidden">string&nbsp;
-      </td>
-      <td class="hidden">&nbsp;</td>
-      <td class="hidden"><code><b>sMode</b></code></td>
-      <td class="hidden">&nbsp;</td>
-      <td class="hidden">          Empty string (default operation) or any combination of the following characters
-          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
-            <tr><th>Character     </th><th>Description</th></tr>
-            <tr><td><code>F</code></td><td>Use fall-back action transitions</td></tr>
-          </table>
-
-      </td>
-    </tr>
-    <tr>
-      <td class="hidden">&nbsp;&nbsp;</td>
-      <td class="hidden">fst&nbsp;
-      </td>
-      <td class="hidden">&nbsp;</td>
-      <td class="hidden"><code><b>itWm</b></code></td>
-      <td class="hidden">&nbsp;</td>
-      <td class="hidden">          Filled with the world automaton.
 
       </td>
     </tr>  </table>
@@ -767,7 +1048,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(309)</td>
+      <td class="hidden">util/wm.itp(373)</td>
     </tr>
   </table>
   </div>
@@ -832,7 +1113,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(325)</td>
+      <td class="hidden">util/wm.itp(389)</td>
     </tr>
   </table>
   </div>
@@ -914,7 +1195,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(338)</td>
+      <td class="hidden">util/wm.itp(402)</td>
     </tr>
   </table>
   </div>
@@ -977,14 +1258,14 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Signature</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden"><code><b>-WM_act</b>(nAct,itWm)</code></td>
+      <td class="hidden"><code><b>-WM_act</b>(act,itWm)</code></td>
     </tr>
     <tr>
       <td class="hidden"></td>
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(366)</td>
+      <td class="hidden">util/wm.itp(430)</td>
     </tr>
   </table>
   </div>
@@ -996,12 +1277,12 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
   <table>
     <tr>
       <td class="hidden">&nbsp;&nbsp;</td>
-      <td class="hidden">int&nbsp;
+      <td class="hidden">number&nbsp;
       </td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden"><code><b>nAct</b></code></td>
+      <td class="hidden"><code><b>act</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">          Zero-based index of the action to be performed, -1 for no action.
+      <td class="hidden">or          The zero-based action index or the action name.
 
       </td>
     </tr>
@@ -1019,10 +1300,10 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
     <h3>Return value</h3> A data instance with exactly one record of the following structure:
     <table>
       <tr><th>Component</th><th>Type</th><th>Description</th></tr>
-      <tr><td>0</td><td><code>int</code></td><td>State before performing <code>nAct</code></td></tr>
-      <tr><td>1</td><td><code>int</code></td><td>State after performing <code>nAct</code></td></tr>
-      <tr><td>2</td><td><code>int</code></td><td><code>nAct</code></td></tr>
-      <tr><td>3</td><td><code>double</code></td><td>The direct reward of <code>nAct</code></td></tr>
+      <tr><td>0</td><td><code>int</code></td><td>State before performing <code>act</code></td></tr>
+      <tr><td>1</td><td><code>int</code></td><td>State after performing <code>act</code></td></tr>
+      <tr><td>2</td><td><code>int</code></td><td><code>act</code> (as index)</td></tr>
+      <tr><td>3</td><td><code>double</code></td><td>The direct reward of <code>act</code></td></tr>
     </table>
 
   <h3>See also</h3>
@@ -1060,37 +1341,27 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Signature</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden"><code><b>-WM_qlearn</b>(idAct,nDefQ,nDctQ,nXIte,itWm,itIwm)</code></td>
+      <td class="hidden"><code><b>-WM_qlearn</b>(nDefQ,nDctQ,nXIte,itWm,itIm)</code></td>
     </tr>
     <tr>
       <td class="hidden"></td>
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(405)</td>
+      <td class="hidden">util/wm.itp(475)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
-    <h3>Description</h3> Simple Q-learning. The function interacts with the world model
- <code>itWm</code> only by invoking <a href="#clp_-WM_setrandomstate"
- >-WM_setrandomstate</a> and <a href="#clp_-WM_act">-WM_act</a>. These
- functions may be overloaded to implement other worlds.
+    <h3>Description</h3> Basic Q-learning of a cognitive agent's inner map of the world. The function
+ interacts with the world model <code>itWm</code> only by invoking <a
+ href="#clp_-WM_setrandomstate">-WM_setrandomstate</a> and <a
+ href="#clp_-WM_act">-WM_act</a>. These functions may be overloaded to
+ implement other worlds.
  
 
   <h3>Parameters</h3>
   <table>
-    <tr>
-      <td class="hidden">&nbsp;&nbsp;</td>
-      <td class="hidden">data&nbsp;
-      </td>
-      <td class="hidden">&nbsp;</td>
-      <td class="hidden"><code><b>idAct</b></code></td>
-      <td class="hidden">&nbsp;</td>
-      <td class="hidden">         A list of actions which can be performed in the world.
-
-      </td>
-    </tr>
     <tr>
       <td class="hidden">&nbsp;&nbsp;</td>
       <td class="hidden">double&nbsp;
@@ -1131,7 +1402,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;</td>
       <td class="hidden"><code><b>itWm</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">          The world model in unit 0.
+      <td class="hidden">          The world model.
 
       </td>
     </tr>
@@ -1140,15 +1411,89 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">fst&nbsp;
       </td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden"><code><b>itIwm</b></code></td>
+      <td class="hidden"><code><b>itIm</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">           Filled with the inner world model of the cognitive agent after
-           Q-learning.
+      <td class="hidden">          Filled with the cognitive agent's inner map of the world. Must have
+          been initialize through <a href="#clp_-WM_init">-WM_init</a> or be
+          the result of a previous Q-learning. Actions performed during the
+          Q-learning are taken from the input symbol table
+          <code>itIm.is</code>.
 
       </td>
     </tr>  </table>
     <h3>Return value</h3> void
 
+  </div>
+  </div>
+  <div id="clp_-WM_ismastered">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-WM_ismastered</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-WM_ismastered','-WM_ismastered','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-WM_ismastered</b>(itIm)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/wm.itp(588)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Determines if the cognitive agent masters its world. The world is mastered,
+ iff there is at least one path from each state in the agents inner map of the
+ world to a final state (goal). The function computes the state potentials and
+ checks, whether all of them are finite (world automata initialized through
+ <a href="#clp_-WM_init">-WM_init</a> have logarithmic weights, hence states
+ with infinite potential are not conencted with the final state).
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itIm</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The agent's inner map of the world.
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> <code>TRUE</code> if the world is mastered, <code>FALSE</code>
+         otherwise.
+
+  <h3>See also</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><a href="#clp_-WM_pathtogoal">-WM_pathtogoal</a>
+    </td>
+  </tr>  </table>
   </div>
   </div>
 <div class="footer">End of page</div>

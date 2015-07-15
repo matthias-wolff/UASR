@@ -1086,6 +1086,11 @@ decomposition
  -h or --help</td>
     </tr>
     <tr>
+      <td><a href="util/uasr.itp.html#clp_-UASR_set_vlevel"><code class="link">-UASR_set_vlevel</code></a></td>
+      <td><code>util/uasr.itp</code></td>
+      <td><code><b>-UASR_set_vlevel</b>(nVlevel)</code><br>&nbsp;<br> Sets the verbose level</td>
+    </tr>
+    <tr>
       <td><a href="util/uasr.itp.html#clp_-UASR_version"><code class="link">-UASR_version</code></a></td>
       <td><code>util/uasr.itp</code></td>
       <td><code><b>-UASR_version</b></code><br>&nbsp;<br> Returns the SVN revision number of the current UASR working copy</td>
@@ -1126,12 +1131,17 @@ decomposition
     <tr>
       <td><a href="util/wm.itp.html#clp_-WM_act"><code class="link">-WM_act</code></a></td>
       <td><code>util/wm.itp</code></td>
-      <td><code><b>-WM_act</b>(nAct,itWm)</code><br>&nbsp;<br> Performs one action in a finite state world</td>
+      <td><code><b>-WM_act</b>(act,itWm)</code><br>&nbsp;<br> Performs one action in a finite state world</td>
     </tr>
     <tr>
       <td><a href="util/wm.itp.html#clp_-WM_addtrans"><code class="link">-WM_addtrans</code></a></td>
       <td><code>util/wm.itp</code></td>
-      <td><code><b>-WM_addtrans</b>(nIni,nTer,nAct,bFinal,itWm)</code><br>&nbsp;<br> Adds a transition to a world automaton</td>
+      <td><code><b>-WM_addtrans</b>(nIni,nTer,act,bFinal,itWm)</code><br>&nbsp;<br> Adds a transition to a world automaton</td>
+    </tr>
+    <tr>
+      <td><a href="util/wm.itp.html#clp_-WM_delacttrans"><code class="link">-WM_delacttrans</code></a></td>
+      <td><code>util/wm.itp</code></td>
+      <td><code><b>-WM_delacttrans</b>(act,itWm)</code><br>&nbsp;<br> Deletes all transitions accepting a given action from a world automaton</td>
     </tr>
     <tr>
       <td><a href="util/wm.itp.html#clp_-WM_ensurestate"><code class="link">-WM_ensurestate</code></a></td>
@@ -1144,6 +1154,12 @@ decomposition
       <td><code><b>-WM_findtrans</b>(nIni,nTer,nAct,itWm)</code><br>&nbsp;<br> Finds a transition in a world automaton</td>
     </tr>
     <tr>
+      <td><a href="util/wm.itp.html#clp_-WM_getactionid"><code class="link">-WM_getactionid</code></a></td>
+      <td><code>util/wm.itp</code></td>
+      <td><code><b>-WM_getactionid</b>(act,itWm)</code><br>&nbsp;<br> Returns the zero-based index of an action in the input symbol table if the
+ world model</td>
+    </tr>
+    <tr>
       <td><a href="util/wm.itp.html#clp_-WM_getstate"><code class="link">-WM_getstate</code></a></td>
       <td><code>util/wm.itp</code></td>
       <td><code><b>-WM_getstate</b>(itWm)</code><br>&nbsp;<br> Returns the current state of a world automaton</td>
@@ -1154,19 +1170,29 @@ decomposition
       <td><code><b>-WM_init</b>(itWm)</code><br>&nbsp;<br> Creates a new empty world automaton</td>
     </tr>
     <tr>
-      <td><a href="util/wm.itp.html#clp_-WM_mazeworld"><code class="link">-WM_mazeworld</code></a></td>
+      <td><a href="util/wm.itp.html#clp_-WM_isineffective"><code class="link">-WM_isineffective</code></a></td>
       <td><code>util/wm.itp</code></td>
-      <td><code><b>-WM_mazeworld</b>(idMaze,idAct,sMode,itWm)</code><br>&nbsp;<br> Creates a maze world automaton</td>
+      <td><code><b>-WM_isineffective</b>(act,itWm)</code><br>&nbsp;<br> Determines if an action is ineffective</td>
+    </tr>
+    <tr>
+      <td><a href="util/wm.itp.html#clp_-WM_ismastered"><code class="link">-WM_ismastered</code></a></td>
+      <td><code>util/wm.itp</code></td>
+      <td><code><b>-WM_ismastered</b>(itIm)</code><br>&nbsp;<br> Determines if the cognitive agent masters its world</td>
+    </tr>
+    <tr>
+      <td><a href="util/wm.itp.html#clp_-WM_pathtogoal"><code class="link">-WM_pathtogoal</code></a></td>
+      <td><code>util/wm.itp</code></td>
+      <td><code><b>-WM_pathtogoal</b>(nS,itWm)</code><br>&nbsp;<br> Determines if a goal can be reached from a specified state</td>
     </tr>
     <tr>
       <td><a href="util/wm.itp.html#clp_-WM_qlearn"><code class="link">-WM_qlearn</code></a></td>
       <td><code>util/wm.itp</code></td>
-      <td><code><b>-WM_qlearn</b>(idAct,nDefQ,nDctQ,nXIte,itWm,itIwm)</code><br>&nbsp;<br> Simple Q-learning</td>
+      <td><code><b>-WM_qlearn</b>(nDefQ,nDctQ,nXIte,itWm,itIm)</code><br>&nbsp;<br> Basic Q-learning of a cognitive agent's inner map of the world</td>
     </tr>
     <tr>
       <td><a href="util/wm.itp.html#clp_-WM_render"><code class="link">-WM_render</code></a></td>
       <td><code>util/wm.itp</code></td>
-      <td><code><b>-WM_render</b>(sFname,sFormat,sMode,itWm)</code><br>&nbsp;<br> Renders a world automaton using the GraphViz toolkit</td>
+      <td><code><b>-WM_render</b>(sFname,sTool,sFormat,sMode,itWm)</code><br>&nbsp;<br> Renders a world automaton using the GraphViz toolkit</td>
     </tr>
     <tr>
       <td><a href="util/wm.itp.html#clp_-WM_setrandomstate"><code class="link">-WM_setrandomstate</code></a></td>

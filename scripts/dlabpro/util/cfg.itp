@@ -225,7 +225,11 @@ function -CFG_init(sFile,bTerm)
   ( ( this :sfl[0,0]: ) "" "splitp" -VAR_strop ) sDefCfg =;                     # Get path of current script
   ( sDefCfg "?\\?/" "replace" -VAR_strop ) sDefCfg =;                           # Convert to canonical form
   sDefCfg "/../../../default.cfg" + sDefCfg =;                                  # Get path of default config. file
-  sDefCfg "def" -CFG_add;                                                       # Load default configuration file
+  sDefCfg stdfile -exists if                                                    # Does file exist? Yes >>
+    sDefCfg "def" -CFG_add;                                                     #   Load default configuration file
+  else                                                                          # << No >>
+    "Default configuration " sDefCfg + " not found (ignored)." + 1 -WARNING;    #   Warning
+  end                                                                           # <<
 
   ## Load new configuration                                                     # -------------------------------------
   sFile bTerm -CFG_add;                                                         # Add new file to config
