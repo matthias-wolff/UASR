@@ -1139,14 +1139,25 @@ decomposition
       <td><code><b>-WM_addtrans</b>(nIni,nTer,act,bFinal,itWm)</code><br>&nbsp;<br> Adds a transition to a world automaton</td>
     </tr>
     <tr>
-      <td><a href="util/wm.itp.html#clp_-WM_delacttrans"><code class="link">-WM_delacttrans</code></a></td>
+      <td><a href="util/wm.itp.html#clp_-WM_delaction"><code class="link">-WM_delaction</code></a></td>
       <td><code>util/wm.itp</code></td>
-      <td><code><b>-WM_delacttrans</b>(act,itWm)</code><br>&nbsp;<br> Deletes all transitions accepting a given action from a world automaton</td>
+      <td><code><b>-WM_delaction</b>(act,itWm)</code><br>&nbsp;<br> Deletes an action and all transitions accepting that action from a world
+ automaton</td>
     </tr>
     <tr>
       <td><a href="util/wm.itp.html#clp_-WM_ensurestate"><code class="link">-WM_ensurestate</code></a></td>
       <td><code>util/wm.itp</code></td>
       <td><code><b>-WM_ensurestate</b>(nS,itWm)</code><br>&nbsp;<br> Ensures the presence of the specified state ID in a world automaton</td>
+    </tr>
+    <tr>
+      <td><a href="util/wm.itp.html#clp_-WM_enter"><code class="link">-WM_enter</code></a></td>
+      <td><code>util/wm.itp</code></td>
+      <td><code><b>-WM_enter</b>(itWm)</code><br>&nbsp;<br> (Re-)enters the world at a random state</td>
+    </tr>
+    <tr>
+      <td><a href="util/wm.itp.html#clp_-WM_explore"><code class="link">-WM_explore</code></a></td>
+      <td><code>util/wm.itp</code></td>
+      <td><code><b>-WM_explore</b>(nECnt,nELen,itWm,itIm)</code><br>&nbsp;<br> Explores the world by randomly performing actions</td>
     </tr>
     <tr>
       <td><a href="util/wm.itp.html#clp_-WM_findtrans"><code class="link">-WM_findtrans</code></a></td>
@@ -1193,11 +1204,6 @@ decomposition
       <td><a href="util/wm.itp.html#clp_-WM_render"><code class="link">-WM_render</code></a></td>
       <td><code>util/wm.itp</code></td>
       <td><code><b>-WM_render</b>(sFname,sTool,sFormat,sMode,itWm)</code><br>&nbsp;<br> Renders a world automaton using the GraphViz toolkit</td>
-    </tr>
-    <tr>
-      <td><a href="util/wm.itp.html#clp_-WM_setrandomstate"><code class="link">-WM_setrandomstate</code></a></td>
-      <td><code>util/wm.itp</code></td>
-      <td><code><b>-WM_setrandomstate</b>(itWm)</code><br>&nbsp;<br> Randomly sets a new current state of a world automaton</td>
     </tr>
     <tr>
       <td><a href="util/wm.itp.html#clp_-WM_setstate"><code class="link">-WM_setstate</code></a></td>

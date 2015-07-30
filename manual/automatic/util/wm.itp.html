@@ -139,7 +139,7 @@
 :itWm.td["~QR"]=(itWm.td["~INI"].!=0).&&(itWm.td["~TER"].==3);
 
 ## Render world automaton
-"world.eps" NULL "eps" "PQ" itWm <a href="#clp_-WM_render">-WM_render</a>;
+"world.eps" NULL "eps" "FQ" itWm <a href="#clp_-WM_render">-WM_render</a>;
 </pre></td>
     <td class="hidden">
       <img src="../../resources/figures/wm/itWm.png" alt="Rendering of itWm">
@@ -206,6 +206,12 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       </td>
     </tr>
     <tr>
+      <td><a href="#clp_-WM_delaction"><code class="link">-WM_delaction</code></a></td>
+      <td><code><b>-WM_delaction</b>(act,itWm)</code><br>&nbsp;<br> Deletes an action and all transitions accepting that action from a world
+ automaton.
+      </td>
+    </tr>
+    <tr>
       <td><a href="#clp_-WM_isineffective"><code class="link">-WM_isineffective</code></a></td>
       <td><code><b>-WM_isineffective</b>(act,itWm)</code><br>&nbsp;<br> Determines if an action is ineffective.
       </td>
@@ -231,11 +237,6 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       </td>
     </tr>
     <tr>
-      <td><a href="#clp_-WM_delacttrans"><code class="link">-WM_delacttrans</code></a></td>
-      <td><code><b>-WM_delacttrans</b>(act,itWm)</code><br>&nbsp;<br> Deletes all transitions accepting a given action from a world automaton.
-      </td>
-    </tr>
-    <tr>
       <td><a href="#clp_-WM_render"><code class="link">-WM_render</code></a></td>
       <td><code><b>-WM_render</b>(sFname,sTool,sFormat,sMode,itWm)</code><br>&nbsp;<br> Renders a world automaton using the GraphViz toolkit.
       </td>
@@ -251,13 +252,18 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       </td>
     </tr>
     <tr>
-      <td><a href="#clp_-WM_setrandomstate"><code class="link">-WM_setrandomstate</code></a></td>
-      <td><code><b>-WM_setrandomstate</b>(itWm)</code><br>&nbsp;<br> Randomly sets a new current state of a world automaton.
+      <td><a href="#clp_-WM_enter"><code class="link">-WM_enter</code></a></td>
+      <td><code><b>-WM_enter</b>(itWm)</code><br>&nbsp;<br> (Re-)enters the world at a random state.
       </td>
     </tr>
     <tr>
       <td><a href="#clp_-WM_act"><code class="link">-WM_act</code></a></td>
       <td><code><b>-WM_act</b>(act,itWm)</code><br>&nbsp;<br> Performs one action in a finite state world.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-WM_explore"><code class="link">-WM_explore</code></a></td>
+      <td><code><b>-WM_explore</b>(nECnt,nELen,itWm,itIm)</code><br>&nbsp;<br> Explores the world by randomly performing actions.
       </td>
     </tr>
     <tr>
@@ -365,7 +371,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(64)</td>
+      <td class="hidden">util/wm.itp(66)</td>
     </tr>
   </table>
   </div>
@@ -376,18 +382,19 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
  function will look up the action named <code>act</code> in the input symbol
  table and return its zero-based index. If no action named <code>act</code> is
  found, the function will add the action.
+ <p><b>TODO:</b> Function is a bit strange; straighten it out!</p>
  
 
   <h3>Parameters</h3>
   <table>
     <tr>
       <td class="hidden">&nbsp;&nbsp;</td>
-      <td class="hidden">number&nbsp;
+      <td class="hidden">variant&nbsp;
       </td>
       <td class="hidden">&nbsp;</td>
       <td class="hidden"><code><b>act</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">or          The zero-based action index or the action name.
+      <td class="hidden">          The zero-based action index or the action name.
 
       </td>
     </tr>
@@ -403,6 +410,76 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       </td>
     </tr>  </table>
     <h3>Return value</h3> The zero-based index of the action in the input symbol table.
+
+  </div>
+  </div>
+  <div id="clp_-WM_delaction">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-WM_delaction</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-WM_delaction','-WM_delaction','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-WM_delaction</b>(act,itWm)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/wm.itp(91)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Deletes an action and all transitions accepting that action from a world
+ automaton.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">variant&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>act</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The zero-based action index or the action name.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itWm</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The world automaton.
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> void
 
   </div>
   </div>
@@ -439,7 +516,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(91)</td>
+      <td class="hidden">util/wm.itp(112)</td>
     </tr>
   </table>
   </div>
@@ -453,12 +530,12 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
   <table>
     <tr>
       <td class="hidden">&nbsp;&nbsp;</td>
-      <td class="hidden">number&nbsp;
+      <td class="hidden">variant&nbsp;
       </td>
       <td class="hidden">&nbsp;</td>
       <td class="hidden"><code><b>act</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">or          The zero-based action index or the action name.
+      <td class="hidden">          The zero-based action index or the action name.
 
       </td>
     </tr>
@@ -511,7 +588,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(114)</td>
+      <td class="hidden">util/wm.itp(135)</td>
     </tr>
   </table>
   </div>
@@ -583,7 +660,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(143)</td>
+      <td class="hidden">util/wm.itp(164)</td>
     </tr>
   </table>
   </div>
@@ -663,7 +740,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(163)</td>
+      <td class="hidden">util/wm.itp(184)</td>
     </tr>
   </table>
   </div>
@@ -755,7 +832,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(196)</td>
+      <td class="hidden">util/wm.itp(217)</td>
     </tr>
   </table>
   </div>
@@ -791,12 +868,12 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
     </tr>
     <tr>
       <td class="hidden">&nbsp;&nbsp;</td>
-      <td class="hidden">number&nbsp;
+      <td class="hidden">variant&nbsp;
       </td>
       <td class="hidden">&nbsp;</td>
       <td class="hidden"><code><b>act</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">or          The zero-based action index or the action name.
+      <td class="hidden">          The zero-based action index or the action name.
 
       </td>
     </tr>
@@ -824,77 +901,6 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       </td>
     </tr>  </table>
     <h3>Return value</h3> The zero-based transition index of the added/updated transition.
-
-  </div>
-  </div>
-  <div id="clp_-WM_delacttrans">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0">
-    <tr>
-      <td nowrap width="25%" class="navbar">
-        Function <span class="mid">-WM_delacttrans</span>
-      </td>
-      <td nowrap width="75%" class="navbar" style="text-align:right;">
-        <a class="navbar" href="javascript:__PrintSection('clp_-WM_delacttrans','-WM_delacttrans','../..');"><img
-        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
-        alt="Print"></a> 
-        <a class="navbar" href="#functions">Functions</a>
-        <a class="navbar" href="#">Script</a>
-        <a class="navbar" href="index.html">Package</a>
-        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
-        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
-        <a class="navbar" href="../../home.html">Home</a>
-      </td>
-    </tr>
-  </table>
-  <div class="mframe">
-  <table cellSpacing="0" cellPadding="0" border="0"> 
-    <tr>
-      <td class="hidden"></td>
-      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">Signature</td>
-      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden"><code><b>-WM_delacttrans</b>(act,itWm)</code></td>
-    </tr>
-    <tr>
-      <td class="hidden"></td>
-      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">Source</td>
-      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(221)</td>
-    </tr>
-  </table>
-  </div>
-  <div class="mframe2">
-    <h3>Description</h3> Deletes all transitions accepting a given action from a world automaton. This
- effectively removes the action itself. The function will <em>not</em> modify
- the input symbol table (i.e. the list of action symbols).
- 
-
-  <h3>Parameters</h3>
-  <table>
-    <tr>
-      <td class="hidden">&nbsp;&nbsp;</td>
-      <td class="hidden">number&nbsp;
-      </td>
-      <td class="hidden">&nbsp;</td>
-      <td class="hidden"><code><b>act</b></code></td>
-      <td class="hidden">&nbsp;</td>
-      <td class="hidden">or          The zero-based action index or the action name.
-
-      </td>
-    </tr>
-    <tr>
-      <td class="hidden">&nbsp;&nbsp;</td>
-      <td class="hidden">fst&nbsp;
-      </td>
-      <td class="hidden">&nbsp;</td>
-      <td class="hidden"><code><b>itWm</b></code></td>
-      <td class="hidden">&nbsp;</td>
-      <td class="hidden">          The world automaton.
-
-      </td>
-    </tr>  </table>
-    <h3>Return value</h3> void
 
   </div>
   </div>
@@ -931,7 +937,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(258)</td>
+      <td class="hidden">util/wm.itp(262)</td>
     </tr>
   </table>
   </div>
@@ -972,8 +978,8 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;</td>
       <td class="hidden"><code><b>sFormat</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">          The output format; "svg", "eps", "png", or any of the file formats
-          supported by GraphViz.
+      <td class="hidden">          The output format; "dot" or any of the output file formats supported
+          by GraphViz.
 
       </td>
     </tr>
@@ -989,14 +995,15 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
           <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
             <tr><th>Character</th><th>Description</th></tr>
             <tr><td>E</td><td>Skip entry transitions (for legibility)</td></tr>
-            <tr><td>L</td><td>Display Q-values/rewards as line widths<sup>1)</sup></td></tr>
-            <tr><td>P</td><td>Use fix state positions<sup>2)</sup></td></tr>
+            <tr><td>F</td><td>Use fix state positions<sup>1)</sup></td></tr>
+            <tr><td>L</td><td>Display Q-values/rewards as line widths<sup>2)</sup></td></tr>
+            <tr><td>P</td><td>Prefix action names with "a_"</td></tr>
             <tr><td>Q</td><td>Display Q-values/rewards in transition labels</td></tr>
           </table>
-          <sup>1)</sup> Effective only if format is "eps"<br>
-          <sup>2)</sup> Requires that the state table <code>itWm.sd</code> of
+          <sup>1)</sup> requires that the state table <code>itWm.sd</code> of
           the world automaton contains two numeric components named "POSX" and
-          "POSY" specifying the state positions.
+          "POSY" specifying the state positions<br>
+          <sup>2)</sup> effective only if format is "eps"
 
       </td>
     </tr>
@@ -1048,7 +1055,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(373)</td>
+      <td class="hidden">util/wm.itp(378)</td>
     </tr>
   </table>
   </div>
@@ -1113,7 +1120,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(389)</td>
+      <td class="hidden">util/wm.itp(394)</td>
     </tr>
   </table>
   </div>
@@ -1157,19 +1164,19 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
   </tr>
     <tr>
       <td class="hidden">&nbsp;&nbsp;</td>
-      <td class="hidden"><a href="#clp_-WM_setrandomstate">-WM_setrandomstate</a>
+      <td class="hidden"><a href="#clp_-WM_enter">-WM_enter</a>
     </td>
   </tr>  </table>
   </div>
   </div>
-  <div id="clp_-WM_setrandomstate">
+  <div id="clp_-WM_enter">
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
       <td nowrap width="25%" class="navbar">
-        Function <span class="mid">-WM_setrandomstate</span>
+        Function <span class="mid">-WM_enter</span>
       </td>
       <td nowrap width="75%" class="navbar" style="text-align:right;">
-        <a class="navbar" href="javascript:__PrintSection('clp_-WM_setrandomstate','-WM_setrandomstate','../..');"><img
+        <a class="navbar" href="javascript:__PrintSection('clp_-WM_enter','-WM_enter','../..');"><img
         src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
         alt="Print"></a> 
         <a class="navbar" href="#functions">Functions</a>
@@ -1188,19 +1195,19 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Signature</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden"><code><b>-WM_setrandomstate</b>(itWm)</code></td>
+      <td class="hidden"><code><b>-WM_enter</b>(itWm)</code></td>
     </tr>
     <tr>
       <td class="hidden"></td>
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(402)</td>
+      <td class="hidden">util/wm.itp(415)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
-    <h3>Description</h3> Randomly sets a new current state of a world automaton.
+    <h3>Description</h3> (Re-)enters the world at a random state.
  
 
   <h3>Parameters</h3>
@@ -1216,10 +1223,22 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
 
       </td>
     </tr>  </table>
-    <h3>Return value</h3> The zero-based index of the newly selected state.
+    <h3>Return value</h3> A data instance with exactly one record of the following structure:
+    <table>
+      <tr><th>Component</th><th>Type</th><th>Description</th></tr>
+      <tr><td>0</td><td><code>int</code></td><td>0 (world state before entering)</td></tr>
+      <tr><td>1</td><td><code>int</code></td><td>State after entering world</td></tr>
+      <tr><td>2</td><td><code>int</code></td><td>-1 (epsilon action)</td></tr>
+      <tr><td>3</td><td><code>double</code></td><td>The direct reward of entry</td></tr>
+    </table>
 
   <h3>See also</h3>
   <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><a href="#clp_-WM_act">-WM_act</a>
+    </td>
+  </tr>
     <tr>
       <td class="hidden">&nbsp;&nbsp;</td>
       <td class="hidden"><a href="#clp_-WM_getstate">-WM_getstate</a>
@@ -1265,7 +1284,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(430)</td>
+      <td class="hidden">util/wm.itp(461)</td>
     </tr>
   </table>
   </div>
@@ -1277,12 +1296,12 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
   <table>
     <tr>
       <td class="hidden">&nbsp;&nbsp;</td>
-      <td class="hidden">number&nbsp;
+      <td class="hidden">variant&nbsp;
       </td>
       <td class="hidden">&nbsp;</td>
       <td class="hidden"><code><b>act</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">or          The zero-based action index or the action name.
+      <td class="hidden">          The zero-based action index or the action name.
 
       </td>
     </tr>
@@ -1310,9 +1329,113 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
   <table>
     <tr>
       <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><a href="#clp_-WM_enter">-WM_enter</a>
+    </td>
+  </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
       <td class="hidden"><a href="#clp_-WM_qlearn">-WM_qlearn</a>
     </td>
   </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-WM_explore">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-WM_explore</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-WM_explore','-WM_explore','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-WM_explore</b>(nECnt,nELen,itWm,itIm)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/wm.itp(504)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Explores the world by randomly performing actions. The function interacts
+ with the world model <code>itWm</code> only by invoking <a
+ href="#clp_-WM_enter">-WM_enter</a> and <a href="#clp_-WM_act">-WM_act</a>.
+ These functions may be overloaded to implement other worlds.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">integer&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nECnt</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Number of episodes to perform.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">integer&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nELen</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Episode lenght (number of actions performed) until randomly
+          requesting a initial world state.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itWm</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The world model.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itIm</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Filled with the cognitive agent's inner map of the world. Must have
+          been initialize through <a href="#clp_-WM_init">-WM_init</a> or be
+          the result of a previous Q-learning. Actions performed during the
+          Q-learning are taken from the input symbol table
+          <code>itIm.is</code>.
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> void
+
   </div>
   </div>
   <div id="clp_-WM_qlearn">
@@ -1348,16 +1471,15 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(475)</td>
+      <td class="hidden">util/wm.itp(562)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
     <h3>Description</h3> Basic Q-learning of a cognitive agent's inner map of the world. The function
  interacts with the world model <code>itWm</code> only by invoking <a
- href="#clp_-WM_setrandomstate">-WM_setrandomstate</a> and <a
- href="#clp_-WM_act">-WM_act</a>. These functions may be overloaded to
- implement other worlds.
+ href="#clp_-WM_enter">-WM_enter</a> and <a href="#clp_-WM_act">-WM_act</a>.
+ These functions may be overloaded to implement other worlds.
  
 
   <h3>Parameters</h3>
@@ -1386,7 +1508,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
     </tr>
     <tr>
       <td class="hidden">&nbsp;&nbsp;</td>
-      <td class="hidden">int&nbsp;
+      <td class="hidden">integer&nbsp;
       </td>
       <td class="hidden">&nbsp;</td>
       <td class="hidden"><code><b>nXIte</b></code></td>
@@ -1458,7 +1580,7 @@ idLog <a href="javascript:__goDlabpro('automatic/data.html','mth_-print')">-prin
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/wm.itp(588)</td>
+      <td class="hidden">util/wm.itp(675)</td>
     </tr>
   </table>
   </div>
