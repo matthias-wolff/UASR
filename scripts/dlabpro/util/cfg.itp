@@ -77,8 +77,10 @@ function -CFG_add(sFile,bTerm)
     idKey "?\t?" "replace" idKey -strop;                                        #   Remove tabs from keys
     idKey idCfg -copy;                                                          #   Copy keys to config buffer
     idVal idCfg -join;                                                          #   Join values
-    .__CFG_idCfg idCfg -cat;                                                    #   Insert new keys before old ...
-    idCfg .__CFG_idCfg -copy;                                                   #   ... in .__CFG_idCfg
+    idCfg -is_empty not if;                                                     #   If there are keys >>
+      .__CFG_idCfg idCfg -cat;                                                  #     Insert new keys before old ...
+      idCfg .__CFG_idCfg -copy;                                                 #     ... in .__CFG_idCfg
+    end;                                                                        #   <<
     TRUE return;                                                                #   Configuration file loaded
   }                                                                             # <<
   function -CFG_get_include(sFile)                                              # Load included files
@@ -452,10 +454,10 @@ function -CFG_get_flist(sKey,sMode)
 ##   <li>If a key named "uasr.dir.&lt;sKey&gt;" exists in the current
 ##     configuration return the value of that key.</li>
 ##   <li>If a directory named
-##     "&lt;uasr.data&gt;/&lt;uasr.db&gt;/exp/&lt;uasr.exp&gt;/&lt;sKey&gt;"
+##     "&lt;uasr.data&gt;/&lt;uasr.db&gt;/&lt;uasr.exp&gt;/&lt;sKey&gt;"
 ##     exists <em>or</em> a fallback is not allowed (see parameter
 ##     <code>sMode</code>) return that directory name.</li>
-##   <li>Return the path "&lt;uasr.data&gt;/&lt;uasr.db&gt;/&lt;sKey&gt;"
+##   <li>Return the path "&lt;uasr.data&gt;/&lt;uasr.db&gt;/common/&lt;sKey&gt;"
 ##     (fallback does not apply for keys "log" and "model").</li>
 ## </ol>
 ## <p>&lt;uasr.xxx.yyy&gt; denotes the value associated with the respective
