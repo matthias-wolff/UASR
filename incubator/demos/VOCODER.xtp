@@ -13,7 +13,7 @@
 ##   $1: Setup file
 
 ## Common includes
-"../util/@.itp" include;                                                        # Include UASR utility functions
+"$UASR_HOME/scripts/dlabpro/util/@.itp" include;                                # Include UASR utility functions
 
 ## == MAIN PROGRAM ==                                                           # =====================================
 
