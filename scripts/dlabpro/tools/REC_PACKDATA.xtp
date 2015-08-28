@@ -318,7 +318,7 @@ function -RN_add_unit(sFile,sFilter,iSI)
   0 0 0 itAM -addtrans { -1 -1 0 };                                             # Prepare HMAs for composition
   0 itLX /noerror -loops { -1 -1 0 };                                "." -MSG2; # Prepare lex for composition
   itAM itLX 0 0 itAux /noeps /noint -compose;                        "." -MSG2; # Compose: hma o lex
-  itAux 0 itAux -minimize;                                                      # Minimize and
+  itAux 0 itAux /lazy -minimize;                                                # Minimize and
   itAux 0 itAux -close;                                                         # Close (hma o lex)
 
   "\n   - Compiling recognition network "                                -MSG2; # Protocol
