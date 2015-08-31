@@ -157,7 +157,7 @@ function -CFG_add(sFile,bTerm)
     sFile if                                                                    #   sFile not empty >>
       sFile -CFG_init_fil not if                                                #     Load custom config., if failed >>
         bTerm if "FATAL: cannot load configuration file ($[sFile]).\n" -ERROR;  #       Terminate session (if bTerm)
-          quit; end                                                             #       |
+          1 quit; end                                                           #       |
         FALSE bRet =;                                                           #       Return false
       end                                                                       #     <<
     end                                                                         #   <<

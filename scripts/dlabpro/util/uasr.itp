@@ -330,7 +330,7 @@ function -MSG2(sMsg)
     .__UTL_nErrors ++=;
     .__UTL_nErrors 100 >= if
        "\n\nFATAL: More than ${.__UTL_nErrors}. Terminating program." -COLOR_error -echo;
-       quit;
+       1 quit;
     end
   end
 }

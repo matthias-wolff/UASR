@@ -65,7 +65,7 @@ end                                                                             
 ( "db.include" "" "S" -CFG_get_ex   ) sBuf     -sset;                           # Get configured database include file
 sBuf if                                                                         # Include was configured >>
   sBuf /noerror include ?error if                                               #   Include it, failed >>
-    "FATAL: cannot load database include file.\n" -ERROR; quit;                 #     EL FATAL
+    "FATAL: cannot load database include file.\n" -ERROR; 1 quit;               #     EL FATAL
   end                                                                           #   <<
   "$[sBuf]"                                                               -MSG; #   Protocol
 else                                                                            # << include was not configured >>
