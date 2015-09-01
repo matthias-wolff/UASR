@@ -52,11 +52,11 @@
 ## along with UASR. If not, see <http://www.gnu.org/licenses/>.
 
 ## Maintainer gets notification in any case
-MAINTAINER="matthias.wolff@tu-cottbus.de frank.duckhorn@tu-dresden.de"
+MAINTAINER="matthias.wolff@b-tu.de frank.duckhorn@tu-dresden.de"
 
-## Uasr common data directores
-UASR_DATA_VM_COMMON=/home/wolff/uasr-data/vm.de/common
-UASR_DATA_SSMG=/home/wolff/uasr-data/ssmg
+## UASR common data directories
+UASR_DATA_VM_COMMON=/data/samba/komtech/public/uasr-data/vm.de/common
+UASR_DATA_SSMG=/data/samba/komtech/public/uasr-data/ssmg
 
 # == Initialization ============================================================
 
