@@ -67,6 +67,7 @@ function -usage(sCmd)
       "\n       out.gmm       output file (default: <out>/<am.model>.gmm)"-MSG; 
       "\n       out.sesinfo   output file (default: <out>/sesinfo.object)"-MSG; 
       "\n       vad.model     VAD file name (default: <out>/3_10_mod.vad)"-MSG;
+      "\n       gmm.mix       Create mixtures (default: yes)"             -MSG;
       "\n       syn.dir       Synthesis directory (default: <out>/syn)"   -MSG;
       "\n       syn.model     Synthesis model (default: 3_20)"            -MSG;
       "\n       recfix.fftshf shift offset after FFT (default: 0)"        -MSG; 
@@ -112,6 +113,7 @@ function -usage(sCmd)
       "\n       out.gmm       output file (default: <out>/<am.model>.gmm)"-MSG; 
       "\n       out.sesinfo   output file (default: <out>/sesinfo.object)"-MSG; 
       "\n       vad.model     VAD file name (default: <out>/3_10_mod.vad)"-MSG;
+      "\n       gmm.mix       Create mixtures (default: yes)"             -MSG;
       "\n       syn.dir       Synthesis directory (default: <out>/syn)"   -MSG;
       "\n       syn.model     Synthesis model (default: 3_20)"            -MSG;
       "\n       recfix.fftshf shift offset after FFT (default: 0)"        -MSG; 
@@ -367,6 +369,7 @@ function -PACK_gmm(retGm)
   vmap iVM;
   var  sOutFile; "$[.sDirOut]/$[.sAm].gmm" sOutFile =;                          # Get default output file name
   ( "out.gmm" sOutFile "S" -CFG_get_ex )   sOutFile =;                          # Get configured output file name
+  ( "gmm.mix" "yes" "S" -CFG_get_ex ) "yes" == var bGmmMix;                     # Get mixture creation flag
 
   "\n   Packing Gaussian mixture model file ."                            -MSG; # Protocol
   "\n   - Reading \"$[.sAmFile]\" ..."                                   -MSG2; # Protocol
@@ -374,11 +377,15 @@ function -PACK_gmm(retGm)
   ?error if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."     -MSG; # Check for errors
 
   "\n   - Extracting Gaussian mixture models ..."                        -MSG2; # Protocol
-  itHMM.gm.mmap NULL == if itHMM -gmm_mix end;                                  # Create mixtures
+  bGmmMix itHMM.gm.mmap NULL == && if itHMM -gmm_mix end;                       # Create mixtures
   itHMM.os -is_empty if :itHMM.ud["~NAM"]: itHMM.os = end;                      # Check/create HMM name table
   idM idC itHMM.gm -extract;                                                    # Get mean vectors and covariance matrizes
-  itHMM.gm.mmap.tmx "lsadd" "add" INF iVM /float -setup;                        # Setup maping object
-  idM idC iVM itGm /float /icov -setup;                                         # Setup Gaussians
+  itHMM.gm.mmap NULL == if;                                                     # Setup without mixture map >>
+    idM idC NULL itGm /float /icov -setup;                                      #   Setup Gaussians
+  else;                                                                         # << Setup with mixture map >>
+    itHMM.gm.mmap.tmx "lsadd" "add" INF iVM /float -setup;                      #   Setup maping object
+    idM idC iVM itGm /float /icov -setup;                                       #   Setup Gaussians
+  end;                                                                          # <<
   " done" -MSG2 "."                                                       -MSG; # Protocol
 
   retGm NULL != if; itGm retGm =; 1 return; end;                                # Return gaussian mixture model
@@ -488,6 +495,7 @@ function -PACK_sesinfo(retSI,retDlg)
   ( "out.sesinfo" sSiFile "S" -CFG_get_ex )    sSiFile  =;                      # Get configured output file name
   var    sDlgFile; "$[.sDirOut]/dialog.fst"    sDlgFile =;                      # Get default dialog file name
   ( "out.dialog" sDlgFile "S" -CFG_get_ex )    sDlgFile =;                      # Get configured dialog file name
+  ( "gmm.mix" "yes" "S" -CFG_get_ex ) "yes" == var bGmmMix;                     # Get mixture creation flag
   var    s;                                                                     # Auxiliary string variable
 
   "\n   - Reading \"$[.sAmFile]\" ..."                                   -MSG2; # Protocol
@@ -504,7 +512,7 @@ function -PACK_sesinfo(retSI,retDlg)
   not if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."        -MSG; # Check for errors
 
   "\n   - Preparing HMMs "                                               -MSG2; # Protocol
-  itHMM.gm.mmap NULL == if itHMM -gmm_mix end;                                  # Create mixtures
+  bGmmMix itHMM.gm.mmap NULL == && if itHMM -gmm_mix end;                       # Create mixtures
   itHMM.os -is_empty if :itHMM.ud["~NAM"]: itHMM.os = end;                      # Check/create HMM name table
   itHMM /index itAM -union; itAM 0 itAM -close;                      "." -MSG2; # Sum and close HMAs
   itAM.td ( "~RC" itAM.td -find_comp ) 1 itAM.td -delete;                       # Remove reference counter component
