@@ -48,7 +48,17 @@ function -PACK_fil(nrm)
 
 	dMELM :2^.nFIL_SHF: .* dMELM =;
 
+  # get used positions
+  data dMELU; -type int 2 dMELM.nrec dMELU -array;
+  data dT;
+  0 i =; i dMELM.nrec < while;
+    i 1 dMELM /rec -xfetch 0 .!= ' 0 dT -compress;
+    :dT[0,0]==0: if :dT[0,2]: else 0 end i 0 dMELU -store;
+    :dT[dT.nrec-1,0]==0: if :dT[dT.nrec-1,1]: else dMELM.dim end :dMELU[i,0]: - i 1 dMELU -store;
+  i ++=; end;
+
 	dMELM ' 0 :.nMAX_PFA_DIM*.nMAX_FIL_DIM: "pfa.fil" "s16" -PACK;
+	dMELU ' 1 :2*.nMAX_FIL_DIM: "pfa.filuse" "u16" -PACK;
 
 	:nrm/2^.nFIL_SHF: return;
 }
