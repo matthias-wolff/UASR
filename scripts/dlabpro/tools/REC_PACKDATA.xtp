@@ -631,7 +631,7 @@ function -PACK_recfix()
   ## Pack it                                                                    # -------------------------------------
   1 var nrm;                                                                    # Init nomalization value
   .sFDsp -SH_rm;                                                                # Remove old output file
-  3 1  "version" "u16"   -PACK1;                                                # Pack version number
+  4 1  "version" "u16"   -PACK1;                                                # Pack version number
   0 1  "_blank1" "u16"   -PACK1;                                                # Pack blank
   nrm                    -PACK_sig;                                             # Pack frontend information
   nrm .__FEA_iPfa.window -PACK_pfa nrm =;                                       # Pack primary feature analysis parameters
@@ -640,6 +640,7 @@ function -PACK_recfix()
   nrm itGm.mmap          -PACK_mix nrm =;                                       # Pack mixture parameters
   nrm iSI.itRN  0        -PACK_fst;                                             # Pack recognition network
   nrm iSI.itRNr 0        -PACK_fst;                                             # Pack reference recognition network
+  nrm                    -PACK_trg;                                             # Pack signal detection
   "\n  => Final norm: $[nrm]"                                             -MSG; # Protocol
 }
 
@@ -783,6 +784,7 @@ sOutTyp "F" == if;                                                              
   "include/recpack_recfix/sfa.itp"                                     include; #   |
   "include/recpack_recfix/gmm.itp"                                     include; #   |
   "include/recpack_recfix/fst.itp"                                     include; #   |
+  "include/recpack_recfix/trg.itp"                                     include; #   |
 end;                                                                            # <<
 
 
