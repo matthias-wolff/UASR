@@ -42,6 +42,7 @@
 4096 var nMAX_FSTT_NUM;
  128 var nMAX_FSTO_NUM;
   16 var nMAX_FSTO_LEN;
+ 128 var nMAX_TRG_MAP; 
 
    1 var nPFA_TYP_FFT; # 0x01
    2 var nPFA_TYP_WVL; # 0x02

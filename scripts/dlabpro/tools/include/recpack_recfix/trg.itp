@@ -35,6 +35,6 @@ function -PACK_trg(nrm)
   20      1   "trg.mino" "u8"  -PACK1;
   0.2     0   "trg.thr1" "s16" -PACK1;
   0.1     0   "trg.thr2" "s16" -PACK1;
-  { 0 .nMAX_FRAME_DIM } 1 8 "trg.sel"  "u16" -PACK;
+  { 0 .nMAX_FRAME_DIM } 1 :.nMAX_TRG_MAP/16: "trg.sel"  "u16" -PACK;
 }
 
