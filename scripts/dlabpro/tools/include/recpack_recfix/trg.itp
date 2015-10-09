@@ -29,12 +29,13 @@ function -PACK_trg(nrm)
 {
 	# Pack it
   :.nTRGM_FRM+.nTRGM_SEL_ID:
-          1   "trg.mode" "u8"  -PACK1;
-  -6      1   "trg.off1" "s8"  -PACK1;
-  6       1   "trg.off2" "s8"  -PACK1;
-  20      1   "trg.mino" "u8"  -PACK1;
-  0.2     0   "trg.thr1" "s16" -PACK1;
-  0.1     0   "trg.thr2" "s16" -PACK1;
+          1 "trg.mode" "u8"  -PACK1;
+  0       1 "_blank1"  "u8"  -PACK1;
+  0.2     0 "trg.thr1" "s16" -PACK1;
+  0.1     0 "trg.thr2" "s16" -PACK1;
+  -6      1 "trg.off1" "s16" -PACK1;
+  6       1 "trg.off2" "s16" -PACK1;
+  20      1 "trg.mino" "u16" -PACK1;
   { 0 .nMAX_FRAME_DIM } 1 :.nMAX_TRG_MAP/16: "trg.sel"  "u16" -PACK;
 }
 
