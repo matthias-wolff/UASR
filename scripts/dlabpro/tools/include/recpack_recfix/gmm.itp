@@ -25,6 +25,8 @@
 
 #@uasrdoc: ignore
 
+var ngau;
+
 function -PACK_gau(nrm,itGm)
 {
 	# Extract data
@@ -68,9 +70,9 @@ function -PACK_gau(nrm,itGm)
 	idIV    0 idIV    -QUANT_s16;
 	idIC    0 idIC    -QUANT_s16;
 
-  # Remove -32768 because of saturation error in mmx optimized multiply
-  idIV :idIV.==-32768: + idIV =;
-  idIC :idIC.==-32768: + idIC =;
+	# Remove -32768 because of saturation error in mmx optimized multiply
+	idIV :idIV.==-32768: + idIV =;
+	idIC :idIC.==-32768: + idIC =;
 
 	# Join to dGAU
 	data dGAU;
@@ -90,24 +92,38 @@ function -PACK_gau(nrm,itGm)
 	dGAU 0 0 "gau.g" "mix" -PACK;
 	"\n  norm gau: $[vnrm]" -MSG2;
 
+	idMean.nrec .ngau =;
 	vnrm return;
 }
 
 function -PACK_mix(nrm,iMmap)
 {
-	iMmap.weak_tmx -is_empty if;
-		"\n  FAILED (mmap.weak_tmx is empty)" -MSG;
-		leave;
-	end;
-	
-	# Generate selection table for extraction
-	data idMark; -type int 1 iMmap.weak_tmx.dim idMark -array;
-	0 1 idMark -fill; :idMark%2: ' idMark =;
+	iMmap NULL == if;
 
-	# Extract dMIXW and dMIXI from weak_tmx
-	idMark iMmap.weak_tmx -dmark;
-	data dMIXW; iMmap.weak_tmx 0 0 dMIXW /mark -select;
-	data dMIXI; iMmap.weak_tmx 0 0 dMIXI /mark -delete;
+		# Generate dMIXW and dMIXI with identity mapping
+		data dMIXI; -type int 1 .ngau dMIXI -array;
+		0 1 dMIXI -fill; dMIXI ' dMIXI =;
+		data dMIXW; -type float .ngau 1 dMIXW -array;
+
+	else;
+
+		iMmap.weak_tmx -is_empty if;
+			"\n  FAILED (mmap.weak_tmx is empty)" -MSG;
+			leave;
+		end;
+
+		# Generate selection table for extraction
+		data idMark; -type int 1 iMmap.weak_tmx.dim idMark -array;
+		0 1 idMark -fill; :idMark%2: ' idMark =;
+
+		# Extract dMIXW and dMIXI from weak_tmx
+		idMark iMmap.weak_tmx -dmark;
+		data dMIXW; iMmap.weak_tmx 0 0 dMIXW /mark -select;
+		data dMIXI; iMmap.weak_tmx 0 0 dMIXI /mark -delete;
+
+	end;
+
+	dMIXI.dim var nmix;
 
 	# Count components of mixtures
 	data dNGAU; :dMIXI.>=0: NULL 0 "sum" dNGAU /rec -aggregate;
@@ -128,7 +144,7 @@ function -PACK_mix(nrm,iMmap)
 	end;
 	
 	# Pack it
-	:iMmap.weak_tmx.dim/2: 1 "mix.nmix" "u16" -PACK1;
+	nmix                   1 "mix.nmix" "u16" -PACK1;
 	:dNLADD[0,0]:          1 "mix.nlad" "u16" -PACK1;
 	dNGAU   1 .nMAX_MIX_NUM                   "mix.ngau" "u16" -PACK;
 	dMIXI ' 1 :.nMAX_MIX_NUM*.nMAX_MIX_GAU*2: "mix.m"    "u16" -PACK;
