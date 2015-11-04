@@ -93,8 +93,9 @@ function -WM_delaction(act,itWm)
   var nAct; ( act itWm -WM_getactionid ) nAct =;                                # Get the action index
   :itWm.td[itWm.NC_TD_TIS].==nAct: itWm.td -dmark;                              # Mark transitions accepting action
   itWm.td 0 0 itWm.td /mark -delete;                                            # Delete them
-  :itWm.td[itWm.NC_TD_TIS]-=(itWm.td[itWm.NC_TD_TIS].>nAct);                    # Adjust input symbol indices >nAct
-  itWm.is nAct 1 itWm.is /rec -delete;                                          # Delete nAct from input symb. table
+#  :itWm.td[itWm.NC_TD_TIS]-=(itWm.td[itWm.NC_TD_TIS].>nAct);                    # Adjust input symbol indices >nAct
+#  itWm.is nAct 1 itWm.is /rec -delete;                                          # Delete nAct from input symb. table
+  :itWm.is[nAct,0]="";                                                          # Clear symbol
   :itWm.ud[0,itWm.IC_UD_XT]=itWm.td.nrec;                                       # Adjust transition count of unit 0
 }
 
@@ -497,10 +498,10 @@ function -WM_act(act,itWm)
 ## @param itIm fst
 ##          Filled with the cognitive agent's inner map of the world. Must have 
 ##          been initialize through <a href="#clp_-WM_init">-WM_init</a> or be
-##          the result of a previous Q-learning. Actions performed during the 
-##          Q-learning are taken from the input symbol table 
+##          the result of a previous exploration. Actions performed during the 
+##          exploration are taken from the input symbol table 
 ##          <code>itIm.is</code>. 
-## @return void
+## @return <code>itIm</code>
 function -WM_explore(nECnt,nELen,itWm,itIm)
 {
   data idObs;                                                                   # Observation of the world
@@ -512,8 +513,10 @@ function -WM_explore(nECnt,nELen,itWm,itIm)
 
   "\n\n   Exploring world ($[nECnt] episodes of $[nELen] action"                # |
     ( nELen 1 != if "s" else "" end ) + ")" +                             -MSG; # Protocol
-    "\n   - Agent's actions: { "                                          -MSG; # Protocol
-  :nI=0; :nI<itIm.is.nrec: while "${itIm.is[nI,0]} " -MSG; nI ++=; end "}"-MSG; # Protocol
+  "\n   - Agent's actions: { "                                            -MSG; # Protocol
+  :nI=0; :nI<itIm.is.nrec: while                                                # Protocol
+    :itIm.is[nI,0]: if "${itIm.is[nI,0]} " -MSG; end                            # Protocol
+  nI ++=; end                                                         "}" -MSG; # Protocol
 
   0 1 -PBAR;                                                                    # Begin progress bar
   0 nE =; nE nECnt < while                                                      # Loop over scheduled episodes >>
@@ -536,6 +539,7 @@ function -WM_explore(nECnt,nELen,itWm,itIm)
     nE ++=                                                                      #   Next episode
   end                                                                           # <<
   "\n  " -MSG2; "done\n"                                                  -MSG; # Protocol
+  itIm return;                                                                  # Return updated inner map
 }
 
 ## Basic Q-learning of a cognitive agent's inner map of the world. The function 
@@ -608,6 +612,7 @@ function -WM_qlearn(nDefQ,nDctQ,nXIte,itWm,itIm)
   var  nDrw;                                                                    # Direct reward from world
   var  nT;                                                                      # Transition index in inner world model
   var  nIte;                                                                    # Current Q-learning iteration
+  var  nI;
   
   ## Initialization                                                             # -------------------------------------
   itIm.is idAct -copy;                                                          # Get agent's action set
@@ -617,10 +622,12 @@ function -WM_qlearn(nDefQ,nDctQ,nXIte,itWm,itIm)
 #iP -break_timer; # <= PROFILE SNIPPET ==
   ## Q-learning iteration                                                       # -------------------------------------
   "\n\n   Q-Learning ($[nXIte] iterations)"                               -MSG; # Protocol
-    "\n   - Agent's actions: { "                                          -MSG; # Protocol
-    0 var i; i idAct.nrec < while "${idAct[i,0]} " -MSG; i ++=; end "}"   -MSG; # Protocol
-    "\n   - Initial Q-value: $[nDefQ]"                                    -MSG; # Protocol
-    "\n   - Q discount     : $[nDctQ]"                                    -MSG; # Protocol
+  "\n   - Agent's actions: { "                                            -MSG; # Protocol
+  :nI=0; :nI<itIm.is.nrec: while                                                # Protocol
+    :itIm.is[nI,0]: if "${itIm.is[nI,0]} " -MSG; end                            # Protocol
+  nI ++=; end                                                         "}" -MSG; # Protocol
+  "\n   - Initial Q-value: $[nDefQ]"                                      -MSG; # Protocol
+  "\n   - Q discount     : $[nDctQ]"                                      -MSG; # Protocol
   0 1 -PBAR;                                                                    # Begin progress bar
   0 nIte =; nIte nXIte < while                                                  # Q-learning iteration >>
     ( itWm -WM_enter ) idObs =; :idObs[0,1]: nIni =;                            #   ??% # (Re-)enter world
