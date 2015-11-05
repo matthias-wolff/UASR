@@ -25,7 +25,7 @@
 
 #@uasrdoc: ignore
 
-function -PACK_fil(nrm)
+function -PACK_fil(nFILFAC)
 {
 	data dMELN;
 	data dMELM;
@@ -46,7 +46,7 @@ function -PACK_fil(nrm)
 		k ++=; end;
 	i ++=; end;
 
-	dMELM :2^.nFIL_SHF: .* dMELM =;
+	dMELM nFILFAC .* dMELM =;
 
   # get used positions
   data dMELU; -type int 2 dMELM.nrec dMELU -array;
@@ -59,8 +59,6 @@ function -PACK_fil(nrm)
 
 	dMELM ' 0 :.nMAX_PFA_DIM*.nMAX_FIL_DIM: "pfa.fil" "s16" -PACK;
 	dMELU ' 1 :2*.nMAX_FIL_DIM: "pfa.filuse" "u16" -PACK;
-
-	:nrm/2^.nFIL_SHF: return;
 }
 
 function -PACK_log(nrm)
@@ -92,25 +90,55 @@ function -PACK_wvl(len)
 
 function -PACK_pfa(nrm,idWnd)
 {
+  0 var nFRMSHF;
+  0 var nFFTSHF;
 	"uasr.pfa.len"   512   -CFG_get var flen;
+  "recfix.nrm.frm" 0 "S" -CFG_get_ex var nFRMNRM;                                      #   Shift offset in frameing   
+  "recfix.nrm.fft" 0 "S" -CFG_get_ex var nFFTNRM;                                      #   Shift offset after FFT
+  "recfix.nrm.fil" 0 "S" -CFG_get_ex var nFILNRM;                                      #   Shift offset after filter
+  "recfix.shf.fil" 3 "S" -CFG_get_ex var nFILSHF;                                      #   Shift offset after filter
+
+	"\n  nrm.sig: $[nrm]" -MSG2;
+  nFRMNRM 0 != if;
+    0 0 idWnd vmax -fetch var wmax;
+    :nrm/nFRMNRM: var nchg;
+    :nchg*wmax>1.00001: while; :nchg=nchg/2; nFRMSHF ++=; end;
+    :idWnd=idWnd*nchg;
+	  :nrm=nrm/nchg/2^nFRMSHF; # norm after FRM
+  end;
+	"\n  nrm.frm: $[nrm] (wmax: $[0 0 idWnd vmax -fetch] shf: $[nFRMSHF])" -MSG2;
+  nFFTNRM 0 != if;
+    :nFFTNRM>nrm*flen/2: while; :nFFTNRM=nFFTNRM/2; nFFTSHF --=; end;
+    :nFFTNRM<nrm*flen/2: while; :nFFTNRM=nFFTNRM*2; nFFTSHF ++=; end;
+  end;
+	:nrm=nrm*flen/2/2^nFFTSHF; # norm after FFT
+	"\n  nrm.fft: $[nrm] (shf: $[nFFTSHF])" -MSG2;
+  :2^-nFILSHF: var nFILFAC;
+  nFILNRM 0 != if;
+    :nFILFAC=nFILFAC*nrm/nFILNRM;
+    :nFILFAC>1.00001: while; :nFILFAC=nFILFAC/2; nFILSHF ++=; end;
+	  :nrm=nrm/nFILFAC/2^nFILSHF; # norm after FIL
+  end;
+	"\n  nrm.fil: $[nrm] (fac: $[nFILFAC] shf: $[nFILSHF])" -MSG2;
+
 	"uasr.sig.srate" 16000 -CFG_get 1 "pfa.srate"  "u32" -PACK1;
 	"uasr.pfa.crate" 160   -CFG_get 1 "pfa.crate"  "u16" -PACK1;
 	"uasr.pfa.wlen"  400   -CFG_get 1 "pfa.wlen"   "u16" -PACK1;
 	flen                            1 "pfa.len"    "u16" -PACK1;
 	.nPFA_TYP_FFT .nPFA_TYP_LOG .nPFA_TYP_FIL + + 1 "pfa.typ"   "u8" -PACK1; # TODO: from uasr.pfa
-	.nFFT_SHF                       1 "pfa.fftshf" "s8"  -PACK1;
+	nFRMSHF                         1 "pfa.frmshf" "s8"  -PACK1;
+	nFFTSHF                         1 "pfa.fftshf" "s8"  -PACK1;
+	nFILSHF                         1 "pfa.filshf" "s8"  -PACK1;
+  0                               1 "_blank1"    "s16" -PACK1;
 	"uasr.pfa.dim"   30    -CFG_get 1 "pfa.dim"    "u16" -PACK1;
-	0                               1 "_blank1"    "s8"  -PACK1;
 	-0.5 -1 *                       1 "pfa.mgcgam" "u16" -PACK1;
 	0.47                            1 "pfa.mgclam" "u16" -PACK1;
+  0                               1 "_blank1"    "s8"  -PACK1;
 	flen -PACK_wvl;
 	idWnd 0 .nMAX_FRAME_DIM           "pfa.wnd"    "u16" -PACK;
-	"\n  norm frm: $[nrm]" -MSG2;
-	:nrm=nrm*flen/2/2^.nFFT_SHF; # norm after FFT
-	"\n  norm fft: $[nrm]" -MSG2;
-	nrm -PACK_fil nrm =;
-	"\n  norm fil: $[nrm]" -MSG2;
+
+	nFILFAC -PACK_fil;
 	nrm -PACK_log nrm =;
-	"\n  norm log: $[nrm]" -MSG2;
+	"\n  nrm.log: $[nrm]" -MSG2;
 	nrm return;
 }

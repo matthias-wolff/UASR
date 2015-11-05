@@ -29,9 +29,49 @@ function -PACK_sfa(nrm,iFI,nDim)
 {
 	data idAux;
 
-	7 var nSFA_A_SHF;  # TODO > autocalc
-	8 var nSFA_A_SHF1; # TODO > autocalc
-	8 var nSFA_A_SHF2; # TODO > autocalc
+  "recfix.shf.dlt0" 3 "S" -CFG_get_ex var nA0SHF;
+  "recfix.shf.dlt1" 3 "S" -CFG_get_ex var nA1SHF;
+  "recfix.shf.dlt2" 3 "S" -CFG_get_ex var nA2SHF;
+
+  "recfix.nrm.dlt0" 0 "S" -CFG_get_ex var nA0NRM;
+  "recfix.nrm.dlt1" 0 "S" -CFG_get_ex var nA1NRM;
+  "recfix.nrm.dlt2" 0 "S" -CFG_get_ex var nA2NRM;
+
+  nrm var nrm0;
+  nrm var nrm1;
+  nrm var nrm2;
+
+  :2^-nA0SHF: var nA0FAC;
+  nA0NRM 0 != if;
+    :nA0FAC=nA0FAC*nrm0/nA0NRM;
+    :nA0FAC>1.00001: while; :nA0FAC=nA0FAC/2; nA0SHF ++=; end;
+	  :nrm0=nrm0/nA0FAC/2^nA0SHF; # norm after FIL
+  end;
+	"\n  nrm.dlt0: $[nrm0] (fac: $[nA0FAC] shf: $[nA0SHF])" -MSG2;
+  :2^-nA1SHF: var nA1FAC;
+  nA1NRM 0 != if;
+    :nA1FAC=nA1FAC*nrm1/nA1NRM;
+    :nA1FAC>1.00001: while; :nA1FAC=nA1FAC/2; nA1SHF ++=; end;
+	  :nrm1=nrm1/nA1FAC/2^nA1SHF; # norm after FIL
+  end;
+	"\n  nrm.dlt1: $[nrm1] (fac: $[nA1FAC] shf: $[nA1SHF])" -MSG2;
+  :2^-nA2SHF: var nA2FAC;
+  nA2NRM 0 != if;
+    :nA2FAC=nA2FAC*nrm2/nA2NRM;
+    :nA2FAC>1.00001: while; :nA2FAC=nA2FAC/2; nA2SHF ++=; end;
+	  :nrm2=nrm2/nA2FAC/2^nA2SHF; # norm after FIL
+  end;
+	"\n  nrm.dlt2: $[nrm2] (fac: $[nA2FAC] shf: $[nA2SHF])" -MSG2;
+  "recfix.shf.pca"  3 "S" -CFG_get_ex var nPCASHF;
+  "recfix.nrm.pca"  0 "S" -CFG_get_ex var nPCANRM;
+  nPCANRM 0 == if;
+    0 0 { nrm0 nrm1 nrm2 } ' vmax -fetch nrm =;
+  else;
+    nPCANRM nrm =;
+  end;
+  # TODO fac0>1 || fac1>1 || fac2>1 => nrm*=2 shf++
+	"\n  nrm.pca: $[nrm] (fac: ${nrm0/nrm/2^nPCASHF} ${nrm1/nrm/2^nPCASHF} ${nrm2/nrm/2^nPCASHF} shf: $[nPCASHF])" -MSG2;
+
 
 	# Calc context length's for A matrix bands
 	:(iFI.idDltW.dim-1)/2: var nACL;
@@ -40,10 +80,13 @@ function -PACK_sfa(nrm,iFI,nDim)
 	:.nMAX_SFA_A_CL*2+1: var nMAX_SFA_A_LEN;
 	
 	# Save dimension and context length's for A matrix bands
-	nDim  1 "sfa.dim" "u16" -PACK1;
-	3     1 "sfa.an"  "u8"  -PACK1;
-	nACLx 1 "sfa.alx" "u8"  -PACK1;
-	idALen 1 .nMAX_SFA_A_NUM "sfa.al" "u8" -PACK; # alen
+	nDim    1 "sfa.dim"  "u16" -PACK1;
+	nPCASHF 1 "sfa.wshf" "s8"  -PACK1;
+	3       1 "sfa.an"   "u8"  -PACK1;
+	nACLx   1 "sfa.alx"  "u8"  -PACK1;
+  0       1 "_blank1"  "s8"  -PACK1;
+  0       1 "_blank1"  "s16" -PACK1;
+	idALen  1 .nMAX_SFA_A_NUM "sfa.al" "u8" -PACK; # alen
 
 	# Expand delta weight vector to A matrix bands ( normal,delta,delta2 )
 	data idDW1;
@@ -55,14 +98,14 @@ function -PACK_sfa(nrm,iFI,nDim)
 		:idDW2=idDW2+idAux*idDW1[x,0];
 	x ++=; end;
 	{ 1 } ' idAux =; nMAX_SFA_A_LEN idAux -reallocate;
-	idDW1 idAux -join;
-	idDW2 idAux -join;
-	idAux :2^(15-nSFA_A_SHF): :nMAX_SFA_A_LEN*.nMAX_SFA_A_NUM: "sfa.a" "s16" -PACK;
+  :idAux=idAux.*nA0FAC;
+	:idDW1.*nA1FAC: idAux -join;
+	:idDW2.*nA2FAC: idAux -join;
+	idAux 0 :nMAX_SFA_A_LEN*.nMAX_SFA_A_NUM: "sfa.a" "s16" -PACK;
 	
 	# Save shift coeffs for A matrix
-	data idShf; { nSFA_A_SHF nSFA_A_SHF1 nSFA_A_SHF2 } idShf =;
+	data idShf; { nA0SHF nA1SHF nA2SHF } idShf =;
 	idShf 1 .nMAX_SFA_A_NUM "sfa.ashf" "s8" -PACK;
-	"\n  norm dlt: $[nrm]" -MSG2;
 
 	# Prepare map for mean+pca expand over unused delta+delta2
 	data idMap;
@@ -76,21 +119,20 @@ function -PACK_sfa(nrm,iFI,nDim)
 
 	# Generate vector norm
 	data idVN;
-	1 nBase ones idVN =;
-	1 nBase ones :2^(idShf[0,1]-idShf[0,0]): .* idVN -cat;
-	1 nBase ones :2^(idShf[0,2]-idShf[0,0]): .* idVN -cat;
+	1 nBase ones nrm0 ./ idVN =;
+	1 nBase ones nrm1 ./ idVN -cat;
+	1 nBase ones nrm2 ./ idVN -cat;
 
 	# Map+pack mean vector
 	data idM; idMap 0 iFI.idX ' 0 1 idM -lookup;
 	idM idVN .* idM =;
-	idM :2^15/nrm: :.nMAX_PFA_DIM*.nMAX_SFA_A_NUM: "sfa.m" "s16" -PACK;
-	"\n  norm mea: $[nrm]" -MSG2;
+	idM 0 :.nMAX_PFA_DIM*.nMAX_SFA_A_NUM: "sfa.m" "s16" -PACK;
 
 	# Map+pack pca matrix
+  :idVN=idVN.*nrm*2^nPCASHF;
 	data idW; idMap 0 iFI.idW 0 nDim idW -lookup;
 	idW idVN ./ idW =;
 	idW 0 :.nMAX_PFA_DIM*.nMAX_SFA_A_NUM*.nMAX_SFA_DIM: "sfa.w" "s16" -PACK;
-	"\n  norm pca: $[nrm]" -MSG2;
 
 	nrm return;
 }
