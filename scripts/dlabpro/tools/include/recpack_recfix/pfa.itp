@@ -46,6 +46,8 @@ function -PACK_fil(nFILFAC)
 		k ++=; end;
 	i ++=; end;
 
+	0 nFILFAC == if; 0 0 dMELM vmax ' vmax -fetch return; end;
+
 	dMELM nFILFAC .* dMELM =;
 
   # get used positions
@@ -115,8 +117,9 @@ function -PACK_pfa(nrm,idWnd)
 	"\n  nrm.fft: $[nrm] (shf: $[nFFTSHF])" -MSG2;
   :2^-nFILSHF: var nFILFAC;
   nFILNRM 0 != if;
+    0 -PACK_fil var fmax;
     :nFILFAC=nFILFAC*nrm/nFILNRM;
-    :nFILFAC>1.00001: while; :nFILFAC=nFILFAC/2; nFILSHF ++=; end;
+    :nFILFAC*fmax>1.00001: while; :nFILFAC=nFILFAC/2; nFILSHF ++=; end;
 	  :nrm=nrm/nFILFAC/2^nFILSHF; # norm after FIL
   end;
 	"\n  nrm.fil: $[nrm] (fac: $[nFILFAC] shf: $[nFILSHF])" -MSG2;
