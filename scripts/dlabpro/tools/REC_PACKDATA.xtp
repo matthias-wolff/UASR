@@ -70,9 +70,6 @@ function -usage(sCmd)
       "\n       gmm.mix       Create mixtures (default: yes)"             -MSG;
       "\n       syn.dir       Synthesis directory (default: <out>/syn)"   -MSG;
       "\n       syn.model     Synthesis model (default: 3_20)"            -MSG;
-      "\n       recfix.fftshf shift offset after FFT (default: 0)"        -MSG; 
-      "\n       recfix.filshf shift offset after filter (default: 0)"     -MSG; 
-      "\n       recfix.prnw   Weight pruing threshold (default: 0)"       -MSG; 
       "\n       render        yes/no: render dialog and grammar FSTs "    -MSG;
                               "(default: no)"                             -MSG;
       "\n       skip          Combination of the following letters"       -MSG;
@@ -116,8 +113,6 @@ function -usage(sCmd)
       "\n       gmm.mix       Create mixtures (default: yes)"             -MSG;
       "\n       syn.dir       Synthesis directory (default: <out>/syn)"   -MSG;
       "\n       syn.model     Synthesis model (default: 3_20)"            -MSG;
-      "\n       recfix.fftshf shift offset after FFT (default: 0)"        -MSG; 
-      "\n       recfix.filshf shift offset after filter (default: 0)"     -MSG; 
       "\n       recfix.prnw   Weight pruing threshold (default: 0)"       -MSG; 
       "\n       render        yes/no: render dialog and grammar FSTs "    -MSG;
                               "(default: no)"                             -MSG;
@@ -132,7 +127,32 @@ function -usage(sCmd)
       "\n     $__SFILE__.xtp $[sCmd] VMX.cfg -Pout=myfolder"              -MSG;
       "\n     $__SFILE__.xtp $[sCmd] VMX.cfg -Pam.model=3_10 "
               "-Plm.fsg=mygrammar.grm.txt -Pout=myfolder"               + -MSG;
+    TRUE .__CFG_bCol =;
+    "$3" "-Pouttyp=F" != if;
+      "\n\n  Type 'dlabpro $__SFILE__.xtp help rec -Pouttyp=F' for help on"
+             " recfix normalization factor config\n" + -COLOR_note        -MSG;
+    else;
+      "\n\n   Normalization factor config for recfix:"                    -MSG;
+      "\n      Normalization factors (recfix.frm.*!=0) overwrite "
+              "automatically calculated ones (displayed with -v2)." +     -MSG;
+      "\n       recfix.nrm.frm  Factor after framing      (default: 0)"   -MSG;
+      "\n       recfix.nrm.fft  Factor after analysis     (default: 0)"   -MSG;
+      "\n       recfix.nrm.fil  Factor after filter       (default: 0)"   -MSG;
+      "\n       recfix.nrm.dlt0 Factor for 1. delta comp. (default: 0)"   -MSG;
+      "\n       recfix.nrm.dlt1 Factor for 2. delta comp. (default: 0)"   -MSG;
+      "\n       recfix.nrm.dlt2 Factor for 3. delta comp. (default: 0)"   -MSG;
+      "\n       recfix.nrm.dlt3 Factor for 4. delta comp. (default: 0)"   -MSG;
+      "\n       recfix.nrm.pca  Factor after PCA          (default: 0)"   -MSG;
+      "\n      Right shifts in operation are used to prevent overflows."  -MSG;
+      "\n      They are compensated by shifting config values."           -MSG;
+      "\n      They do not change normalization."                         -MSG;
+      "\n       recfix.shf.fil  Shift in filter          (default: 0)"    -MSG;
+      "\n       recfix.shf.dlt0 Shift for 1. delta comp. (default: 3)"    -MSG;
+      "\n       recfix.shf.dlt1 Shift for 2. delta comp. (default: 3)"    -MSG;
+      "\n       recfix.shf.dlt2 Shift for 3. delta comp. (default: 3)"    -MSG;
+      "\n       recfix.shf.pca  Shift in PCA             (default: 3)"    -MSG;
       "\n"                                                                -MSG;
+    end;
     leave;
   end
   sCmd "vad" == if
