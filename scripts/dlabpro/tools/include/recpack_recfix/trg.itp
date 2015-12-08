@@ -28,14 +28,15 @@
 function -PACK_trg(nrm)
 {
 	# Pack it
-  :.nTRGM_FRM+.nTRGM_SEL_ID:
-          1 "trg.mode" "u8"  -PACK1;
+  var x;
+  "recfix.trg.mode" :.nTRGM_FRM+.nTRGM_SEL_ID: "S" -CFG_get_ex x -vset; x 1 "trg.mode" "u8"  -PACK1;
   0       1 "_blank1"  "u8"  -PACK1;
-  0.03    0 "trg.thr1" "s16" -PACK1;
-  0.02    0 "trg.thr2" "s16" -PACK1;
-  -6      1 "trg.off1" "s16" -PACK1;
-  6       1 "trg.off2" "s16" -PACK1;
-  30      1 "trg.mino" "u16" -PACK1;
+  "recfix.trg.thr1" 0.03 "S" -CFG_get_ex x -vset; x 0 "trg.thr1" "s16"  -PACK1;
+  "recfix.trg.thr2" 0.02 "S" -CFG_get_ex x -vset; x 0 "trg.thr2" "s16"  -PACK1;
+  "recfix.trg.off1"   -6 "S" -CFG_get_ex x -vset; x 1 "trg.off1" "s16"  -PACK1;
+  "recfix.trg.off2"    6 "S" -CFG_get_ex x -vset; x 1 "trg.off2" "s16"  -PACK1;
+  "recfix.trg.mino"   30 "S" -CFG_get_ex x -vset; x 1 "trg.off2" "u16"  -PACK1;
+
   { 0 .nMAX_FRAME_DIM } 1 :.nMAX_TRG_MAP/16: "trg.sel"  "u16" -PACK;
 }
 

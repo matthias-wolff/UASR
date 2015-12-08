@@ -151,6 +151,13 @@ function -usage(sCmd)
       "\n       recfix.shf.dlt1 Shift for 2. delta comp. (default: 3)"    -MSG;
       "\n       recfix.shf.dlt2 Shift for 3. delta comp. (default: 3)"    -MSG;
       "\n       recfix.shf.pca  Shift in PCA             (default: 3)"    -MSG;
+      "\n      Trigger configuration."                                    -MSG;
+      "\n       recfix.trg.mode Trigger mode (see nTRGM_* in maxdim.itp)" -MSG;
+      "\n       recfix.trg.thr1 Activation threshold     (default: 0.3)"  -MSG;
+      "\n       recfix.trg.thr2 Deactivation threshold   (default: 0.2)"  -MSG;
+      "\n       recfix.trg.off1 Activation offset        (default: -6)"   -MSG;
+      "\n       recfix.trg.off2 Deactivation offset      (default: 6)"    -MSG;
+      "\n       recfix.trg.mino Minimal deactivation time(default: 30)"   -MSG;
       "\n"                                                                -MSG;
     end;
     leave;
