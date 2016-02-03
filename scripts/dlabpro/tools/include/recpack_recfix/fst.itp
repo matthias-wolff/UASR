@@ -28,6 +28,7 @@
 function -PACK_fst(nrm,itRN,nU)
 {
 	data idAux;
+	data idAux2;
 	fst iRN;
 	itRN NULL nU iRN -copy_ui;
 	iRN 0 iRN -push_weights;
@@ -44,11 +45,9 @@ function -PACK_fst(nrm,itRN,nU)
 
 	# extract state offset
 	data iS; :iRN.sd["~FLG"]: iS =;
-	"" -1 iS -rindex;
-	iS iT 1 0 idAux -gen_index;
-	iS 1 1 iS -delete; idAux iS -join;
-	:iS[1]: -1 idAux /rec -shift; :idAux[idAux.nrec-1,0]=iT.nrec;
-	:idAux-iS[1]: iS -join;
+	iT 0 idAux -compress;
+	"" -1 iS -rindex; iS idAux 1 0 idAux2 -gen_index; iS 1 1 iS -delete;
+	idAux2 0 idAux 1 2 idAux -lookup; idAux iS -join;
 
 	# quant states
 	data dS;
