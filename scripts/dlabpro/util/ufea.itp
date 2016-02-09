@@ -25,30 +25,46 @@
 
 function -UPFA_trf_FFT(idFea)
 {
-  idFea fft abs idFea =;
+  idFea fft abs idFea.nScale ./ idFea =;
+}
+
+function -UPFA_map_LOG(idFea)
+{
+  idFea .ln
+    idFea.nScale .ln +
+    0 max
+    idFea =;
+}
+
+function -UPFA_map_NONE(idFea)
+{
+  leave;
 }
 
 function -UPFA_ana(idSig,idPM,idFea,idDummy,iPfa)
 {
   idSig idFea =;
+  # TODO: labels
+
   iPfa.rmdc if idFea rmdc idFea = end;
   # TODO: synchronus framing
-  idFea iPfa.wlen iPfa.crate frame # TODO: use dlm_fba_doframing
+
+  idFea nosify idFea =;
+  idFea iPfa.wlen iPfa.crate frame # TODO: use dlm_fba_doframing (quant noise + pitch)
     iPfa.wlen iPfa.len iPfa.wtype iPfa.wnorm window idFea =;
+
   idFea -UPFA_trf_$[iPfa.trf];
+  # TODO: noiserdc
+
+  # TODO: log if mf_type="S"
   iPfa.fil -is_empty not if
     iPfa.fil idFea * idFea =;
   end
+
   idFea.dim iPfa.dim > if idFea iPfa.dim :idFea.dim-iPfa.dim: idFea -delete; end
   idFea.dim iPfa.dim < if -type double :iPfa.dim-idFea.dim: idFea -addncomps; end
-  iPfa.map "LOG" == if;
-    idFea .log idFea =;
-  else iPfa.map "NONE" == if;
-  else
-    "Unknown UPFA transformation (pfa.UPFA.trn: ${iPfa.trf})." -ERROR;
-    leave;
-  end end
-  11 brk;
+
+  idFea -UPFA_map_$[iPfa.map];
 }
 
 function -UPFA_syn(idFea,idControl,idSyn)
@@ -61,7 +77,7 @@ function -UPFA_init()
   ## Create and configure signal analysis/synthesis processor                   # -------------------------------------
   object iPfa;                                                                  # Create analysis processor
 
-  function -UPFA_cfg(sCfgN,sCfgO1,sCfgO2,val,sType)
+  function -UPFA_cfg(sCfgN,sCfgO1,sCfgO2,def,sType)
   {
     function -UPFA_cfgo(sCfgO,val)
     {
@@ -76,17 +92,36 @@ function -UPFA_init()
       end;
       val return;
     }
+
     sType "1" "left"  -VAR_strop var sLType;
-    sType "1" "right" -VAR_strop var sRType;
+    sType "l" "search" -VAR_strop 0 >= var bLoc;
+    sType "f" "search" -VAR_strop 0 >= var bFnc;
+    sType "F" "search" -VAR_strop 0 >= var bIniFnc;
+
+    def var val;
     sCfgO2 val -UPFA_cfgo val =;
     sCfgO1 val -UPFA_cfgo val =;
-    sCfgN val "S" -CFG_get_ex val =;
+    "pfa.UPFA.$[sCfgN]" val "S" -CFG_get_ex val =;
+
+    bFnc if;
+      "-UPFA_$[sCfgN]_$[val]" "function" ?instance not if;
+        "Function -UPFA_$[sCfgN]_$[val] does not exist (fix uasr.pdf.UPFA.$[sCfgN])" -ERROR;
+        def val =;
+      end;
+    end;
+    bIniFnc if;
+      "-UPFA_init_$[sCfgN]_$[val]" "function" ?instance not if;
+        "Function -UPFA_init_$[sCfgN]_$[val] does not exist (fix uasr.pdf.UPFA.$[sCfgN])" -ERROR;
+        def val =;
+      end;
+    end;
+
     var vout;
     val vout -$[sLType]set;
-    sRType "l" != if;
+    bLoc not if;
       object iP; iPfa iP =;
       var iP.$[sCfgN];
-      vout iP.$[sCfgN] -$[sRType]set;
+      vout iP.$[sCfgN] -$[sLType]set;
       iP iPfa =;
     end;
     vout return;
@@ -96,6 +131,7 @@ function -UPFA_init()
     "fil.MEL.lambda" ""                "" 0.47 "vl" -UPFA_cfg var nLambda;
     "fil.MEL.type"   "pfa.MEL.mf_type" "" "MT" "sl" -UPFA_cfg var sType;
     
+    # TODO: mf_type "S"
     iPfa.fil -reset;
     iPfa.len unit nLambda iPfa.dim sType mfbs iPfa.fil =;
   }
@@ -111,26 +147,20 @@ function -UPFA_init()
   ".__FEA_sSynOpt"  "var" ?instance not if "" var .__FEA_sSynOpt; end           # Options on -synthesize
 
   ## Common configuration                                                       # -------------------------------------
-  "srate"  "sig.srate"  ""      16000 "v" -UPFA_cfg;                            # Set sampling rate
-  "crate"  "pfa.crate"  ""        160 "v" -UPFA_cfg;                            # Set frame continuation rate
-  "wlen"   "pfa.wlen"   ""        400 "v" -UPFA_cfg;                            # Set window length
-  "wtype"  "pfa.window" "" "Blackman" "s" -UPFA_cfg;                            # Set window type
-  "len"    "pfa.len"    ""        512 "v" -UPFA_cfg;                            # Set frame length
-  "dim"    "pfa.dim"    ""         30 "v" -UPFA_cfg;                            # Set primary feature vector dimension
+  "srate" "sig.srate"            ""      16000 "v"   -UPFA_cfg;                 # Set sampling rate
+  "crate" "pfa.crate"            ""        160 "v"   -UPFA_cfg;                 # Set frame continuation rate
+  "wlen"  "pfa.wlen"             ""        400 "v"   -UPFA_cfg;                 # Set window length
+  "wtype" "pfa.window"           "" "Blackman" "s"   -UPFA_cfg;                 # Set window type
+  "len"   "pfa.len"              ""        512 "v"   -UPFA_cfg;                 # Set frame length
+  "dim"   "pfa.dim"              ""         30 "v"   -UPFA_cfg;                 # Set primary feature vector dimension
 
   ## UPFA configuration                                                         # -------------------------------------
-  "rmdc"  "pfa.anaoptions:/rmdc" "" FALSE "b" -UPFA_cfg;                        # Set remove mean
-  "wnorm" "pfa.FBA.wnorm"        "" FALSE "b" -UPFA_cfg;                        # Set window normalization
-  var iPfa.trf;   "pfa.UPFA.trf"    "FFT" "S" -CFG_get_ex iPfa.trf   -sset;     # Set signal transformation method
-  "-UPFA_trf_$[iPfa.trf]" "function" ?instance not if                           # Check function for transformation
-    "Unkown transformation (pfa.UPFA.trf: $[iPfa.trf])." -ERROR; leave;         #   Error
-  end                                                                           # <<
-  var sFil; "pfa.UPFA.fil" "MEL" "S" -CFG_get_ex sFil -sset;                    # Get filter matrix type
-  "-UPFA_init_fil_$[sFil]" "function" ?instance not if                          # Check function for filter matrix type >>
-    "Unkown filter matrix type (pfa.UPFA.fil: $[sFil])." -ERROR; leave;         #   Error
-  end                                                                           # <<
+  "rmdc"  "pfa.anaoptions:/rmdc" ""      FALSE "b"   -UPFA_cfg;                 # Set remove mean
+  "wnorm" "pfa.FBA.wnorm"        ""      FALSE "b"   -UPFA_cfg;                 # Set window normalization
+  "trf"   ""                     ""      "FFT" "sf"  -UPFA_cfg;                 # Set signal transformation method
+  "fil"   ""                     ""      "MEL" "slF" -UPFA_cfg var sFil;        # Get filter matrix type
   data iPfa.fil;  -UPFA_init_fil_$[sFil];                                       # Set filter matrix
-  var iPfa.map;   "pfa.UPFA.map"    "LOG" "S" -CFG_get_ex iPfa.map   -sset;     # Set feature mapping
+  "map"   ""                     ""      "LOG" "sf"  -UPFA_cfg;                 # Set feature mapping
 
   ## Functions                                                                  # -------------------------------------
   function iPfa.-analyze;    /disarm -UPFA_ana /disarm iPfa.-analyze    =;      # Set analysis function
