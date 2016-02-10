@@ -25,10 +25,15 @@
 
 function -UPFA_trf_FFT(idFea)
 {
-  idFea fft abs idFea.nScale ./ idFea =;
+  idFea fft idFea.nScale ./ idFea =;
 }
 
-function -UPFA_map_LOG(idFea)
+function -UPFA_tmap_ABS(idFea)
+{
+  idFea abs idFea =;
+}
+
+function -UPFA_fmap_LOG(idFea)
 {
   idFea .ln
     idFea.nScale .ln +
@@ -36,7 +41,7 @@ function -UPFA_map_LOG(idFea)
     idFea =;
 }
 
-function -UPFA_map_NONE(idFea)
+function -UPFA_fmap_NONE(idFea)
 {
   leave;
 }
@@ -49,11 +54,12 @@ function -UPFA_ana(idSig,idPM,idFea,idDummy,iPfa)
   iPfa.rmdc if idFea rmdc idFea = end;
   # TODO: synchronus framing
 
-  idFea nosify idFea =;
+  idFea noisify idFea =;
   idFea iPfa.wlen iPfa.crate frame # TODO: use dlm_fba_doframing (quant noise + pitch)
     iPfa.wlen iPfa.len iPfa.wtype iPfa.wnorm window idFea =;
 
   idFea -UPFA_trf_$[iPfa.trf];
+  idFea -UPFA_tmap_$[iPfa.tmap];
   # TODO: noiserdc
 
   # TODO: log if mf_type="S"
@@ -64,7 +70,7 @@ function -UPFA_ana(idSig,idPM,idFea,idDummy,iPfa)
   idFea.dim iPfa.dim > if idFea iPfa.dim :idFea.dim-iPfa.dim: idFea -delete; end
   idFea.dim iPfa.dim < if -type double :iPfa.dim-idFea.dim: idFea -addncomps; end
 
-  idFea -UPFA_map_$[iPfa.map];
+  idFea -UPFA_fmap_$[iPfa.fmap];
 }
 
 function -UPFA_syn(idFea,idControl,idSyn)
@@ -158,9 +164,10 @@ function -UPFA_init()
   "rmdc"  "pfa.anaoptions:/rmdc" ""      FALSE "b"   -UPFA_cfg;                 # Set remove mean
   "wnorm" "pfa.FBA.wnorm"        ""      FALSE "b"   -UPFA_cfg;                 # Set window normalization
   "trf"   ""                     ""      "FFT" "sf"  -UPFA_cfg;                 # Set signal transformation method
+  "tmap"  ""                     ""      "ABS" "sf"  -UPFA_cfg;                 # Set transformation mapping type
   "fil"   ""                     ""      "MEL" "slF" -UPFA_cfg var sFil;        # Get filter matrix type
   data iPfa.fil;  -UPFA_init_fil_$[sFil];                                       # Set filter matrix
-  "map"   ""                     ""      "LOG" "sf"  -UPFA_cfg;                 # Set feature mapping
+  "fmap"  ""                     ""      "LOG" "sf"  -UPFA_cfg;                 # Set filter mapping type
 
   ## Functions                                                                  # -------------------------------------
   function iPfa.-analyze;    /disarm -UPFA_ana /disarm iPfa.-analyze    =;      # Set analysis function
