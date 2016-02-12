@@ -33,17 +33,25 @@ function -UPFA_tmap_ABS(idFea)
   idFea abs idFea =;
 }
 
-# TODO: -UPFA_tmap_LOG for mf_type="S"
+function -UPFA_tmap_LOG(idFea)
+{
+  idFea abs .ln
+    idFea.nScale ln -1 *
+    max idFea =;
+}
 
 function -UPFA_fmap_LOG(idFea)
 {
   idFea .ln
-    idFea.nScale .ln +
+    idFea.nScale ln +
     0 max
     idFea =;
 }
 
-# TODO: -UPFA_tmap_?? for mf_type="S"
+function -UPFA_fmap_QEN(idFea)
+{
+  idFea idFea.nScale ln + idFea =;
+}
 
 function -UPFA_fmap_NONE(idFea)
 {
