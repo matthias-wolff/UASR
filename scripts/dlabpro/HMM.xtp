@@ -940,7 +940,7 @@ function -CMD_trn()
   "model"  "S" -CFG_get_path sDirModel =;                                       # Silently get model directory
   "am.train.splitbest" FALSE -CFG_get bSplitBest =;                             # Use best HMM for split
   -SNS_get_tab idSns =;                                                         # Get sensor table
-  -HMM_set_eval_mode nEval =;
+  -HMM_set_eval_mode nEval =;                                                   # Get evaluation mode
 
   ## - Handle uasr.start (= -Pstart=...) and uasr.stop (= -Pstop=...)           # - - - - - - - - - - - - - - - - - - -
   "start" "#" "S" -CFG_get_ex sBuf =; sBuf "#" == not if                        # Have key "(uasr.)start" >>

@@ -610,16 +610,18 @@ function -HMM_assess(itHMM,sSns,nSpl,nIte)
   nCor 0 >= if                                                                  # Have computed correctness >>
     var K; :K=idF.nrec;                                                         #   Sample size
     var n; :n=round(nCor*K);                                                    #   Number of hits
-	var topIval :topIval=round((1-betaquant(0.025,K-n,n+1)-n/K)*1000)/10;		# Top of confidence interval
-	var botIval :botIval=round((n/K-1+betaquant(0.975,K-n+1,n))*1000)/10;		# Bottom of confidence interval
+	var ciU :ciU=max(n/K,min(1,1-betaquant(0.025,K-n,n+1)));                    #   Upper bound of confidence interval
+	var ciL :ciL=max(0,min(n/K,1-betaquant(0.975,K-n+1,n)));                    #   Lower bound of confidence interval
+    
     "\n\n   Evaluation result:"                                           -MSG; #   Protocol
     "\n   - Correct        : $[n] of $[K]"                                -MSG; #   Protocol (# hits, # samples)
     "\n   - Correctness    : ${round(n/K*1000)/10} %"                     -MSG; #   Protocol (Label correctness)
-    topIval -100 == if " +0.0" -MSG; else " +$[topIval]" -MSG; end				# Protocol (95% confidence interv.)
-    botIval +100 == if " -0.0" -MSG; else " -$[botIval]" -MSG; end				# Protocol (95% confidence interv.)
+    " +${round((ciU-n/K)*1000)/10} -${round(abs(n/K-ciL)*1000)/10}"       -MSG; #   Protocol (95% confidence interv.)
     " ( HMM $[nSpl]_$[nIte]" ( sSns if ", $[sSns]" + end ) " )" +         -MSG; #   Protocol (HMM and sensor IDs)
     "\n   - Confidence lvl.: 95 %"                                        -MSG; #   Protocol (Confidence level)
   end                                                                           # <<
+  { ${n/K} $[ciU] $[ciL] "$[nSpl]_$[nIte]" } idAux =;                           # Make global log entry
+  sSns nSpl nIte idAux -HMM_assess_global_log;                                  # Continue global log file 
   NULL iP -end_timer;                                                           # End timer
   "\n   Time: ${round(iP.time/1000)} s\n  "                               -MSG; # Protocol (elapsed time)
   nCor 0 >= if nCor else 1. end return;                                         # Return label correctness or 1
@@ -1396,6 +1398,65 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
   ( itHMM sSns nSpl nIte "L" NULL NULL iL $[sResFnc] ) nRet =;                  # Finish result
   NULL iP -end_timer; "\n   Time: ${ent(iP.time/1000+0.5)} s\n"           -MSG; # End timer
   nRet return;                                                                  # Return result
+}
+
+## Continues the global assessment log file for HMM training.
+##
+## @cgen:index
+## @param itHMM hmm
+##          HMM instance to be assessed
+## @param sSns string
+##          Sensor ID, <code>NULL</code> or empty for one-channel recordings 
+##          (typical case for speech recognition)
+## @param nSpl number
+##          Number of state splits of HMM to be assessed
+## @param nIte number
+##          Update iteration of HMM to be assessed
+## @param idLogEntry data
+##          The log entry, one record of the recognition correctness, the upper 
+##          and lower bound of the confidence interval and the model name
+## @return nothing
+## @global &lt;am.train.split&gt; R
+## @global &lt;am.train.iteN&gt;  R
+## @global &lt;uasr.dir.log&gt;   R
+function -HMM_assess_global_log(sSns,nSpl,nIte,idLogEntry)
+{
+  data idLog;                                                                   # The log
+  data idAux;                                                                   # Auxiliary data
+  var  sSxt;    ( sSns if ".$[sSns]" else "" end     ) sSxt    =;               # Sensor file extension
+  var  sDirLog; ( "log" "S"            -CFG_get_path ) sDirLog =;               # Get log directory
+  var  bXvl;    ( "xvl" FALSE "S"        -CFG_get_ex ) bXvl    -bset;           # Cross-validation flag
+  var  nXS;     ( "am.train.split" 0 "S" -CFG_get_ex ) nXS     =;               # Get number of splits
+  var  nXI;                                                                     # Number of iterations
+  var  nS;                                                                      # Split
+  var  nI;                                                                      # Iteration
+  var  sFn;                                                                     # Log file name
+
+  ( .__CFG_bNwr not ) ( nSpl 0 >= ) && ( nIte 0 >= ) && if                      # No write prot.and regular eval.>>
+    "$[sDirLog]/hmm_assess$[sSxt].data.xml" sFn =;                              #   Make log file name
+    :nSpl>0 || nIte>0 || bXvl: if                                               #   Continuing log >>
+      sFn idLog /noerror -restore;                                              #     Load previous log file
+    end                                                                         #   <<
+    ( idLog -is_empty ) if                                                      #   Log empty >>
+      0 nS =; nS nXS <= while                                                   #     Loop over splits >>
+        ( "uasr.am.train.ite$[nS]" 0 "S" -CFG_get_ex ) nXI =;                   #       Get number of iterations
+        0 nI =; nI nXI <= while                                                 #       Loop over iterations >>
+          { NAN NAN NAN "$[nS]_$[nI]" } idLog -cat;                             #         Add empty log entry
+          nI ++=;                                                               #         Next iteration
+        end                                                                     #       <<
+        nS ++=;                                                                 #       Next split
+      end                                                                       #     <<
+    end                                                                         #   <<
+    { "$[nSpl]_$[nIte]" } idLog 0 3 idAux -gen_index;                           #   Find line in log
+    :idAux[0,0]>=0: if                                                          #   Found >>
+      :idLog[idAux[0,0],0]=idLogEntry[0,0];                                     #     Write correctness
+      :idLog[idAux[0,0],1]=idLogEntry[0,1];                                     #     Write upper bound of conf. int.
+      :idLog[idAux[0,0],2]=idLogEntry[0,2];                                     #     Write lower bound of conf. int.
+    else                                                                        #   << Not found >>
+      idLogEntry idLog /noerror -cat;                                           #     Append to log
+    end                                                                         #   <<
+    sFn idLog /noerror /xml -save;                                              #   Save new log file
+  end                                                                           # <<
 }
 
 ## Creates or continues the assessment log file and the label confusion matrix. Both files will be written into
