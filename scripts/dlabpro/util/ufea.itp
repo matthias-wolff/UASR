@@ -60,31 +60,58 @@ function -UPFA_fmap_NONE(idFea)
 
 function -UPFA_ana(idSig,idPM,idFea,idDummy,iPfa)
 {
+  var nC;
   idSig idFea =;
-  # TODO: labels
-  10 brk;
+  # Check for non-numeric components
+  0 nC =; nC idFea.dim < while;
+    nC idFea -get_comp_type 256 <= if break end;
+  nC ++=; end;
+  # Extract labels into subobject idFea.idL
+  nC idFea.dim < if;
+    data idFea.idLab;
+    0 nC =; nC idFea.dim < while;
+      nC idFea -get_comp_type 256 <= if;
+        :idFea[nC]: idFea.idLab -join;
+        idFea nC 1 idFea -delete;
+      else;
+        nC ++=;
+      end;
+    end;
+  end
 
+  # Remove DC
   iPfa.rmdc if idFea rmdc idFea = end;
 
+  # Framing
   idPM NULL != if;
     idFea iPfa.wlen iPfa.crate idPM iPfa.nperiods sframe idFea =;
   else;
     idFea iPfa.wlen iPfa.crate frame idFea =;
   end;
-  idFea iPfa.wlen iPfa.len iPfa.wtype iPfa.wnorm window nosify idFea =;
+  # Windowing
+  idFea iPfa.wlen iPfa.len iPfa.wtype iPfa.wnorm window noisify idFea =;
 
+  # Transformation + mapping
   idFea -UPFA_trf_$[iPfa.trf];
   idFea -UPFA_tmap_$[iPfa.tmap];
   # TODO: noiserdc
 
+  # Filter matrix
   iPfa.fil -is_empty not if
     iPfa.fil idFea * idFea =;
   end
 
+  # Output dimension
   idFea.dim iPfa.dim > if idFea iPfa.dim :idFea.dim-iPfa.dim: idFea -delete; end
   idFea.dim iPfa.dim < if -type double :iPfa.dim-idFea.dim: idFea -addncomps; end
 
+  # Filter mapping
   idFea -UPFA_fmap_$[iPfa.fmap];
+
+  # Append labels
+  "idFea.idLab" "data" ?instance if;
+    idFea.idLab idFea -join;
+  end;
 }
 
 function -UPFA_syn(idFea,idControl,idSyn)
