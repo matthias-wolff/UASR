@@ -175,6 +175,11 @@
       </td>
     </tr>
     <tr>
+      <td><a href="#clp_-HMM_assess_global_log"><code class="link">-HMM_assess_global_log</code></a></td>
+      <td><code><b>-HMM_assess_global_log</b>(sSns,nSpl,nIte,idLogEntry)</code><br>&nbsp;<br> Continues the global assessment log file for HMM training.
+      </td>
+    </tr>
+    <tr>
       <td><a href="#clp_-XXM_assess_log"><code class="link">-XXM_assess_log</code></a></td>
       <td><code><b>-XXM_assess_log</b>(sFilePref,sFileSuff,idLtb,idFlst,idAsc)</code><br>&nbsp;<br> Creates or continues the assessment log file and the label confusion matrix.
       </td>
@@ -1327,7 +1332,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">train/am.itp(661)</td>
+      <td class="hidden">train/am.itp(663)</td>
     </tr>
   </table>
   </div>
@@ -1501,7 +1506,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">train/am.itp(1182)</td>
+      <td class="hidden">train/am.itp(1184)</td>
     </tr>
   </table>
   </div>
@@ -1745,6 +1750,119 @@
     </tr>  </table>
   </div>
   </div>
+  <div id="clp_-HMM_assess_global_log">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-HMM_assess_global_log</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-HMM_assess_global_log','-HMM_assess_global_log','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-HMM_assess_global_log</b>(sSns,nSpl,nIte,idLogEntry)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">train/am.itp(1422)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Continues the global assessment log file for HMM training.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sSns</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Sensor ID, <code>NULL</code> or empty for one-channel recordings
+          (typical case for speech recognition)
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nSpl</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Number of state splits of HMM to be assessed
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">number&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nIte</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Update iteration of HMM to be assessed
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idLogEntry</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The log entry, one record of the recognition correctness, the upper
+          and lower bound of the confidence interval and the model name
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> nothing
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;am.train.split&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;am.train.iteN&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>&lt;uasr.dir.log&gt;</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
   <div id="clp_-XXM_assess_log">
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
@@ -1778,7 +1896,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">train/am.itp(1436)</td>
+      <td class="hidden">train/am.itp(1497)</td>
     </tr>
   </table>
   </div>
@@ -1928,7 +2046,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">train/am.itp(1553)</td>
+      <td class="hidden">train/am.itp(1614)</td>
     </tr>
   </table>
   </div>
@@ -2059,7 +2177,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">train/am.itp(1654)</td>
+      <td class="hidden">train/am.itp(1715)</td>
     </tr>
   </table>
   </div>
@@ -2149,7 +2267,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">train/am.itp(1679)</td>
+      <td class="hidden">train/am.itp(1740)</td>
     </tr>
   </table>
   </div>
@@ -2224,7 +2342,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">train/am.itp(1708)</td>
+      <td class="hidden">train/am.itp(1769)</td>
     </tr>
   </table>
   </div>
@@ -2302,7 +2420,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">train/am.itp(1744)</td>
+      <td class="hidden">train/am.itp(1805)</td>
     </tr>
   </table>
   </div>
@@ -2436,7 +2554,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">train/am.itp(1886)</td>
+      <td class="hidden">train/am.itp(1947)</td>
     </tr>
   </table>
   </div>

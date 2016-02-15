@@ -23,16 +23,25 @@
 ## You should have received a copy of the GNU Lesser General Public License
 ## along with UASR. If not, see <http://www.gnu.org/licenses/>.
 
+## UPFA transfer function with fourier analysis
+##
+## @param idFea  Current feature data object
 function -UPFA_trf_FFT(idFea)
 {
   idFea fft idFea.nScale ./ idFea =;
 }
 
+## UPFA transfer mapping function with absolute value calculation
+##
+## @param idFea  Current feature data object
 function -UPFA_tmap_ABS(idFea)
 {
   idFea abs idFea =;
 }
 
+## UPFA transfer mapping function taking the logarithm
+##
+## @param idFea  Current feature data object
 function -UPFA_tmap_LOG(idFea)
 {
   idFea abs .ln
@@ -40,6 +49,9 @@ function -UPFA_tmap_LOG(idFea)
     max idFea =;
 }
 
+## UPFA filter mapping function taking the logarithm
+##
+## @param idFea  Current feature data object
 function -UPFA_fmap_LOG(idFea)
 {
   idFea .ln
@@ -48,82 +60,156 @@ function -UPFA_fmap_LOG(idFea)
     idFea =;
 }
 
+## UPFA filter mapping function with subtraction of quantization energy
+##
+## @param idFea  Current feature data object
 function -UPFA_fmap_QEN(idFea)
 {
   idFea idFea.nScale ln + idFea =;
 }
 
+## UPFA filter mapping function with no operation
+##
+## @param idFea  Current feature data object
 function -UPFA_fmap_NONE(idFea)
 {
   leave;
 }
 
+## Universal primary feature analysis
+##
+## This function preforms the universal primary feature analysis.
+##
+## @param idSig data
+##          Signal to be analyzed, may contain multiple signal channels,
+##          may contain one or multiple label components.
+## @param idPM data
+##          Pitch marks for pitch synchronous analysis, may be NULL
+## @param idFea data
+##          Will be filled with the feature output vectors. Labels will be
+##          copied from <code>idSig</code>.
+## @param idDummy data
+##          Only for compatible with imaginary data object in dlabpro's feature
+##          processors. Should be NULL.
+## @see -UPFA_init
 function -UPFA_ana(idSig,idPM,idFea,idDummy,iPfa)
 {
-  var nC;
-  idSig idFea =;
-  # Check for non-numeric components
-  0 nC =; nC idFea.dim < while;
-    nC idFea -get_comp_type 256 <= if break end;
-  nC ++=; end;
-  # Extract labels into subobject idFea.idL
-  nC idFea.dim < if;
-    data idFea.idLab;
-    0 nC =; nC idFea.dim < while;
-      nC idFea -get_comp_type 256 <= if;
-        :idFea[nC]: idFea.idLab -join;
-        idFea nC 1 idFea -delete;
-      else;
-        nC ++=;
-      end;
-    end;
-  end
+  idSig idFea =;                                                                # Copy signal to feature object
 
-  # Remove DC
-  iPfa.rmdc if idFea rmdc idFea = end;
+  var nC;                                                                       # Channel index
+  ## Check for non-numeric components                                           # -------------------------------------
+  0 nC =; nC idFea.dim < while;                                                 # Iterate over components in signal >>
+    nC idFea -get_comp_type 256 <= if break end;                                #   Break on label component
+  nC ++=; end;                                                                  # <<
+  ## Extract labels into subobject idFea.idL                                    # -------------------------------------
+  nC idFea.dim < if;                                                            # If there are label components >>
+    data idFea.idLab;                                                           #   Create label subobject idFea.idLab
+    0 nC =; nC idFea.dim < while;                                               #   Iterate over components in signal >>
+      nC idFea -get_comp_type 256 <= if;                                        #     Check for label component >>
+        :idFea[nC]: idFea.idLab -join;                                          #       Copy labels
+        idFea nC 1 idFea -delete;                                               #       Remove labels from signals
+      else;                                                                     #     << Numeric component >>
+        nC ++=;                                                                 #       Go to next component
+      end;                                                                      #     <<
+    end;                                                                        #   <<
+  end                                                                           # <<
 
-  # Framing
-  idPM NULL != if;
-    idFea iPfa.wlen iPfa.crate idPM iPfa.nperiods sframe idFea =;
-  else;
-    idFea iPfa.wlen iPfa.crate frame idFea =;
-  end;
-  # Windowing
-  idFea iPfa.wlen iPfa.len iPfa.wtype iPfa.wnorm window noisify idFea =;
+  ## Remove direct component if configured                                      # -------------------------------------
+  iPfa.rmdc if idFea rmdc idFea = end;                                          # Remove direct component
 
-  # Transformation + mapping
-  idFea -UPFA_trf_$[iPfa.trf];
-  idFea -UPFA_tmap_$[iPfa.tmap];
+  ## Framing                                                                    # -------------------------------------
+  idPM NULL != if;                                                              # If there are pitch marks >>
+    idFea iPfa.wlen iPfa.crate idPM iPfa.nperiods sframe idFea =;               #   Perform pitch synchron framing
+  else;                                                                         # << Without pitch marks >>
+    idFea iPfa.wlen iPfa.crate frame idFea =;                                   #   Perform fixed length framing
+  end;                                                                          # <<
+  ## Windowing                                                                  # -------------------------------------
+  idFea iPfa.wlen iPfa.len iPfa.wtype iPfa.wnorm window noisify idFea =;        # Perform windowing & noisify
+
+  ## Transformation + mapping                                                   # -------------------------------------
+  idFea -UPFA_trf_$[iPfa.trf];                                                  # Call transformation function
+  idFea -UPFA_tmap_$[iPfa.tmap];                                                # Call transformation mapping function
   # TODO: noiserdc
 
-  # Filter matrix
-  iPfa.fil -is_empty not if
-    iPfa.fil idFea * idFea =;
-  end
+  ## Filter matrix                                                              # -------------------------------------
+  iPfa.fil -is_empty not if iPfa.fil idFea * idFea =; end                       # Apply filter matrix if configured
 
-  # Output dimension
-  idFea.dim iPfa.dim > if idFea iPfa.dim :idFea.dim-iPfa.dim: idFea -delete; end
-  idFea.dim iPfa.dim < if -type double :iPfa.dim-idFea.dim: idFea -addncomps; end
+  ## Output dimension                                                           # -------------------------------------
+  idFea.dim iPfa.dim > if idFea iPfa.dim :idFea.dim-iPfa.dim: idFea -delete; end #Clip dimension to configured dimension
+  idFea.dim iPfa.dim < if -type double :iPfa.dim-idFea.dim: idFea -addncomps;end #Expand dimension to configured dimension
 
-  # Filter mapping
-  idFea -UPFA_fmap_$[iPfa.fmap];
+  ## Filter mapping                                                             # -------------------------------------
+  idFea -UPFA_fmap_$[iPfa.fmap];                                                # Call filter mapping function
 
-  # Append labels
-  "idFea.idLab" "data" ?instance if;
-    idFea.idLab idFea -join;
-  end;
+  ## Append labels                                                              # -------------------------------------
+  "idFea.idLab" "data" ?instance if; idFea.idLab idFea -join; end;              # Append labels to features
 }
 
+
+## Universal primary feature synthesis
+##
+## This function preforms the universal primary feature synthesis.
+## It is currently not yet implemented!
+##
+## @param idFea data
+##          Features to be synthesized.
+## @param idControl data
+##          May contain pitch marks or into data.
+## @param idSyn data
+##          Will be filled with the synthesized signal. Labels will be
+##          copied from <code>idSig</code>.
+## @see -UPFA_init
 function -UPFA_syn(idFea,idControl,idSyn)
 {
-  "Universal synthesis is currently not implemented." -ERROR;
+  "Universal synthesis is currently not implemented." -ERROR;                   # Error
 }
 
+## Initialize universal primary feature analysis
+##
+## This function creates the object .__FEA_iPfa and sets up
+## the methods -analyze and -synthesize. Additionally it reads
+## all required configuration keys. Finally the object is
+## compatible to feature analysis/synthesis processor instances
+## in dlabpro.
+##
+## @global .__FEA_iPfa                      CW
+## @global .__FEA_sAnaOpt                   CW
+## @global .__FEA_sSynOpt                   CW
+## @global &lt;uasr.pfa.crate&gt;           R
+## @global &lt;uasr.pfa.srate&gt;           R
+## @global &lt;uasr.pfa.wlen&gt;            R
+## @global &lt;uasr.pfa.window&gt;          R
+## @global &lt;uasr.pfa.len&gt;             R
+## @global &lt;uasr.pfa.dim&gt;             R
+## @global &lt;uasr.pfa.UPFA.*&gt;          R
 function -UPFA_init()
 {
   ## Create and configure signal analysis/synthesis processor                   # -------------------------------------
   object iPfa;                                                                  # Create analysis processor
 
+  ## Read configuration key for UPFA with up to two fallback keys
+  ##
+  ## This function reads the config key <code>uasr.pfa.UPFA.$[sCfgN]</code>.
+  ## If this key is not available it falls back to <code>uasr.$[sCfgO1]</code>
+  ## and than to <code>uasr.$[sCfgO2]</code>. If non of the keys is
+  ## available <code>def</code> is used.
+  ##
+  ## The function creates a subobject in <code>.__FEA_iPfa</code> of class
+  ## <code>var</code> to store the value of the key. Additionally the value is
+  ## returned.
+  ##
+  ## The first character of <code>sType</code> determines the <code>-?set</code>
+  ## method to write the value into an instance of class <code>var</code>.
+  ## The remaining characters maybe one or more of the following:
+  ## <ul>
+  ## <li><code>l</code>: Do not create subobject in <code>.__FEA_iPfa</code>, only return the value.
+  ## <li><code>f</code>: Fail if the working function <code>-UPFA_$[sCfgN]_$[val]</code> does not exist.
+  ## <li><code>F</code>: Fail if the init function <code>-UPFA_init_$[sCfgN]_$[val]</code> does not exist.
+  ## </ul>
+  ##
+  ## @global &lt;uasr.pfa.UPFA.$[sCfgN]&gt;   R
+  ## @global &lt;uasr.$[sCfgO1]&gt;           R
+  ## @global &lt;uasr.$[sCfgO2]&gt;           R
   function -UPFA_cfg(sCfgN,sCfgO1,sCfgO2,def,sType)
   {
     function -UPFA_cfgo(sCfgO,val)
@@ -140,56 +226,61 @@ function -UPFA_init()
       val return;
     }
 
-    sType "1" "left"  -VAR_strop var sLType;
-    sType "l" "search" -VAR_strop 0 >= var bLoc;
-    sType "f" "search" -VAR_strop 0 >= var bFnc;
-    sType "F" "search" -VAR_strop 0 >= var bIniFnc;
+    sType "1" "left"  -VAR_strop var sLType;                                    # Get data type
+    sType "l" "search" -VAR_strop 0 >= var bLoc;                                # Check for local flag
+    sType "f" "search" -VAR_strop 0 >= var bFnc;                                # Check for function flag
+    sType "F" "search" -VAR_strop 0 >= var bIniFnc;                             # Check for init function flag
 
-    def var val;
-    sCfgO2 val -UPFA_cfgo val =;
-    sCfgO1 val -UPFA_cfgo val =;
-    "pfa.UPFA.$[sCfgN]" val "S" -CFG_get_ex val =;
+    def var val;                                                                # Start with default value
+    sCfgO2 val -UPFA_cfgo val =;                                                # Try to read key sCfgO2
+    sCfgO1 val -UPFA_cfgo val =;                                                # Try to read key sCfgO1
+    "pfa.UPFA.$[sCfgN]" val "S" -CFG_get_ex val =;                              # Try to read key pfa.UPFA.sCfgN
 
-    bFnc if;
-      "-UPFA_$[sCfgN]_$[val]" "function" ?instance not if;
-        "Function -UPFA_$[sCfgN]_$[val] does not exist (fix uasr.pdf.UPFA.$[sCfgN])" -ERROR;
-        def val =;
-      end;
-    end;
-    bIniFnc if;
-      "-UPFA_init_$[sCfgN]_$[val]" "function" ?instance not if;
-        "Function -UPFA_init_$[sCfgN]_$[val] does not exist (fix uasr.pdf.UPFA.$[sCfgN])" -ERROR;
-        def val =;
-      end;
-    end;
+    bFnc "-UPFA_$[sCfgN]_$[val]" "function" ?instance not && if;                # Check for existance of working function >>
+      "Function -UPFA_$[sCfgN]_$[val] does not exist (fix uasr.pdf.UPFA.$[sCfgN])" -ERROR;
+      def val =;                                                                #   Fallback to default
+    end;                                                                        # <<
+    bIniFnc "-UPFA_init_$[sCfgN]_$[val]" "function" ?instance not && if;        # Check for existance of init function >>
+      "Function -UPFA_init_$[sCfgN]_$[val] does not exist (fix uasr.pdf.UPFA.$[sCfgN])" -ERROR;
+      def val =;                                                                #   Fallback to default
+    end;                                                                        # <<
 
-    var vout;
-    val vout -$[sLType]set;
-    bLoc not if;
-      object iP; iPfa iP =;
-      var iP.$[sCfgN];
-      vout iP.$[sCfgN] -$[sLType]set;
-      iP iPfa =;
-    end;
-    vout return;
+    var vout; val vout -$[sLType]set;                                           # Setup output var instance
+    bLoc not if;                                                                # If we should write into iPfa >>
+      object iP; iPfa iP =;                                                     #   Copy iPfa locally
+      var iP.$[sCfgN];                                                          #   Create subobject of class var
+      vout iP.$[sCfgN] -$[sLType]set;                                           #   Write config value
+      iP iPfa =;                                                                #   Copy local iPfa to global one
+    end;                                                                        # <<
+    vout return;                                                                # Return configuration key value
   }
+
+  ## Init filter matrix for mel-filter
+  ##
+  ## @global &lt;uasr.fil.MEL.lambda&gt; R
+  ## @global &lt;uasr.fil.MEL.type&gt;   R
+  ## @local  iPfa.dim                    R
+  ## @local  iPfa.fil                    W
   function -UPFA_init_fil_MEL()
   {
-    "fil.MEL.lambda" ""                "" 0.47 "vl" -UPFA_cfg var nLambda;
-    "fil.MEL.type"   "pfa.MEL.mf_type" "" "MT" "sl" -UPFA_cfg var sType;
+    "fil.MEL.lambda" ""                "" 0.47 "vl" -UPFA_cfg var nLambda;      # Get Lambda from configuration
+    "fil.MEL.type"   "pfa.MEL.mf_type" "" "MT" "sl" -UPFA_cfg var sType;        # Get MEL-Type from configuration
 
-    sType "S" "search" -VAR_strop 0 >= if;
-      "LOG" sDefTMap =;
-      "QEN" sDefFMap =;
-    end;
+    sType "S" "search" -VAR_strop 0 >= if;                                      # If we use sinc transfer functions >>
+      "LOG" sDefTMap =;                                                         #   Update default transfer mapping method
+      "QEN" sDefFMap =;                                                         #   Update default filter mapping method
+    end;                                                                        # <<
     
-    iPfa.fil -reset;
-    iPfa.len unit nLambda iPfa.dim sType mfbs iPfa.fil =;
+    iPfa.fil -reset;                                                            # Reset filter matrix
+    iPfa.len unit nLambda iPfa.dim sType mfbs iPfa.fil =;                       # Get filter matrix form analysis of unity vectors
   }
 
+  ## Init filter with no operation (stands for identity matrix)
+  ##
+  ## @local  iPfa.fil                    W
   function -UPFA_init_fil_NONE()
   {
-    iPfa.fil -reset;
+    iPfa.fil -reset;                                                            # Reset filter matrix
   }
 
   ## Create session persistent variables                                        # -------------------------------------
