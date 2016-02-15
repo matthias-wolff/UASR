@@ -715,8 +715,10 @@ function -PACK_vadinfo()
 ## == MAIN PROGRAM ==                                                           # =====================================
 
 ( "$1" "xtpx" == ) if                                                           # Create self-contained prg. archive >> 
-  "$__FILE__" "x" + this /zip -save;                                            #   Write xtpx file
-  ( "$1" "xtpx" == ) if quit; end                                               #   Quit after saving archive
+  var sXtpxFile; "$__FILE__" "x" + sXtpxFile =;                                 #   Make target file name
+  "\nCreating " sXtpxFile + " ..." +                                      -MSG; #   Protocol
+  sXtpxFile this /zip -save;                                                    #   Save program object
+  ( "$1" "xtpx" == ) if " done.\n" -MSG; quit; end                              #   Quit after saving archive
 end                                                                             # <<
 -UASR_silence;                                                                  # Detect silent mode
 "\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               

@@ -78,15 +78,6 @@ function -usage(sCmd)
     "\n\n"                                                                -MSG;
     0 return;
   end
-  sCmd "dlp" == if
-      "\n   dlp: Save program object in current folder"                   -MSG;
-    "\n\n   USAGE:"                                                       -MSG;
-      "\n     dlabpro $__SFILE__.xtp dlp"                                 -MSG;
-    "\n\n   EXAMPLE:"                                                     -MSG;
-      "\n     $__SFILE__.xtp dlp"                                         -MSG;
-    "\n\n"                                                                -MSG;
-    0 return;
-  end
   sCmd "lab" == if
       "\n   lab: Phoneme labeling"                                        -MSG;
     "\n\n   USAGE:"                                                       -MSG;
@@ -188,20 +179,29 @@ function -usage(sCmd)
     "\n\n"                                                                -MSG;
     0 return;
   end
+  sCmd "xtpx" == if
+      "\n   xtpx: Create executable program object"                       -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp xtpx"                                -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp xtpx"                                        -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
     "\n   SYNOPSIS:"                                                      -MSG;
     "\n     HMM: Hidden Markov model classifier and synthesizer"          -MSG;
   "\n\n   USAGE:"                                                         -MSG;
     "\n     dlabpro $__SFILE__.xtp <command> <cfgfile> [options]"         -MSG;
   "\n\n   COMMANDS:"                                                      -MSG;
-    "\n     ana - Model analysis (EXPERIMENTAL)"                          -MSG;
-    "\n     adp - Model adaptation MAP"			                          -MSG;
-    "\n     dlp - Save program object in current folder"                  -MSG;
-    "\n     cut - HMM cut diphones and generate HMM diphone inventory"    -MSG;
-    "\n     cnv - Calculate feature/speaker conversion matrix"            -MSG;
-    "\n     lab - Phoneme labeling"                                       -MSG;
-    "\n     syn - Synthesis"                                              -MSG;
-    "\n     evl - Evaluation"                                             -MSG;
-    "\n     trn - Training"                                               -MSG;
+    "\n     ana  - Model analysis (EXPERIMENTAL)"                         -MSG;
+    "\n     adp  - Model adaptation MAP"			                      -MSG;
+    "\n     cut  - HMM cut diphones and generate HMM diphone inventory"   -MSG;
+    "\n     cnv  - Calculate feature/speaker conversion matrix"           -MSG;
+    "\n     evl  - Evaluation"                                            -MSG;
+    "\n     lab  - Phoneme labeling"                                      -MSG;
+    "\n     syn  - Synthesis"                                             -MSG;
+    "\n     trn  - Training"                                              -MSG;
+    "\n     xtpx - Create executable program object"                      -MSG;
   "\n\n  Type 'dlabpro $__SFILE__.xtp help <command>' for help on a "     -MSG;
          "specific command."                                              -MSG;
     "\n"                                                                  -MSG;
@@ -1143,7 +1143,7 @@ label L_EXCEPTION;                                                              
 -logo;                                                                          # Print logo
 ( "$1" "help" == ) -UASR_help || if "$2" -usage; 0 return; end                  # Print help
 "$1" var sCmd;                                                                  # Get command
-sCmd "dlp" != if                                                                # Not saving program object >>
+sCmd "xtpx" != if                                                               # Not saving program object >>
   sCmd "ana" ==                                                                 #   | HMM analysis
   sCmd "lab" == ||                                                              #   | HMM labeling
   sCmd "syn" == ||                                                              #   | HMM synthesis
@@ -1160,7 +1160,7 @@ end                                                                             
 ## Do includes                                                                  # -------------------------------------
 "\n// Includes        : "                                                 -MSG; # Protocol
 :sCmd=="trn" || sCmd=="evl" || sCmd=="syn" || sCmd=="lab" || sCmd=="adp":       # |
-:sCmd=="dlp": || if                                                             # Some common cases >>
+:sCmd=="xtpx": || if                                                            # Some common cases >>
   "util/am.itp"      include;                                         "." -MSG; #   Include AM utilities
   "util/fea.itp"     include;                                         "." -MSG; #   Include feature utilities
   "util/fst.itp"     include;                                         "." -MSG; #   Include FST utilities
@@ -1171,30 +1171,30 @@ end                                                                             
   "util/sig.itp"     include;                                         "." -MSG; #   Include signal utilities
   "util/spp.itp"     include;                                         "." -MSG; #   Include signal preprocessing utilities
 end                                                                             # <<
-:sCmd=="trn" || sCmd=="evl" || sCmd=="dlp": if                                  # HMM training >>
+:sCmd=="trn" || sCmd=="evl" || sCmd=="xtpx": if                                 # HMM training >>
   "train/am.itp"     include;                                         "." -MSG; #   Include AM training utilities
 end                                                                             # <<
-:sCmd=="syn" || sCmd=="dlp": if                                                 # Synthesis
+:sCmd=="syn" || sCmd=="xtpx": if                                                # Synthesis
   "synth/am.itp"     include;                                         "." -MSG; #   Include AM synthesis utilities
   "synth/diph.itp"   include;                                         "." -MSG; #   Include diphone synthesis utilities
   "synth/into.itp"   include;                                         "." -MSG; #   Include into utilities
   "util/into.itp"    include;                                         "." -MSG; #   Include INTO file utilities
 end                                                                             # <<
-:sCmd=="ana" || sCmd=="dlp": if                                                 # HMM analysis >>
+:sCmd=="ana" || sCmd=="xtpx": if                                                # HMM analysis >>
   "train/amana.itp"  include;                                       "..." -MSG; #   Include AM analysis utilities
 end                                                                             # <<
-:sCmd=="lab" || sCmd=="adp" || sCmd=="dlp": if                                  # HMM analysis >>
+:sCmd=="lab" || sCmd=="adp" || sCmd=="xtpx": if                                 # HMM analysis >>
   "train/am.itp"     /noerror include;                                "." -MSG; #   Include AM training utilities
 end                                                                             # <<
 " done"                                                                   -MSG; # Protocol
 
 ## Save/continue program object                                                 # -------------------------------------
-"$1" "dlp" == if                                                                # Saving program object >>
-  "\n\n   Saving program object ..."                                      -MSG; #   Protocol
-  "root10015" this -trace_error;                                                #   ?
-  "HMM.dlp" this /zip -save;                                                    #   Save program object
-  "$1" "dlp" == if                                                              #   If not restarting >>
-    " done.\n\n//$__SFILE__.xtp completed (${.__UTL_nErrors} errors)."    -MSG; #     Protocol
+"$1" "xtpx" == if                                                               # Saving executable program object >>
+  var sXtpxFile; "$__FILE__" "x" + sXtpxFile =;                                 #   Make target file name
+  "\n\n   Creating " sXtpxFile + " ..." +                                 -MSG; #   Protocol
+  sXtpxFile this /zip -save;                                                    #   Save program object
+  "$1" "xtpx" == if                                                             #   If not restarting >>
+    " done.\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n" -MSG; #     Protocol
     quit                                                                        #     The end
   else                                                                          #   << If restarting >>
     -logo;                                                                      #     Print logo
