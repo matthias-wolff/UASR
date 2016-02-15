@@ -23,15 +23,34 @@
 ## You should have received a copy of the GNU Lesser General Public License
 ## along with UASR. If not, see <http://www.gnu.org/licenses/>.
 
-## UPFA transfer function with fourier analysis
+## UPFA transformation function with fourier analysis
 ##
 ## @param idFea  Current feature data object
-function -UPFA_trf_FFT(idFea)
+## @param iPfa   Primary feature analysis config object
+function -UPFA_trf_FFT(idFea,iPfa)
 {
   idFea fft idFea.nScale ./ idFea =;
 }
 
-## UPFA transfer mapping function with absolute value calculation
+## UPFA transformation function with wavelet analysis
+##
+## @param idFea  Current feature data object
+## @param iPfa   Primary feature analysis config object
+function -UPFA_trf_WVL(idFea,iPfa)
+{
+  idFea iPfa.wvl_di iPfa.wvl_level wvl idFea =;
+}
+
+## UPFA transformation function with generalized mel-cepstrum analysis
+##
+## @param idFea  Current feature data object
+## @param iPfa   Primary feature analysis config object
+function -UPFA_trf_MGC(idFea,iPfa)
+{
+  idFea iPfa.mgc_gamma iPfa.mgc_lambda iPfa.mgc_coeff mgcep idFea =;
+}
+
+## UPFA transformation mapping function with absolute value calculation
 ##
 ## @param idFea  Current feature data object
 function -UPFA_tmap_ABS(idFea)
@@ -39,7 +58,7 @@ function -UPFA_tmap_ABS(idFea)
   idFea abs idFea =;
 }
 
-## UPFA transfer mapping function taking the logarithm
+## UPFA transformation mapping function taking the logarithm
 ##
 ## @param idFea  Current feature data object
 function -UPFA_tmap_LOG(idFea)
@@ -47,6 +66,14 @@ function -UPFA_tmap_LOG(idFea)
   idFea abs .ln
     idFea.nScale ln -1 *
     max idFea =;
+}
+
+## UPFA transformation mapping function with no operation
+##
+## @param idFea  Current feature data object
+function -UPFA_tmap_NONE(idFea)
+{
+  leave;
 }
 
 ## UPFA filter mapping function taking the logarithm
@@ -127,7 +154,7 @@ function -UPFA_ana(idSig,idPM,idFea,idDummy,iPfa)
   idFea iPfa.wlen iPfa.len iPfa.wtype iPfa.wnorm window noisify idFea =;        # Perform windowing & noisify
 
   ## Transformation + mapping                                                   # -------------------------------------
-  idFea -UPFA_trf_$[iPfa.trf];                                                  # Call transformation function
+  idFea iPfa -UPFA_trf_$[iPfa.trf];                                             # Call transformation function
   idFea -UPFA_tmap_$[iPfa.tmap];                                                # Call transformation mapping function
   # TODO: noiserdc
 
@@ -255,19 +282,75 @@ function -UPFA_init()
     vout return;                                                                # Return configuration key value
   }
 
+  ## Init filter for wavelet transformation
+  ##
+  ## @global &lt;uasr.pfa.UPFA.trf.WVL.type&gt;   R
+  ## @global &lt;uasr.pfa.UPFA.trf.WVL.level&gt;  R
+  ## @local  iPfa.wvl_di                          CW
+  ## @local  iPfa.wvl_level                       CW
+  ## @local  sDefTMap                             W
+  ## @local  sDefFil                              W
+  ## @local  sDefFMap                             W
+  function -UPFA_init_trf_WVL()
+  {
+    "NONE" sDefTMap =;                                                          # Set default transformation mapping method
+    "NONE" sDefFMap =;                                                          # Set default filter mapping method
+    "NONE" sDefFil  =;                                                          # Set default filter matrix mode
+
+    "trf.WVL.type"  "pfa.FWT.wvltype" "" "d4" "sl" -UPFA_cfg var sType;         # Get wavelet type from config
+    "trf.WVL.level" "pfa.FWT.level"   ""   -1 "vl" -UPFA_cfg var nLevel;        # Get wavelet detail level from config
+
+    4 var nDI;                                                                  # Set default daubechies index
+    "haar" sType == if 2 nDI = end;                                             # Update daubechies index on haar type
+    "d" sType "1" "left" -VAR_strop == if;                                      # Update daubechies index from dN type >>
+      sType sType "" "len" -VAR_strop -- "right" -VAR_strop nDI -vset;          #   Read index number for type
+    end;                                                                        # <<
+
+    object iP; iPfa iP =;                                                       # Copy iPfa locally
+    nDI    var iP.wvl_di;                                                       # Write daubechies index
+    nLevel var iP.wvl_level;                                                    # Write wavelet detail level
+    iP iPfa =;                                                                  # Copy local iPfa to global one
+  }
+
+  ## Init filter for generalized mel-cepstrum transformation
+  ##
+  ## @global &lt;uasr.pfa.UPFA.trf.MGC.gamma&gt;  R
+  ## @global &lt;uasr.pfa.UPFA.trf.MGC.lambda&gt; R
+  ## @global &lt;uasr.pfa.UPFA.trf.MGC.coeff&gt;  R
+  ## @local  iPfa.mgc_gamma                       CW
+  ## @local  iPfa.mgc_lambda                      CW
+  ## @local  iPfa.mgc_coeff                       CW
+  ## @local  sDefTMap                             W
+  ## @local  sDefFil                              W
+  ## @local  sDefFMap                             W
+  function -UPFA_init_trf_MGC()
+  {
+    "NONE" sDefTMap =;                                                          # Set default transformation mapping method
+    "NONE" sDefFMap =;                                                          # Set default filter mapping method
+    "NONE" sDefFil  =;                                                          # Set default filter matrix mode
+
+    object iP; iPfa iP =;                                                       # Copy iPfa locally
+    "trf.MGC.gamma"  "" "" -0.5 "vl" -UPFA_cfg var iP.mgc_gamma;                # Get MGC gamma from config
+    "trf.MGC.lambda" "" "" 0.47 "vl" -UPFA_cfg var iP.mgc_lambda;               # Get MGC lambda from config
+    "trf.MGC.coeff"  "" ""   24 "vl" -UPFA_cfg var iP.mgc_coeff;                # Get MGC number of coefficients from config
+    iP iPfa =;                                                                  # Copy local iPfa to global one
+  }
+
   ## Init filter matrix for mel-filter
   ##
-  ## @global &lt;uasr.fil.MEL.lambda&gt; R
-  ## @global &lt;uasr.fil.MEL.type&gt;   R
-  ## @local  iPfa.dim                    R
-  ## @local  iPfa.fil                    W
+  ## @global &lt;uasr.pfa.UPFA.fil.MEL.lambda&gt; R
+  ## @global &lt;uasr.pfa.UPFA.fil.MEL.type&gt;   R
+  ## @local  iPfa.dim                             R
+  ## @local  iPfa.fil                             W
+  ## @local  sDefTMap                             W
+  ## @local  sDefFMap                             W
   function -UPFA_init_fil_MEL()
   {
     "fil.MEL.lambda" ""                "" 0.47 "vl" -UPFA_cfg var nLambda;      # Get Lambda from configuration
     "fil.MEL.type"   "pfa.MEL.mf_type" "" "MT" "sl" -UPFA_cfg var sType;        # Get MEL-Type from configuration
 
     sType "S" "search" -VAR_strop 0 >= if;                                      # If we use sinc transfer functions >>
-      "LOG" sDefTMap =;                                                         #   Update default transfer mapping method
+      "LOG" sDefTMap =;                                                         #   Update default transformation mapping method
       "QEN" sDefFMap =;                                                         #   Update default filter mapping method
     end;                                                                        # <<
     
@@ -297,13 +380,17 @@ function -UPFA_init()
   "dim"      "pfa.dim"              ""         30 "v"   -UPFA_cfg;              # Set primary feature vector dimension
 
   ## UPFA configuration                                                         # -------------------------------------
+  "ABS" var sDefTMap;                                                           # Default transformation mapping method
+  "LOG" var sDefFMap;                                                           # Default filter mapping method
+  "MEL" var sDefFil;                                                            # Default filter type            
   "rmdc"     "pfa.anaoptions:/rmdc" ""      FALSE "b"   -UPFA_cfg;              # Set remove mean
   "wnorm"    "pfa.FBA.wnorm"        ""      FALSE "b"   -UPFA_cfg;              # Set window normalization
   "nperiods" "pfa.FBA.n_periods"    ""          2 "v"   -UPFA_cfg;              # Set maximal number of periods
   "trf"      ""                     ""      "FFT" "sf"  -UPFA_cfg;              # Set signal transformation method
-  "fil"      ""                     ""      "MEL" "slF" -UPFA_cfg var sFil;     # Get filter matrix type
-  "ABS" var sDefTMap;
-  "LOG" var sDefFMap;
+  "-UPFA_init_trf_$[iPfa.trf]" "function" ?instance if                          # If there is a transformation init function >>
+    -UPFA_init_trf_$[iPfa.trf];                                                 #   Call transformation init funtcion
+  end                                                                           # <<
+  "fil"      ""                     ""    sDefFil "slF" -UPFA_cfg var sFil;     # Get filter matrix type
   data iPfa.fil;  -UPFA_init_fil_$[sFil];                                       # Set filter matrix
   "tmap"     ""                     ""   sDefTMap "sf"  -UPFA_cfg;              # Set transformation mapping type
   "fmap"     ""                     ""   sDefFMap "sf"  -UPFA_cfg;              # Set filter mapping type
