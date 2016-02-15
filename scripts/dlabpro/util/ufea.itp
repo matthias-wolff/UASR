@@ -177,6 +177,11 @@ function -UPFA_init()
   {
     "fil.MEL.lambda" ""                "" 0.47 "vl" -UPFA_cfg var nLambda;
     "fil.MEL.type"   "pfa.MEL.mf_type" "" "MT" "sl" -UPFA_cfg var sType;
+
+    sType "S" "search" -VAR_strop 0 >= if;
+      "LOG" sDefTMap =;
+      "QEN" sDefFMap =;
+    end;
     
     iPfa.fil -reset;
     iPfa.len unit nLambda iPfa.dim sType mfbs iPfa.fil =;
@@ -205,10 +210,12 @@ function -UPFA_init()
   "wnorm"    "pfa.FBA.wnorm"        ""      FALSE "b"   -UPFA_cfg;              # Set window normalization
   "nperiods" "pfa.FBA.n_periods"    ""          2 "v"   -UPFA_cfg;              # Set maximal number of periods
   "trf"      ""                     ""      "FFT" "sf"  -UPFA_cfg;              # Set signal transformation method
-  "tmap"     ""                     ""      "ABS" "sf"  -UPFA_cfg;              # Set transformation mapping type
   "fil"      ""                     ""      "MEL" "slF" -UPFA_cfg var sFil;     # Get filter matrix type
+  "ABS" var sDefTMap;
+  "LOG" var sDefFMap;
   data iPfa.fil;  -UPFA_init_fil_$[sFil];                                       # Set filter matrix
-  "fmap"     ""                     ""      "LOG" "sf"  -UPFA_cfg;              # Set filter mapping type
+  "tmap"     ""                     ""   sDefTMap "sf"  -UPFA_cfg;              # Set transformation mapping type
+  "fmap"     ""                     ""   sDefFMap "sf"  -UPFA_cfg;              # Set filter mapping type
 
   ## Functions                                                                  # -------------------------------------
   function iPfa.-analyze;    /disarm -UPFA_ana /disarm iPfa.-analyze    =;      # Set analysis function
