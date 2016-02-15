@@ -604,7 +604,7 @@ function -HMM_assess(itHMM,sSns,nSpl,nIte)
   ## Aftermath                                                                  # -------------------------------------
   NULL NULL itHMM -1 "1F" NULL -AM_decode;                           "." -MSG2; # Free decoder
   sPre sSxt itHMM.ud idF idAsc -XXM_assess_log nCor =;                          # Create/continue log file
-  sPre sSxt itHMM.ud idF idAsc -XXM_assess_hist;                                # Create/continue assmnt. histrograms
+  sPre sSxt itHMM.ud idF idAsc -XXM_assess_hist;                                # Create/continue assmnt. histograms
 
   "\n   Total sample time: ${nTst/60000} min"                            -MSG2; # Protocol
   nCor 0 >= if                                                                  # Have computed correctness >>

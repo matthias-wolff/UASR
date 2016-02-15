@@ -33,6 +33,16 @@
 "util/uasr.itp" include;                                                        # Include UASR utilities
 "util/var.itp"  include;                                                        # Include variables' utilities
 
+## Prints the program logo
+function -logo()
+{
+  "\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"      -MSG; # Protocol               
+  "\n// $__SFILE__.xtp"                                                   -MSG; # Protocol
+  "\n// Process         : $HOSTNAME/" -pid +                              -MSG; # Protocol
+  "\n// dLabPro VID     : " -version +                                    -MSG; # Protocol
+  "\n// UASR VID        : " -UASR_version +                               -MSG; # Protocol
+}
+
 ## Prints help on usage
 ##
 ## @param sCmd string
@@ -65,6 +75,15 @@ function -usage(sCmd)
       "\n     -v<n>           verbose level"                              -MSG;
     "\n\n   EXAMPLE:"                                                     -MSG;
       "\n     $__SFILE__.xtp adp ../../config/vm/VM.cfg -Pexp=VMV"        -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
+  sCmd "dlp" == if
+      "\n   dlp: Save program object in current folder"                   -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp dlp"                                 -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp dlp"                                         -MSG;
     "\n\n"                                                                -MSG;
     0 return;
   end
@@ -175,7 +194,8 @@ function -usage(sCmd)
     "\n     dlabpro $__SFILE__.xtp <command> <cfgfile> [options]"         -MSG;
   "\n\n   COMMANDS:"                                                      -MSG;
     "\n     ana - Model analysis (EXPERIMENTAL)"                          -MSG;
-    "\n     adp - Model adaptation MAP"			                              -MSG;
+    "\n     adp - Model adaptation MAP"			                          -MSG;
+    "\n     dlp - Save program object in current folder"                  -MSG;
     "\n     cut - HMM cut diphones and generate HMM diphone inventory"    -MSG;
     "\n     cnv - Calculate feature/speaker conversion matrix"            -MSG;
     "\n     lab - Phoneme labeling"                                       -MSG;
@@ -1120,32 +1140,27 @@ label L_EXCEPTION;                                                              
 }
 
 ## == MAIN PROGRAM ==                                                           # =====================================
-
-"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
-"\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
-"\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
-"\n// dLabPro VID     : " -version +                                      -MSG; # Protocol
-"\n// UASR VID        : " -UASR_version +                                 -MSG; # Protocol
+-logo;                                                                          # Print logo
 ( "$1" "help" == ) -UASR_help || if "$2" -usage; 0 return; end                  # Print help
 "$1" var sCmd;                                                                  # Get command
-sCmd "ana" ==                                                                   # | HMM analysis
-sCmd "lab" == ||                                                                # | HMM labeling
-sCmd "syn" == ||                                                                # | HMM synthesis
-sCmd "evl" == ||                                                                # | HMM evaluation
-sCmd "trn" == || 
-sCmd "adp" == ||                                                                # | HMM training
-not ( $$ 2 < ) || if                                                            # Bad command or less than 2 args. >> 
-  $$ 2 < if "Too few arguments" else "unknown command '$1'"  end   -ERROR;      #   Error
-  "\nType '$__SFILE__.xtp help' for usage\n" -echo;                             #   Give a little help
-  1 return;                                                                     #   Terminate with error code
+sCmd "dlp" != if                                                                # Not saving program object >>
+  sCmd "ana" ==                                                                 #   | HMM analysis
+  sCmd "lab" == ||                                                              #   | HMM labeling
+  sCmd "syn" == ||                                                              #   | HMM synthesis
+  sCmd "evl" == ||                                                              #   | HMM evaluation
+  sCmd "trn" == ||                                                              #   | HMM training
+  sCmd "adp" == ||                                                              #   | HMM adaptation
+  not ( $$ 2 < ) || if                                                          #   Bad command or less than 2 args. >> 
+    $$ 2 < if "Too few arguments" else "unknown command '$1'"  end   -ERROR;    #     Error
+    "\nType '$__SFILE__.xtp help' for usage\n" -echo;                           #     Give a little help
+    1 return;                                                                   #     Terminate with error code
+  end                                                                           #   <<
 end                                                                             # <<
 
-## Initialize session                                                           # -------------------------------------
-"\n// Configuration   : $2"                                               -MSG; # Protocol
-"$2" TRUE -CFG_init;                                                            # Configure session
-
+## Do includes                                                                  # -------------------------------------
 "\n// Includes        : "                                                 -MSG; # Protocol
-:sCmd=="trn" || sCmd=="evl" || sCmd=="syn" || sCmd=="lab" || sCmd=="adp" : if   # Some common cases >>
+:sCmd=="trn" || sCmd=="evl" || sCmd=="syn" || sCmd=="lab" || sCmd=="adp":       # |
+:sCmd=="dlp": || if                                                             # Some common cases >>
   "util/am.itp"      include;                                         "." -MSG; #   Include AM utilities
   "util/fea.itp"     include;                                         "." -MSG; #   Include feature utilities
   "util/fst.itp"     include;                                         "." -MSG; #   Include FST utilities
@@ -1156,32 +1171,42 @@ end                                                                             
   "util/sig.itp"     include;                                         "." -MSG; #   Include signal utilities
   "util/spp.itp"     include;                                         "." -MSG; #   Include signal preprocessing utilities
 end                                                                             # <<
-:sCmd=="trn" || sCmd=="evl": if                                                 # HMM training >>
+:sCmd=="trn" || sCmd=="evl" || sCmd=="dlp": if                                  # HMM training >>
   "train/am.itp"     include;                                         "." -MSG; #   Include AM training utilities
 end                                                                             # <<
-sCmd "syn" == if                                                                # Synthesis
+:sCmd=="syn" || sCmd=="dlp": if                                                 # Synthesis
   "synth/am.itp"     include;                                         "." -MSG; #   Include AM synthesis utilities
   "synth/diph.itp"   include;                                         "." -MSG; #   Include diphone synthesis utilities
   "synth/into.itp"   include;                                         "." -MSG; #   Include into utilities
   "util/into.itp"    include;                                         "." -MSG; #   Include INTO file utilities
 end                                                                             # <<
-sCmd "ana" == if                                                                # HMM analysis >>
+:sCmd=="ana" || sCmd=="dlp": if                                                 # HMM analysis >>
   "train/amana.itp"  include;                                       "..." -MSG; #   Include AM analysis utilities
 end                                                                             # <<
-:sCmd=="lab" || sCmd=="adp": if                                                                # HMM analysis >>
-  "train/am.itp"     include;                                         "." -MSG; #   Include AM training utilities
+:sCmd=="lab" || sCmd=="adp" || sCmd=="dlp": if                                  # HMM analysis >>
+  "train/am.itp"     /noerror include;                                "." -MSG; #   Include AM training utilities
 end                                                                             # <<
 " done"                                                                   -MSG; # Protocol
-#"\n\n   Saving program object ..."                                       -echo;
-#"root10015" this -trace_error;
-#"d:/tmp/HMM.dlp" this /zip -save;
-#1 break;
 
-## TODO: need a pre-include or a real inline function
-# -init_session include;
+## Save/continue program object                                                 # -------------------------------------
+"$1" "dlp" == if                                                                # Saving program object >>
+  "\n\n   Saving program object ..."                                      -MSG; #   Protocol
+  "root10015" this -trace_error;                                                #   ?
+  "HMM.dlp" this /zip -save;                                                    #   Save program object
+  "$1" "dlp" == if                                                              #   If not restarting >>
+    " done.\n\n//$__SFILE__.xtp completed (${.__UTL_nErrors} errors)."    -MSG; #     Protocol
+    quit                                                                        #     The end
+  else                                                                          #   << If restarting >>
+    -logo;                                                                      #     Print logo
+  end                                                                           #   <<
+end                                                                             # <<
+
+## Initialize session                                                           # -------------------------------------
+"\n// Configuration   : $2"                                               -MSG; # Protocol
+"$2" TRUE -CFG_init;                                                            # Configure session
 "util/uasr_session.itp" include;                                                # Include UASR session startup script
 
 ## Execute commands                                                             # -------------------------------------
--CMD_$[sCmd] return;                                                            # Call command handler function
+-CMD_$1 return;                                                                 # Call command handler function
 
 ## EOF
