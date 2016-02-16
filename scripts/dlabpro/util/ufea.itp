@@ -50,36 +50,28 @@ function -UPFA_trf_MGC(idFea,iPfa)
   idFea iPfa.mgc_gamma iPfa.mgc_lambda iPfa.mgc_coeff mgcep idFea =;
 }
 
-## UPFA transformation mapping function with absolute value calculation
+## UPFA mapping function with absolute value calculation
 ##
 ## @param idFea  Current feature data object
-function -UPFA_tmap_ABS(idFea)
+function -UPFA_map_ABS(idFea)
 {
   idFea abs idFea =;
 }
 
-## UPFA transformation mapping function taking the logarithm
+## UPFA mapping function taking the logarithm
 ##
 ## @param idFea  Current feature data object
-function -UPFA_tmap_LOG(idFea)
+function -UPFA_map_ABSLOG(idFea)
 {
   idFea abs .ln
     idFea.nScale ln -1 *
     max idFea =;
 }
 
-## UPFA transformation mapping function with no operation
+## UPFA mapping function taking the logarithm
 ##
 ## @param idFea  Current feature data object
-function -UPFA_tmap_NONE(idFea)
-{
-  leave;
-}
-
-## UPFA filter mapping function taking the logarithm
-##
-## @param idFea  Current feature data object
-function -UPFA_fmap_LOG(idFea)
+function -UPFA_map_LOG(idFea)
 {
   idFea .ln
     idFea.nScale ln +
@@ -87,18 +79,18 @@ function -UPFA_fmap_LOG(idFea)
     idFea =;
 }
 
-## UPFA filter mapping function with subtraction of quantization energy
+## UPFA mapping function with subtraction of quantization energy
 ##
 ## @param idFea  Current feature data object
-function -UPFA_fmap_QEN(idFea)
+function -UPFA_map_QEN(idFea)
 {
   idFea idFea.nScale ln + idFea =;
 }
 
-## UPFA filter mapping function with no operation
+## UPFA mapping function with no operation
 ##
 ## @param idFea  Current feature data object
-function -UPFA_fmap_NONE(idFea)
+function -UPFA_map_NONE(idFea)
 {
   leave;
 }
@@ -141,6 +133,9 @@ function -UPFA_ana(idSig,idPM,idFea,idDummy,iPfa)
     end;                                                                        #   <<
   end                                                                           # <<
 
+  ## Signal channel mixer                                                       # -------------------------------------
+  # TODO
+  
   ## Remove direct component if configured                                      # -------------------------------------
   iPfa.rmdc if idFea rmdc idFea = end;                                          # Remove direct component
 
@@ -155,7 +150,7 @@ function -UPFA_ana(idSig,idPM,idFea,idDummy,iPfa)
 
   ## Transformation + mapping                                                   # -------------------------------------
   idFea iPfa -UPFA_trf_$[iPfa.trf];                                             # Call transformation function
-  idFea -UPFA_tmap_$[iPfa.tmap];                                                # Call transformation mapping function
+  idFea -UPFA_map_$[iPfa.tmap];                                                 # Call transformation mapping function
   # TODO: noiserdc
 
   ## Filter matrix                                                              # -------------------------------------
@@ -166,7 +161,7 @@ function -UPFA_ana(idSig,idPM,idFea,idDummy,iPfa)
   idFea.dim iPfa.dim < if -type double :iPfa.dim-idFea.dim: idFea -addncomps;end #Expand dimension to configured dimension
 
   ## Filter mapping                                                             # -------------------------------------
-  idFea -UPFA_fmap_$[iPfa.fmap];                                                # Call filter mapping function
+  idFea -UPFA_map_$[iPfa.fmap];                                                 # Call filter mapping function
 
   ## Append labels                                                              # -------------------------------------
   "idFea.idLab" "data" ?instance if; idFea.idLab idFea -join; end;              # Append labels to features
@@ -213,6 +208,7 @@ function -UPFA_init()
 {
   ## Create and configure signal analysis/synthesis processor                   # -------------------------------------
   object iPfa;                                                                  # Create analysis processor
+  "" var sFncPat;                                                               # Function pattern for -UPFA_cfg
 
   ## Read configuration key for UPFA with up to two fallback keys
   ##
@@ -230,10 +226,11 @@ function -UPFA_init()
   ## The remaining characters maybe one or more of the following:
   ## <ul>
   ## <li><code>l</code>: Do not create subobject in <code>.__FEA_iPfa</code>, only return the value.
-  ## <li><code>f</code>: Fail if the working function <code>-UPFA_$[sCfgN]_$[val]</code> does not exist.
-  ## <li><code>F</code>: Fail if the init function <code>-UPFA_init_$[sCfgN]_$[val]</code> does not exist.
+  ## <li><code>f</code>: Fail if the working function <code>-UPFA_$[sFncPat]_$[val]</code> does not exist.
   ## </ul>
   ##
+  ## @local  iPfa                             W
+  ## @local  sFncPat                          R
   ## @global &lt;uasr.pfa.UPFA.$[sCfgN]&gt;   R
   ## @global &lt;uasr.$[sCfgO1]&gt;           R
   ## @global &lt;uasr.$[sCfgO2]&gt;           R
@@ -256,19 +253,14 @@ function -UPFA_init()
     sType "1" "left"  -VAR_strop var sLType;                                    # Get data type
     sType "l" "search" -VAR_strop 0 >= var bLoc;                                # Check for local flag
     sType "f" "search" -VAR_strop 0 >= var bFnc;                                # Check for function flag
-    sType "F" "search" -VAR_strop 0 >= var bIniFnc;                             # Check for init function flag
 
     def var val;                                                                # Start with default value
     sCfgO2 val -UPFA_cfgo val =;                                                # Try to read key sCfgO2
     sCfgO1 val -UPFA_cfgo val =;                                                # Try to read key sCfgO1
     "pfa.UPFA.$[sCfgN]" val "S" -CFG_get_ex val =;                              # Try to read key pfa.UPFA.sCfgN
 
-    bFnc "-UPFA_$[sCfgN]_$[val]" "function" ?instance not && if;                # Check for existance of working function >>
-      "Function -UPFA_$[sCfgN]_$[val] does not exist (fix uasr.pdf.UPFA.$[sCfgN])" -ERROR;
-      def val =;                                                                #   Fallback to default
-    end;                                                                        # <<
-    bIniFnc "-UPFA_init_$[sCfgN]_$[val]" "function" ?instance not && if;        # Check for existance of init function >>
-      "Function -UPFA_init_$[sCfgN]_$[val] does not exist (fix uasr.pdf.UPFA.$[sCfgN])" -ERROR;
+    bFnc "-UPFA_$[sFncPat]_$[val]" "function" ?instance not && if;              # Check for existance of working function >>
+      "Function -UPFA_$[sFncPat]_$[val] does not exist (fix uasr.pdf.UPFA.$[sCfgN])" -ERROR;
       def val =;                                                                #   Fallback to default
     end;                                                                        # <<
 
@@ -350,7 +342,7 @@ function -UPFA_init()
     "fil.MEL.type"   "pfa.MEL.mf_type" "" "MT" "sl" -UPFA_cfg var sType;        # Get MEL-Type from configuration
 
     sType "S" "search" -VAR_strop 0 >= if;                                      # If we use sinc transfer functions >>
-      "LOG" sDefTMap =;                                                         #   Update default transformation mapping method
+      "ABSLOG" sDefTMap =;                                                         #   Update default transformation mapping method
       "QEN" sDefFMap =;                                                         #   Update default filter mapping method
     end;                                                                        # <<
     
@@ -382,16 +374,20 @@ function -UPFA_init()
   ## UPFA configuration                                                         # -------------------------------------
   "ABS" var sDefTMap;                                                           # Default transformation mapping method
   "LOG" var sDefFMap;                                                           # Default filter mapping method
-  "MEL" var sDefFil;                                                            # Default filter type            
+  "MEL" var sDefFil;                                                            # Default filter type     
+## TODO: sig.nch + sig.ch<n>
   "rmdc"     "pfa.anaoptions:/rmdc" ""      FALSE "b"   -UPFA_cfg;              # Set remove mean
   "wnorm"    "pfa.FBA.wnorm"        ""      FALSE "b"   -UPFA_cfg;              # Set window normalization
   "nperiods" "pfa.FBA.n_periods"    ""          2 "v"   -UPFA_cfg;              # Set maximal number of periods
+  "trf" sFncPat =;                                                              # Set function pattern
   "trf"      ""                     ""      "FFT" "sf"  -UPFA_cfg;              # Set signal transformation method
   "-UPFA_init_trf_$[iPfa.trf]" "function" ?instance if                          # If there is a transformation init function >>
     -UPFA_init_trf_$[iPfa.trf];                                                 #   Call transformation init funtcion
   end                                                                           # <<
-  "fil"      ""                     ""    sDefFil "slF" -UPFA_cfg var sFil;     # Get filter matrix type
+  "init_fil" sFncPat =;                                                         # Set function pattern
+  "fil"      ""                     ""    sDefFil "slf" -UPFA_cfg var sFil;     # Get filter matrix type
   data iPfa.fil;  -UPFA_init_fil_$[sFil];                                       # Set filter matrix
+  "map" sFncPat =;                                                              # Set function pattern
   "tmap"     ""                     ""   sDefTMap "sf"  -UPFA_cfg;              # Set transformation mapping type
   "fmap"     ""                     ""   sDefFMap "sf"  -UPFA_cfg;              # Set filter mapping type
 
