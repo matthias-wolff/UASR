@@ -1,0 +1,54 @@
+\documentclass{standalone}
+\input{dataflow}
+
+\tikzset{
+	sel/.style = { diamond, font=\small, shape aspect=4, fill=\csel, append after command={
+		\pgfextra{\let\TikZlastnode\tikzlastnode}
+		node [draw=none,anchor=north east,outer sep=-0.5mm] at (\TikZlastnode.west)  {\tiny WVL}
+		node [draw=none,anchor=north east,outer sep=-0.5mm] at (\TikZlastnode.south) {\tiny MGC}
+		node [draw=none,anchor=north west,outer sep=-0.5mm] at (\TikZlastnode.east)  {\tiny FFT}
+  }}
+}
+
+\begin{document}
+\pagestyle{empty}
+\thispagestyle{empty}
+\sffamily
+
+\begin{tikzpicture}[node distance=5mm]
+\node (sel)   [sel]   {trf};
+
+\node (wvl)   [alg,below=of sel.west|-sel.south]  {Wavelet};
+\node (mgc)   [alg,below=of sel.south|-wvl.south] {MGCep};
+\node (fft)   [alg,below=of sel.east|-mgc.south]  {FFT};
+\draw[->] (sel.west)  -- (wvl);
+\draw[->] (sel.south) -- (mgc);
+\draw[->] (sel.east)  -- (fft);
+
+\coordinate (uni) at ($(sel|-fft.south)-(0,5mm)$);
+\draw[radius=2pt,fill] (wvl) -- (wvl|-uni) circle;
+\draw[radius=2pt,fill] (mgc) -- (mgc|-uni) circle;
+\draw[radius=2pt,fill] (fft) -- (fft|-uni) circle;
+\draw (wvl|-uni) -- (fft|-uni);
+
+\coordinate (trft) at ($(sel.north)+(0,2mm)$);
+\coordinate (trfl) at ($(wvl.west)-(2mm,0)$);
+\node (trf)  [blk=Transformation,fit=(sel)(wvl)(fft)(uni)(trft)(trfl)] {};
+
+\node (in)    [io,above=of sel|-trf.north] {Window};
+\node (out)   [io,below=of uni|-trf.south] {Mapping (tmap)};
+\draw[->] (uni) -- (out);
+\draw[->] (in)   -- (sel);
+
+\node (phead) [head,above=of in] {Data path};
+\node (chead) [head,right=of trf.east|-phead.north,anchor=north west] {Config key \\ \small \begin{tabular}{c}under \\ uasr.pfa.UPFA.\end{tabular}};
+%\node (dhead) [head,right=of chead.north east,anchor=north west] {Description};
+%\coordinate (chead) at ($(trf.east)+(15mm,0)$);
+
+\draw[<-] (sel)  -- (chead|-sel)  node[cfg]{.trf};
+\draw[<-] (wvl)  -- (chead|-wvl)  node[cfg]{.trf.WVL.type \\ .trf.WVL.level};
+\draw[<-] (mgc)  -- (chead|-mgc)  node[cfg]{.trf.MGC.gamma \\ .trf.MGC.lambda \\ .trf.MGC.coeff};
+
+\end{tikzpicture}
+
+\end{document}

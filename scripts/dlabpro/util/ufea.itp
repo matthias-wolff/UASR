@@ -23,44 +23,76 @@
 ## You should have received a copy of the GNU Lesser General Public License
 ## along with UASR. If not, see <http://www.gnu.org/licenses/>.
 
-## UPFA transformation function with fourier analysis
+## UPFA transformation function with fourier analysis.
 ##
-## @param idFea  Current feature data object
-## @param iPfa   Primary feature analysis config object
+## <p>This is a wrapper for <code>fft</code> operator of dlabpro's class <code>signal</code>.
+## The spectral values are divided by quantization scale factor (<code>idFea.nScale</code>).</p>
+##
+## @param idFea data
+##          Current feature data object
+## @param iPfa  object
+##          Primary feature analysis config object
 function -UPFA_trf_FFT(idFea,iPfa)
 {
   idFea fft idFea.nScale ./ idFea =;
 }
 
-## UPFA transformation function with wavelet analysis
+## UPFA transformation function with wavelet analysis.
 ##
-## @param idFea  Current feature data object
-## @param iPfa   Primary feature analysis config object
+## <p>This is a wrapper for <code>wvl</code> operator of dlabpro's class <code>signal</code>.</p>
+##
+## @param idFea data
+##          Current feature data object
+## @param iPfa  object
+##          Primary feature analysis config object
+##
+## @global &lt;uasr.pfa.UPFA.trf.WVL.type&gt;       R
+## @global &lt;uasr.pfa.UPFA.trf.WVL.level&gt;      R
 function -UPFA_trf_WVL(idFea,iPfa)
 {
   idFea iPfa.wvl_di iPfa.wvl_level wvl idFea =;
 }
 
-## UPFA transformation function with generalized mel-cepstrum analysis
+## UPFA transformation function with generalized mel-cepstrum analysis.
 ##
-## @param idFea  Current feature data object
-## @param iPfa   Primary feature analysis config object
+## <p>This is a wrapper for <code>mgcep</code> operator of dlabpro's class <code>signal</code>.</p>
+##
+## @param idFea data
+##          Current feature data object
+## @param iPfa  object
+##          Primary feature analysis config object
+##
+## @global &lt;uasr.pfa.UPFA.trf.MGC.gamma&gt;       R
+## @global &lt;uasr.pfa.UPFA.trf.MGC.lambda&gt;      R
+## @global &lt;uasr.pfa.UPFA.trf.MGC.coeff&gt;       R
 function -UPFA_trf_MGC(idFea,iPfa)
 {
   idFea iPfa.mgc_gamma iPfa.mgc_lambda iPfa.mgc_coeff mgcep idFea =;
 }
 
-## UPFA mapping function with absolute value calculation
+## UPFA mapping function with absolute value calculation.
 ##
-## @param idFea  Current feature data object
+## <p>This function replaces each value in <code>idFea</code> with its absoule value.</p>
+##
+## <p>The function can be used after "FFT" transformation method for amplitude spectrum.</p>
+##
+## @param idFea data
+##          Current feature data object
 function -UPFA_map_ABS(idFea)
 {
   idFea abs idFea =;
 }
 
-## UPFA mapping function taking the logarithm
+## UPFA mapping function taking the logarithm.
 ##
-## @param idFea  Current feature data object
+## <p>This function replaces each value in <code>idFea</code> with the
+## natural logarithm of the absoult value. Finally the value is bottom clipped
+## to quantization error logarithm: <code>-ln(idFea.nScale)</code>.</p>
+##
+## <p>The function is used for preprocess by MEL-filter with Sinc transfer function.</p>
+##
+## @param idFea data
+##          Current feature data object
 function -UPFA_map_ABSLOG(idFea)
 {
   idFea abs .ln
@@ -68,9 +100,16 @@ function -UPFA_map_ABSLOG(idFea)
     max idFea =;
 }
 
-## UPFA mapping function taking the logarithm
+## UPFA mapping function taking the logarithm.
 ##
-## @param idFea  Current feature data object
+## <p>This function replaces each value in <code>idFea</code> with the
+## natural logarithm of this value. Finally the quantization error logarithm
+## [<code>-ln(idFea.nScale)</code>] is added and the result is bottom clipped to zero.</p>
+##
+## <p>The function can be used after filter to get logarithmic features.</p>
+##
+## @param idFea data
+##          Current feature data object
 function -UPFA_map_LOG(idFea)
 {
   idFea .ln
@@ -79,17 +118,23 @@ function -UPFA_map_LOG(idFea)
     idFea =;
 }
 
-## UPFA mapping function with subtraction of quantization energy
+## UPFA mapping function with subtraction of quantization energy.
 ##
-## @param idFea  Current feature data object
+## <p>This function adds each value by the quantization error logarithm [<code>-ln(idFea.nScale)</code>].</p>
+##
+## <p>The function is used for postprocess by MEL-filter with Sinc transfer function.</p>
+##
+## @param idFea data
+##          Current feature data object
 function -UPFA_map_QEN(idFea)
 {
   idFea idFea.nScale ln + idFea =;
 }
 
-## UPFA mapping function with no operation
+## UPFA mapping function with no operation.
 ##
-## @param idFea  Current feature data object
+## @param idFea data
+##          Current feature data object
 function -UPFA_map_NONE(idFea)
 {
   leave;
@@ -110,6 +155,8 @@ function -UPFA_map_NONE(idFea)
 ## @param idDummy data
 ##          Only for compatible with imaginary data object in dlabpro's feature
 ##          processors. Should be NULL.
+## @param iPfa object
+##          Primary feature extraction configuration (.__FEA_iPfa).
 ## @see -UPFA_init
 function -UPFA_ana(idSig,idPM,idFea,idDummy,iPfa)
 {

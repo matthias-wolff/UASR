@@ -1,0 +1,42 @@
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{ngerman}
+\usepackage{xcolor}
+\usepackage{fixltx2e}
+\usepackage{tikz}
+\usepackage{titlesec}
+\usepackage{booktabs}
+
+\usetikzlibrary{shapes,positioning,arrows,backgrounds,calc,fit}
+%\usetikzlibrary{shapes.geometric,backgrounds,positioning-plus,node-families,calc}
+%\usetikzlibrary{shapes.geometric,backgrounds,calc}
+
+% http://www.texample.net/tikz/examples/flowchart/
+
+\definecolor{fhgg}{RGB}{23,156,125} % green
+\definecolor{fhgo}{RGB}{235,106,10} % orange
+\definecolor{fhgdb}{RGB}{0,110,146} % dark blue
+\definecolor{fhglb}{RGB}{37,186,226} % light blue
+\definecolor{fhgy}{RGB}{177,200,0} % yellow green
+
+\newcommand{\cfile}{fhglb!20!white}
+\newcommand{\csel}{fhgo!20!white}
+\newcommand{\cbuf}{fhgg!20!white}
+\newcommand{\calg}{fhgy!20!white}
+
+\tikzset{
+	every node/.style = { align = center, draw },
+	io/.style = { signal, signal to=south, signal pointer angle=150, fill=\cfile, minimum width=20mm },
+	alg/.style = { rectangle, minimum width=15mm, minimum height=6mm, fill=\calg },
+	clr/.style = { draw=none },
+	head/.style = { clr, font=\large },
+	buf/.style = { cylinder, shape aspect=.5, fill=\cbuf },
+	op/.style = { circle, fill=\calg },
+ 	cfg/.style = { buf, font=\scriptsize },
+	dsc/.style = { clr, font=\scriptsize, align=left, anchor=west },
+	blk/.style = { inner sep=3mm, color=fhgdb, append after command={
+		\pgfextra{\let\TikZlastnode\tikzlastnode}
+		node [draw=none,anchor=north west,text=fhgdb] (blk-\TikZlastnode) at (\TikZlastnode.north west) {#1}
+	}},
+}
+

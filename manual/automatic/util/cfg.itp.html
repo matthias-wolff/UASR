@@ -182,8 +182,8 @@
     <tbody><!-- Universal primary feature extraction settings -->
     <tr><td class="rowgroup" colspan="4"><a name="cfgk-upfa"></a>Univeral primary feature extraction settings</td></tr>
     <tr><td><code>uasr.pfa.UPFA.sig.nch         </code></td><td>number </td><td><code>                             1</code></td><td>Number of signal channels in analysis after mixing.</td></tr>
-    <tr><td><code>uasr.pfa.UPFA.sig.ch&lt;n&gt; </code></td><td>number </td><td><code>                       "0:1:0"</code></td><td>Per analysis signal channel config: "&lt;id&gt;:&lt;gain&gt;:&lt;delay&gt;,&lt;id&gt;:&lt;gain&gt;:&lt;delay&gt;,..." <br>
-(With &lt;id&gt; as the channel index in the original signal.)</td></tr>
+    <tr><td><code>uasr.pfa.UPFA.sig.ch&lt;n&gt; </code></td><td>number </td><td><code>                       "0:1:0"</code></td><td>Per analysis signal channel config: "&lt;id&gt;:&lt;gain&gt;:&lt;delay&gt;,&lt;id&gt;:&lt;gain&gt;:&lt;delay&gt;,..."
+<br>(With &lt;id&gt; as the channel index in the original signal.)</td></tr>
     <tr><td><code>uasr.pfa.UPFA.srate           </code></td><td>number </td><td><code>uasr.pfa.srate         [16000]</code></td><td>Signal sampling rate [Hz]</td></tr>
     <tr><td><code>uasr.pfa.UPFA.crate           </code></td><td>number </td><td><code>uasr.pfa.crate           [160]</code></td><td>Analysis frame rate [samples]</td></tr>
     <tr><td><code>uasr.pfa.UPFA.wlen            </code></td><td>number </td><td><code>uasr.pfa.wlen            [400]</code></td><td>Analysis window length [samples]</td></tr>
@@ -221,12 +221,12 @@ In UASR the following methods are implemented<a name="cfgk-upfa-tmap">:</a><pre>
 In UASR the following methods are implemented:<pre>
   <a href="ufea.itp.html#clp_-UPFA_fil_MEP"   >"MEL"  - MEL filterbank</a>
   <a href="ufea.itp.html#clp_-UPFA_fil_NONE"  >"NONE" - Do not use filter (equals identy matrix)</a></pre></td></tr>
-    <tr><td><code>uasr.pfa.UPFA.fil.MEL.lambda</code></td><td>number </td><td><code>                          0.47</code></td><td>Warping factor.</td></tr>
     <tr><td><code>uasr.pfa.UPFA.fil.MEL.type  </code></td><td>string </td><td><code>uasr.pfa.MEL.mf_type    ["MT"]</code></td><td>Sets the type of melfilter. Possible values are: "MS", "MT", "BS", "BT".<pre>
   "M" - Center frequencies according to the mel scale
   "B" - Center frequencies accroding to Bilinear warping scale
   "S" - Sinc function as transfer function of the filters (cepstral smoothing)
   "T" - Triangular function as transfer function of ther filters</pre></td></tr>
+    <tr><td><code>uasr.pfa.UPFA.fil.MEL.lambda</code></td><td>number </td><td><code>                          0.47</code></td><td>Warping factor.</td></tr>
     <tr><td><code>uasr.pfa.UPFA.fmap          </code></td><td>string </td><td><code>                         "LOG"</code></td><td>Mapping method executed after filtering. There have to be a function called <code>-UPFA_map_&lt;fmap&gt;</code>.
 For implemented methods see <a href="#cfgk-upfa-tmap"><code>uasr.pfa.UPFA.tmap</code></a>.<pre>
     <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>

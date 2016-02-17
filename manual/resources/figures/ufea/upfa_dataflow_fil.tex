@@ -1,0 +1,50 @@
+\documentclass{standalone}
+\input{dataflow}
+
+\tikzset{
+	sel/.style = { diamond, font=\small, shape aspect=4, fill=\csel, append after command={
+		\pgfextra{\let\TikZlastnode\tikzlastnode}
+		node [draw=none,anchor=north east,outer sep=-0.5mm] at (\TikZlastnode.south west) {\tiny NONE}
+		node [draw=none,anchor=north west,outer sep=-0.5mm] at (\TikZlastnode.south east) {\tiny MEL}
+  }}
+}
+
+\begin{document}
+\pagestyle{empty}
+\thispagestyle{empty}
+\sffamily
+
+\begin{tikzpicture}[node distance=5mm]
+\node (sel)   [sel]   {fil};
+
+\node (none)  [alg,below=of sel.south west] {Identity};
+\node (mel)   [alg,below=of sel.south east|-none.south] {MEL};
+\draw[->] (sel.south west) -- (none);
+\draw[->] (sel.south east) -- (mel);
+
+\node (mat)   [buf,below=of sel|-mel.south,inner sep=4mm] {Filter matrix};
+\draw[->] (none) -- (none|-mat.north);
+\draw[->] (mel)  -- (mel|-mat.north);
+
+\node (mul)   [op,left=of mat]    {*};
+\draw[->] (mat)  -- (mul);
+
+\coordinate (fill) at ($(mul.west)-(4mm,0)$);
+\node (fil)  [blk=Filter,fit=(sel)(mel)(mat)(mul)(fill)] {};
+
+\node (in)    [io,above=of mul|-fil.north]   {Mapping (tmap)};
+\node (out)   [io,below=of mul|-fil.south]   {Dimension clipping};
+\draw[->] (in)   -- (mul);
+\draw[->] (mul)  -- (out);
+
+\node (phead) [head,above=of in] {Data path};
+\node (chead) [head,right=of fil.east|-phead.north,anchor=north west] {Config key \\ \small \begin{tabular}{c}under \\ uasr.pfa.UPFA.\end{tabular}};
+%\node (dhead) [head,right=of chead.north east,anchor=north west] {Description};
+%\coordinate (chead) at ($(trf.east)+(15mm,0)$);
+
+\draw[<-] (sel)  -- (chead|-sel)  node[cfg]{.fil};
+\draw[<-] (mel)  -- (chead|-mel)  node[cfg]{.fil.MEL.type \\ .fil.MEL.lambda};
+
+\end{tikzpicture}
+
+\end{document}
