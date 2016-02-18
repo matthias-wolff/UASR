@@ -92,7 +92,15 @@
   <!--{{ CUSTOM_DOC -->
   <a name="index:upfa" title="Universal primary feature analysis"></a>
   <h3>Universal primary feature analysis</h3>
-  <p>BLA BLA</p>
+  <p>The idea of the universal primary feature analysis is to combine multiple analysis methods into one unified dataflow.
+  All methods share the same, common pre- and postprocessing.
+  To use universal analysis you have to set the configuration key <code>uasr.pfa="UPFA"</code>.
+  The figure 1 shows the implemented dataflow as well as all important configuration keys.
+  The configuration keys are printed as subkeys of <code>uasr.pfa.UPFA</code>.</p>
+  <p>A detailed description of the keys and their default values can be found under <a href="cfg.itp.html#cfgk-upfa">UASR Configuration Files</a>.
+  There in the default column you find classic PFA configuration keys, these are fallbacks.
+  If the UPFA specific configuration key is not defined, the fall back key of classic PFA is read.
+  Only if that key is also not defined, the default value is used.</p>
   <p class="figure"><nobr>
     <object data="../../resources/figures/ufea/upfa_dataflow.svg" type="image/svg+xml" width="572" height="592">
       <param name="src" value="../../resources/figures/ufea/upfa_dataflow.svg">
@@ -101,7 +109,40 @@
     height="17" border="0" alt="Enlarge image"></a></nobr></p>
    <p class="figure">Figure 1: Dataflow for universal primary feature analysis</p>
 
-  <p>BLA BLA</p>
+  <p>The UPFA consists of the following analysis components:
+  <ul>
+    <li>The <b>Mixing</b> can be used the mix different signal channels together.
+    The gain and the delay can be configured, so a simple static beam former is also possible.
+    In default mode only the first channel is processed without modification.
+    <li>The <b>RMDC</b> component removes the mean of the signal. It is disabled by default
+    <li>The <b>Framing</b> component is used the split the signal into frames.
+    It is done pitch synchronous if pitches are provided to <code>-UPFA_ana</code>,
+    otherwise a static window length (<code>uasr.pfa.UPFA.wlen</code>) and continuous rate (<code>uasr.pfa.UPFA.crate</code>) is used.
+    <li>The <b>Window</b> component multiplies each frame sample by sample with a window function.
+    In addition it expands the frames to full frame length (<code>uasr.pfa.UPFA.len</code>).
+    Finally the frames are added with quantization noise.
+    <li>The <b>Transformation</b> component preforms the core analysis method.
+    Currently FFT, Wavlet and generalized MEL-Cepstrum are implemented.
+    You can define your own methods by implementing function of name <code>-UPFA_trf_&lt;NAME&gt;</code>.
+    <li>The first <b>Mapping</b> component is used for postprocessing the analysis result.
+    It preforms a customizable mapping on each value in each frame.
+    It is used for example to get amplitude spectrum from complex FFT by calculation absolute values.
+    You can define your own mapping methods by implementing function of name <code>-UPFA_map_&lt;NAME&gt;</code>.
+    <li>The <b>Filter</b>component multiplies each frame with a configurable filter matrix.
+    It is used for example for MEL-filter.
+    But may also be used for a custom spatial mapping or simply for selecting features.
+    You can define your own filter matrix by implementing function of name <code>-UPFA_init_fil_&lt;NAME&gt;</code>.
+    <li>The <b>Dimension</b> component checks if the configured frame dimension <code>uasr.pfa.UPFA.dim</code> or <code>uasr.pfa.dim</code> is met.
+    It clips or expands the frame dimension if necessary.
+    <li>The second <b>Mapping</b> component is used for postprocessing the filter result.
+    It preforms a customizable mapping on each value in each frame.
+    It is used for example to get logarithmic features.
+    You can define your own mapping methods by implementing function of name <code>-UPFA_map_&lt;NAME&gt;</code>.
+  </ul>
+  </p>
+
+  <p>The figures 2 and 3 give a more detailed view on the transformation and the filter component of UPFA.
+  There are also some configuration keys which are specific for certaint algorithms.</p>
   <p class="figure"><nobr>
     <object data="../../resources/figures/ufea/upfa_dataflow_trf.svg" type="image/svg+xml" width="352" height="381">
       <param name="src" value="../../resources/figures/ufea/upfa_dataflow_trf.svg">
@@ -110,7 +151,6 @@
     height="17" border="0" alt="Enlarge image"></a></nobr></p>
    <p class="figure">Figure 2: Dataflow for transformation component</p>
 
-  <p>BLA BLA</p>
   <p class="figure"><nobr>
     <object data="../../resources/figures/ufea/upfa_dataflow_fil.svg" type="image/svg+xml" width="389" height="372">
       <param name="src" value="../../resources/figures/ufea/upfa_dataflow_fil.svg">
@@ -118,6 +158,35 @@
     </object>&nbsp;<a href="../../resources/figures/ufea/upfa_dataflow_fil.svg" target="_blank"><img src="../../resources/zoom.gif" width="17"
     height="17" border="0" alt="Enlarge image"></a></nobr></p>
    <p class="figure">Figure 3: Dataflow for filter component</p>
+
+  <h4>Migrating to UPFA</h4>
+  <p>For migration from dlabpro's feature processors to UPFA you need to set the transformation, the mappings and the filter method in UPFA.
+  The following table gives an overview over settings which are compatible between old and universal analysis.
+  The generated features are nonetheless not equal because the way of adding quantization noise was changed for universal analysis.</p>
+  <table>
+    <tr><td class="rowgroup">Old (feature processors)</td><td class="rowgroup">New (UPFA)</td></tr>
+    <tr><td><code>uasr.pfa="MEL"</code></td><td><code>
+      uasr.pfa="UPFA"<br>
+      uasr.pfa.UPFA.trf="FFT" (default)<br>
+      uasr.pfa.UPFA.tmap="ABS" (default)<br>
+      uasr.pfa.UPFA.fil="MEL" (default)<br>
+      uasr.pfa.UPFA.fmap="LOG" (default)<br>
+    </code></td></tr>
+    <tr><td><code>uasr.pfa="FFT"</code></td><td><code>
+      uasr.pfa="UPFA"<br>
+      uasr.pfa.UPFA.trf="FFT" (default)<br>
+      uasr.pfa.UPFA.tmap="ABS" (default)<br>
+      uasr.pfa.UPFA.fil="NONE"<br>
+      uasr.pfa.UPFA.fmap="LOG" (default) or "NONE"<br>
+    </code></td></tr>
+    <tr><td><code>uasr.pfa="FWT"</code></td><td><code>
+      uasr.pfa="UPFA"<br>
+      uasr.pfa.UPFA.trf="WVL"<br>
+      uasr.pfa.UPFA.tmap="NONE"<br>
+      uasr.pfa.UPFA.fil="NONE"<br>
+      uasr.pfa.UPFA.fmap="NONE"<br>
+    </code></td></tr>
+  </table>
 
   <!--}} CUSTOM_DOC -->
   <a name="functions"></a><h3>Functions</h3>
