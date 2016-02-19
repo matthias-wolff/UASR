@@ -160,6 +160,33 @@ function -UPFA_map_NONE(idFea)
 ## @see -UPFA_init
 function -UPFA_ana(idSig,idPM,idFea,idDummy,iPfa)
 {
+  ## Run signal mixer
+  ##
+  ## @param idFea data
+  ##          Input & output data instance
+  ## @param iPfa object
+  ##          Primary feature extraction configuration (.__FEA_iPfa).
+  function -UPFA_sigmix(idFea,iPfa)
+  {
+    var nC;                                                                     # Current Channel index
+    var nR;                                                                     # Current config record index
+    data idCh;                                                                  # Mixed channel singal
+    data idAux;                                                                 # Temporary data object
+
+    idFea.dim var nOff;                                                         # Offset for new components
+    0 nC =; "iPfa.sig$[nC]" "data" ?instance while;                             # Loop over channel configs >>
+      idCh -reset;                                                              #   Clear mixed signal
+      0 nR =; nR iPfa.sig$[nC].nrec < while;                                    #   Loop over contributing signals >>
+        :idFea[iPfa.sig$[nC][nR,"~ID"]]:                                        #     Extract contributing signal
+          :iPfa.sig$[nC][nR,"~GAIN"]: .*                                        #     | Apply gain
+          :iPfa.sig$[nC][nR,"~DELAY"]: idAux /rec -shift;                       #     | Apply delay
+        idAux idCh + idCh =;                                                    #     Add to mixed signal
+      nR ++=; end;                                                              #   <<
+      idCh idFea -join;                                                         #   Join mixed signal into output object
+    nC ++=; end;                                                                # <<
+    idFea.dim nOff > if idFea 0 nOff idFea -delete end;                         # Delete old channel if there are new ones
+  }
+
   idSig idFea =;                                                                # Copy signal to feature object
 
   var nC;                                                                       # Channel index
@@ -181,7 +208,7 @@ function -UPFA_ana(idSig,idPM,idFea,idDummy,iPfa)
   end                                                                           # <<
 
   ## Signal channel mixer                                                       # -------------------------------------
-  # TODO
+  idFea iPfa -UPFA_sigmix;                                                      # Run signal mixer
   
   ## Remove direct component if configured                                      # -------------------------------------
   iPfa.rmdc if idFea rmdc idFea = end;                                          # Remove direct component
@@ -321,6 +348,31 @@ function -UPFA_init()
     vout return;                                                                # Return configuration key value
   }
 
+  ## Init signal mixer
+  ##
+  ## @global &lt;uasr.pfa.UPFA.sig.nch&gt;         R
+  ## @global &lt;uasr.pfa.UPFA.sig.ch&lt;n&gt;&gt; R
+  ## @local  iPfa.sig&lt;n&gt;                     CW
+  function -UPFA_init_sig()
+  {
+    var nC;                                                                     # Current Channel index
+    var nNC;                                                                    # Number of mixed signal channels
+    var sC;                                                                     # Signal channel config
+    data idAux;                                                                 # Temporary data object
+
+    "sig.nch" "" "" 1 "vl" -UPFA_cfg nNC =;                                     # Get number of mixed signal channels
+    object iP; iPfa iP =;                                                       # Copy iPfa locally
+    0 nC =; nC nNC < while;                                                     # Loop over channels >>
+      "sig.ch$[nC]" "" "" "$[nC]:1:0" "sl" -UPFA_cfg sC =;                      #   Get channel config
+      { "$[sC]" } "," "split" idAux -strop;                                     #   Parse channel config
+      idAux ' ":" "split" idAux -strop;                                         #   |
+      idAux -type long idAux /force -tconvert;                                  #   |
+      { "~ID" "~GAIN" "~DELAY" } ' 0 idAux -set_cnames;                         #   |
+      data iP.sig$[nC]; idAux iP.sig$[nC] =;                                    #   Copy signal config to iPfa
+    nC ++=; end;                                                                # <<
+    iP iPfa =;                                                                  # Copy local iPfa to global one
+  }
+
   ## Init filter for wavelet transformation
   ##
   ## @global &lt;uasr.pfa.UPFA.trf.WVL.type&gt;   R
@@ -422,7 +474,7 @@ function -UPFA_init()
   "ABS" var sDefTMap;                                                           # Default transformation mapping method
   "LOG" var sDefFMap;                                                           # Default filter mapping method
   "MEL" var sDefFil;                                                            # Default filter type     
-## TODO: sig.nch + sig.ch<n>
+  -UPFA_init_sig;                                                               # Init signal mixer
   "rmdc"     "pfa.anaoptions:/rmdc" ""      FALSE "b"   -UPFA_cfg;              # Set remove mean
   "wnorm"    "pfa.FBA.wnorm"        ""      FALSE "b"   -UPFA_cfg;              # Set window normalization
   "nperiods" "pfa.FBA.n_periods"    ""          2 "v"   -UPFA_cfg;              # Set maximal number of periods
