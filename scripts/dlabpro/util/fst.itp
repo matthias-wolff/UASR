@@ -385,9 +385,10 @@ function -FST_render_ex(sFname,idTisTab,idTosTab,nUnit,sFormat,itSrc)
     :itAux.td[nIcTos]: itAux.os sEps itAux -sym_lookup idTd -join;
   end  
   nIcStk 0 >= if                                                                # Have stack tokens >>
+    "itAux.stk" "data" ?instance not if data itAux.stk; { "" } itAux.stk = end; #   Create empty stack table if missing
     :sign(itAux.td[nIcStk])+1: 0 { ":-" "" ":+" } ' 0 1 idAux -lookup { "" };   #   Make pop, no-op, or push prefix
     idAux idTd -join;                                                           #   Join to transition description
-    :abs(itAux.td[nIcStk]): itAux.stk sEps itAux -sym_lookup idTd -join;        #   Look up stack token name
+    :abs(itAux.td[nIcStk]): itAux.stk "?" itAux -sym_lookup idTd -join;         #   Look up stack token name
   end                                                                           # <<
   nIcW 0 >= if                                                                  # Weighted automaton? Yes >>
     nIcTis 0 >= nIcTos 0 >= || nIcStk 0 >= || if                                #   Have any symbols? Yes >>
