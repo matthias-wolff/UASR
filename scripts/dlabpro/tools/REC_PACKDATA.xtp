@@ -283,8 +283,8 @@ function -FFSG()
     end                                                                         #   <<
     TRUE return;                                                                #   Ok
   end                                                                           # <<
-  "$[sFsgFile] ("                                                         -MSG; # Protocol
-  sFile stdfile -exists if                                                      # File exist
+  "$[.sFsgFile] ("                                                        -MSG; # Protocol
+  .sFsgFile stdfile -exists if                                                  # File exist
     "exists)" -MSG;                                                             #   Tell it
     TRUE return;                                                                #   Very good
   end                                                                           # << (file does not exist)
