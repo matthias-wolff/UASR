@@ -37,6 +37,16 @@
 "util/uasr.itp" include;                                                        # Include UASR utilities
 "util/var.itp"  include;                                                        # Include variables' utilities
 
+## Prints the program logo
+function -logo()
+{
+  "\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"      -MSG; # Protocol               
+  "\n// $__SFILE__.xtp"                                                   -MSG; # Protocol
+  "\n// Process         : $HOSTNAME/" -pid +                              -MSG; # Protocol
+  "\n// dLabPro VID     : " -version +                                    -MSG; # Protocol
+  "\n// UASR VID        : " -UASR_version +                               -MSG; # Protocol
+}
+
 ## Prints help on usage
 function -usage(sCmd)
 {
@@ -106,13 +116,23 @@ function -usage(sCmd)
     "\n\n"                                                                -MSG;
     0 return;
   end
+  sCmd "xtpx" == if
+      "\n   xtpx: Create executable program object"                       -MSG;
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp xtpx"                                -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+      "\n     $__SFILE__.xtp xtpx"                                        -MSG;
+    "\n\n"                                                                -MSG;
+    0 return;
+  end
     "\n   SYNOPSIS:"                                                      -MSG;
     "\n     FEA: Primary feature analysis and import"                     -MSG;
   "\n\n   USAGE:"                                                         -MSG;
     "\n     dlabpro $__SFILE__.xtp <command> [arguments] [options]"       -MSG;
   "\n\n   COMMANDS:"                                                      -MSG;
-    "\n     ana - Primary feature analysis"                               -MSG;
-    "\n     imp - Import of external feature files"                       -MSG;
+    "\n     ana  - Primary feature analysis"                              -MSG;
+    "\n     imp  - Import of external feature files"                      -MSG;
+    "\n     xtpx - Create executable program object"                      -MSG;
   "\n\n  Type 'dlabpro $__SFILE__.xtp help <command>' for help on a "     -MSG;
          "specific command."                                              -MSG;
     "\n"                                                                  -MSG;
@@ -341,20 +361,31 @@ function -CMD_cpy()
 
 ## == MAIN PROGRAM ==                                                           # =====================================
 
-"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
-"\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
-"\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
-"\n// dLabPro VID     : " -version +                                      -MSG; # Protocol
-"\n// UASR VID        : " -UASR_version +                                 -MSG; # Protocol
+-logo;
 ( "$1" "help" == ) -UASR_help || if "$2" -usage; 0 return; end                  # Print help
 "$1" var sCmd;                                                                  # Get command
-sCmd "ana" ==                                                                   # | Primary feature analysis
-sCmd "cpy" == ||                                                                # | Feature copying
-sCmd "imp" == ||                                                                # | Feature import
-not ( $$ 2 < ) || if                                                            # Bad command or less than 2 args. >> 
-  $$ 2 < if "Too few arguments" else "unknown command '$1'"  end -ERROR;        #   Error
-  "\nType '$__SFILE__.xtp help' for usage\n" -echo;                             #   Give a little help
-  1 return;                                                                     #   Terminate with error code
+sCmd "xtpx" != if                                                               # Not saving progra object >>
+  sCmd "ana" ==                                                                 #   | Primary feature analysis
+  sCmd "cpy" == ||                                                              #   | Feature copying
+  sCmd "imp" == ||                                                              #   | Feature import
+  not ( $$ 2 < ) || if                                                          #   Bad command or less than 2 args. >> 
+    $$ 2 < if "Too few arguments" else "unknown command '$1'"  end -ERROR;      #     Error
+    "\nType '$__SFILE__.xtp help' for usage\n" -echo;                           #     Give a little help
+    1 return;                                                                   #     Terminate with error code
+  end                                                                           #   <<
+end                                                                             # <<
+
+## Save/continue program object                                                 # -------------------------------------
+"$1" "xtpx" == if                                                               # Saving executable program object >>
+  var sXtpxFile; "$__FILE__" "x" + sXtpxFile =;                                 #   Make target file name
+  "\n\n   Creating " sXtpxFile + " ..." +                                 -MSG; #   Protocol
+  sXtpxFile this /zip -save;                                                    #   Save program object
+  "$1" "xtpx" == if                                                             #   If not restarting >>
+    " done.\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n" -MSG; #     Protocol
+    quit                                                                        #     The end
+  else                                                                          #   << If restarting >>
+    -logo;                                                                      #     Print logo
+  end                                                                           #   <<
 end                                                                             # <<
 
 ## Initialize session                                                           # -------------------------------------
@@ -363,6 +394,6 @@ end                                                                             
 "util/uasr_session.itp" include;                                                # Include UASR session startup script
 
 ## Execute commands                                                             # -------------------------------------
--CMD_$[sCmd] return;                                                            # Call command handler function
+-CMD_$1 return;                                                                 # Call command handler function
 
 ## EOF
