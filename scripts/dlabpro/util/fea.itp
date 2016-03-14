@@ -390,9 +390,9 @@ function -FEA_get(iF,sSns,sMode,idFea)
 
   idFea.dim -- idFea -get_comp_type 256 < if;                                   # Check if there are labels >>
     data idLab;                                                                 #   Create label object
-    ## HACK! Stack rotating is needed because in UPFA idFea
+    ## HACK! Stack swaping is needed because in UPFA idFea
     ## has a subobject named idLab.
-    idLab idFea.dim -- 1 idFea -xfetch -rot =;                                  #   Extract labels
+    idLab idFea.dim -- 1 idFea -xfetch -swap =;                                 #   Extract labels
     idLab "f" idLab -LAB_map_ex;                                                #   Map labels with post map
     0 idFea.dim -- idFea -get_cname idLab -set_cname;                           #   Copy component name
 		idFea idFea.dim 1 - 1 idFea -delete;                                        #   Delete old labels
