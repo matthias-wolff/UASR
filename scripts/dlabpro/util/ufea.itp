@@ -34,7 +34,7 @@
 ##          Primary feature analysis config object
 function -UPFA_trf_FFT(idFea,iPfa)
 {
-  idFea fft idFea.nScale ./ idFea =;
+  idFea fft idFea.nScale ./ 0 :idFea/2+1: idFea -select
 }
 
 ## UPFA transformation function with wavelet analysis.
@@ -373,8 +373,18 @@ function -UPFA_init()
     iP iPfa =;                                                                  # Copy local iPfa to global one
   }
 
+  ## Init FFT transformation
+  ##
+  ## @return Transformation output feature dimension
+  function -UPFA_init_trf_FFT()
+  {
+    :iPfa.len/2+1: return;                                                      # Return output dimension
+  }
+
   ## Init filter for wavelet transformation
   ##
+  ## @return Transformation output feature dimension
+  ## 
   ## @global &lt;uasr.pfa.UPFA.trf.WVL.type&gt;   R
   ## @global &lt;uasr.pfa.UPFA.trf.WVL.level&gt;  R
   ## @local  iPfa.wvl_di                          CW
@@ -401,10 +411,14 @@ function -UPFA_init()
     nDI    var iP.wvl_di;                                                       # Write daubechies index
     nLevel var iP.wvl_level;                                                    # Write wavelet detail level
     iP iPfa =;                                                                  # Copy local iPfa to global one
+
+    iPfa.len return;                                                            # Return output dimension
   }
 
   ## Init filter for generalized mel-cepstrum transformation
   ##
+  ## @return Transformation output feature dimension
+  ## 
   ## @global &lt;uasr.pfa.UPFA.trf.MGC.gamma&gt;  R
   ## @global &lt;uasr.pfa.UPFA.trf.MGC.lambda&gt; R
   ## @global &lt;uasr.pfa.UPFA.trf.MGC.coeff&gt;  R
@@ -425,6 +439,8 @@ function -UPFA_init()
     "trf.MGC.lambda" "" "" 0.47 "vl" -UPFA_cfg var iP.mgc_lambda;               # Get MGC lambda from config
     "trf.MGC.coeff"  "" ""   24 "vl" -UPFA_cfg var iP.mgc_coeff;                # Get MGC number of coefficients from config
     iP iPfa =;                                                                  # Copy local iPfa to global one
+
+    iPfa.mgc_coeff return;                                                      # Return output dimension
   }
 
   ## Init filter matrix for mel-filter
@@ -446,7 +462,7 @@ function -UPFA_init()
     end;                                                                        # <<
     
     iPfa.fil -reset;                                                            # Reset filter matrix
-    iPfa.len unit nLambda iPfa.dim sType mfbs iPfa.fil =;                       # Get filter matrix form analysis of unity vectors
+    iPfa.tlen unit nLambda iPfa.dim sType mfbs iPfa.fil =;                      # Get filter matrix form analysis of unity vectors
   }
 
   ## Init filter with no operation (stands for identity matrix)
@@ -480,8 +496,9 @@ function -UPFA_init()
   "nperiods" "pfa.FBA.n_periods"    ""          2 "v"   -UPFA_cfg;              # Set maximal number of periods
   "trf" sFncPat =;                                                              # Set function pattern
   "trf"      ""                     ""      "FFT" "sf"  -UPFA_cfg;              # Set signal transformation method
+  iPfa.len var iPfa.tlen;                                                       # Set default transformation output dimension
   "-UPFA_init_trf_$[iPfa.trf]" "function" ?instance if                          # If there is a transformation init function >>
-    -UPFA_init_trf_$[iPfa.trf];                                                 #   Call transformation init funtcion
+    -UPFA_init_trf_$[iPfa.trf] iPfa.tlen =;                                     #   Call transformation init funtcion
   end                                                                           # <<
   "init_fil" sFncPat =;                                                         # Set function pattern
   "fil"      ""                     ""    sDefFil "slf" -UPFA_cfg var sFil;     # Get filter matrix type
