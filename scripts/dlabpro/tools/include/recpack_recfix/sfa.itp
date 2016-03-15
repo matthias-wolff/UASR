@@ -47,21 +47,21 @@ function -PACK_sfa(nrm,iFI,nDim)
     :nA0FAC>1.00001: while; :nA0FAC=nA0FAC/2; nA0SHF ++=; end;
 	  :nrm0=nrm0/nA0FAC/2^nA0SHF; # norm after FIL
   end;
-	"\n  nrm.dlt0: $[nrm0] (fac: $[nA0FAC] shf: $[nA0SHF])" -MSG2;
+	"\n  nrm.dlt0: $[nrm0] (fac: $[nA0FAC] shf: $[nA0SHF])" -MSG;
   :2^-nA1SHF: var nA1FAC;
   nA1NRM 0 != if;
     :nA1FAC=nA1FAC*nrm1/nA1NRM;
     :nA1FAC>1.00001: while; :nA1FAC=nA1FAC/2; nA1SHF ++=; end;
 	  :nrm1=nrm1/nA1FAC/2^nA1SHF; # norm after FIL
   end;
-	"\n  nrm.dlt1: $[nrm1] (fac: $[nA1FAC] shf: $[nA1SHF])" -MSG2;
+	"\n  nrm.dlt1: $[nrm1] (fac: $[nA1FAC] shf: $[nA1SHF])" -MSG;
   :2^-nA2SHF: var nA2FAC;
   nA2NRM 0 != if;
     :nA2FAC=nA2FAC*nrm2/nA2NRM;
     :nA2FAC>1.00001: while; :nA2FAC=nA2FAC/2; nA2SHF ++=; end;
 	  :nrm2=nrm2/nA2FAC/2^nA2SHF; # norm after FIL
   end;
-	"\n  nrm.dlt2: $[nrm2] (fac: $[nA2FAC] shf: $[nA2SHF])" -MSG2;
+	"\n  nrm.dlt2: $[nrm2] (fac: $[nA2FAC] shf: $[nA2SHF])" -MSG;
   "recfix.shf.pca"  3 "S" -CFG_get_ex var nPCASHF;
   "recfix.nrm.pca"  0 "S" -CFG_get_ex var nPCANRM;
   nPCANRM 0 == if;
@@ -70,7 +70,7 @@ function -PACK_sfa(nrm,iFI,nDim)
     nPCANRM nrm =;
   end;
   # TODO fac0>1 || fac1>1 || fac2>1 => nrm*=2 shf++
-	"\n  nrm.pca: $[nrm] (fac: ${nrm0/nrm/2^nPCASHF} ${nrm1/nrm/2^nPCASHF} ${nrm2/nrm/2^nPCASHF} shf: $[nPCASHF])" -MSG2;
+	"\n  nrm.pca: $[nrm] (fac: ${nrm0/nrm/2^nPCASHF} ${nrm1/nrm/2^nPCASHF} ${nrm2/nrm/2^nPCASHF} shf: $[nPCASHF])" -MSG;
 
 
 	# Calc context length's for A matrix bands

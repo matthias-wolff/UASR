@@ -135,29 +135,29 @@ function -usage(sCmd)
       "\n\n   Normalization factor config for recfix:"                    -MSG;
       "\n      Normalization factors (recfix.frm.*!=0) overwrite "
               "automatically calculated ones (displayed with -v2)." +     -MSG;
-      "\n       recfix.nrm.frm  Factor after framing      (default: 0)"   -MSG;
-      "\n       recfix.nrm.fft  Factor after analysis     (default: 0)"   -MSG;
-      "\n       recfix.nrm.fil  Factor after filter       (default: 0)"   -MSG;
-      "\n       recfix.nrm.dlt0 Factor for 1. delta comp. (default: 0)"   -MSG;
-      "\n       recfix.nrm.dlt1 Factor for 2. delta comp. (default: 0)"   -MSG;
-      "\n       recfix.nrm.dlt2 Factor for 3. delta comp. (default: 0)"   -MSG;
-      "\n       recfix.nrm.dlt3 Factor for 4. delta comp. (default: 0)"   -MSG;
-      "\n       recfix.nrm.pca  Factor after PCA          (default: 0)"   -MSG;
+      "\n       recfix.nrm.frm  Factor after framing        (default: 0)" -MSG;
+      "\n       recfix.nrm.trf  Factor after transformation (default: 0)" -MSG;
+      "\n       recfix.nrm.fil  Factor after filter         (default: 0)" -MSG;
+      "\n       recfix.nrm.dlt0 Factor for 1. delta comp.   (default: 0)" -MSG;
+      "\n       recfix.nrm.dlt1 Factor for 2. delta comp.   (default: 0)" -MSG;
+      "\n       recfix.nrm.dlt2 Factor for 3. delta comp.   (default: 0)" -MSG;
+      "\n       recfix.nrm.dlt3 Factor for 4. delta comp.   (default: 0)" -MSG;
+      "\n       recfix.nrm.pca  Factor after PCA            (default: 0)" -MSG;
       "\n      Right shifts in operation are used to prevent overflows."  -MSG;
       "\n      They are compensated by shifting config values."           -MSG;
       "\n      They do not change normalization."                         -MSG;
-      "\n       recfix.shf.fil  Shift in filter          (default: 0)"    -MSG;
-      "\n       recfix.shf.dlt0 Shift for 1. delta comp. (default: 3)"    -MSG;
-      "\n       recfix.shf.dlt1 Shift for 2. delta comp. (default: 3)"    -MSG;
-      "\n       recfix.shf.dlt2 Shift for 3. delta comp. (default: 3)"    -MSG;
-      "\n       recfix.shf.pca  Shift in PCA             (default: 3)"    -MSG;
+      "\n       recfix.shf.fil  Shift in filter            (default: 0)"  -MSG;
+      "\n       recfix.shf.dlt0 Shift for 1. delta comp.   (default: 3)"  -MSG;
+      "\n       recfix.shf.dlt1 Shift for 2. delta comp.   (default: 3)"  -MSG;
+      "\n       recfix.shf.dlt2 Shift for 3. delta comp.   (default: 3)"  -MSG;
+      "\n       recfix.shf.pca  Shift in PCA               (default: 3)"  -MSG;
       "\n      Trigger configuration."                                    -MSG;
       "\n       recfix.trg.mode Trigger mode (see nTRGM_* in maxdim.itp)" -MSG;
-      "\n       recfix.trg.thr1 Activation threshold     (default: 0.3)"  -MSG;
-      "\n       recfix.trg.thr2 Deactivation threshold   (default: 0.2)"  -MSG;
-      "\n       recfix.trg.off1 Activation offset        (default: -6)"   -MSG;
-      "\n       recfix.trg.off2 Deactivation offset      (default: 6)"    -MSG;
-      "\n       recfix.trg.mino Minimal deactivation time(default: 30)"   -MSG;
+      "\n       recfix.trg.thr1 Activation threshold       (default: 0.3)"-MSG;
+      "\n       recfix.trg.thr2 Deactivation threshold     (default: 0.2)"-MSG;
+      "\n       recfix.trg.off1 Activation offset          (default: -6)" -MSG;
+      "\n       recfix.trg.off2 Deactivation offset        (default: 6)"  -MSG;
+      "\n       recfix.trg.mino Minimal deactivation time  (default: 30)" -MSG;
       "\n"                                                                -MSG;
     end;
     leave;
@@ -703,19 +703,13 @@ function -PACK_recfix()
   # TODO: DLG
   # TODO: VAD
 
-  ## Init FBAproc for window                                                    # -------------------------------------
-  ( "pfa" "" -CFG_get ) -FEA_pfa_init;                                          # Init .__FEA_iPfa
-  data idSig; 1 1000 ones idSig =;                                              # Create a short signal
-  :1000/.__FEA_iPfa.srate: idSig -set rinc;                                     # Set record increment
-  idSig NULL idSig NULL .__FEA_iPfa -analyze;                                   # Analyze the signal for window initialization
-
   ## Pack it                                                                    # -------------------------------------
   1 var nrm;                                                                    # Init nomalization value
   .sFDsp -SH_rm;                                                                # Remove old output file
   4 1  "version" "u16"   -PACK1;                                                # Pack version number
   0 1  "_blank1" "u16"   -PACK1;                                                # Pack blank
   nrm                    -PACK_sig;                                             # Pack frontend information
-  nrm .__FEA_iPfa.window -PACK_pfa nrm =;                                       # Pack primary feature analysis parameters
+  nrm                    -PACK_pfa nrm =;                                       # Pack primary feature analysis parameters
   nrm iFI itGm.mean.dim  -PACK_sfa nrm =;                                       # Pack secondary feature analysis parameters
   nrm itGm               -PACK_gau nrm =;                                       # Pack gaussian parameters
   nrm itGm.mmap          -PACK_mix nrm =;                                       # Pack mixture parameters
