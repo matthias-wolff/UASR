@@ -34,7 +34,7 @@
 ##          Primary feature analysis config object
 function -UPFA_trf_FFT(idFea,iPfa)
 {
-  idFea fft idFea.nScale ./ 0 :idFea/2+1: idFea -select
+  idFea fft idFea.nScale ./ 0 :idFea.dim/2+1: idFea -select;
 }
 
 ## UPFA transformation function with wavelet analysis.
@@ -196,10 +196,10 @@ function -UPFA_ana(idSig,idPM,idFea,idDummy,iPfa)
   nC ++=; end;                                                                  # <<
   ## Extract labels into subobject idFea.idL                                    # -------------------------------------
   nC idFea.dim < if;                                                            # If there are label components >>
-    data idFea.idLab;                                                           #   Create label subobject idFea.idLab
+    data idFea.lab;                                                             #   Create label subobject idFea.lab
     0 nC =; nC idFea.dim < while;                                               #   Iterate over components in signal >>
       nC idFea -get_comp_type 256 <= if;                                        #     Check for label component >>
-        :idFea[nC]: idFea.idLab -join;                                          #       Copy labels
+        :idFea[nC]: idFea.lab -join;                                            #       Copy labels
         idFea nC 1 idFea -delete;                                               #       Remove labels from signals
       else;                                                                     #     << Numeric component >>
         nC ++=;                                                                 #       Go to next component
@@ -238,7 +238,10 @@ function -UPFA_ana(idSig,idPM,idFea,idDummy,iPfa)
   idFea -UPFA_map_$[iPfa.fmap];                                                 # Call filter mapping function
 
   ## Append labels                                                              # -------------------------------------
-  "idFea.idLab" "data" ?instance if; idFea.idLab idFea -join; end;              # Append labels to features
+  "idFea.lab" "data" ?instance if;                                              # If there are labels >>
+    idFea.lab idFea -join;                                                      #   Append labels to features
+    idFea.lab -destroy;                                                         #   Remove label object
+  end;                                                                          # <<
 }
 
 
