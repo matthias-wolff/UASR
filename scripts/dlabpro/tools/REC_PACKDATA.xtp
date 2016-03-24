@@ -158,6 +158,10 @@ function -usage(sCmd)
       "\n       recfix.trg.off1 Activation offset          (default: -6)" -MSG;
       "\n       recfix.trg.off2 Deactivation offset        (default: 6)"  -MSG;
       "\n       recfix.trg.mino Minimal deactivation time  (default: 30)" -MSG;
+      "\n      Confidence configuration."                                 -MSG;
+      "\n       recfix.cnf.mode Confid. mode (see nCNFM_* in maxdim.itp)" -MSG;
+      "\n       recfix.cnf.tad  Threshold for acoustic distance"          -MSG;
+      "\n       recfix.cnf.ted  Threshold for edit distance"              -MSG;
       "\n"                                                                -MSG;
     end;
     leave;
@@ -715,6 +719,7 @@ function -PACK_recfix()
   nrm itGm.mmap          -PACK_mix nrm =;                                       # Pack mixture parameters
   nrm iSI.itRN  0        -PACK_fst;                                             # Pack recognition network
   nrm iSI.itRNr 0        -PACK_fst;                                             # Pack reference recognition network
+  nrm                    -PACK_cnf;                                             # Pack reference recognition network
   nrm                    -PACK_trg;                                             # Pack signal detection
   "\n  => Final norm: $[nrm]"                                             -MSG; # Protocol
 }

@@ -64,3 +64,5 @@
   64 var nTRGM_THR_ABS;
  128 var nTRGM_SEL_ID;
 
+   0 var nCNFM_NONE;
+   1 var nCNFM_AED;

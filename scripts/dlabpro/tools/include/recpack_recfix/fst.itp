@@ -80,3 +80,14 @@ function -PACK_fst(nrm,itRN,nU)
 	dOS   0 0 "fst.os"  "mix" -PACK;
 }
 
+
+function -PACK_cnf(nrm)
+{
+	# Pack it
+  var x;
+  "recfix.cnf.mode" .nCNFM_AED "S" -CFG_get_ex x -vset; x 1 "cnf.mode" "u8" -PACK1;
+  0       1 "_blank1"  "u8"  -PACK1;
+  "recfix.cnf.tad" 0.05 "S" -CFG_get_ex x -vset; x 0 "trg.tad" "s16"  -PACK1;
+  "recfix.cnf.ted" 0.75 "S" -CFG_get_ex x -vset; x 0 "trg.ted" "s16"  -PACK1;
+  0       1 "_blank2"  "u16" -PACK1;
+}
