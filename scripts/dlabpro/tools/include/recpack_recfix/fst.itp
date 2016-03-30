@@ -81,8 +81,19 @@ function -PACK_fst(nrm,itRN,nU)
 }
 
 
-function -PACK_cnf(nrm)
+function -PACK_cnf(nrm,itGP)
 {
+  # Get phoneme id table from itGP
+  data dGP;
+  1 0 0 :itGP.td["~TIS"]: vmax -fetch ++ zeros dGP =; 0 1 dGP -fill;
+  dGP itGP.td 0 "~TIS" itGP.td -find_comp dGP -gen_index { -1 };
+  dGP 0 itGP.td "~TOS" itGP.td -find_comp 1 dGP -lookup { -1 };
+
+  # Mark pause + trash
+  data aux;
+  itGP.os "." "cmp" aux -strop; :aux.==0: dGP -dmark; 255 0 dGP /mark -fill;
+  itGP.os "#" "cmp" aux -strop; :aux.==0: dGP -dmark; 255 0 dGP /mark -fill;
+
 	# Pack it
   var x;
   "recfix.cnf.mode" .nCNFM_AED "S" -CFG_get_ex x -vset; x 1 "cnf.mode" "u8" -PACK1;
@@ -90,4 +101,5 @@ function -PACK_cnf(nrm)
   "recfix.cnf.tad" 0.05 "S" -CFG_get_ex x -vset; x 0 "trg.tad" "s16"  -PACK1;
   "recfix.cnf.ted" 0.75 "S" -CFG_get_ex x -vset; x 0 "trg.ted" "s16"  -PACK1;
   0       1 "_blank2"  "u16" -PACK1;
+  dGP 1 .nMAX_MIX_NUM "cnf.phn" "u8" -PACK;
 }

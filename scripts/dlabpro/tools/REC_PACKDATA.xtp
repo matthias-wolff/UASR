@@ -719,7 +719,7 @@ function -PACK_recfix()
   nrm itGm.mmap          -PACK_mix nrm =;                                       # Pack mixture parameters
   nrm iSI.itRN  0        -PACK_fst;                                             # Pack recognition network
   nrm iSI.itRNr 0        -PACK_fst;                                             # Pack reference recognition network
-  nrm                    -PACK_cnf;                                             # Pack reference recognition network
+  nrm iSI.itGP           -PACK_cnf;                                             # Pack reference recognition network
   nrm                    -PACK_trg;                                             # Pack signal detection
   "\n  => Final norm: $[nrm]"                                             -MSG; # Protocol
 }
