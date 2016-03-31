@@ -90,9 +90,11 @@ function -PACK_cnf(nrm,itGP)
   dGP 0 itGP.td "~TOS" itGP.td -find_comp 1 dGP -lookup { -1 };
 
   # Mark pause + trash
-  data aux;
-  itGP.os "." "cmp" aux -strop; :aux.==0: dGP -dmark; 255 0 dGP /mark -fill;
-  itGP.os "#" "cmp" aux -strop; :aux.==0: dGP -dmark; 255 0 dGP /mark -fill;
+  0 var r; r itGP.os.nrec < while;
+    :itGP.os[r,0]==".": :itGP.os[r,0]=="#": || if;
+      :dGP.==r: dGP -dmark; 255 0 dGP /mark -fill;
+    end;
+  r ++=; end;
 
 	# Pack it
   var x;
