@@ -36,6 +36,25 @@
 "../util/os.itp"   include;
 "../util/uasr.itp" include;
 "../util/var.itp"  include;
+"../util/fea.itp"  include;
+"include/recpack_ssmg/base.itp"     include;
+"include/recpack_ssmg/fba.itp"      include;
+"include/recpack_ssmg/mel.itp"      include;
+"include/recpack_ssmg/pca.itp"      include;
+"include/recpack_ssmg/mahala.itp"   include;
+"include/recpack_ssmg/gmm.itp"      include;
+"include/recpack_ssmg/recodata.itp" include;
+"include/recpack_ssmg/dialog.itp"   include;
+"include/recpack_ssmg/syn.itp"      include;
+"include/recpack_ssmg/keytab.itp"   include;
+"include/recpack_recfix/maxdim.itp" include;
+"include/recpack_recfix/base.itp"   include;
+"include/recpack_recfix/sig.itp"    include;
+"include/recpack_recfix/pfa.itp"    include;
+"include/recpack_recfix/sfa.itp"    include;
+"include/recpack_recfix/gmm.itp"    include;
+"include/recpack_recfix/fst.itp"    include;
+"include/recpack_recfix/trg.itp"    include;
 
 ## Prints help on usage
 function -usage(sCmd)
@@ -838,17 +857,6 @@ sOutTyp "S" == if;                                                              
   "vad.model" sVadFile "S" -CFG_get_ex sVadFile =;                              #   Get VAD file name
   "syn.dir"   sSynDir  "S" -CFG_get_ex sSynDir  =;                              #   Get synthesis directory
   "syn.model" sSynMod  "S" -CFG_get_ex sSynMod  =;                              #   Get synthesis model
-  "../util/fea.itp"                                                    include; #   Include
-  "include/recpack_ssmg/base.itp"                                      include; #   |
-  "include/recpack_ssmg/fba.itp"                                       include; #   |
-  "include/recpack_ssmg/mel.itp"                                       include; #   |
-  "include/recpack_ssmg/pca.itp"                                       include; #   |
-  "include/recpack_ssmg/mahala.itp"                                    include; #   |
-  "include/recpack_ssmg/gmm.itp"                                       include; #   |
-  "include/recpack_ssmg/recodata.itp"                                  include; #   |
-  "include/recpack_ssmg/dialog.itp"                                    include; #   |
-  "include/recpack_ssmg/syn.itp"                                       include; #   |
-  "include/recpack_ssmg/keytab.itp"                                    include; #   |
 end;                                                                            # <<
 sOutTyp "F" == if;                                                              # For recfix >>
   sCmd "dlg" == sCmd "vad" == || if;                                            #   Commands 'dlg' and 'vad' >>
@@ -856,15 +864,6 @@ sOutTyp "F" == if;                                                              
   end;                                                                          #   <<
   "recfix.prnw"    0 -CFG_get var nPRNW;                                        #   Weight pruning threshold
   "$[.sDirOut]/recfix.cfg"   var sFDsp;                                         #   Output file name
-  "../util/fea.itp"                                                    include; #   Include
-  "include/recpack_recfix/maxdim.itp"                                  include; #   |
-  "include/recpack_recfix/base.itp"                                    include; #   |
-  "include/recpack_recfix/sig.itp"                                     include; #   |
-  "include/recpack_recfix/pfa.itp"                                     include; #   |
-  "include/recpack_recfix/sfa.itp"                                     include; #   |
-  "include/recpack_recfix/gmm.itp"                                     include; #   |
-  "include/recpack_recfix/fst.itp"                                     include; #   |
-  "include/recpack_recfix/trg.itp"                                     include; #   |
 end;                                                                            # <<
 
 
