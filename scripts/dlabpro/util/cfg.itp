@@ -591,7 +591,7 @@ function -CFG_get_path(sKey,sMode)
   sKey "sig"     == if "Signal"     sName =; end                                # Signal files directory
   sKey "syn"     == if "Synthesis"  sName =; end                                # Synthesis files directory
   sKey "scripts" == if "Scripts"    sName =; end                                # Script files directory
-  sKey "into"    == if "Into"       sName =; end                                # Intonation files directory
+  sKey "into"    == if "Intonation" sName =; end                                # Intonation files directory
   sKey "midi"    == if "Midi"       sName =; end                                # Midi files directory
   sKey "inv"     == if "Inventory"  sName =; end                                # Synthesis inventory files directory
   "dir.${sKey}" "/${sKey}" "" "${sName} dir" -CFG_get_path_int return;          # Get and return path
