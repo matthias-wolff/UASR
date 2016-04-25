@@ -357,7 +357,8 @@ function -FST_render_ex(sFname,idTisTab,idTosTab,nUnit,sFormat,itSrc)
   var  nIcTos;                                                                  # Output symbol comp.in transition tab.
   var  nIcW;                                                                    # Weight component in transition table
   var  nIcStk;                                                                  # Stack token component in trans. table
-  var  sEps;   "svg" sFormat == if "&epsilon;" else "-" end sEps =;             # Rendering of epsilon 
+  var  sEps;   "-" sEps =;                                                      # Rendering of epsilon
+#  var  sEps;   "svg" sFormat == if "&epsilon;" else "-" end sEps =;            # NOTE: Does not work anymore
   
   ## Copy unit to render and get some component indices                         # -------------------------------------
   nUnit 0 >= if                                                                 # Render particulat unit ? (Yes) >>
