@@ -1,0 +1,449 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<
+<    AUTHOR : n/a
+<    PACKAGE: manual
+<
+<    Copyright 2013 UASR contributors (see COPYRIGHT file)
+<    - Chair of System Theory and Speech Technology, TU Dresden
+<    - Chair of Communications Engineering, BTU Cottbus
+<
+<    This file is part of UASR.
+<
+<    UASR is free software: you can redistribute it and/or modify it under the
+<    terms of the GNU Lesser General Public License as published by the Free
+<    Software Foundation, either version 3 of the License, or (at your option)
+<    any later version.
+<
+<    UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+<    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+<    FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+<    more details.
+<
+<    You should have received a copy of the GNU Lesser General Public License
+<    along with UASR. If not, see [http://www.gnu.org/licenses/].
+-->
+<html>
+<head>
+  <meta http-equiv="Content-Type" content= "text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <meta name="description" content=   "UASR documentation - UASR script DNN.xtp">
+  <meta name="author" content="">
+  <meta name="generator" content="UASR_DOC">
+  <title>UASR script DNN.xtp</title>
+  <link rel=stylesheet type="text/css" href="../default.css">
+</head>
+<script type="text/javascript">
+
+  if (top==self)
+  {
+    var sLocation = "../index.html?automatic/DNN.xtp.html";
+    if (location.hash.length>0)
+      sLocation += ";"+location.hash.substr(1);
+    top.location = sLocation;
+  }
+</script>
+<script type="text/javascript" src="../default.js"></script>
+<script type="text/javascript">__sRootPath="../..";</script>
+<body>
+
+  <div id="clp_DNN.xtp">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        UASR script <span class="mid">DNN.xtp</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('','DNN.xtp','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden">General</td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><nobr><b>DNN</b> $1 $2</nobr></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Author</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Frank Duckhorn
+</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Synopsis</h3>
+    <p>DNN training and evaluation
+ </p>
+  <h3>Arguments</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>$1</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Command or 'help'
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>$2</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Setup file or, if 1st arg. is 'help', command
+
+      </td>
+    </tr>  </table>
+  <!--{{ CUSTOM_DOC -->
+  <!--}} CUSTOM_DOC -->
+  <a name="functions"></a><h3>Functions</h3>
+  <table cellSpacing="0" cellPadding="4" border="0">
+    <tr>
+      <td class="rowgroup" colSpan="2">Functions</td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-logo"><code class="link">-logo</code></a></td>
+      <td><code><b>-logo</b></code><br>&nbsp;<br> Prints the program logo
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-usage"><code class="link">-usage</code></a></td>
+      <td><code><b>-usage</b>(sCmd)</code><br>&nbsp;<br> Prints help on usage
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-PNG_save"><code class="link">-PNG_save</code></a></td>
+      <td><code><b>-PNG_save</b>(sF,idFea)</code>
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_fea"><code class="link">-CMD_fea</code></a></td>
+      <td><code><b>-CMD_fea</b></code><br>&nbsp;<br> DNN feature conversion
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_trn"><code class="link">-CMD_trn</code></a></td>
+      <td><code><b>-CMD_trn</b></code><br>&nbsp;<br> DNN training
+.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-CMD_evl"><code class="link">-CMD_evl</code></a></td>
+      <td><code><b>-CMD_evl</b></code><br>&nbsp;<br> DNN evaluation
+.
+      </td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <div id="clp_-logo">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-logo</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-logo','-logo','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-logo</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">DNN.xtp(37)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Prints the program logo
+
+  </div>
+  </div>
+  <div id="clp_-usage">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-usage</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-usage','-usage','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-usage</b>(sCmd)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">DNN.xtp(50)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Prints help on usage
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sCmd</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Command to display help for (general help if empty).
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-PNG_save">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-PNG_save</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-PNG_save','-PNG_save','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-PNG_save</b>(sF,idFea)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">DNN.xtp(132)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sF</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idFea</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-CMD_fea">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_fea</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_fea','-CMD_fea','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_fea</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">DNN.xtp(155)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> DNN feature conversion
+
+  </div>
+  </div>
+  <div id="clp_-CMD_trn">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_trn</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_trn','-CMD_trn','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_trn</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">DNN.xtp(229)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> DNN training
+
+  </div>
+  </div>
+  <div id="clp_-CMD_evl">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-CMD_evl</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-CMD_evl','-CMD_evl','..');"><img
+        src="../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-CMD_evl</b></code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">DNN.xtp(297)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> DNN evaluation
+
+  </div>
+  </div>
+<div class="footer">End of page</div>
+</body>
+</html>
+
