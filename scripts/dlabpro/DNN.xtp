@@ -59,6 +59,11 @@ function -usage(sCmd)
     "\n\n   OPTIONS:"                                                     -MSG;
       "\n     -P<key>=<value> override config. key-value-pairs"           -MSG;
       "\n     -v<n>           verbose level"                              -MSG;
+    "\n\n   REMARKS:"                                                     -MSG;
+      "\n     Special <key>s for $__SFILE__.xtp trn:"                     -MSG;
+      "\n       dnn.fmin: Lower limit for feature value quantization"     -MSG;
+      "\n       dnn.fmax: Upper limit for feature value quantization"     -MSG;
+      "\n       dnn.fbit: Number of bits for feature value quantization"  -MSG;
     "\n\n"                                                                -MSG;
     0 return;
   end
@@ -85,18 +90,18 @@ function -usage(sCmd)
       "\n     -v<n>           verbose level"                              -MSG;
     "\n\n   REMARKS:"                                                     -MSG;
       "\n     Special <key>s for $__SFILE__.xtp trn:"                     -MSG;
-      "\n       skip  : Combination of the following letters"             -MSG;
-      "\n                 S - skip feature statistics"                    -MSG;
-      "\n                 I - skip HMM intitialization"                   -MSG;
-      "\n                 U - skip iterative HMM update"                  -MSG;
-      "\n                 E - skip HMM evaluation"                        -MSG;
-      "\n                 T - skip model folder tidy up"                  -MSG;
-      "\n       start : Split and iteration number to start form, two"    -MSG;
-      "\n               intergers separated by an underscore,"            -MSG;
-      "\n               NO white spaces!"                                 -MSG;
-      "\n       sensor: Name of sensor whose signals are to be processed" -MSG;
-      "\n               only. Append '...' to process from start sensor." -MSG;
-      "\n               (does typically not apply to speech recognition)" -MSG;
+      "\n       dnn.test_iter    : TODO"                                  -MSG;
+      "\n       dnn.test_interval: TODO"                                  -MSG;
+      "\n       dnn.display      : TODO"                                  -MSG;
+      "\n       dnn.max_iter     : TODO"                                  -MSG;
+      "\n       dnn.snapshot     : TODO"                                  -MSG;
+      "\n       dnn.solver_mode  : TODO"                                  -MSG;
+      "\n       dnn.base_lr      : TODO"                                  -MSG;
+      "\n       dnn.momentum     : TODO"                                  -MSG;
+      "\n       dnn.weight_decay : TODO"                                  -MSG;
+      "\n       dnn.lr_policy    : TODO"                                  -MSG;
+      "\n       dnn.gamma        : TODO"                                  -MSG;
+      "\n       dnn.power        : TODO"                                  -MSG;
     "\n\n"                                                                -MSG;
     0 return;
   end
@@ -129,11 +134,8 @@ function -usage(sCmd)
   0 return;
 }
 
-function -PNG_save(sF,idFea)
+function -PNG_save(sF,idFea,rmin,rmax,rbit)
 {
-  0  var rmin;
-  12 var rmax;
-  8  var rbit;
   data idSFea;
 
   idFea idSFea =;
@@ -172,6 +174,9 @@ function -CMD_fea()
   "fea" "" -CFG_get_path;                                                       # Echo feature files path
   ( "flist.sep" "\t " "S" -CFG_get_ex ) iF set sep;                             # Set file list separator(s)  
   "all" "" -CFG_get_flist iF set flist;                                         # Signal files list
+  var nFmin; "dnn.fmin"  0 -CFG_get nFmin -vset;
+  var nFmax; "dnn.fmax" 12 -CFG_get nFmax -vset; 
+  var nFbit; "dnn.fbit"  8 -CFG_get nFbit -vset;
 
   ## Sensor loop                                                                # -------------------------------------
   :idSns[0,0]: if "\n// No. of sensors  : $[idSns.nrec]" -MSG; end              # Protocol
@@ -199,7 +204,7 @@ function -CMD_fea()
          "${idSns[nSns,0]}" sSns =; sSns if ".$[sSns]" sSns =; end              #       Make ext. out of sensor name
          "$[__sDirFea]/$[iF.sfile]$[sSns].png" sF =;                            #       Make path name of feature file
          "\n     - storing: $[sF] ..."                                 3 -MSGX; #       Protocol
-        sF idFea -PNG_save if                                                   #       Save feature file, ok >>
+        sF idFea nFmin nFmax nFbit -PNG_save if                                 #       Save feature file, ok >>
           " ok\n       "                                               3 -MSGX; #         Protocol
         else                                                                    #       << failed >>
           " FAILED\n       "                                           3 -MSGX; #         Protocol
