@@ -146,7 +146,7 @@ function -PNG_save(sF,idFea,rmin,rmax,rbit)
   idSFea 0 max idSFea =;
   idSFea -type UINT$[rbit] idSFea -tconvert;
   "$[sF].raw" "raw" idSFea stdfile -export;
-  "rm $[sF]" -system;
+  "rm -f $[sF]" -system;
   "convert -depth $[rbit] -size $[idSFea.dim]x$[idSFea.nrec] gray:$[sF].raw $[sF]" -system;
   "rm $[sF].raw" -system;
 
