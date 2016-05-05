@@ -27,6 +27,7 @@
 ## Loads the data files produced by the recognizer from the locations committed
 ## thorugh the command line arguments.
 ##
+## @cgen:index
 ## @param nFArg integer
 ##          One-based index of first command line argument, standard is 1.
 ## @param iSI object
@@ -49,12 +50,18 @@
 ##          be <code>NULL</code> if not needed.
 function -RRES_getargs(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr)
 {
-  ## TODO: Implement -RRES_getargs 
+  itRec if ( nFArg     -argv ) itRec -restore;
+  itRef if ( :nFArg+1: -argv ) itRef -restore;
+  idNld if ( :nFArg+2: -argv ) idNld -restore;
+  idSig if ( :nFArg+3: -argv ) "wav" idSig stdfile -import;
+  itFvr if ( :nFArg+4: -argv ) itFvr -restore;
+  iSI   if ( :nFArg+5: -argv ) iSI   -restore;
 }
 
 ## Processes a recognition result transducer. The function stips uninteresing
 ## components, removes epsilon input symbols and adds phoneme label names.
 ##
+## @cgen:index
 ## @param itRes fst
 ##          The recognition result transducer (consecutive path though the
 ##          recognition network).
@@ -94,6 +101,7 @@ function -RRES_process(itRes,idNld,idPhnTab)
 
 ## Returns the per-frame output labels of the recognition result. 
 ##
+## @cgen:index
 ## @param itRes fst
 ##          The recognition result transducer (consecutive path though the
 ##          recognition network).
