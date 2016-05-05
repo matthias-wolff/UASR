@@ -1518,6 +1518,11 @@ LEX: zwei    tsv(aI|o:)</pre></td>
       </td>
     </tr>
     <tr>
+      <td><a href="#clp_-FSG_normalize"><code class="link">-FSG_normalize</code></a></td>
+      <td><code><b>-FSG_normalize</b>(itLMsrc,itLMdst)</code><br>&nbsp;<br> Normalizes the output symbols of a finite state grammar.
+      </td>
+    </tr>
+    <tr>
       <td><a href="#clp_-RN_add_unit"><code class="link">-RN_add_unit</code></a></td>
       <td><code><b>-RN_add_unit</b>(sFile,sFilter,iSI)</code><br>&nbsp;<br> Adds a unit to the recognition network
 .
@@ -1891,6 +1896,79 @@ LEX: zwei    tsv(aI|o:)</pre></td>
 
   </div>
   </div>
+  <div id="clp_-FSG_normalize">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FSG_normalize</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FSG_normalize','-FSG_normalize','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FSG_normalize</b>(itLMsrc,itLMdst)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/REC_PACKDATA.xtp(376)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Normalizes the output symbols of a finite state grammar. "Normalizing" means
+ that opening and closing square brackets, '[' and ']', will be placed at
+ separate transitions. For example, the function will replace the transition
+ &#x25EF;&mdash;"[foo["&rarr;&#x25EF; by the chain
+ &#x25EF;&mdash;"["&rarr;&#x25EF;&mdash;"foo"&rarr;&#x25EF;&mdash;"["&rarr;&#x25EF;.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itLMsrc</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          A finite state grammar.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itLMdst</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The normalized finite state grammar, may be indentical with
+          <code>itLM</code>.
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> The edit transducer used to normalize the grammar.
+
+  </div>
+  </div>
   <div id="clp_-RN_add_unit">
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
@@ -1924,7 +2002,7 @@ LEX: zwei    tsv(aI|o:)</pre></td>
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">tools/REC_PACKDATA.xtp(378)</td>
+      <td class="hidden">tools/REC_PACKDATA.xtp(443)</td>
     </tr>
   </table>
   </div>
@@ -2007,7 +2085,7 @@ LEX: zwei    tsv(aI|o:)</pre></td>
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">tools/REC_PACKDATA.xtp(446)</td>
+      <td class="hidden">tools/REC_PACKDATA.xtp(520)</td>
     </tr>
   </table>
   </div>
@@ -2061,7 +2139,7 @@ LEX: zwei    tsv(aI|o:)</pre></td>
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">tools/REC_PACKDATA.xtp(467)</td>
+      <td class="hidden">tools/REC_PACKDATA.xtp(541)</td>
     </tr>
   </table>
   </div>
@@ -2115,7 +2193,7 @@ LEX: zwei    tsv(aI|o:)</pre></td>
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">tools/REC_PACKDATA.xtp(507)</td>
+      <td class="hidden">tools/REC_PACKDATA.xtp(581)</td>
     </tr>
   </table>
   </div>
@@ -2169,7 +2247,7 @@ LEX: zwei    tsv(aI|o:)</pre></td>
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">tools/REC_PACKDATA.xtp(573)</td>
+      <td class="hidden">tools/REC_PACKDATA.xtp(647)</td>
     </tr>
   </table>
   </div>
@@ -2277,7 +2355,7 @@ LEX: zwei    tsv(aI|o:)</pre></td>
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">tools/REC_PACKDATA.xtp(687)</td>
+      <td class="hidden">tools/REC_PACKDATA.xtp(761)</td>
     </tr>
   </table>
   </div>
@@ -2319,7 +2397,7 @@ LEX: zwei    tsv(aI|o:)</pre></td>
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">tools/REC_PACKDATA.xtp(720)</td>
+      <td class="hidden">tools/REC_PACKDATA.xtp(794)</td>
     </tr>
   </table>
   </div>
@@ -2361,7 +2439,7 @@ LEX: zwei    tsv(aI|o:)</pre></td>
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">tools/REC_PACKDATA.xtp(747)</td>
+      <td class="hidden">tools/REC_PACKDATA.xtp(821)</td>
     </tr>
   </table>
   </div>

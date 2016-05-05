@@ -361,6 +361,72 @@ function -FSG_load_dialog(sFile,sFilter,itDlg)
   TRUE return;
 }
 
+## Normalizes the output symbols of a finite state grammar. "Normalizing" means
+## that opening and closing square brackets, '[' and ']', will be placed at 
+## separate transitions. For example, the function will replace the transition
+## &#x25EF;&mdash;"[foo["&rarr;&#x25EF; by the chain 
+## &#x25EF;&mdash;"["&rarr;&#x25EF;&mdash;"foo"&rarr;&#x25EF;&mdash;"["&rarr;&#x25EF;.
+##
+## @param itLMsrc fst
+##          A finite state grammar.
+## @param itLMdst fst
+##          The normalized finite state grammar, may be indentical with 
+##          <code>itLM</code>.
+## @return The edit transducer used to normalize the grammar.
+function -FSG_normalize(itLMsrc,itLMdst)
+{
+  function -add_symbols(idSym,idTab)                                            # Add symbols to transducer symbol tab.
+  {                                                                             # >>
+    data idAux;                                                                 #   Auxiliary data
+    idSym idTab 0 0 idAux /noerror -gen_index;                                  #   Find symbols that already exist
+    idSym idAux -join;                                                          #   ...
+    :idAux[0].>=0: idAux /comp -dmark; idAux 0 0 idAux /mark -delete;           #   Mark and delete them
+    idAux.nrec 0 == if return; end                                              #   No new symbols -> leave
+    idAux 1 idAux -sortup; idAux 1 idAux -compress;                             #   Remove duplicate new symbols
+    :idAux[0]: idTab -cat;                                                      #   Add new symbols
+  }                                                                             # <<
+
+  function -add_edit(sTos,itE)                                                  # Add one edit to edit transducer
+  {                                                                             # >>
+    data idTis; { "$[sTos]" } idTis =;                                          #   Editor input symbol
+    data idTos;                                                                 #   Editor output sequence
+    data idAux;                                                                 #   Auxiliary data
+    var  nFT;                                                                   #   First transition of new edit
+    
+    idTis "[]" "splitd" idTos -strop; idTos ' idTos =;                          #   Split input symb.into output symbs.
+    idTos itE.is -add_symbols;                                                  #   Add 'em output symbols
+    idTos itE.is 0 0 idAux -gen_index; idAux idTos -join;                       #   Look-up output symbol indices
+
+    itE.td.nrec nFT =;                                                          #   Remember index of first new trans.
+    "$[sTos]" itE /fst /lsr -addunit;                                           #   Create new edit
+    idTos 1 -1 -1 :itE.ud.nrec-1: itE -addseq;                                  #   Add editor output sequence
+    idTis itE.os 0 0 idAux -gen_index;                                          #   Get index if edited input symbol
+    :itE.td[nFT,itE.NC_TD_TOS]=idAux[0,0];                                      #   Add edited symbol to first trans.
+  }                                                                             # <<
+
+  fst itLMn;                                                                    # Normalize grammar
+  fst itE;                                                                      # Edit transducer
+  var nTos;                                                                     # Output symbol index
+  var sTos;                                                                     # Output symbol
+  itLMsrc.os itE.os =;                                                          # Initialize input symbol table  
+  { "[" "]" } ' itE.is =;                                                       # Initialize output symbol table  
+  0 nTos =; nTos itLMsrc.os.nrec < while                                        # Loop over output symbols >>
+    :itLMsrc.os[nTos,0]: sTos =;                                                #   Get output symbol
+    sTos itE -add_edit;                                                         #   Add edit transducer path
+    nTos ++=;                                                                   #   Next output symbol
+  end                                                                           # <<
+  itE itE -union;                                                               # Union of edits
+  0 itE -invert;                                                                # Inversion
+  itE 0 itE -close;                                                             # Kleene closure
+
+  # TODO: Better replace instead of compose (would mak smaller network)!
+  itE.sd.nrec 1 > if                                                            # Editor has more than one state >>
+    itLMsrc itE 0 0 itLMdst -compose;                                           #   Normalize grammar
+  end                                                                           # << (otherwise no normalizatn.needed)
+  
+  itE return;                                                                   # Return edit transducer
+}
+
 ## Adds a unit to the recognition network
 ##
 ## @param sFile string
@@ -416,7 +482,16 @@ function -RN_add_unit(sFile,sFilter,iSI)
     "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
     s itLM.is itLM.os -1 itLM -FST_render;                           "." -MSG2; #   Protocol
   end                                                                           # <<
+  ( itLM itLM -FSG_normalize ) itAux =;                              "." -MSG2; # Normalize FVR output symbols
   itLM 0 itLM /lazy -minimize;
+  .bRender if                                                                   # Rendering grammar? Yes >>
+    "$[.sDirOut]/" ( sFilter "#:#.normalized.svg" "replace" -VAR_strop ) + s =; #   Make file name
+    "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
+    s itLM.is itLM.os -1 itLM -FST_render;                           "." -MSG2; #   Protocol
+    "$[.sDirOut]/" ( sFilter "#:#.normalizer.svg" "replace" -VAR_strop ) + s =; #   Make file name
+    "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
+    s itAux.is itAux.os -1 itAux -FST_render;                        "." -MSG2; #   Protocol
+  end                                                                           # <<
 
   "\n   - Compiling word recognition network "                           -MSG2; # Protocol
   iSI.itLX itLX -LX_unify;                                                      # Kleene-closure of lexicon FST

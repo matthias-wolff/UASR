@@ -23,24 +23,26 @@
 ## You should have received a copy of the GNU Lesser General Public License
 ## along with UASR. If not, see <http://www.gnu.org/licenses/>.
 
-"am.itp"        include;                                                        # Acoustic model
-"cfg.itp"       include;                                                        # UASR configuration files
-"data.itp"      include;                                                        # For dLabPro class data
-"fea.itp"       include;                                                        # Feature analysis and transformation
-"fst.itp"       include;                                                        # For dLabPro class fst
-"gmm.itp"       include;                                                        # For dLabPro class gmm
-"histogram.itp" include;                                                        # For dLabPro class histogram
-"ica.itp"       include;                                                        # Fast-ICA (Hyvärinen method)
-"into.itp"      include;                                                        # DRESS into-files
-"lab.itp"       include;                                                        # Labels
-"lm.itp"        include;                                                        # Language model
-"lx.itp"        include;                                                        # Lexicon
-"os.itp"        include;                                                        # Operating system dependent
-"prosody.itp"   include;                                                        # Prosody
-"sig.itp"       include;                                                        # Signals
-"spp.itp"       include;                                                        # Signal pre-processing
-"svm.itp"       include;                                                        # For dLabPro class svm
-"uasr.itp"      include;                                                        # UASR
-"var.itp"       include;                                                        # For dLabPro class var
+"am.itp"           include;                                                     # Acoustic model
+"cfg.itp"          include;                                                     # UASR configuration files
+"data.itp"         include;                                                     # For dLabPro class data
+"fea.itp"          include;                                                     # Feature analysis and transformation
+"fst.itp"          include;                                                     # For dLabPro class fst
+"gmm.itp"          include;                                                     # For dLabPro class gmm
+"histogram.itp"    include;                                                     # For dLabPro class histogram
+"ica.itp"          include;                                                     # Fast-ICA (Hyvärinen method)
+"into.itp"         include;                                                     # DRESS into-files
+"lab.itp"          include;                                                     # Labels
+"lm.itp"           include;                                                     # Language model
+"lx.itp"           include;                                                     # Lexicon
+"os.itp"           include;                                                     # Operating system dependent
+"prosody.itp"      include;                                                     # Prosody
+"rec_postproc.itp" include;                                                     # recognizer(.exe) result post-proc.
+"sig.itp"          include;                                                     # Signals
+"spp.itp"          include;                                                     # Signal pre-processing
+"svm.itp"          include;                                                     # For dLabPro class svm
+"uasr.itp"         include;                                                     # UASR
+"ufea.itp"         include;                                                     # Universal primary feature analysis
+"var.itp"          include;                                                     # For dLabPro class var
 
 ## EOF
