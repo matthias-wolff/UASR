@@ -32,9 +32,10 @@
 ##
 ##   See man cronjob and man -S 5 cronjob for more information.
 ##
-## Copyright 2013-2014 UASR contributors (see COPYRIGHT file)
+## Copyright 2013-2016 UASR contributors (see COPYRIGHT file)
+## - Chair of Communications Engineering, BTU Cottbus-Senftenberg
+## - Fraunhofer IKTS, Dresden
 ## - Chair of System Theory and Speech Technology, TU Dresden
-## - Chair of Communications Engineering, BTU Cottbus
 ##
 ## This file is part of UASR.
 ##

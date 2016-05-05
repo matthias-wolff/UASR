@@ -4,10 +4,10 @@
 // AUTHOR : Matthias Wolff
 // PACKAGE: uasr/manual
 //
-// Copyright 2013 UASR contributors (see COPYRIGHT file)
-// - Chair of System Theory and Speech Technology, TU Dresden
-// - Chair of Communications Engineering, BTU Cottbus
-//
+// Copyright 2013-2016 UASR contributors (see COPYRIGHT file)
+// - Chair of Communications Engineering, BTU Cottbus-Senftenberg
+// - Fraunhofer IKTS, Dresden
+// - Chair of System Theory and Speech Technology, TU Dresden//
 // This file is part of UASR.
 //
 // UASR is free software: you can redistribute it and/or modify it under the

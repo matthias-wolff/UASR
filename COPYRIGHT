@@ -1,8 +1,9 @@
 UASR: Unified Approach to Speech Synthesis and Recognition
 
-Copyright 2013-2014 UASR contributors (see below)
+Copyright 2013-2016 UASR contributors (see COPYRIGHT file)
+- Chair of Communications Engineering, BTU Cottbus-Senftenberg
+- Fraunhofer IKTS, Dresden
 - Chair of System Theory and Speech Technology, TU Dresden
-- Chair of Communications Engineering, BTU Cottbus
 
 UASR is free software: you can redistribute it and/or modify it under the
 terms of the GNU Lesser General Public License as published by the Free
@@ -18,16 +19,17 @@ You should have received a copy of the GNU Lesser General Public License
 along with UASR. If not, see <http://www.gnu.org/licenses/>.
 
 UASR contributors:
-- Constanze Tschöpe
+- Constanze Tschoepe
 - Frank Duckhorn
 - Guntram Strecha
 - Hussein Hussein
 - Matthias Eichner
 - Matthias Wolff
 - Paul Clement Fokam Nkwonkam
-- Rainer Köhler
-- Ronald Römer
-- Rüdiger Hoffmann
-- Sören Wittenberg
+- Rainer Koehler
+- Ronald Roemer
+- Ruediger Hoffmann
+- Soeren Wittenberg
 - Steffen Werner
-- Thomas L. Näth
+- Thomas L. Naeth
+- Werner Meyer

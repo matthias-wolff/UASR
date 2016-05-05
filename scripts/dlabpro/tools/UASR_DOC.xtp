@@ -8,9 +8,10 @@
 ## ARGUMENTS:
 ##   $1: - UASR database name (optional)
 
-## Copyright 2013 UASR contributors (see COPYRIGHT file)
+## Copyright 2013-2016 UASR contributors (see COPYRIGHT file)
+## - Chair of Communications Engineering, BTU Cottbus-Senftenberg
+## - Fraunhofer IKTS, Dresden
 ## - Chair of System Theory and Speech Technology, TU Dresden
-## - Chair of Communications Engineering, BTU Cottbus
 ##
 ## This file is part of UASR.
 ##
@@ -377,9 +378,10 @@ function -gen_html_head(sTitle,iDgn)
   "\n<    AUTHOR : n/a"                                                              iDgn >>;
   "\n<    PACKAGE: manual"                                                           iDgn >>;
   "\n<"                                                                              iDgn >>;
-  "\n<    Copyright 2013 UASR contributors (see COPYRIGHT file)"                     iDgn >>;
+  "\n<    Copyright 2013-2016 UASR contributors (see COPYRIGHT file)"                iDgn >>;
+  "\n<    - Chair of Communications Engineering, BTU Cottbus-Senftenberg"            iDgn >>;
+  "\n<    - Fraunhofer IKTS, Dresden"                                                iDgn >>;
   "\n<    - Chair of System Theory and Speech Technology, TU Dresden"                iDgn >>;
-  "\n<    - Chair of Communications Engineering, BTU Cottbus"                        iDgn >>;
   "\n<"                                                                              iDgn >>;
   "\n<    This file is part of UASR."                                                iDgn >>;
   "\n<"                                                                              iDgn >>;

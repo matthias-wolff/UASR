@@ -4,9 +4,10 @@
 <    AUTHOR : n/a
 <    PACKAGE: manual
 <
-<    Copyright 2013 UASR contributors (see COPYRIGHT file)
+<    Copyright 2013-2016 UASR contributors (see COPYRIGHT file)
+<    - Chair of Communications Engineering, BTU Cottbus-Senftenberg
+<    - Fraunhofer IKTS, Dresden
 <    - Chair of System Theory and Speech Technology, TU Dresden
-<    - Chair of Communications Engineering, BTU Cottbus
 <
 <    This file is part of UASR.
 <
@@ -91,6 +92,296 @@
  </p>
   <!--{{ CUSTOM_DOC -->
   <!--}} CUSTOM_DOC -->
+  <a name="functions"></a><h3>Functions</h3>
+  <table cellSpacing="0" cellPadding="4" border="0">
+    <tr>
+      <td class="rowgroup" colSpan="2">Functions</td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-RRES_getargs"><code class="link">-RRES_getargs</code></a></td>
+      <td><code><b>-RRES_getargs</b>(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr)</code><br>&nbsp;<br>Loads the data files produced by the recognizer from the locations committed
+thorugh the command line arguments.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-RRES_process"><code class="link">-RRES_process</code></a></td>
+      <td><code><b>-RRES_process</b>(itRes,idNld,idPhnTab)</code><br>&nbsp;<br> Processes a recognition result transducer.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-RRES_out"><code class="link">-RRES_out</code></a></td>
+      <td><code><b>-RRES_out</b>(itRes)</code><br>&nbsp;<br> Returns the per-frame output labels of the recognition result.
+      </td>
+    </tr>
+  </table>
+  </div>
+  </div>
+  <div id="clp_-RRES_getargs">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-RRES_getargs</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-RRES_getargs','-RRES_getargs','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-RRES_getargs</b>(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/rec_postproc.itp(50)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3>Loads the data files produced by the recognizer from the locations committed
+thorugh the command line arguments.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">integer&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nFArg</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">One-based index of first command line argument, standard is 1.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">object&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>iSI</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Filled with the session info, can be <code>NULL</code> if not
+needed.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itRec</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Filled with the main recognition result, can be <code>NULL</code> if
+not needed.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itRef</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Filled with the reference recognition result, can be
+<code>NULL</code> if not needed.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idNld</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Filled with the frame-by-Gaussian neglog. density array, can be
+<code>NULL</code> if not needed.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSig</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Filled with the input speech signal, can be <code>NULL</code> if not
+needed.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itFvr</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">Filled with the recognized semantics (feature-value relation), can
+be <code>NULL</code> if not needed.
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-RRES_process">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-RRES_process</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-RRES_process','-RRES_process','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-RRES_process</b>(itRes,idNld,idPhnTab)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/rec_postproc.itp(67)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Processes a recognition result transducer. The function stips uninteresing
+ components, removes epsilon input symbols and adds phoneme label names.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itRes</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The recognition result transducer (consecutive path though the
+          recognition network).
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idNld</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The neglog likelihood matrix (records: feature vectors, components:
+          GMMs).
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idPhnTab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The phoneme table, phoneme labels are expected in component 0.
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> A data object containing the processed path.
+
+  </div>
+  </div>
+  <div id="clp_-RRES_out">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-RRES_out</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-RRES_out','-RRES_out','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-RRES_out</b>(itRes)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/rec_postproc.itp(101)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Returns the per-frame output labels of the recognition result.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itRes</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The recognition result transducer (consecutive path though the
+          recognition network).
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> A data object containing the frame-wise output labels.
+
   </div>
   </div>
 <div class="footer">End of page</div>
