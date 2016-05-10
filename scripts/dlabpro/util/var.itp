@@ -34,7 +34,7 @@
 ##          Parameter to <code>sStrop</code>
 ## @param sStrop string
 ##          String operation
-## @return The result (string or number)
+## @return The result (string, number, or data)
 function -VAR_strop(sStr,sParam,sStrop)
 {
   data idAux;                                                                   # Auxiliary data 
@@ -42,7 +42,8 @@ function -VAR_strop(sStr,sParam,sStrop)
   1 idAux -allocate;                                                            # Allocate one record
   sStr 0 0 idAux -store;                                                        # Store the argument
   idAux sParam sStrop idAux -strop;                                             # Invoke string operation
-  idAux [ 0 0 ] return;                                                         # Return result
+  ( idAux.nrec 1 > ) ( idAux.dim 1 > ) || if idAux return; end                  # Return result as data
+  idAux [ 0 0 ] return;                                                         # Return primitive result
 }
 
 ## EOF
