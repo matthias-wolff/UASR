@@ -50,16 +50,17 @@
 ##          be <code>NULL</code> if not needed.
 function -RRES_getargs(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr)
 {
-  itRec if ( nFArg     -argv ) itRec -restore;
-  itRef if ( :nFArg+1: -argv ) itRef -restore;
-  idNld if ( :nFArg+2: -argv ) idNld -restore;
-  idSig if ( :nFArg+3: -argv ) "wav" idSig stdfile -import;
-  itFvr if ( :nFArg+4: -argv ) itFvr -restore;
-  iSI   if ( :nFArg+5: -argv ) iSI   -restore;
+  itRec if ( nFArg     -argv ) itRec -restore;              end                 # Load main recognition result
+  itRef if ( :nFArg+1: -argv ) itRef -restore;              end                 # Load reference recognition result
+  idNld if ( :nFArg+2: -argv ) idNld -restore;              end                 # Load neglog. density array
+  idSig if ( :nFArg+3: -argv ) "wav" idSig stdfile -import; end                 # Load speech signal
+  itFvr if ( :nFArg+4: -argv ) itFvr -restore;              end                 # Load recognized semantics
+  iSI   if ( :nFArg+5: -argv ) iSI   -restore;              end                 # Load session info
 }
 
-## Processes a recognition result transducer. The function stips uninteresing
-## components, removes epsilon input symbols and adds phoneme label names.
+## Computes the per-frame recognition result. The function stips uninteresing
+## components, removes epsilon input symbols and adds phoneme (component 
+## "~PLB") and output (component "~OLB") label names.
 ##
 ## @cgen:index
 ## @param itRes fst
@@ -71,11 +72,15 @@ function -RRES_getargs(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr)
 ## @param idPhnTab data
 ##          The phoneme table, phoneme labels are expected in component 0.
 ## @return A data object containing the processed path. 
-function -RRES_process(itRes,idNld,idPhnTab)
+function -RRES_perframe(itRes,idNld,idPhnTab)
 {
   data idRes;                                                                   # The stripped recognition result
+  data idOut;
   data idAux;                                                                   # An auxiliary data object
   data idAux2;
+  var  nR;
+  var  nXR;
+  var  sL;
   
   ## Strip components                                                           # -------------------------------------
   :itRes.td["~TIS"]: idRes -join;                                               # Keep input symbols (Gaussians)
@@ -92,55 +97,65 @@ function -RRES_process(itRes,idNld,idPhnTab)
   0 "~NLL" idAux -set_cname; idAux idRes -join;                                 # Add to stripped recognition result
   idRes ( "~RID" idRes -find_comp ) 1 idRes -delete;                            # Delete record index component
 
-  ## Add symbolic labels                                                        # -------------------------------------
+  ## Add symbolic phoneme labels                                                # -------------------------------------
   :idRes["~PHN"]: 0 idPhnTab 0 1 idAux -lookup;                                 # Look up phoneme labels
   0 "~PLB" idAux -set_cname; idAux idRes -join;                                 # Add to stripped recognition result
   
+  ## Get per-frame output labels                                                # -------------------------------------
+  :itRes.td["~TOS"]: 0 itRes.os 0 1 idOut -lookup;
+  0 "~OLB" idOut -set_cname;
+  :itRes.td["~TIS"]: idOut -join;
+  :itRes.td["~TOS"]: idOut -join;
+  
+  ## - Move output labels away from epsilon-input transitions                   # - - - - - - - - - - - - - - - - - - -
+  "" sL =;                                                                      # Output label aggregation buffer
+  -1 nXR =;                                                                     # Last non-epsilon transition
+  0 nR =; nR idOut.nrec < while                                                 # Loop over transitions >>
+    :sL+=idOut[nR,0];                                                           #   Aggregate output label
+    :idOut[nR,1]<0: if                                                          #   Epsilon input symbol >>
+      :idOut[nR,0]="";                                                          #     No output
+    else                                                                        #   << Non-epsilon input symbol >>
+      :idOut[nR,0]=sL;                                                          #     Write aggregated output label
+      "" sL =;                                                                  #     Clear label aggregation buffer
+      nR nXR =;                                                                 #     Remember last non-eps transition
+    end                                                                         #   <<
+    nR ++=;                                                                     #   Next transition
+  end                                                                           # <<
+  ( sL "" != ) ( nXR 0 >= ) && if                                               # Rest in aggregation buffer >>
+    :idOut[nXR,0]+=sL;                                                          #   Write to last non-eps transition
+  end                                                                           # <<
+
+  ## - Remove epsilon input symbols                                             # - - - - - - - - - - - - - - - - - - -
+  :idOut["~TIS"].<0: idOut -dmark;                                              # Mark epsilcon transition
+  idOut 0 0 idOut /mark -delete;                                                # Delete 'em
+  idOut 0 1 idOut -select;                                                      # Keep only output labels
+  idOut idRes -join;                                                            # Join to result
+
+  ## Return result                                                              # ---------------------------------------  
   idRes return;                                                                 # Return result
 }
 
-## Returns the per-frame output labels of the recognition result. 
+## Returns the recognition result as a string.
 ##
 ## @cgen:index
 ## @param itRes fst
 ##          The recognition result transducer (consecutive path though the
 ##          recognition network).
-## @return A data object containing the frame-wise output labels. 
+## @return The recognition result as a string.
 function -RRES_out(itRes)
 {
-  data idRes;
-  var  nR;
-  var  nXR;
-  var  sL;
-  
-  :itRes.td["~TOS"]: 0 itRes.os 0 1 idRes -lookup;
-  0 "~OUT" idRes -set_cname;
-  :itRes.td["~TIS"]: idRes -join;
-  :itRes.td["~TOS"]: idRes -join;
-  
-  "" sL =;
-  -1 nXR =;
-  0 nR =; nR idRes.nrec < while
-    :sL+=idRes[nR,0];
-    :idRes[nR,1]<0: if
-      :idRes[nR,0]="";
-    else
-      :idRes[nR,0]=sL;
-      "" sL =;
-      nR nXR =;
-    end
-    nR ++=;
-  end
-  ( sL "" != ) ( nXR 0 >= ) && if
-    :idRes[nXR,0]+=sL;    
-  end
+  data idAux;                                                                   # Auciliary data
+  var  sOut;  "" sOut -sset;                                                    # Output string buffer
+  var  i;                                                                       # Loop counter
 
-  ## Remove epsilon input symbols                                               # -------------------------------------
-  :idRes["~TIS"].<0: idRes -dmark;                                              # Mark epsilcon records
-  idRes 0 0 idRes /mark -delete;                                                # Delete 'em
-  idRes 0 1 idRes -select;                                                      # Keep only output labels
-  
-  idRes return;
+  :itRes.td["~TOS"]: 0 itRes.os 0 1 idAux -lookup;                              # Get output symbols
+  0 i =; i idAux.nrec < while                                                   # Loop over transitions >>
+    :idAux[i,0]: sOut +=;                                                       #   Aggregate output string 1)
+    i ++=;                                                                      #   Next transition
+  end                                                                           # <<
+  sOut return;                                                                  # Return output string
+
+  ## 1) -strop not used because result may be longer than 255 characters! 
 }
 
 ## EOF
