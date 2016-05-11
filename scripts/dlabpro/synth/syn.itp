@@ -151,7 +151,7 @@ function -SYN_hmm() {
   sFnInto "into" idInto stdfile -import;                                        # Load synthesis control
   
   { "$[sFnInto]" } NULL "splitp" idAux -strop;
-  0 1 idAux -sfetch "." "split" -VAR_strop "_$[sAmId]" + sSynFileTurn =;
+  ( ( 0 1 idAux -sfetch ) "." "split" -VAR_strop ) [ 0 0 ] "_$[sAmId]" + sSynFileTurn =;
 
   0 1 idInto /comp -xfetch 0 idAux -compress;
   0 0 idAux -sfetch sPho1 =;

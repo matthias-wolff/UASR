@@ -104,13 +104,18 @@ thorugh the command line arguments.
       </td>
     </tr>
     <tr>
-      <td><a href="#clp_-RRES_process"><code class="link">-RRES_process</code></a></td>
-      <td><code><b>-RRES_process</b>(itRes,idNld,idPhnTab)</code><br>&nbsp;<br> Processes a recognition result transducer.
+      <td><a href="#clp_-RRES_perframe"><code class="link">-RRES_perframe</code></a></td>
+      <td><code><b>-RRES_perframe</b>(itRes,idNld,idPhnTab)</code><br>&nbsp;<br> Computes the per-frame recognition result.
       </td>
     </tr>
     <tr>
       <td><a href="#clp_-RRES_out"><code class="link">-RRES_out</code></a></td>
-      <td><code><b>-RRES_out</b>(itRes)</code><br>&nbsp;<br> Returns the per-frame output labels of the recognition result.
+      <td><code><b>-RRES_out</b>(itRes)</code><br>&nbsp;<br> Returns the recognition result as a string.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-RRES_collect"><code class="link">-RRES_collect</code></a></td>
+      <td><code><b>-RRES_collect</b>(idSig,idRpf,itFvr)</code><br>&nbsp;<br> Collects the recognition result into a speech database.
       </td>
     </tr>
   </table>
@@ -245,14 +250,14 @@ be <code>NULL</code> if not needed.
     </tr>  </table>
   </div>
   </div>
-  <div id="clp_-RRES_process">
+  <div id="clp_-RRES_perframe">
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
       <td nowrap width="25%" class="navbar">
-        Function <span class="mid">-RRES_process</span>
+        Function <span class="mid">-RRES_perframe</span>
       </td>
       <td nowrap width="75%" class="navbar" style="text-align:right;">
-        <a class="navbar" href="javascript:__PrintSection('clp_-RRES_process','-RRES_process','../..');"><img
+        <a class="navbar" href="javascript:__PrintSection('clp_-RRES_perframe','-RRES_perframe','../..');"><img
         src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
         alt="Print"></a> 
         <a class="navbar" href="#functions">Functions</a>
@@ -271,20 +276,21 @@ be <code>NULL</code> if not needed.
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Signature</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden"><code><b>-RRES_process</b>(itRes,idNld,idPhnTab)</code></td>
+      <td class="hidden"><code><b>-RRES_perframe</b>(itRes,idNld,idPhnTab)</code></td>
     </tr>
     <tr>
       <td class="hidden"></td>
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/rec_postproc.itp(74)</td>
+      <td class="hidden">util/rec_postproc.itp(75)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
-    <h3>Description</h3> Processes a recognition result transducer. The function stips uninteresing
- components, removes epsilon input symbols and adds phoneme label names.
+    <h3>Description</h3> Computes the per-frame recognition result. The function stips uninteresing
+ components, removes epsilon input symbols and adds phoneme (component
+ "~PLB") and output (component "~OLB") label names.
  
 
   <h3>Parameters</h3>
@@ -361,12 +367,12 @@ be <code>NULL</code> if not needed.
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/rec_postproc.itp(109)</td>
+      <td class="hidden">util/rec_postproc.itp(145)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
-    <h3>Description</h3> Returns the per-frame output labels of the recognition result.
+    <h3>Description</h3> Returns the recognition result as a string.
  
 
   <h3>Parameters</h3>
@@ -383,8 +389,90 @@ be <code>NULL</code> if not needed.
 
       </td>
     </tr>  </table>
-    <h3>Return value</h3> A data object containing the frame-wise output labels.
+    <h3>Return value</h3> The recognition result as a string.
 
+  </div>
+  </div>
+  <div id="clp_-RRES_collect">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-RRES_collect</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-RRES_collect','-RRES_collect','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-RRES_collect</b>(idSig,idRpf,itFvr)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/rec_postproc.itp(174)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Collects the recognition result into a speech database.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idSig</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The speech signal.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idRpf</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The per-frame recognition result as returned by <a class="code"
+          href="#clp_-RRES_perframe">RRES_perframe</a>.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itFvr</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The recognized semantics (feature-value relation represented by an
+          FST), can be <code>NULL</code> or emtpy. The transliteration is
+          expected as <a href="javascript:__goDlabpro('automatic/fvrtools.html')"
+          >FVR comment string</a> in <code>itFvr.ud.rtext</code>.
+
+      </td>
+    </tr>  </table>
   </div>
   </div>
 <div class="footer">End of page</div>

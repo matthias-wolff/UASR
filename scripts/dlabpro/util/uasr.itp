@@ -452,7 +452,9 @@ function -UTL_sort_SI(idList)
 ## @cgen:index
 /inline function -UTL_spath()
 {
-  this :sfl[0,0]: "" "splitp" -VAR_strop "?\\?/" "replace" -VAR_strop return;
+  data idAux;
+  ( this :sfl[0,0]:   "" "splitp"  -VAR_strop ) idAux =; 
+  ( :idAux[0,0]: "?\\?/" "replace" -VAR_strop ) return;
 }
 
 ## Returns the SVN revision number of the current UASR working copy.

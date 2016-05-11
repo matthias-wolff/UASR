@@ -31,16 +31,16 @@ function -CFG_getAmId(sAmId,sDirModel)
   
   { sAmId } "_" "split" idAux -strop; idAux.dim 2 < if
     sDirModel "$[sAmId]_*.hmm" FALSE idAux -SH_find;
-    0 0 idAux -sfetch "." "split" -VAR_strop sAmId =;
+    ( ( 0 0 idAux -sfetch ) "." "split" -VAR_strop ) [ 0 0 ] sAmId =;
   end
   sAmId return;
 }
 
 function -CFG_generate()
 {
-  var  sDb;          "db"                  "" "S" -CFG_get_ex        sDb     =;
-  var  sExp;        "exp"                  "" "S" -CFG_get_ex        sExp    =;
-  var  sCommon;     "$UASR_HOME-data/$[sDb]/common"                  sCommon =;
+  var  sDb;     "db"  "" "S" -CFG_get_ex        sDb     =;
+  var  sExp;    "exp" "" "S" -CFG_get_ex        sExp    =;
+  var  sCommon; "$UASR_HOME-data/$[sDb]/common" sCommon =;
   var  sPfa;
   var  nPfa;
   var  nSfa;

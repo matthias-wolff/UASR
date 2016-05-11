@@ -219,11 +219,11 @@ function -CFG_init(sFile,bTerm)
 
   ## Save configuration file name                                               # -------------------------------------
   { { "$[sFile]" } } "" "splitp" idAux -strop;                                  # | 
-  :idAux[0,idAux.dim-1]: "." "split" -VAR_strop .__CFG_sCfgfilename =;          # |
+  :idAux[0,idAux.dim-1]: "." "split" -VAR_strop [ 0 0 ] .__CFG_sCfgfilename =;  # |
 
   ## Load default configuration                                                 # -------------------------------------
   .__CFG_idCfg -reset;                                                          # Reset configuration kay/value list
-  ( ( this :sfl[0,0]: ) "" "splitp" -VAR_strop ) sDefCfg =;                     # Get path of current script
+  ( ( this :sfl[0,0]: ) "" "splitp" -VAR_strop ) [ 0 0 ] sDefCfg =;             # Get path of current script
   ( sDefCfg "?\\?/" "replace" -VAR_strop ) sDefCfg =;                           # Convert to canonical form
   sDefCfg "/../../../default.cfg" + sDefCfg =;                                  # Get path of default config. file
   sDefCfg stdfile -exists if                                                    # Does file exist? Yes >>

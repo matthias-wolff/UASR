@@ -29,12 +29,14 @@
 ##
 ## @cgen:index
 ## @param sStr string
-##          Source string
+##          Source string.
 ## @param sParam string
-##          Parameter to <code>sStrop</code>
+##          Parameter to <code>sStrop</code>.
 ## @param sStrop string
-##          String operation
-## @return The result (string, number, or data)
+##          String operation.
+## @return The result: data if <code>sStrop</code> is "split", "splitall", 
+##         "splitd", or "splitp", a primitive string or number for all other
+##         string operations.
 function -VAR_strop(sStr,sParam,sStrop)
 {
   data idAux;                                                                   # Auxiliary data 
@@ -42,7 +44,10 @@ function -VAR_strop(sStr,sParam,sStrop)
   1 idAux -allocate;                                                            # Allocate one record
   sStr 0 0 idAux -store;                                                        # Store the argument
   idAux sParam sStrop idAux -strop;                                             # Invoke string operation
-  ( idAux.nrec 1 > ) ( idAux.dim 1 > ) || if idAux return; end                  # Return result as data
+  "split"    sStrop == if idAux return; end
+  "splitall" sStrop == if idAux return; end
+  "splitd"   sStrop == if idAux return; end
+  "splitp"   sStrop == if idAux return; end
   idAux [ 0 0 ] return;                                                         # Return primitive result
 }
 

@@ -81,7 +81,7 @@ function -RRES_perframe(itRes,idNld,idPhnTab)
   var  nR;
   var  nXR;
   var  sL;
-  
+
   ## Strip components                                                           # -------------------------------------
   :itRes.td["~TIS"]: idRes -join;                                               # Keep input symbols (Gaussians)
   :itRes.td["~PHN"]: idRes -join;                                               # Keep phoneme symbols
@@ -156,6 +156,35 @@ function -RRES_out(itRes)
   sOut return;                                                                  # Return output string
 
   ## 1) -strop not used because result may be longer than 255 characters! 
+}
+
+## Collects the recognition result into a speech database.
+## 
+## @cgen:index
+## @param idSig data
+##          The speech signal.
+## @param idRpf data
+##          The per-frame recognition result as returned by <a class="code"
+##          href="#clp_-RRES_perframe">RRES_perframe</a>.
+## @param itFvr fst
+##          The recognized semantics (feature-value relation represented by an
+##          FST), can be <code>NULL</code> or emtpy. The transliteration is
+##          expected as <a href="javascript:__goDlabpro('automatic/fvrtools.html')"
+##          >FVR comment string</a> in <code>itFvr.ud.rtext</code>.
+function -RRES_collect(idSig,idRpf,itFvr)
+{
+  data idOrt;                                                                   # Transliteration 
+  var  sDate; ( stdprof -date "?-?" "replace" -VAR_strop ) sDate =;             # Current date
+  var  sTime; stdprof -time                                sTime =;             # Current time
+  var  sTid;  "$[sDate]-$[sTime]"                          sTid  =;             # Turn ID: a time stamp
+
+  ## Get transliteration                                                        # -------------------------------------
+  itFvr if
+    ( itFvr.ud.rtext " " "split" -VAR_strop ) ' idOrt =;
+  else
+    ## TODO: Make transliteration from idRpf output labels!
+  end
+idOrt -print; 1 brk;
 }
 
 ## EOF
