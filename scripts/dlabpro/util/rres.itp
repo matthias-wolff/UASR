@@ -1,0 +1,322 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: recognizer(.exe) result post-processing utilities
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013-2016 UASR contributors (see COPYRIGHT file)
+## - Chair of Communications Engineering, BTU Cottbus-Senftenberg
+## - Fraunhofer IKTS, Dresden
+## - Chair of System Theory and Speech Technology, TU Dresden
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Loads the data files produced by the recognizer from the locations committed
+## thorugh the command line arguments.
+##
+## @cgen:index
+## @param nFArg integer
+##          One-based index of first command line argument, standard is 1.
+## @param iSI object
+##          Filled with the session info, can be <code>NULL</code> if not 
+##          needed.
+## @param itRec fst
+##          Filled with the main recognition result, can be <code>NULL</code> if
+##          not needed.
+## @param itRef fst
+##          Filled with the reference recognition result, can be 
+##          <code>NULL</code> if not needed.
+## @param idNld data
+##          Filled with the frame-by-Gaussian neglog. density array, can be 
+##          <code>NULL</code> if not needed.
+## @param idSig data
+##          Filled with the input speech signal, can be <code>NULL</code> if not
+##          needed.
+## @param itFvr fst
+##          Filled with the recognized semantics (feature-value relation), can 
+##          be <code>NULL</code> if not needed.
+function -RRES_getargs(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr)
+{
+  itRec if ( nFArg     -argv ) itRec -restore;              end                 # Load main recognition result
+  itRef if ( :nFArg+1: -argv ) itRef -restore;              end                 # Load reference recognition result
+  idNld if ( :nFArg+2: -argv ) idNld -restore;              end                 # Load neglog. density array
+  idSig if ( :nFArg+3: -argv ) "wav" idSig stdfile -import; end                 # Load speech signal
+  itFvr if ( :nFArg+4: -argv ) itFvr -restore;              end                 # Load recognized semantics
+  iSI   if ( :nFArg+5: -argv ) iSI   -restore;              end                 # Load session info
+}
+
+## Computes the per-frame recognition result. The function stips uninteresing
+## components, removes epsilon input symbols and adds phoneme (component 
+## "~PLB") and output (component "~OLB") label names.
+##
+## @cgen:index
+## @param itRes fst
+##          The recognition result transducer (consecutive path though the
+##          recognition network).
+## @param idNld data
+##          The neglog likelihood matrix (records: feature vectors, components:
+##          GMMs).
+## @param idPhnTab data
+##          The phoneme table, phoneme labels are expected in component 0.
+## @return A data object containing the processed path. 
+function -RRES_perframe(itRes,idNld,idPhnTab)
+{
+  data idRes;                                                                   # The stripped recognition result
+  data idOut;
+  data idAux;                                                                   # An auxiliary data object
+  data idAux2;
+  var  nR;
+  var  nXR;
+  var  sL;
+
+  ## Strip components                                                           # -------------------------------------
+  :itRes.td["~TIS"]: idRes -join;                                               # Keep input symbols (Gaussians)
+  :itRes.td["~PHN"]: idRes -join;                                               # Keep phoneme symbols
+  :itRes.td["~LSR"]: idRes -join;                                               # Keep phoneme symbols
+
+  ## Remove epsilon input symbols                                               # -------------------------------------
+  :idRes["~TIS"].<0: idRes -dmark;                                              # Mark epsilcon records
+  idRes 0 0 idRes /mark -delete;                                                # Delete 'em
+
+  ## Get per-frame neglog likelihoods                                           # -------------------------------------
+  "~RID" -1 idRes -rindex;                                                      # Add record index component
+  :idRes["~RID"]: 0 :idRes["~TIS"]: 0 idNld idAux -lookup_2;                    # Get neglog likelihoods
+  0 "~NLL" idAux -set_cname; idAux idRes -join;                                 # Add to stripped recognition result
+  idRes ( "~RID" idRes -find_comp ) 1 idRes -delete;                            # Delete record index component
+
+  ## Add symbolic phoneme labels                                                # -------------------------------------
+  :idRes["~PHN"]: 0 idPhnTab 0 1 idAux -lookup;                                 # Look up phoneme labels
+  0 "~PLB" idAux -set_cname; idAux idRes -join;                                 # Add to stripped recognition result
+  
+  ## Get per-frame output labels                                                # -------------------------------------
+  :itRes.td["~TOS"]: 0 itRes.os 0 1 idOut -lookup;
+  0 "~OLB" idOut -set_cname;
+  :itRes.td["~TIS"]: idOut -join;
+  :itRes.td["~TOS"]: idOut -join;
+  
+  ## - Move output labels away from epsilon-input transitions                   # - - - - - - - - - - - - - - - - - - -
+  "" sL =;                                                                      # Output label aggregation buffer
+  -1 nXR =;                                                                     # Last non-epsilon transition
+  0 nR =; nR idOut.nrec < while                                                 # Loop over transitions >>
+    :sL+=idOut[nR,0];                                                           #   Aggregate output label
+    :idOut[nR,1]<0: if                                                          #   Epsilon input symbol >>
+      :idOut[nR,0]="";                                                          #     No output
+    else                                                                        #   << Non-epsilon input symbol >>
+      :idOut[nR,0]=sL;                                                          #     Write aggregated output label
+      "" sL =;                                                                  #     Clear label aggregation buffer
+      nR nXR =;                                                                 #     Remember last non-eps transition
+    end                                                                         #   <<
+    nR ++=;                                                                     #   Next transition
+  end                                                                           # <<
+  ( sL "" != ) ( nXR 0 >= ) && if                                               # Rest in aggregation buffer >>
+    :idOut[nXR,0]+=sL;                                                          #   Write to last non-eps transition
+  end                                                                           # <<
+
+  ## - Remove epsilon input symbols                                             # - - - - - - - - - - - - - - - - - - -
+  :idOut["~TIS"].<0: idOut -dmark;                                              # Mark epsilcon transition
+  idOut 0 0 idOut /mark -delete;                                                # Delete 'em
+  idOut 0 1 idOut -select;                                                      # Keep only output labels
+  idOut idRes -join;                                                            # Join to result
+
+  ## Return result                                                              # ---------------------------------------  
+  idNld idRes -copy_descr;
+  idRes return;                                                                 # Return result
+}
+
+## Computes the confidence of a segment of the speech recognition result.
+##
+## @param idRec data
+##          The post-processed recognition result as returned by <a class="code"
+##          href="#clp_-RRES_perframe">RRES_perframe</a>.
+## @param idRef data
+##          The post-processed reference recognition result as returned by <a 
+##          class="code" href="#clp_-RRES_perframe">RRES_perframe</a>.
+## @param idPhnTab data
+##          The phoneme table, phoneme labels are expected in component 0.
+## @param nFF integer
+##          The zero-based first frame index, inclusive; negative for first
+##          frame.
+## @param nLF integer
+##          The zero-based last frame index, inclusive; negative for last frame.
+## @param nNadT double
+##          Rejection threshold of normalized acoustic distance (NAD); negative
+##          for default value (0.05).
+## @param nNedT double
+##          Rejection threshold of normalized edit distance (NED); negative for
+##          default value (0.5).
+## @param nLambda double
+##          NAD-NED interpolation weight; negative for default (0.5).
+## @return The confidence.
+function -RRES_confidence(idRec,idRef,idPhnTab,nFF,nLF,nNadT,nNedT,nLambda)
+{
+  data idRes;                                                                   # Copy of recognition result
+  data idAux;                                                                   # Auxiliary data                     
+  data idAux2;                                                                  # Auxiliary data 2
+  var  nNad;                                                                    # Normalized acoustic distance
+  var  nNed;                                                                    # Normalized edit distance
+
+  ## Default values                                                             # -------------------------------------
+  nFF     0 < if 0                 nFF =; end                                   # Default first frame
+  nLF     0 < if ( idRec.nrec -- ) nLF =; end                                   # Default last frame
+  nNadT   0 < if 0.05            nNadT =; end                                   # Default NAD threshold
+  nNedT   0 < if 0.5             nNedT =; end                                   # Default NED threshold
+  nLambda 0 < if 0.5           nLambda =; end                                   # Default NAD-NED interpolation weight
+
+  ## Prepare data                                                               # -------------------------------------
+  :idRec["~PHN"]: idRes =;                                                      # Copy phoneme sequence
+  :idRec["~NLL"]: idRes -join;                                                  # Copy neglog. likelihoods
+  :idRef["~PHN"]: idRes -join;                                                  # Copy reference phoneme sequence
+  :idRef["~NLL"]: idRes -join;                                                  # Copy reference neglog. likelihoods
+  { "PHN" "NLL" "PHNr" "NLLr" } ' 0 idRes -set_cnames;                          # Name components
+  idRes nFF ( nLF nFF - ++ ) idRes /rec -select;                                # Get segment of recognition result
+  
+   { "." "#" } ' idPhnTab 0 0 idAux -gen_index;                                 # Get pause and garbage phoneme indices
+  :(idRes["PHN"].==idAux[0,0]).||(idRes["PHNr"].==idAux[0,0]): idRes -dmark;    # Mark pauses labels
+  idRes 0 0 idRes /mark -delete;                                                # Delete
+  :(idRes["PHN"].==idAux[1,0]).||(idRes["PHNr"].==idAux[1,0]): idRes -dmark;    # Mark garbage labels
+  idRes 0 0 idRes /mark -delete;                                                # Delete
+
+  idRes.nrec 0 == if 0 return; end                                              # No frames --> conf:=0
+
+  ## Compute normalized acoustic distance (NAD)                                 # -------------------------------------
+  :idRes["NLL"]-idRes["NLLr"]: NULL 0 "sum" idAux  /rec -aggregate;             # Sum NLL differences of frames
+  :idRes["NLL"]:               NULL 0 "sum" idAux2 /rec -aggregate;             # Sum NLLs of speech recognition res. 
+  :nNad = idAux[0,0]/idAux2[0,0];                                               # Compute normalized acoustic distance
+
+  ## Compute normalized edit distance  (NED)                                    # -------------------------------------
+  :idRes["PHN"].!=idRes["PHNr"]: NULL 0 "sum" idAux /rec -aggregate;            # Sum Hamming distance of frame labels
+  :nNed = idAux[0,0]/idRes.nrec;                                                # Compute normalzed edit distance
+
+  ## Compute confidence                                                         # -------------------------------------
+  :nLambda*max(1-nNed/nNedT,-1)+(1-nLambda)*max(1-nNad/nNadT,-1): return;       # Compute and return confidence
+}
+
+## Returns the recognition result as a string.
+##
+## @cgen:index
+## @param itRes fst
+##          The recognition result transducer (consecutive path though the
+##          recognition network).
+## @return The recognition result as a string.
+function -RRES_out(itRes)
+{
+  data idAux;                                                                   # Auciliary data
+  var  sOut;  "" sOut -sset;                                                    # Output string buffer
+  var  i;                                                                       # Loop counter
+
+  :itRes.td["~TOS"]: 0 itRes.os 0 1 idAux -lookup;                              # Get output symbols
+  0 i =; i idAux.nrec < while                                                   # Loop over transitions >>
+    :idAux[i,0]: sOut +=;                                                       #   Aggregate output string 1)
+    i ++=;                                                                      #   Next transition
+  end                                                                           # <<
+  sOut return;                                                                  # Return output string
+
+  ## 1) -strop not used because result may be longer than 255 characters! 
+}
+
+## Collects the recognition result into a speech database.
+## 
+## @cgen:index
+## @param idSig data
+##          The speech signal.
+## @param idRpf data
+##          The per-frame recognition result as returned by <a class="code"
+##          href="#clp_-RRES_perframe">RRES_perframe</a>.
+## @param itFvr fst
+##          The recognized semantics (feature-value relation represented by an
+##          FST), can be <code>NULL</code> or emtpy. The transliteration is
+##          expected as <a href="javascript:__goDlabpro('automatic/fvrtools.html')"
+##          >FVR comment string</a> in <code>itFvr.ud.rtext</code>.
+## @param idPhnTab data
+##          The phoneme table, phoneme labels are expected in component 0.
+## @param sDirOur string
+##          Output directory for collected data.
+function -RRES_collect(idSig,idRpf,itFvr,idPhnTab,sDirOut)
+{
+  DGen iDG;                                                                     # Document generator
+  data idOrt;                                                                   # Transliteration (ORT tier)
+  data idPtb;                                                                   # Modified phoneme table
+  data idMau;                                                                   # Phoneme labels (MAU tier)
+  data idFls;                                                                   # File list
+  data idAux;                                                                   # Auxiliary data
+  var  sTid;                                                                    # Turn ID (a time stamp)
+  var  sLab;                                                                    # Turn label (recognition result)
+  var  nSpf;                                                                    # Samples per frame
+  
+  ## Make turn ID                                                               # -------------------------------------
+  ( stdprof -date "?-?" "replace" -VAR_strop ) "-" + sTid =;                    # Current date plus "-" ...
+  stdprof -time sTid +=;                                                        # ... plus current time
+  "ppf: collect $[sDirOut]/[...]/$[sTid].[...]\n" -echo;                        # Notify
+
+  ## Make turn label (recognition result)                                       # -------------------------------------
+  :idRpf["~OLB"]: "" "rcat" idAux -strop;                                       # Concatenate output labels
+  :idAux[0,0]: sLab -sset;                                                      # Store in sLab
+
+  ## Write signal and FVR file                                                  # -------------------------------------
+  :idSig*16384: ( -type short ) idAux -tconvert;                                # Convert samples to integers
+  "$[sDirOut]/sig/$[sTid].wav" "wav" idAux stdfile -export;                     # Export wave file
+  "$[sDirOut]/fvr/$[sTid].fst" itFvr -save;                                     # Export FVR file
+
+  ## Get transliteration                                                        # -------------------------------------
+  itFvr if                                                                      # Have FVR >>
+    itFvr.ud.rtext if                                                           #   Have FVR comment string >>
+      ( itFvr.ud.rtext " " "split" -VAR_strop ) ' idOrt =;                      #     Get transliteration
+    end                                                                         #   <<
+  end                                                                           # <<
+  idOrt -is_empty if                                                            # Have no transliteration yet >>
+    ## TODO: Make transliteration from idRpf output labels!
+  end                                                                           # <<
+  :zeros(1,idOrt.nrec): idAux =; 0 1 idAux -fill;                               # Make word index component
+  idOrt idAux -join; idAux idOrt =;                                             # Add as first component in idOrt
+
+  ## Get phonetic labels                                                        # -------------------------------------
+  :nSpf = round(idRpf.rinc/idSig.rinc);                                         # Compute samples per frame
+  nSpf 0 <= if                                                                  # Samples per frame not detected >>
+    "Cannot detect number of samples per frame. Assuming 160." 1      -WARNING; #   Warning
+    160 nSpf =;                                                                 #   Standard value
+  end                                                                           # <<
+  idPhnTab 0 1 idPtb -select;                                                   # Copy phoneme table
+  idPtb "?.?<p:>"  "replace" idPtb -strop;                                      # Replace pause label
+  idPtb "?#?<nib>" "replace" idPtb -strop;                                      # Replace garbage label
+  :idRpf["~PHN"]: 0 idPtb 0 1 idMau -lookup;                                    # Look up label names
+  idMau 0 idMau -compress;                                                      # Compress
+  :idMau*=nSpf;                                                                 # Convert #frames to #samples
+  idMau 0 1 idAux -select; idMau 0 1 idMau -delete;                             # Move label component to idAux
+  :-1*ones(1,idMau.nrec): idMau -join;                                          # Add symlink. component
+  idAux idMau -join;                                                            # Join label component  
+
+  ## Write partitur file                                                        # -------------------------------------
+  ## - see https://www.phonetik.uni-muenchen.de/Bas/BasFormatseng.html#Partitur_General
+  "LHD: Partitur 1.2.16\n"                                              iDG >>; # Header
+  "SNB: 2\n"                                                            iDG >>; # Number of bytes per sample
+  "SAM: ${round(1000/idSig.rinc)}\n"                                    iDG >>; # Sampling frequency in Hz
+  "SBF: 01\n"                                                           iDG >>; # Intel byte order
+  "SSB: 16\n"                                                           iDG >>; # Bit resolution
+  "NCH: ${idSig.dim}\n"                                                 iDG >>; # Number of channels
+  "LBD:\n"                                                              iDG >>; # End of header
+  idOrt "ORT:\t" "\t" "\n" iDG -table;                                          # ORT tier (transliteration)
+  idMau "MAU:\t" "\t" "\n" iDG -table;                                          # MAU tier (phoneme labels)
+  "$[sDirOut]/par/$[sTid].par" iDG -write                                       # Write partitur file
+
+  ## Continue file list                                                         # -------------------------------------
+  "file"  255 idFls -addcomp;                                                   # Add file component to file list
+  "label" 255 idFls -addcomp;                                                   # Add label component to file list
+  "$[sDirOut]/collect.flst" "ascii" idFls stdfile /noerror -import;             # Load file list (ignore errors)
+  { "$[sTid]" "$[sLab]" } idFls -cat;                                           # Append new entry
+  "$[sDirOut]/collect.flst" "ascii" idFls stdfile -export;                      # Write file list
+}
+
+## EOF
