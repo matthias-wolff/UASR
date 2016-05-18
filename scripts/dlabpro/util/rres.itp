@@ -227,7 +227,22 @@ function -RRES_out(itRes)
   ## 1) -strop not used because result may be longer than 255 characters! 
 }
 
-## Collects the recognition result into a speech database.
+## Collects the recognition result into a speech database. The function will
+## create/update the following folder structure
+## <pre>
+##   &lt;sDirOut&gt;
+##   |-- fvr
+##   |   |-- &lt;TID&gt;.fst - Recognized semantics (feature-value relation)
+##   |   '-- ...
+##   |-- par
+##   |   |-- &lt;TID&gt;.par - <a href="https://www.phonetik.uni-muenchen.de/Bas/BasFormatseng.html#Partitur" target="_blank">Partitur file</a> containing MAU and ORT tiers
+##   |   '-- ...
+##   |-- sig
+##   |   |-- &lt;TID&gt;.wav - Signal file
+##   |   '-- ...
+##   '-- collect.flst  - File list including the recognition result (word sequence or <a href="javascript:__goDlabpro('automatic/fvrtools.html')">FVR string</a>)
+## </pre>
+## <p>where <code>&lt;TID&gt;</code> denotes the unique turn ID (time stamp).</p>
 ## 
 ## @cgen:index
 ## @param idSig data

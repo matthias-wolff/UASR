@@ -28,17 +28,17 @@
 <head>
   <meta http-equiv="Content-Type" content= "text/html; charset=iso-8859-1">
   <meta http-equiv="Content-Style-Type" content="text/css">
-  <meta name="description" content=   "UASR documentation - UASR script util/rec_postproc.itp">
+  <meta name="description" content=   "UASR documentation - UASR script util/rres.itp">
   <meta name="author" content="">
   <meta name="generator" content="UASR_DOC">
-  <title>UASR script util/rec_postproc.itp</title>
+  <title>UASR script util/rres.itp</title>
   <link rel=stylesheet type="text/css" href="../../default.css">
 </head>
 <script type="text/javascript">
 
   if (top==self)
   {
-    var sLocation = "../../index.html?automatic/util/rec_postproc.itp.html";
+    var sLocation = "../../index.html?automatic/util/rres.itp.html";
     if (location.hash.length>0)
       sLocation += ";"+location.hash.substr(1);
     top.location = sLocation;
@@ -48,14 +48,14 @@
 <script type="text/javascript">__sRootPath="../../..";</script>
 <body>
 
-  <div id="clp_util/rec_postproc.itp">
+  <div id="clp_util/rres.itp">
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
       <td nowrap width="25%" class="navbar">
-        UASR script <span class="mid">util/rec_postproc.itp</span>
+        UASR script <span class="mid">util/rres.itp</span>
       </td>
       <td nowrap width="75%" class="navbar" style="text-align:right;">
-        <a class="navbar" href="javascript:__PrintSection('','util/rec_postproc.itp','../..');"><img
+        <a class="navbar" href="javascript:__PrintSection('','util/rres.itp','../..');"><img
         src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
         alt="Print"></a> 
         <a class="navbar" href="#functions">Functions</a>
@@ -74,7 +74,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Signature</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden"><nobr><b>rec_postproc</b> </nobr></td>
+      <td class="hidden"><nobr><b>rres</b> </nobr></td>
     </tr>
     <tr>
       <td class="hidden"></td>
@@ -109,13 +109,18 @@ thorugh the command line arguments.
       </td>
     </tr>
     <tr>
+      <td><a href="#clp_-RRES_confidence"><code class="link">-RRES_confidence</code></a></td>
+      <td><code><b>-RRES_confidence</b>(idRec,idRef,idPhnTab,nFF,nLF,nNadT,nNedT,nLambda)</code><br>&nbsp;<br> Computes the confidence of a segment of the speech recognition result.
+      </td>
+    </tr>
+    <tr>
       <td><a href="#clp_-RRES_out"><code class="link">-RRES_out</code></a></td>
       <td><code><b>-RRES_out</b>(itRes)</code><br>&nbsp;<br> Returns the recognition result as a string.
       </td>
     </tr>
     <tr>
       <td><a href="#clp_-RRES_collect"><code class="link">-RRES_collect</code></a></td>
-      <td><code><b>-RRES_collect</b>(idSig,idRpf,itFvr)</code><br>&nbsp;<br> Collects the recognition result into a speech database.
+      <td><code><b>-RRES_collect</b>(idSig,idRpf,itFvr,idPhnTab,sDirOut)</code><br>&nbsp;<br> Collects the recognition result into a speech database.
       </td>
     </tr>
   </table>
@@ -154,7 +159,7 @@ thorugh the command line arguments.
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/rec_postproc.itp(51)</td>
+      <td class="hidden">util/rres.itp(51)</td>
     </tr>
   </table>
   </div>
@@ -283,7 +288,7 @@ be <code>NULL</code> if not needed.
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/rec_postproc.itp(75)</td>
+      <td class="hidden">util/rres.itp(75)</td>
     </tr>
   </table>
   </div>
@@ -334,6 +339,145 @@ be <code>NULL</code> if not needed.
 
   </div>
   </div>
+  <div id="clp_-RRES_confidence">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-RRES_confidence</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-RRES_confidence','-RRES_confidence','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-RRES_confidence</b>(idRec,idRef,idPhnTab,nFF,nLF,nNadT,nNedT,nLambda)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/rres.itp(163)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Computes the confidence of a segment of the speech recognition result.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idRec</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The post-processed recognition result as returned by <a class="code"
+          href="#clp_-RRES_perframe">RRES_perframe</a>.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idRef</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The post-processed reference recognition result as returned by <a
+          class="code" href="#clp_-RRES_perframe">RRES_perframe</a>.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idPhnTab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The phoneme table, phoneme labels are expected in component 0.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">integer&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nFF</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The zero-based first frame index, inclusive; negative for first
+          frame.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">integer&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nLF</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The zero-based last frame index, inclusive; negative for last frame.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">double&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nNadT</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Rejection threshold of normalized acoustic distance (NAD); negative
+          for default value (0.05).
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">double&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nNedT</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Rejection threshold of normalized edit distance (NED); negative for
+          default value (0.5).
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">double&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nLambda</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          NAD-NED interpolation weight; negative for default (0.5).
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> The confidence.
+
+  </div>
+  </div>
   <div id="clp_-RRES_out">
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
@@ -367,7 +511,7 @@ be <code>NULL</code> if not needed.
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/rec_postproc.itp(145)</td>
+      <td class="hidden">util/rres.itp(214)</td>
     </tr>
   </table>
   </div>
@@ -419,19 +563,34 @@ be <code>NULL</code> if not needed.
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Signature</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden"><code><b>-RRES_collect</b>(idSig,idRpf,itFvr)</code></td>
+      <td class="hidden"><code><b>-RRES_collect</b>(idSig,idRpf,itFvr,idPhnTab,sDirOut)</code></td>
     </tr>
     <tr>
       <td class="hidden"></td>
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/rec_postproc.itp(174)</td>
+      <td class="hidden">util/rres.itp(262)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
-    <h3>Description</h3> Collects the recognition result into a speech database.
+    <h3>Description</h3> Collects the recognition result into a speech database. The function will
+ create/update the following folder structure
+ <pre>
+   &lt;sDirOut&gt;
+   |-- fvr
+   |   |-- &lt;TID&gt;.fst - Recognized semantics (feature-value relation)
+   |   '-- ...
+   |-- par
+   |   |-- &lt;TID&gt;.par - <a href="https://www.phonetik.uni-muenchen.de/Bas/BasFormatseng.html#Partitur" target="_blank">Partitur file</a> containing MAU and ORT tiers
+   |   '-- ...
+   |-- sig
+   |   |-- &lt;TID&gt;.wav - Signal file
+   |   '-- ...
+   '-- collect.flst  - File list including the recognition result (word sequence or <a href="javascript:__goDlabpro('automatic/fvrtools.html')">FVR string</a>)
+ </pre>
+ <p>where <code>&lt;TID&gt;</code> denotes the unique turn ID (time stamp).</p>
  
 
   <h3>Parameters</h3>
@@ -471,6 +630,27 @@ be <code>NULL</code> if not needed.
           expected as <a href="javascript:__goDlabpro('automatic/fvrtools.html')"
           >FVR comment string</a> in <code>itFvr.ud.rtext</code>.
 
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idPhnTab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The phoneme table, phoneme labels are expected in component 0.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sDirOut</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">
       </td>
     </tr>  </table>
   </div>
