@@ -492,12 +492,13 @@ function -RN_add_unit(sFile,sFilter,iSI)
     "$[.sDirOut]/" ( sFilter "#:#.normalizer.svg" "replace" -VAR_strop ) + s =; #   Make file name
     "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
     s itAux.is itAux.os -1 itAux -FST_render;                        "." -MSG2; #   Protocol
-    "\n   - Check Fsg on parity of braces ..."                           -MSG2; #   Protocol
-    fst itCheck; itLM itCheck =;                                                #   create FST for check
-    ( itCheck fvrtools -fsg_check ) not if                                      #   check brace parity >>
+    "\n   - Check square bracket parity of output language ..."          -MSG2; #   Protocol
+    fst itCheck;                                                                #   Check error path
+    ( itLM itCheck fvrtools -fsg_fvr_check ) not if                             #   Check output symb. brace parity >>
       " FAILED" -COLOR_red                                               -MSG2; #      Protocol
       "$[.sDirOut]/" ( sFilter "#:#_ErrDetect.svg" "replace" -VAR_strop ) + s =;#      Make file name
-      s itCheck.is itCheck.os -1 itCheck -FST_render;                    -MSG2; #      Protocol
+      s itCheck.is itCheck.os -1 itCheck -FST_render;                "." -MSG2; #      Protocol
+      0 return;                                                                 #      return not correct
     else                                                                        #      is check correct?
       " ok"                                                              -MSG2; #      Protocol
     end                                                                         #   <<
