@@ -38,12 +38,11 @@
 "lx.itp"           include;                                                     # Lexicon
 "os.itp"           include;                                                     # Operating system dependent
 "prosody.itp"      include;                                                     # Prosody
-"rec_postproc.itp" include;                                                     # recognizer(.exe) result post-proc.
+"rres.itp"         include;                                                     # recognizer(.exe) result post-proc.
 "sig.itp"          include;                                                     # Signals
 "spp.itp"          include;                                                     # Signal pre-processing
 "svm.itp"          include;                                                     # For dLabPro class svm
 "uasr.itp"         include;                                                     # UASR
-"ufea.itp"         include;                                                     # Universal primary feature analysis
 "var.itp"          include;                                                     # For dLabPro class var
 
 ## EOF
