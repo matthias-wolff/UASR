@@ -155,3 +155,64 @@ function -PACK_pfa(nrm)
 	"\n  nrm.log: $[nrm]" -MSG;
 	nrm return;
 }
+
+function -NRM_Calc(idHist)
+{
+  # Config
+  data idPrc; { 0 3e-7 1e-6 3e-6 } ' idPrc =;
+  1e5  var nMinHistSum;
+  1    var nMaxId;
+  1.05 var nMaxInc
+
+  # Split Val + Hist
+  data idVal;
+  :idHist[0]: idVal =;
+  idHist 1 :idHist.dim-1: idHist -select;
+
+  # Get sum + max + activation
+  data idSum; idHist sum idSum =;
+  data idMax; :idHist.>0: idVal .* vmax idMax =;
+  data idAct; idSum nMinHistSum .>= idAct =;
+
+  # Find max pos
+  data idMaxI; idMax ' idVal 0 0 idMaxI -gen_index;
+
+  # Get percentage info for max
+  var nH;
+  var nP;
+  var nPrc;
+  var nSum;
+  idPrc.nrec idMax -reallocate;
+  0 nH =; nH idHist.dim < while; :idAct[0,nH]: if;
+    :idMaxI[nH,0]: nP =;
+    0 nSum =;
+    1 nPrc =; nPrc idPrc.nrec < while;
+      nP 0 > :nSum/idSum[0,nH]: :idPrc[nPrc,0]: < && while;
+        nSum :idHist[nP,nH]: + nSum =;
+      nP --=; end;
+      :idMax[nPrc,nH]=idVal[nP,0];
+    nPrc ++=; end;
+  end; nH ++=; end;
+
+  # Get cuttoff of max nrm
+  data idCutOff; idMax idCutOff =;
+  data idAux;
+  32768 log :idVal[idVal.nrec-1,0]/idVal[0,0]: :1/(idVal.nrec-1): ^ log / round var nD15bit;
+  0 nH =; nH idHist.dim < while; :idAct[0,nH]: if;
+    idMax idVal nH 0 idAux -gen_index;
+    :max(idAux-nD15bit+1,0): idAux =;
+    0 nPrc =; nPrc idPrc.nrec < while;
+      0 0 (
+        ( 0 :idAux[nPrc,0]: :idHist[nH]: /rec -xfetch ) sum
+      ) -fetch :idSum[0,nH]: / nPrc nH idCutOff -store;
+    nPrc ++=; end;
+  end; nH ++=; end;
+
+  # Add to config
+  var nNrm;
+  data idName; idHist idName -get_cnames;
+  0 nH =; nH idHist.dim < while; :idAct[0,nH]: if;
+    :idMax[nMaxId,nH]*nMaxInc: nNrm =;
+    { "uasr.recfix.nrm.${idName[nH,0]}" "$[nNrm]" } .__CFG_idCfg -cat;
+  end; nH ++=; end;
+}

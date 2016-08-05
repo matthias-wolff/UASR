@@ -969,6 +969,7 @@ function -FEA_sfa(idFea,iFI,nMsf,idMsf,idLsf)
 
   ## Do transformations                                                         # -------------------------------------
   idFea idMsf .__FEA_iSfa -delta;                                    "." -MSG2; # idFea = delta(idFea,idDlt)
+  idMsf iFI.idDlt -UPFA_hist_update_dlt;                                        # Update UPFA histogram
   iFI.idW idMsf iFI.idX + * idMsf =;                                 "." -MSG2; # idFea = iFI.idW*(idFea+iFI.idX)
 
   ## Split MSF and LSF                                                          # -------------------------------------
@@ -989,6 +990,8 @@ function -FEA_sfa(idFea,iFI,nMsf,idMsf,idLsf)
   idF nIcLab idF.dim nIcLab - idLab -select;                                    # Copy labels
   idMsf if idF 0    nMsf idMsf -select; idLab idMsf -join; end                  # Copy MSF's
   idLsf if idF nMsf nLsf idLsf -select; idLab idLsf -join; end       "." -MSG2; # Copy LSF's
+
+  idMsf ' "pca" -UPFA_hist_update;                                              # Update UPFA histogram
 }
 
 ## Inverse secondary feature analysis.

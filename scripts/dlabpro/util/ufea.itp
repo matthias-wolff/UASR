@@ -222,14 +222,17 @@ function -UPFA_ana(idSig,idPM,idFea,idDummy,iPfa)
   end;                                                                          # <<
   ## Windowing                                                                  # -------------------------------------
   idFea iPfa.wlen iPfa.len iPfa.wtype iPfa.wnorm window noisify idFea =;        # Perform windowing & noisify
+  idFea "frm" -UPFA_hist_update;                                                # Update histogram
 
   ## Transformation + mapping                                                   # -------------------------------------
   idFea iPfa -UPFA_trf_$[iPfa.trf];                                             # Call transformation function
   idFea -UPFA_map_$[iPfa.tmap];                                                 # Call transformation mapping function
   # TODO: noiserdc
+  idFea "trf" -UPFA_hist_update;                                                # Update histogram
 
   ## Filter matrix                                                              # -------------------------------------
   iPfa.fil -is_empty not if iPfa.fil idFea * idFea =; end                       # Apply filter matrix if configured
+  idFea "fil" -UPFA_hist_update;                                                # Update histogram
 
   ## Output dimension                                                           # -------------------------------------
   idFea.dim iPfa.dim > if idFea iPfa.dim :idFea.dim-iPfa.dim: idFea -delete; end #Clip dimension to configured dimension
@@ -519,3 +522,98 @@ function -UPFA_init()
   object .__FEA_iPfa; iPfa .__FEA_iPfa =;                                       # Create global object and copy proc.
 }
 
+FALSE var .__bUPFAHist;
+histogram .__UPFAHist;
+data .__UPFAHistPos; { "frm" "trf" "fil" "dlt0" "dlt1" "dlt2" "dlt3" "pca" } ' .__UPFAHistPos =;
+
+function -UPFA_hist()
+{
+  ## Variables                                                                  # -------------------------------------
+  file iF;                                                                      # File list for signal analysis
+  data idSns;   -SNS_get_tab                   idSns   =;                       # Get sensor table
+  data idFea;                                                                   # Feature data
+  var  nSns;                                                                    # Current sensor index
+  var  sSxt;                                                                    # Sensor file extension
+  object  iFI;                                                                  # Feature information object
+  var        nMsf;                                                              # Number of most significant features
+
+  ## Initialize                                                                 # -------------------------------------
+  "\n\n// UPFA Histogram"                                                 -MSG; # Protocol
+  ( "flist.sep" "\t " "S" -CFG_get_ex ) iF set sep;                             # Set file list separator(s)  
+  "train" "" -CFG_get_flist iF set flist;                                       # Signal files list
+  "sfa.dim" 24 -CFG_get nMsf -vset;                                             # Get number of MSF
+  var        sDirMod; ( "model"     ""        -CFG_get_path ) sDirMod -sset;    # Model directory
+       .__UPFAHist -reset;
+  -15  .__UPFAHist -set min;
+  5    .__UPFAHist -set max;
+  1000 .__UPFAHist -set bins;
+  TRUE .__bUPFAHist =;                                                          # Enable histogram updatea
+
+  ## Sensor loop                                                                # -------------------------------------
+  :idSns[0,0]: if "\n// No. of sensors  : $[idSns.nrec]" -MSG; end              # Protocol
+  label L_SNS;                                                                  # Loop over sensors
+
+    ## File loop                                                                #   - - - - - - - - - - - - - - - - - -
+    "\n" -MSG; :idSns[nSns,0]: if "\n   Sensor ${idSns[nSns,0]}" -MSG; end      #   Protocol
+    :idSns[nSns,0]: if ".${idSns[nSns,0]}" else "" end sSxt =;                  #   Get sensor file extension
+    "${sDirMod}/feainfo$[sSxt].object" iFI -FEA_info;                           #   Get feature info object
+    "\n   Feature analysis of $[iF.len] signal files ..."                 -MSG; #   Protocol
+    0 1 -PBAR;                                                                  #   Begin progress bar
+    iF -reset; label L_FILE; iF -next if                                        #   Loop over files >>
+
+      "\n"                                                             3 -MSGX; #     Protocol
+      "\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "                 -MSG2; #     Protocol
+      :(iF.nfile+1)/iF.len: 1 -PBAR;                                            #     Display progress
+
+      ## Do primary feature analysis                                            #     . . . . . . . . . . . . . . . . .
+      iF "${idSns[nSns,0]}" "S" idFea -FEA_get;                                 #     Get primary feature vectors
+      idFea iFI nMsf idFea NULL -FEA_sfa;                                       #     Get secondary feature vectors
+
+      " ok"                                                              -MSG2; #     Protocol
+      goto L_FILE;                                                              #     End of file loop
+    end                                                                         #   <<
+    "\n   " -MSG2; "done\n"                                               -MSG; #   Protocol
+
+    ## End of sensor loop                                                       #   - - - - - - - - - - - - - - - - - -
+    nSns ++=; nSns idSns.nrec < if goto L_SNS; end                              #   End of loop
+
+  FALSE .__bUPFAHist =;                                                         # Disable histogram update
+  "\n// UPFA Histogramm completed"                                        -MSG; # Protocola
+
+  data idH;
+  .__UPFAHist.hist idH =;
+  idH :idH.nrec/idH.nblock: idH.nblock idH -reshape;
+
+  .__UPFAHistPos 0 idH -set_cnames;
+  "~VAL" -type double 0 idH -insertcomp;
+  0 1 idH -mark;
+  :(.__UPFAHist.max-.__UPFAHist.min)/.__UPFAHist.bins: var nStep;
+  :.__UPFAHist.min+nStep/2: nStep idH /mark -fill;
+  :10.^idH[0]: 0 1 0 idH -xstore;
+
+  idH return;
+}
+
+function -UPFA_hist_update(idDat,sPos)
+{
+  .__bUPFAHist not if leave end;
+
+  data idPos; { sPos } .__UPFAHistPos 0 0 idPos -gen_index;
+
+  data idSeq; idDat :idDat.dim*idDat.nrec: 1 idSeq -reshape;
+  idSeq abs .log idSeq =;
+  idSeq :ones(1,idSeq.nrec): :idPos[0,0]: .* .__UPFAHist -update_i;
+}
+
+function -UPFA_hist_update_dlt(idDat,idDlt)
+{
+  .__bUPFAHist not if leave end;
+
+  data nDlt; idDlt ' sum nDlt =;
+  .__FEA_iPfa.dim var nPos;
+
+  0 var nD; nD nDlt.dim < while;
+    nPos :nDlt[0,nD]: idDat -xfetch "dlt${nD+1}" -UPFA_hist_update;
+    :nPos=nPos+nDlt[0,nD];
+  nD ++=; end;
+}

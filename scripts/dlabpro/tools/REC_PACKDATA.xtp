@@ -38,6 +38,7 @@
 "../util/uasr.itp" include;
 "../util/var.itp"  include;
 "../util/fea.itp"  include;
+"../util/sig.itp"  include;
 "include/recpack_ssmg/base.itp"     include;
 "include/recpack_ssmg/fba.itp"      include;
 "include/recpack_ssmg/mel.itp"      include;
@@ -813,6 +814,9 @@ function -PACK_recfix()
   # TODO: DLG
   # TODO: VAD
 
+  data idHist; -UPFA_hist idHist =;
+  idHist -NRM_Calc;
+
   ## Pack it                                                                    # -------------------------------------
   1 var nrm;                                                                    # Init nomalization value
   .sFDsp -SH_rm;                                                                # Remove old output file
@@ -897,6 +901,7 @@ not ( $$ 2 < ) || if                                                            
 end                                                                             # <<
 "\n// Configuration   : $2"                                               -MSG; # Protocol
 "$2" FALSE -CFG_init;                                                           # Configure session
+"../util/uasr_session.itp" include;                                             # Include UASR session startup script
 
 ## Start up                                                                     # -------------------------------------
 "\n\n// RECOGNIZER DATA PACKAGING: "                                      -MSG; # Protocol
