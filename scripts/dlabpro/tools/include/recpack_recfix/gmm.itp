@@ -148,7 +148,7 @@ function -PACK_mix(nrm,iMmap)
 	nmix                   1 "mix.nmix" "u16" -PACK1;
 	:dNLADD[0,0]:          1 "mix.nlad" "u16" -PACK1;
 	dNGAU   1 .nMAX_MIX_NUM                   "mix.ngau" "u16" -PACK;
-	dMIXI ' 1 :.nMAX_MIX_NUM*.nMAX_MIX_GAU*2: "mix.m"    "u16" -PACK;
+	dMIXI ' 1 :.nMAX_MIX_NUM*.nMAX_MIX_GAU*2: "mix.m"    "s16" -PACK;
 	dLADD   :32768/nrm: .nMAX_LAD_NUM         "mix.lad"  "s16" -PACK;
 	"\n  norm mix: $[nrm]" -MSG;
 
