@@ -499,7 +499,6 @@ function -RN_add_unit(sFile,sFilter,iSI)
       " FAILED" -COLOR_red                                               -MSG2; #      Protocol
       "$[.sDirOut]/" ( sFilter "#:#_ErrDetect.svg" "replace" -VAR_strop ) + s =;#      Make file name
       s itCheck.is itCheck.os -1 itCheck -FST_render;                "." -MSG2; #      Protocol
-      0 return;                                                                 #      return not correct
     else                                                                        #      is check correct?
       " ok"                                                              -MSG2; #      Protocol
     end                                                                         #   <<
