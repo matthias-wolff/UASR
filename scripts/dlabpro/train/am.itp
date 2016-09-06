@@ -1352,6 +1352,7 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
 
     ## Post-process decoding result                                             #   - - - - - - - - - - - - - - - - - -
     itRes.td ( "~STK" itRes.td -find_comp ) 1 itRes.td -delete                  #   Remove search stack component
+    idPhn -reset;                                                               #   Reset phone table
     0 nU =; nU itRes.ud.nrec < while;                                           #   Loop over units >>
       itRes NULL nU itAux2 -copy_ui;                                            #     Get current unit
       itAux2 itAux =; 0 itAux -invert; itAux itG2P 0 0 itAux -compose;          #     Get decoded phonemes (per frame)
