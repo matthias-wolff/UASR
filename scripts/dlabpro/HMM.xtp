@@ -37,7 +37,7 @@
 ## Prints the program logo
 function -logo()
 {
-  "\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"      -MSG; # Protocol               
+  "\n// UASR - UNIFIED APPROACH TO SIGNAL SYNTHESIS AND RECOGNITION"      -MSG; # Protocol               
   "\n// $__SFILE__.xtp"                                                   -MSG; # Protocol
   "\n// Process         : $HOSTNAME/" -pid +                              -MSG; # Protocol
   "\n// dLabPro VID     : " -version +                                    -MSG; # Protocol
