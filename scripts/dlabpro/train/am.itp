@@ -1159,7 +1159,7 @@ function -HMM_eval_fnc(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)
 ## @param sResFnc string
 ##          Identifier of user defined result function, see description below
 ## @param sMode string
-##          A string of two characters, the first specifies the decoding
+##          A string of max three characters, the first specifies the decoding
 ##          constraints, the second specifies the decoder type.
 ##          <table style="margin-top:3pt">
 ##            <tr><th>1st char.</th><th>Decoder constraints</th></tr>
@@ -1171,6 +1171,8 @@ function -HMM_eval_fnc(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)
 ##            <tr><th>2st char.</th><th>Decoder type</th></tr>
 ##            <tr><td>V</td><td>Viterbi</td></tr>
 ##            <tr><td>F</td><td>-- reserved -- (Forward-backward)</td></tr>
+##            <tr><th>3rd char.</th><th>Reference decoding</th></tr>
+##            <tr><td>R</td><td>Additionally do referece decoding on free phoneme loop</td></tr>
 ##          </table>
 ## @return a real number &le;1 indicating the recognition rate over the entire
 ##         test set, typically the product of correctness and accuracy
@@ -1186,6 +1188,7 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
 {
   var sMd1; sMode "1" "left" -VAR_strop                            sMd1 -sset;  # Get constraint (1st char. of sMode)
   var sMd2; sMode "2" "left" -VAR_strop "1" "right" -VAR_strop     sMd2 -sset;  # Get decoder type (2nd char. of sMode)
+  var sMd3; sMode "3" "left" -VAR_strop "1" "right" -VAR_strop     sMd3 -sset;  # Get ref. dec. type (3rd char. of sMode)
   var sMsn; ( itHMM sSns nSpl nIte "I" NULL NULL NULL $[sResFnc] ) sMsn =;      # Get mission name
   var sMcn; "Recognition grammar (or none)"                        sMcn =;      # Make constraint clear text
   sMd1 "F" == if "Labels and label boundaries"                     sMcn =; end  # ...
@@ -1220,11 +1223,13 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
   fst        itG2P;                                                             # Phonetic labelling transducer
   fst        itRes;                                                             # Recognition result
   fst        itAux;                                                             # Auxiliary transducer
+  fst        itAux2;                                                            # Auxiliary transducer #2
   data       idFea;                                                             # Primary feature vector sequence
   data       idLab;                                                             # Label sequence
   data       idNld;                                                             # Neglog. density array
   data       idAux;                                                             # Auxiliary data instance
   data       idPlbi;                                                            # Reference phoneme indizes
+  data       idPhn;                                                             # Recognized phoneme indizes
   var        sDirMod; ( "model"     ""        -CFG_get_path ) sDirMod -sset;    # Model directory
   var        sDirLog; ( "log"       ""        -CFG_get_path ) sDirLog -sset;    # Log directory
   var        sDirFea; ( "fea"       ""        -CFG_get_path ) sDirFea -sset;    # Feature files directory
@@ -1237,6 +1242,7 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
   var        nCnt;                                                              # Number successfully processed turns
   var        bAux;                                                              # Auxiliary boolean buffer
   var        sAux;                                                              # Auxiliary string buffer
+  var        nU;                                                                # Unit index
   file       iF;      ( "flist.sep" "\t " "S" -CFG_get_ex    ) iF -set sep;     # Feature file list
                       ( sDatSet      ""       -CFG_get_flist ) iF -set flist;   # ...
   object     iFI;     "${sDirMod}/feainfo$[sSxt].object" iFI -FEA_info;         # Feature information object
@@ -1317,6 +1323,13 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
         NULL stdprof -end_timer;                                                #       End timer
       end                                                                       #     <<
     end                                                                         #   <<
+    sMd3 "R" == if                                                              #   Add reference decoding network >>
+      itRN itAux =; itAM itAux2 =;                                              #     Convert to fst
+      :itAux2.td["~TOS"]: ( :itAux2.td["~TOS"].>=0: itRN.os.nrec .* ) +         #     Change output symbol indizies
+        0 1 "~TOS" itAux2.td -xstore;                                           #     |
+      itAux2 itAux -cat; itAux2.os itAux.os -cat;                               #     Join phoneme loop
+      itAux itRN -copy_fst;                                                     #     Replace fst in hmm
+    end                                                                         #   <<
 
     ## Decode                                                                   #   - - - - - - - - - - - - - - - - - -
     stdprof -begin_timer;                                                       #   Start timer
@@ -1339,16 +1352,21 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
 
     ## Post-process decoding result                                             #   - - - - - - - - - - - - - - - - - -
     itRes.td ( "~STK" itRes.td -find_comp ) 1 itRes.td -delete                  #   Remove search stack component
-    itRes itAux -copy; 0 itAux -invert; itAux itG2P 0 0 itAux -compose;         #   Get decoded phonemes (per frame)
-    "."                                                                  -MSG2; #   Protocol
-    itAux 0 1 -1 itAux -best_n;                                                 #   HACK: solution might not be unique
-    :itAux.td.nrec!=0: if;                                                      #   HACK: ignore if empty >>
-      :idAux =abs(itAux.td[0]-itRes.td[0])+abs(itAux.td[1]-itRes.td[1]);        #     HACK: compare structures
-      idAux NULL 0 "sum" idAux /rec -aggregate; :idAux[0,0]>0: if               #     HACK: structures mismatch >>
-        "Composition with labelling transducer not unique!" 1 -WARNING;         #     HACK:   NOT OK
+    idPhn -reset;                                                               #   Reset phone table
+    0 nU =; nU itRes.ud.nrec < while;                                           #   Loop over units >>
+      itRes NULL nU itAux2 -copy_ui;                                            #     Get current unit
+      itAux2 itAux =; 0 itAux -invert; itAux itG2P 0 0 itAux -compose;          #     Get decoded phonemes (per frame)
+      "."                                                                -MSG2; #     Protocol
+      itAux 0 1 -1 itAux -best_n;                                               #     HACK: solution might not be unique
+      :itAux.td.nrec!=0: if;                                                    #     HACK: ignore if empty >>
+        :idAux =abs(itAux.td[0]-itAux2.td[0])+abs(itAux.td[1]-itAux2.td[1]);    #       HACK: compare structures
+        idAux NULL 0 "sum" idAux /rec -aggregate; :idAux[0,0]>0: if             #       HACK: structures mismatch >>
+          "Composition with labelling transducer not unique!" 1 -WARNING;       #       HACK:   NOT OK
+        end                                                                     #       HACK: <<
       end                                                                       #     HACK: <<
-    end                                                                         #   HACK: <<
-    :itAux.td[itAux.NC_TD_TOS]: itRes.td -join;                                 #   Join phonemes to transitions
+      :itAux.td[itAux.NC_TD_TOS]: idPhn -cat;                                   #     Join phonemes to phoneme table
+    nU ++=; end;                                                                #   <<
+    idPhn itRes.td -join;                                                       #   Join phonemes to transitions
     itRes.td.dim -- "~PHN" itRes.td -set_cname;                      "." -MSG2; #   Rename
     .__bLabIdx if;                                                              #   Want label indizes >>                                                
       "" -1 itAux.td -rindex;                                                   #     Get indizes in result     
