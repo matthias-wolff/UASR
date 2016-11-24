@@ -39,10 +39,12 @@
   16 var nMAX_MIX_GAU;
  128 var nMAX_MIX_NUM;
 2048 var nMAX_LAD_NUM;
-2048 var nMAX_FSTS_NUM;
-4096 var nMAX_FSTT_NUM;
- 128 var nMAX_FSTO_NUM;
-  16 var nMAX_FSTO_LEN;
+8192 var nMAX_BFSTS_NUM;
+16384 var nMAX_BFSTT_NUM;
+ 256 var nMAX_SFSTS_NUM;
+ 512 var nMAX_SFSTT_NUM;
+ 512 var nMAX_FSTO_NUM;
+  64 var nMAX_FSTO_LEN;
  128 var nMAX_TRG_MAP; 
 
    1 var nPFA_TYP_FFT; # 0x01
@@ -53,7 +55,7 @@
 
  256 var nGMM_MIN_CLIP;
 
-   2 var nFST_NUM;
+   3 var nFST_NUM;
 
    0 var nTRGM_FILE;
    1 var nTRGM_SIG;
@@ -61,6 +63,7 @@
    3 var nTRGM_PFA;
    4 var nTRGM_SFA;
    5 var nTRGM_MIX;
+   6 var nTRGM_LDA;
   15 var nTRGM_MASK;
   64 var nTRGM_THR_ABS;
  128 var nTRGM_SEL_ID;

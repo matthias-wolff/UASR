@@ -26,13 +26,33 @@
 
 #@uasrdoc: ignore
 
-function -PACK_fst(nrm,itRN,nU)
+function -PACK_fsts(nrm,itRN)
+{
+  itRN.ud.nrec .nFST_NUM > if;
+		"\n  WARN: Too many recognition networks ($[itRN.ud.nrec]>$[.nFST_NUM])" 0 -WARNING;
+  end;
+  0 var nU; nU .nFST_NUM < while;
+    nrm itRN nU "B" :nU==0: -PACK_fst;
+  nU ++=; end;
+}
+
+function -PACK_fst(nrm,itRN,nU,sTyp,bAct)
 {
 	data idAux;
 	data idAux2;
 	fst iRN;
-	itRN NULL nU iRN -copy_ui;
-	iRN 0 iRN -push_weights;
+  1 var nXMUL;
+  nU itRN.ud.nrec < if;
+  	itRN NULL nU iRN -copy_ui;
+	  iRN 0 iRN -push_weights;
+  else;
+    "" iRN /fst /lsr -addunit;
+    0 1 iRN -addstates;
+    0 0 0 iRN -addtrans;
+    { "" } iRN.os =;
+    0 nXMUL =;
+    FALSE bAct =;
+  end;
 
 	# extract transitions
 	data iT;
@@ -42,30 +62,35 @@ function -PACK_fst(nrm,itRN,nU)
 	:iRN.td["~TOS"]: iT -join;
 	"~LSR" iRN.td -find_comp 0 >= if; :iRN.td["~LSR"]: iT -join; else "~LSR" -type long iT -addcomp; end;
 	"~STK" iRN.td -find_comp 0 >= if; :iRN.td["~STK"]: iT -join; else "~STK" -type long iT -addcomp; end;
-	iT 1 iT -sortup; iT 0 iT -sortup;
+  iT -is_empty not if;
+  	iT 1 iT -sortup; iT 0 iT -sortup;
+  end;
 
 	# extract state offset
 	data iS; :iRN.sd["~FLG"]: iS =;
-	iT 0 idAux -compress;
-	"" -1 iS -rindex; iS idAux 1 0 idAux2 -gen_index; iS 1 1 iS -delete;
-	idAux2 0 idAux 1 2 idAux -lookup; idAux iS -join;
+  iT -is_empty not if;
+  	iT 0 idAux -compress;
+	  "" -1 iS -rindex; iS idAux 1 0 idAux2 -gen_index; iS 1 1 iS -delete;
+  	idAux2 0 idAux 1 2 idAux -lookup; idAux iS -join;
+  else;
+    -type double 2 iS -addncomps;
+  end;
 
 	# quant states
 	data dS;
 	:iS[1]: 1 idAux -QUANT_u16; idAux dS -join;
 	:iS[2]: 1 idAux -QUANT_u8;  idAux dS -join;
 	:iS[0]: 1 idAux -QUANT_u8;  idAux dS -join;
-	.nMAX_FSTS_NUM dS -reallocate;
+	.nMAX_$[sTyp]FSTS_NUM dS -reallocate;
 
 	# quant transitions
 	data dT;
 	:iT["~TER"]: 1           idAux -QUANT_u16; idAux dT -join;
 	:iT["~TIS"]: 1           idAux -QUANT_s8;  idAux dT -join;
-	:iT["~TOS"]: 1           idAux -QUANT_s8;  idAux dT -join;
-	:iT["~LSR"]: :32768/nrm: idAux -QUANT_s16; idAux dT -join;
 	:iT["~STK"]: 1           idAux -QUANT_s8;  idAux dT -join;
-	1 iT.nrec zeros 1        idAux -QUANT_s8;  idAux dT -join;
-	.nMAX_FSTT_NUM dT -reallocate;
+	:iT["~TOS"]: 1           idAux -QUANT_s16; idAux dT -join;
+	:iT["~LSR"]: :32768/nrm: idAux -QUANT_s16; idAux dT -join;
+	.nMAX_$[sTyp]FSTT_NUM dT -reallocate;
 
 	# perpare os
 	data dOS; iRN.os .nMAX_FSTO_LEN dOS /force -tconvert;
@@ -73,14 +98,15 @@ function -PACK_fst(nrm,itRN,nU)
 
 
 	# Pack it
-	iS.nrec 1 "fst.xs"  "u16" -PACK1;
-	iT.nrec 1 "fst.xt"  "u16" -PACK1;
+	:iS.nrec*nXMUL: 1 "fst.xs"  "u16" -PACK1;
+	:iT.nrec*nXMUL: 1 "fst.xt"  "u16" -PACK1;
 	.nPRNW 0 == if;
 		32767 1 "fst.prnw" "s16" -PACK1;
 	else;
 		.nPRNW :32768/nrm: "fst.prnw" "s16" -PACK1;
 	end;
-	0       1 "_blank1" "u16" -PACK1;
+	bAct    1 "fst.active" "u8" -PACK1;
+	0       1 "_blank1" "u8" -PACK1;
 	dS    0 0 "fst.s"   "mix" -PACK;
 	dT    0 0 "fst.t"   "mix" -PACK;
 	dOS   0 0 "fst.os"  "mix" -PACK;
