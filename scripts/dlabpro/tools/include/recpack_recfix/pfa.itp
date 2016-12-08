@@ -95,6 +95,7 @@ function -PACK_pfa(nrm)
   "recfix.nrm.trf" 0 "S" -CFG_get_ex var nTRFNRM;                                      #   Shift offset after transformation
   "recfix.nrm.fil" 0 "S" -CFG_get_ex var nFILNRM;                                      #   Shift offset after filter
   "recfix.shf.fil" 3 "S" -CFG_get_ex var nFILSHF;                                      #   Shift offset after filter
+  "recfix.fftshfcfg" 0 "S" -CFG_get_ex var nFFTSHFCFG;
 
 	"\n  nrm.sig: $[nrm]" -MSG;
 
@@ -142,7 +143,7 @@ function -PACK_pfa(nrm)
 	nFRMSHF                         1 "pfa.frmshf" "s8"  -PACK1;
 	nTRFSHF                         1 "pfa.trfshf" "s8"  -PACK1;
 	nFILSHF                         1 "pfa.filshf" "s8"  -PACK1;
-  0                               1 "_blank1"    "s16" -PACK1;
+  nFFTSHFCFG                      1 "pfa.fftshfcfg" "u16" -PACK1;
 	iPfa.dim                        1 "pfa.dim"    "u16" -PACK1;
 	iPfa.trf "MGC" == if iPfa.mgc_gamma -1 * else 0 end  0 "pfa.mgcgam" "u16" -PACK1;
 	iPfa.trf "MGC" == if iPfa.mgc_lambda     else 0 end  0 "pfa.mgclam" "u16" -PACK1;
