@@ -29,7 +29,7 @@
 function -PACK_sig(nrm)
 {
   data dDELAY; { 0 0 0 0 } dDELAY =;
-  data dGAIN;  { 1 0 0 0 } dGAIN  =;
+  data dGAIN;  { 1 1 1 1 } dGAIN  =;
 
   1 1 "sig.nch" "u8" -PACK1;
   0 1 "sig.rmdc" "u8"   -PACK1;                                                 # Pack blank
