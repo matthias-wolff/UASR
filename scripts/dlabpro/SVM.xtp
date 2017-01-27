@@ -228,7 +228,7 @@ function -SVM_cpl_dataset(idF,sSns,sSfa,bSig,bSv,idLtb,idDts)
 ## <ul>
 ##   <li><code>svm</code> should return a correctly ordered result!</li>
 ## </ul>
-function -SVM_sort_res(idRes)
+function -SVM_sort_res(idLtb,idRes)
 {
   data idRes2;
   data idAux;
@@ -247,12 +247,15 @@ function -SVM_sort_res(idRes)
   end                                                                           # <<
 
   ## Order components by ascending class index                                  # -------------------------------------
-	0 nC1 =; idRes.dim nXC =; label L_C2; nC1 nXC < if                            # Loop over components in idRes >>
+	0 nC1 =; idLtb.nrec nXC =; label L_C2; nC1 nXC < if                           # Loop over components in idRes >>
 	  ( "$[nC1]" idRes -find_comp ) nC2 =;                                        #   Find class named nC1
     nC2 0 >= if                                                                 #   Got it >>
       "\n   - Comp. $[nC2] -> $[nC1]"                                    -MSG2; #     Protocol
 	    idRes nC2 1 idAux -select; idAux idRes2 -join;                            #     Copy res. of class nC1 to idRes2
       idRes nC2 1 idRes -delete;                                                #     Delete result of class nC1
+    else                                                                        #   << Class not found >>
+      "\n   - Empty -> $[nC1]"                                           -MSG2; #     Protocol
+	    1 idRes.nrec zeros idRes2 -join;                                          #     Add empty component to idRes2
 	  end                                                                         #   <<
 	  nC1 ++=; goto L_C2;                                                         #   End of component loop
 	end                                                                           # <<
@@ -481,7 +484,7 @@ function -CMD_trn()
       idFp :idSns[nN,0]: sSfa bSig bSv idLtb idDts -SVM_cpl_dataset;            #     Create test data set (partn.)
       "\n   SVM evaluation ..."                                           -MSG; #     Protocol
       idDts idResP iSVM /probabilities -classify;                               #     Classify test set (partition)
-      idResP -SVM_sort_res;                                                     #     HACK: Order result components
+      idLtb idResP -SVM_sort_res;                                                     #     HACK: Order result components
       idResP idRes -cat;                                                        #     Append to result
       nP ++=; goto L_EVLP;                                                      #     End of partitions loop
     end                                                                         #   <<
