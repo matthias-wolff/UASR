@@ -1037,13 +1037,19 @@ function -doc_package(idS,nS0,nXS,idCd,iDgn)
 ##          The destintion directory.
 ## @param sFile
 ##          The file name.
-function -doc_copy(sSrcDir,sDstDir,sFile)
+## @param bOvr
+##          <code>true</code> to overwrite existing target file.
+function -doc_copy(sSrcDir,sDstDir,sFile,bOvr)
 {
-  sSrcDir sDstDir == if leave; end
-  data idAux; "" ( -type char ) idAux -addcomp;
-  "\n   c- $[sDstDir]/$[sFile]"                                           -MSG;
-  "$[sSrcDir]/$[sFile]" "raw" idAux stdfile -import ?error if leave; end
-  "$[sDstDir]/$[sFile]" "raw" idAux stdfile -export;
+  sSrcDir sDstDir == if leave; end                                              # Leave if source = target folder
+  data idAux; "" ( -type char ) idAux -addcomp;                                 # Auxiliary data
+  "\n   c- $[sDstDir]/$[sFile]"                                           -MSG; # Protocol
+  ( bOvr not ) ( "$[sDstDir]/$[sFile]" stdfile -exists ) && if                  # Not overwriting and target existst >>
+    " (exisits -> skipped)"                                               -MSG; #   Protocol
+    leave;                                                                      #   Tschoe mit "oe" 
+  end                                                                           # <<                                                                           
+  "$[sSrcDir]/$[sFile]" "raw" idAux stdfile -import ?error if leave; end        # Load source, leave on error
+  "$[sDstDir]/$[sFile]" "raw" idAux stdfile -export;                            # Write target
 }
 
 ## == MAIN PROGRAM ==                                                           # =====================================
@@ -1215,19 +1221,19 @@ end                                                                             
 ## Copy common files
 $$ 1 ==  if                                                                     # Have DB name as argument >>
   "$UASR_HOME/manual" "?\\?/" "replace" -VAR_strop var sUpath;                  #   UASR doc.path (norm'd for Windows!)
-  sUpath ( sDpath "/.." + ) "default.css" -doc_copy; 
-  sUpath ( sDpath "/.." + ) "default.js"  -doc_copy; 
-  sUpath ( sDpath "/.." + ) "index.html"  -doc_copy; 
-  sUpath ( sDpath "/.." + ) "print.css"   -doc_copy; 
-  sUpath ( sDpath "/.." + ) "toc.css"     -doc_copy; 
+  sUpath ( sDpath "/.." + ) "default.css" FALSE -doc_copy; 
+  sUpath ( sDpath "/.." + ) "default.js"  FALSE -doc_copy; 
+  sUpath ( sDpath "/.." + ) "index.html"  FALSE -doc_copy; 
+  sUpath ( sDpath "/.." + ) "print.css"   FALSE -doc_copy; 
+  sUpath ( sDpath "/.." + ) "toc.css"     FALSE -doc_copy; 
   "/resources" sUpath +=;
-  sUpath ( sDpath "/../resources" + ) "blank_stc.gif" -doc_copy; 
-  sUpath ( sDpath "/../resources" + ) "book_obj.gif"  -doc_copy; 
-  sUpath ( sDpath "/../resources" + ) "exe_obj.gif"   -doc_copy; 
-  sUpath ( sDpath "/../resources" + ) "head_bgnd.png" -doc_copy; 
-  sUpath ( sDpath "/../resources" + ) "lib_obj.gif"   -doc_copy; 
-  sUpath ( sDpath "/../resources" + ) "pkg_obj.gif"   -doc_copy; 
-  sUpath ( sDpath "/../resources" + ) "print.gif"     -doc_copy; 
+  sUpath ( sDpath "/../resources" + ) "blank_stc.gif" FALSE -doc_copy; 
+  sUpath ( sDpath "/../resources" + ) "book_obj.gif"  FALSE -doc_copy; 
+  sUpath ( sDpath "/../resources" + ) "exe_obj.gif"   FALSE -doc_copy; 
+  sUpath ( sDpath "/../resources" + ) "head_bgnd.png" FALSE -doc_copy; 
+  sUpath ( sDpath "/../resources" + ) "lib_obj.gif"   FALSE -doc_copy; 
+  sUpath ( sDpath "/../resources" + ) "pkg_obj.gif"   FALSE -doc_copy; 
+  sUpath ( sDpath "/../resources" + ) "print.gif"     FALSE -doc_copy; 
 end                                                                             # <<
 
 "\n\n// $__SFILE__.xtp completed (${.__UTL_nErrors} errors).\n"           -MSG; # Protocol
