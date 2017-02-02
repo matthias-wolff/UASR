@@ -96,7 +96,10 @@ function -SH_find_ex(sDir,sPattern,bRec,sOpt,idList)
     sOpt not if " /a:-d" sOpt =; end                                            #   Default options
     sOpt " /b" + sOpt =;                                                        #   Simple list
     bRec if sOpt " /s" + sOpt =; end                                            #   Enable recursive search
-    ( "$[sDir]/$[sPattern]" -WIN_convert_path ) var sPath;                      #   Make fully qualified search pattern
+    var sCwd; -cwd sCwd =;
+    sDir -cd;
+    ( sPattern -WIN_convert_path ) var sPath;
+    sCwd -cd;
     sPath "#/#\\\\\\\\" "replace" -VAR_strop sPath =;                           #   Replace '/' by '\'
     "cmd /c dir \"$[sPath]\" ${sOpt} > \"${sTf}\"" var sCmdFind;                #   Shell cmd. listing subdirectories
     #"\n|" sCmdFind + "|" + -echo;                                              #   DEBUGGIN'
