@@ -86,6 +86,7 @@ function -SH_find_ex(sDir,sPattern,bRec,sOpt,idList)
 {
   file iF; "" iF -set sep;                                                      # File list object
   var  sTf; "UASR" -SH_tmpfile sTf =;                                           # Get a temporary file name
+  var  sCwd;                                                                    # Prvious working directory
   idList -reset;                                                                # Reset target
 
   ## Check if folder exists                                                     # -------------------------------------
@@ -100,7 +101,9 @@ function -SH_find_ex(sDir,sPattern,bRec,sOpt,idList)
     sPath "#/#\\\\\\\\" "replace" -VAR_strop sPath =;                           #   Replace '/' by '\'
     "cmd /c dir \"$[sPath]\" ${sOpt} > \"${sTf}\"" var sCmdFind;                #   Shell cmd. listing subdirectories
     #"\n|" sCmdFind + "|" + -echo;                                              #   DEBUGGIN'
+    -cwd sCwd =; sDir -cd;                                                      #   Change into sDir
     sCmdFind -system;                                                           #   Run find
+    sCwd -cd;                                                                   #   Change into previous working dir.
   else                                                                          # << Other systems >>
     bRec not if sOpt " -maxdepth 1" + sOpt =; end                               #   Disable recursive search
     "find $[sDir] $[sOpt] -follow -name \"$[sPattern]\""                        #   Run find
