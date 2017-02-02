@@ -287,7 +287,7 @@ function -SET_minus(A,B,Z)
   data idAux;
   A B 0 0 idAux /noerror -gen_index;
   idAux 0 .>= idAux =;
-  idAux A -dmark;
+  idAux A /comp -dmark;
   A -1 -1 Z /mark /noerror -delete ?error if A Z -copy; end
   A -unmark;
 }
