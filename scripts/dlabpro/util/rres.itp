@@ -24,6 +24,16 @@
 ## You should have received a copy of the GNU Lesser General Public License
 ## along with UASR. If not, see <http://www.gnu.org/licenses/>.
 
+## Prints a message.
+##
+## @cgen:index
+## @param sMsg string
+##          The message
+function -RRES_msg(sMsg)
+{
+  "rres: " sMsg + "\n" + -echo;
+}
+
 ## Loads the data files produced by the recognizer from the locations committed
 ## thorugh the command line arguments.
 ##
@@ -48,14 +58,136 @@
 ## @param itFvr fst
 ##          Filled with the recognized semantics (feature-value relation), can 
 ##          be <code>NULL</code> if not needed.
-function -RRES_getargs(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr)
+## @param bCfg boolean
+##          If <code>TRUE</code> load recognizer configuration file.
+function -RRES_getargs(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr,bCfg)
 {
-  itRec if ( nFArg     -argv ) itRec -restore;              end                 # Load main recognition result
-  itRef if ( :nFArg+1: -argv ) itRef -restore;              end                 # Load reference recognition result
-  idNld if ( :nFArg+2: -argv ) idNld -restore;              end                 # Load neglog. density array
-  idSig if ( :nFArg+3: -argv ) "wav" idSig stdfile -import; end                 # Load speech signal
-  itFvr if ( :nFArg+4: -argv ) itFvr -restore;              end                 # Load recognized semantics
-  iSI   if ( :nFArg+5: -argv ) iSI   -restore;              end                 # Load session info
+  itRec if
+    $$ nFArg >= if
+      ( nFArg -argv ) itRec -restore;
+    else
+      "WARNING - Missing argument $[nFArg] (itRec)"                   -RRES_msg;
+      itRec -reset;
+    end
+  end
+  itRef if 
+    $$ :nFArg+1: >= if
+      ( :nFArg+1: -argv ) itRef -restore;
+    else
+      "WARNING - Missing argument ${nFArg+1} (itRef)"                 -RRES_msg;
+      itRef -reset;
+    end
+  end
+  idNld if 
+    $$ :nFArg+2: >= if
+      ( :nFArg+2: -argv ) idNld -restore;
+    else
+      "WARNING - Missing argument ${nFArg+2} (idNld)"                 -RRES_msg;
+      idNld -reset;
+    end
+  end
+  idSig if 
+    $$ :nFArg+3: >= if
+      ( :nFArg+3: -argv ) "wav" idSig stdfile -import;
+    else
+      "WARNING - Missing argument ${nFArg+3} (idSig)"                 -RRES_msg;
+      idSig -reset;
+    end
+  end
+  itFvr if 
+    $$ :nFArg+4: >= if
+      ( :nFArg+4: -argv ) itFvr -restore;
+    else
+      "WARNING - Missing argument ${nFArg+4} (itFvr)"                 -RRES_msg;
+      itFvr -reset;
+    end
+  end
+  iSI if 
+    $$ :nFArg+5: >= if
+      ( :nFArg+5: -argv ) iSI -restore;
+    else
+      "WARNING - Missing argument ${nFArg+5} (iSI)"                   -RRES_msg;
+      iSI -reset;
+    end
+  end
+  bCfg if
+    $$ :nFArg+6: >= if
+      ( :nFArg+6: -argv ) -RRES_CFG_init;
+    else
+      "WARNING - Missing argument ${nFArg+6} (configuration file)"    -RRES_msg;
+    end
+  end
+}
+
+## Reads the recognizer configuration file. Values can be retrieved by 
+## {@link -RRES_CFG_get} subsequently. If UASR's cfg utilities are included, 
+## values can also be retrieved or stored by the <tt>-CFG_xxx</tt> functions.
+##
+## @cgen:index
+## @global __CFG_idCfg CW
+## @param sFile string
+##          Path to recognizer configuration file to be loaded.
+## @return <code>TRUE</code> if successful, <code>FALSE</code> otherwise.
+function -RRES_CFG_init(sFile)
+{
+  data idCfg;                                                                  # Buffer for configuration file
+  data idKey;                                                                  # Buffer for keys
+  data idVal;                                                                  # Buffer for values
+  data idAux;                                                                  # Auxiliary data
+  file iCfg;                                                                   # File processor
+  "=;#" iCfg -set sep;                                                         # - set separators
+
+  ## Read configuration file                                                   # ---------------------------------------
+  ".__CFG_idCfg" NULL ?instance not if data .__CFG_idCfg; end                  # Create configuration table
+  sFile "ascii" idCfg iCfg /strings -import ?error if goto L_EXCEPTION; end    # Read configuration file
+  
+  ## Normalize keys                                                            # ---------------------------------------
+  idCfg 0 1 idKey -select;                                                     # Get keys
+  idKey "? ?"  "replace" idKey -strop;                                         # Remove spaces
+  idKey "?\t?" "replace" idKey -strop;                                         # Remove tabs
+  ( 1 idKey.nrec zeros ) 0 { "uasr." } 0 1 idAux -lookup;                      # Make a sequence of strings
+  idKey idAux -join; idAux "" "ccat" idKey -strop;                             # Prepend keys with "uasr."
+  idKey "?uasr.uasr.?uasr." "replace" idKey -strop;                            # Fix uasr. keys
+  idKey "?uasr.ignore.?uasr." "replace" idKey -strop;                          # Fix ignore. keys
+
+  ## Normalize values                                                          # ---------------------------------------
+  idCfg 1 1 idVal -select;                                                     # Get values
+  idVal " \t" "trim" idVal -strop;                                             # Trim leading and tailing spaces
+  ( 1 idVal.nrec zeros ) 0 { "\"" } 0 1 idAux -lookup;                         # Make a sequence of strings
+  idVal idAux -join; :idAux[0]: idAux -join; idAux "" "ccat" idVal -strop;     # Put values in quotation marks
+  
+  ## Make configuration                                                        # ---------------------------------------
+  idKey .__CFG_idCfg -copy;                                                    # Copy keys
+  idVal .__CFG_idCfg -join;                                                    # Append values
+  { "key" "val" } ' 0 .__CFG_idCfg -set_cnames;                                # Name components
+  TRUE return;                                                                 # Return "ok"
+  
+label L_EXCEPTION                                                              # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  .__CFG_idCfg -reset;                                                         # Clear configuration
+  "key" 255 .__CFG_idCfg -addcomp;                                             # Add dummy keys component
+  "val" 255 .__CFG_idCfg -addcomp;                                             # Add dummy values component
+  FALSE return;                                                                # Return "error"
+}
+
+## Retrieves a value from the recognizer configuration.
+##
+## @cgen:index
+## @global __CFG_idCfg R
+## @param sKey string
+##          The key.
+## @param default
+##          The default value.
+## @return The value.
+function -RRES_CFG_get(sKey,default)
+{
+  data idIdx;
+  ".__CFG_idCfg" NULL ?instance not if default return; end                     # No config -> return default
+  { { "${sKey}" } } .__CFG_idCfg 0 0 idIdx /noerror -gen_index;                # Find key
+  idIdx.nrec 0 == :idIdx[0,0]: -1 == || if                                     # Key not found >>
+    default return;                                                            #   Return default
+  else                                                                         # << Key found >>
+    ${.__CFG_idCfg[idIdx[0,0],1]} return;                                      #   Return value
+  end                                                                          # <<
 }
 
 ## Computes the per-frame recognition result. The function stips uninteresing
@@ -272,9 +404,10 @@ function -RRES_collect(idSig,idRpf,itFvr,idPhnTab,sDirOut)
   var  nSpf;                                                                    # Samples per frame
   
   ## Make turn ID                                                               # -------------------------------------
-  ( stdprof -date "?-?" "replace" -VAR_strop ) "-" + sTid =;                    # Current date plus "-" ...
-  stdprof -time sTid +=;                                                        # ... plus current time
-  "ppf: collect $[sDirOut]/[...]/$[sTid].[...]\n" -echo;                        # Notify
+  { "" } idAux =; ( stdprof -date ) 0 0 idAux -store;                           # Get current date in idAux[0,0]
+  idAux "?-?" "replace" idAux -strop;                                           # Reomve slashes
+  idAux [ 0 0 ] "-" + sTid =; stdprof -time sTid +=;                            # Turn ID: <date>-<time>
+  "collect $[sDirOut]/[...]/$[sTid].[...]"                           -RRES_msg; # Notify
 
   ## Make turn label (recognition result)                                       # -------------------------------------
   :idRpf["~OLB"]: "" "rcat" idAux -strop;                                       # Concatenate output labels
@@ -288,7 +421,8 @@ function -RRES_collect(idSig,idRpf,itFvr,idPhnTab,sDirOut)
   ## Get transliteration                                                        # -------------------------------------
   itFvr if                                                                      # Have FVR >>
     itFvr.ud.rtext if                                                           #   Have FVR comment string >>
-      ( itFvr.ud.rtext " " "split" -VAR_strop ) ' idOrt =;                      #     Get transliteration
+      { "" } idAux =; itFvr.ud.rtext 0 0 idAux -store;                          #     Get into idAux
+      ( idAux " " "split" -VAR_strop ) ' idOrt =;                               #     Get transliteration
     end                                                                         #   <<
   end                                                                           # <<
   idOrt -is_empty if                                                            # Have no transliteration yet >>
@@ -300,7 +434,8 @@ function -RRES_collect(idSig,idRpf,itFvr,idPhnTab,sDirOut)
   ## Get phonetic labels                                                        # -------------------------------------
   :nSpf = round(idRpf.rinc/idSig.rinc);                                         # Compute samples per frame
   nSpf 0 <= if                                                                  # Samples per frame not detected >>
-    "Cannot detect number of samples per frame. Assuming 160." 1      -WARNING; #   Warning
+    "WARNING - Cannot detect number of samples per frame. Assuming 160."        #   | 
+                                                                     -RRES_msg; #   Warning
     160 nSpf =;                                                                 #   Standard value
   end                                                                           # <<
   idPhnTab 0 1 idPtb -select;                                                   # Copy phoneme table
