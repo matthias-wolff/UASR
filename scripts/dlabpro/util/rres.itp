@@ -389,7 +389,7 @@ function -RRES_out(itRes)
 ##          >FVR comment string</a> in <code>itFvr.ud.rtext</code>.
 ## @param idPhnTab data
 ##          The phoneme table, phoneme labels are expected in component 0.
-## @param sDirOur string
+## @param sDirOut string
 ##          Output directory for collected data.
 function -RRES_collect(idSig,idRpf,itFvr,idPhnTab,sDirOut)
 {

@@ -893,6 +893,16 @@ decomposition
       <td><code><b>-PRP_get</b>(sKey,default)</code><br>&nbsp;<br> -- EXPERIMENTAL -- Returns session property</td>
     </tr>
     <tr>
+      <td><a href="util/rres.itp.html#clp_-RRES_CFG_get"><code class="link">-RRES_CFG_get</code></a></td>
+      <td><code>util/rres.itp</code></td>
+      <td><code><b>-RRES_CFG_get</b>(sKey,default)</code><br>&nbsp;<br> Retrieves a value from the recognizer configuration</td>
+    </tr>
+    <tr>
+      <td><a href="util/rres.itp.html#clp_-RRES_CFG_init"><code class="link">-RRES_CFG_init</code></a></td>
+      <td><code>util/rres.itp</code></td>
+      <td><code><b>-RRES_CFG_init</b>(sFile)</code><br>&nbsp;<br> Reads the recognizer configuration file</td>
+    </tr>
+    <tr>
       <td><a href="util/rres.itp.html#clp_-RRES_collect"><code class="link">-RRES_collect</code></a></td>
       <td><code>util/rres.itp</code></td>
       <td><code><b>-RRES_collect</b>(idSig,idRpf,itFvr,idPhnTab,sDirOut)</code><br>&nbsp;<br> Collects the recognition result into a speech database</td>
@@ -900,8 +910,13 @@ decomposition
     <tr>
       <td><a href="util/rres.itp.html#clp_-RRES_getargs"><code class="link">-RRES_getargs</code></a></td>
       <td><code>util/rres.itp</code></td>
-      <td><code><b>-RRES_getargs</b>(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr)</code><br>&nbsp;<br>Loads the data files produced by the recognizer from the locations committed
-thorugh the command line arguments</td>
+      <td><code><b>-RRES_getargs</b>(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr,bCfg)</code><br>&nbsp;<br> Loads the data files produced by the recognizer from the locations committed
+ thorugh the command line arguments</td>
+    </tr>
+    <tr>
+      <td><a href="util/rres.itp.html#clp_-RRES_msg"><code class="link">-RRES_msg</code></a></td>
+      <td><code>util/rres.itp</code></td>
+      <td><code><b>-RRES_msg</b>(sMsg)</code><br>&nbsp;<br>Prints a message</td>
     </tr>
     <tr>
       <td><a href="util/rres.itp.html#clp_-RRES_out"><code class="link">-RRES_out</code></a></td>

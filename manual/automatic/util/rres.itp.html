@@ -98,9 +98,24 @@
       <td class="rowgroup" colSpan="2">Functions</td>
     </tr>
     <tr>
+      <td><a href="#clp_-RRES_msg"><code class="link">-RRES_msg</code></a></td>
+      <td><code><b>-RRES_msg</b>(sMsg)</code><br>&nbsp;<br>Prints a message.
+      </td>
+    </tr>
+    <tr>
       <td><a href="#clp_-RRES_getargs"><code class="link">-RRES_getargs</code></a></td>
-      <td><code><b>-RRES_getargs</b>(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr)</code><br>&nbsp;<br>Loads the data files produced by the recognizer from the locations committed
-thorugh the command line arguments.
+      <td><code><b>-RRES_getargs</b>(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr,bCfg)</code><br>&nbsp;<br> Loads the data files produced by the recognizer from the locations committed
+ thorugh the command line arguments.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-RRES_CFG_init"><code class="link">-RRES_CFG_init</code></a></td>
+      <td><code><b>-RRES_CFG_init</b>(sFile)</code><br>&nbsp;<br> Reads the recognizer configuration file.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-RRES_CFG_get"><code class="link">-RRES_CFG_get</code></a></td>
+      <td><code><b>-RRES_CFG_get</b>(sKey,default)</code><br>&nbsp;<br> Retrieves a value from the recognizer configuration.
       </td>
     </tr>
     <tr>
@@ -124,6 +139,62 @@ thorugh the command line arguments.
       </td>
     </tr>
   </table>
+  </div>
+  </div>
+  <div id="clp_-RRES_msg">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-RRES_msg</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-RRES_msg','-RRES_msg','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-RRES_msg</b>(sMsg)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/rres.itp(32)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3>Prints a message.
+
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sMsg</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">The message
+
+      </td>
+    </tr>  </table>
   </div>
   </div>
   <div id="clp_-RRES_getargs">
@@ -152,21 +223,21 @@ thorugh the command line arguments.
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Signature</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden"><code><b>-RRES_getargs</b>(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr)</code></td>
+      <td class="hidden"><code><b>-RRES_getargs</b>(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr,bCfg)</code></td>
     </tr>
     <tr>
       <td class="hidden"></td>
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/rres.itp(51)</td>
+      <td class="hidden">util/rres.itp(63)</td>
     </tr>
   </table>
   </div>
   <div class="mframe2">
-    <h3>Description</h3>Loads the data files produced by the recognizer from the locations committed
-thorugh the command line arguments.
-
+    <h3>Description</h3> Loads the data files produced by the recognizer from the locations committed
+ thorugh the command line arguments.
+ 
 
   <h3>Parameters</h3>
   <table>
@@ -177,7 +248,7 @@ thorugh the command line arguments.
       <td class="hidden">&nbsp;</td>
       <td class="hidden"><code><b>nFArg</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">One-based index of first command line argument, standard is 1.
+      <td class="hidden">          One-based index of first command line argument, standard is 1.
 
       </td>
     </tr>
@@ -188,8 +259,8 @@ thorugh the command line arguments.
       <td class="hidden">&nbsp;</td>
       <td class="hidden"><code><b>iSI</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">Filled with the session info, can be <code>NULL</code> if not
-needed.
+      <td class="hidden">          Filled with the session info, can be <code>NULL</code> if not
+          needed.
 
       </td>
     </tr>
@@ -200,8 +271,8 @@ needed.
       <td class="hidden">&nbsp;</td>
       <td class="hidden"><code><b>itRec</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">Filled with the main recognition result, can be <code>NULL</code> if
-not needed.
+      <td class="hidden">          Filled with the main recognition result, can be <code>NULL</code> if
+          not needed.
 
       </td>
     </tr>
@@ -212,8 +283,8 @@ not needed.
       <td class="hidden">&nbsp;</td>
       <td class="hidden"><code><b>itRef</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">Filled with the reference recognition result, can be
-<code>NULL</code> if not needed.
+      <td class="hidden">          Filled with the reference recognition result, can be
+          <code>NULL</code> if not needed.
 
       </td>
     </tr>
@@ -224,8 +295,8 @@ not needed.
       <td class="hidden">&nbsp;</td>
       <td class="hidden"><code><b>idNld</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">Filled with the frame-by-Gaussian neglog. density array, can be
-<code>NULL</code> if not needed.
+      <td class="hidden">          Filled with the frame-by-Gaussian neglog. density array, can be
+          <code>NULL</code> if not needed.
 
       </td>
     </tr>
@@ -236,8 +307,8 @@ not needed.
       <td class="hidden">&nbsp;</td>
       <td class="hidden"><code><b>idSig</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">Filled with the input speech signal, can be <code>NULL</code> if not
-needed.
+      <td class="hidden">          Filled with the input speech signal, can be <code>NULL</code> if not
+          needed.
 
       </td>
     </tr>
@@ -248,10 +319,166 @@ needed.
       <td class="hidden">&nbsp;</td>
       <td class="hidden"><code><b>itFvr</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">Filled with the recognized semantics (feature-value relation), can
-be <code>NULL</code> if not needed.
+      <td class="hidden">          Filled with the recognized semantics (feature-value relation), can
+          be <code>NULL</code> if not needed.
 
       </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">boolean&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>bCfg</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          If <code>TRUE</code> load recognizer configuration file.
+
+      </td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-RRES_CFG_init">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-RRES_CFG_init</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-RRES_CFG_init','-RRES_CFG_init','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-RRES_CFG_init</b>(sFile)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/rres.itp(131)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Reads the recognizer configuration file. Values can be retrieved by
+ {@link -RRES_CFG_get} subsequently. If UASR's cfg utilities are included,
+ values can also be retrieved or stored by the <tt>-CFG_xxx</tt> functions.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sFile</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Path to recognizer configuration file to be loaded.
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> <code>TRUE</code> if successful, <code>FALSE</code> otherwise.
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>__CFG_idCfg</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#0000FF">create</span>&nbsp;<span style="color:#D00000">write</span>&nbsp;</td>
+    </tr>  </table>
+  </div>
+  </div>
+  <div id="clp_-RRES_CFG_get">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-RRES_CFG_get</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-RRES_CFG_get','-RRES_CFG_get','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-RRES_CFG_get</b>(sKey,default)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/rres.itp(181)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Retrieves a value from the recognizer configuration.
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sKey</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The key.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>default</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The default value.
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> The value.
+
+  <h3>Access to Configuration and Global Instances</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><code>__CFG_idCfg</code></td>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden"><span style="color:#008000">read</span>&nbsp;</td>
     </tr>  </table>
   </div>
   </div>
@@ -288,7 +515,7 @@ be <code>NULL</code> if not needed.
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/rres.itp(75)</td>
+      <td class="hidden">util/rres.itp(207)</td>
     </tr>
   </table>
   </div>
@@ -372,7 +599,7 @@ be <code>NULL</code> if not needed.
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/rres.itp(163)</td>
+      <td class="hidden">util/rres.itp(295)</td>
     </tr>
   </table>
   </div>
@@ -511,7 +738,7 @@ be <code>NULL</code> if not needed.
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/rres.itp(214)</td>
+      <td class="hidden">util/rres.itp(346)</td>
     </tr>
   </table>
   </div>
@@ -570,7 +797,7 @@ be <code>NULL</code> if not needed.
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/rres.itp(262)</td>
+      <td class="hidden">util/rres.itp(394)</td>
     </tr>
   </table>
   </div>
@@ -645,12 +872,13 @@ be <code>NULL</code> if not needed.
     </tr>
     <tr>
       <td class="hidden">&nbsp;&nbsp;</td>
-      <td class="hidden">
+      <td class="hidden">string&nbsp;
       </td>
       <td class="hidden">&nbsp;</td>
       <td class="hidden"><code><b>sDirOut</b></code></td>
       <td class="hidden">&nbsp;</td>
-      <td class="hidden">
+      <td class="hidden">          Output directory for collected data.
+
       </td>
     </tr>  </table>
   </div>
