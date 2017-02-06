@@ -70,10 +70,16 @@ UASR_HOME=${UASR_HOME%uasr/*}
 UASR_HOME=${UASR_HOME%uasr}uasr
 export UASR_HOME
 export DLABPRO_HOME=${UASR_HOME%uasr}dLabPro
-export PATH=$DLABPRO_HOME/bin.release:$PATH
 export RECOGNIZER_SUBDIR=
-DLABPRO=${UASR_HOME%uasr}dLabPro/bin.release/dlabpro
-RECOGNIZER=${UASR_HOME%uasr}dLabPro/bin.release/recognizer
+if [ "X$MACHINE" != "X" ]; then
+	export PATH=$DLABPRO_HOME/bin.release.$MACHINE:$PATH
+	DLABPRO=${UASR_HOME%uasr}dLabPro/bin.release.$MACHINE/dlabpro
+	RECOGNIZER=${UASR_HOME%uasr}dLabPro/bin.release.$MACHINE/recognizer
+else
+	export PATH=$DLABPRO_HOME/bin.release:$PATH
+	DLABPRO=${UASR_HOME%uasr}dLabPro/bin.release/dlabpro
+	RECOGNIZER=${UASR_HOME%uasr}dLabPro/bin.release/recognizer
+fi
 AUTHORMAP="$MAIN_DIR/rnv_mailrpl.txt"
 
 UR="HEAD"
