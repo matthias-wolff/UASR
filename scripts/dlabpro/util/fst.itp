@@ -387,7 +387,15 @@ function -FST_render_ex(sFname,idTisTab,idTosTab,nUnit,sFormat,itSrc)
     :itAux.td[nIcTos]: itAux.os sEps itAux -sym_lookup idTd -join;
   end  
   nIcStk 0 >= if                                                                # Have stack tokens >>
-    "itAux.stk" "data" ?instance not if data itAux.stk; { "" } itAux.stk = end; #   Create empty stack table if missing
+    "itAux.stk" "data" ?instance not if                                         #   Have no stack token table >>
+      :vmax(abs(itAux.td[nIcStk])): [ 0 0 ] ++ var nXStk;                       #     Get max. stack token ID  
+      data itAux.stk;                                                           #     Create stack token table
+      :zeros(1,nXStk): itAux.stk =; itAux.stk 0 { "STK" } 0 1 itAux.stk -lookup;#     Fill with "STK"
+      :zeros(1,nXStk): itAux.stk -join;                                         #     Add component of zeros
+      1 1 itAux.stk -mark; 0 1 itAux.stk /mark -fill;                           #     Fill with 0, 1, ...
+      itAux.stk "" "ccat" itAux.stk -strop;                                     #     Create stack token names "STKn"
+      itAux.stk "?STK0?" "replace" itAux.stk -strop;                            #     Clear "STK0" -> ""
+    end;                                                                        #   <<
     :sign(itAux.td[nIcStk])+1: 0 { ":-" "" ":+" } ' 0 1 idAux -lookup { "" };   #   Make pop, no-op, or push prefix
     idAux idTd -join;                                                           #   Join to transition description
     :abs(itAux.td[nIcStk]): itAux.stk "?" itAux -sym_lookup idTd -join;         #   Look up stack token name
