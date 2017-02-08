@@ -171,10 +171,11 @@ function -LX_ladd_pause(sName,idPhonTab,idLX)
     sEntry not if
       :idPhonTab[nAux,0]: sEntry =;
     else
-      ( "(" sEntry + "|" + :idPhonTab[nAux,0]: + ")" + ) sEntry =;
+      ( sEntry "|" + :idPhonTab[nAux,0]: + ) sEntry =;
     end
   end
   sEntry if
+    ( "(" sEntry + "|)" + ) sEntry =;
     sName sEntry idLX -LX_ladd; 
   end
 }

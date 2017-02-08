@@ -64,7 +64,7 @@ function -RRES_getargs(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr,bCfg)
 {
   itRec if
     $$ nFArg >= if
-      ( nFArg -argv ) itRec -restore;
+      ( nFArg -argv ) itRec /noerror -restore;
     else
       "WARNING - Missing argument $[nFArg] (itRec)"                   -RRES_msg;
       itRec -reset;
@@ -72,7 +72,7 @@ function -RRES_getargs(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr,bCfg)
   end
   itRef if 
     $$ :nFArg+1: >= if
-      ( :nFArg+1: -argv ) itRef -restore;
+      ( :nFArg+1: -argv ) itRef /noerror -restore;
     else
       "WARNING - Missing argument ${nFArg+1} (itRef)"                 -RRES_msg;
       itRef -reset;
@@ -80,7 +80,7 @@ function -RRES_getargs(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr,bCfg)
   end
   idNld if 
     $$ :nFArg+2: >= if
-      ( :nFArg+2: -argv ) idNld -restore;
+      ( :nFArg+2: -argv ) idNld /noerror -restore;
     else
       "WARNING - Missing argument ${nFArg+2} (idNld)"                 -RRES_msg;
       idNld -reset;
@@ -88,7 +88,7 @@ function -RRES_getargs(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr,bCfg)
   end
   idSig if 
     $$ :nFArg+3: >= if
-      ( :nFArg+3: -argv ) "wav" idSig stdfile -import;
+      ( :nFArg+3: -argv ) "wav" idSig stdfile /noerror -import;
     else
       "WARNING - Missing argument ${nFArg+3} (idSig)"                 -RRES_msg;
       idSig -reset;
@@ -96,7 +96,7 @@ function -RRES_getargs(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr,bCfg)
   end
   itFvr if 
     $$ :nFArg+4: >= if
-      ( :nFArg+4: -argv ) itFvr -restore;
+      ( :nFArg+4: -argv ) itFvr /noerror -restore;
     else
       "WARNING - Missing argument ${nFArg+4} (itFvr)"                 -RRES_msg;
       itFvr -reset;
@@ -104,7 +104,7 @@ function -RRES_getargs(nFArg,iSI,itRec,itRef,idNld,idSig,itFvr,bCfg)
   end
   iSI if 
     $$ :nFArg+5: >= if
-      ( :nFArg+5: -argv ) iSI -restore;
+      ( :nFArg+5: -argv ) iSI /noerror -restore;
     else
       "WARNING - Missing argument ${nFArg+5} (iSI)"                   -RRES_msg;
       iSI -reset;
