@@ -42,7 +42,6 @@ function -usage(sCmd)
       "\n     <cfgfile>   UASR configuration file"                        -MSG;
     "\n\n   EXAMPLE:"                                                     -MSG;
     "\n\n     'dlabpro $__SFILE__.xtp fea myconfig.cfg'"                  -MSG;
-      "\n     Checks the feature files of the 'myconfig.cfg' UASR setup." -MSG;
       "\n"                                                                -MSG;
     0 return;
   end
@@ -54,9 +53,9 @@ function -usage(sCmd)
       "\n     <cfgfile>   UASR configuration file"                        -MSG;
     "\n\n   EXAMPLE:"                                                     -MSG;
     "\n\n     'dlabpro $__SFILE__.xtp fls myconfig.cfg'"                  -MSG;
-      "\n     Checks the file lists of the 'myconfig.cfg' UASR setup."    -MSG;
       "\n"                                                                -MSG;
     0 return;
+  end
   sCmd "sig" == if
     "\n\n   sig: Check signal and labels files"                           -MSG; 
     "\n\n   USAGE:"                                                       -MSG;
@@ -65,11 +64,19 @@ function -usage(sCmd)
       "\n     <cfgfile>   UASR configuration file"                        -MSG;
     "\n\n   EXAMPLE:"                                                     -MSG;
     "\n\n     'dlabpro $__SFILE__.xtp sig myconfig.cfg'"                  -MSG;
-      "\n     Checks the signal and label files of the 'myconfig.cfg'"    -MSG;
-      "\n     UASR setup."                                                -MSG;
       "\n"                                                                -MSG;
     0 return;
   end
+  sCmd "trl" == if
+    "\n\n   trl: Check transliteration files"                             -MSG; 
+    "\n\n   USAGE:"                                                       -MSG;
+      "\n     dlabpro $__SFILE__.xtp trl <cfgfile> [options]"             -MSG;
+    "\n\n   ARGUMENTS:"                                                   -MSG;
+      "\n     <cfgfile>   UASR configuration file"                        -MSG;
+    "\n\n   EXAMPLE:"                                                     -MSG;
+    "\n\n     'dlabpro $__SFILE__.xtp trl myconfig.cfg'"                  -MSG;
+      "\n"                                                                -MSG;
+    0 return;
   end
   "\n\n   SYNOPSIS:"                                                      -MSG;
     "\n     Database check-up tool"                                       -MSG;
@@ -236,7 +243,7 @@ function -CMD_fcu(sType)
 {
   "\n\n// DATABASE FILE CHECK-UP"                                         -MSG; # Protocol
   "\n// File type       : $[sType]" -MSG;                                       # Protocol
-  sType "" -CFG_get_path;                                                       # Echo path to files
+  var  sDir; ( sType "" -CFG_get_path ) sDir =;                                 # Echo path to files
   sType "sig" == if "lab" "" -CFG_get_path; end                                 # Echo path to label files
   var  bOk;                                                                     # Current file ok?
   var  nE;                                                                      # Number of errors
@@ -256,6 +263,7 @@ function -CMD_fcu(sType)
       "\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: ..."              -MSG2; #     Protocol
       sType "fea" == if ( iF sSns "F" idX -FEA_get ) bOk =; end                 #     Check feature vector file
       sType "sig" == if ( iF sSns     idX -SIG_get ) bOk =; end                 #     Check signal and label files
+      sType "trl" == if ( sDir iF.sfile idX -TRL_import ) bOk =; end               #     Check transliteration files
       bOk if                                                                    #     File ok >>
         " ok"                                                            -MSG2; #       Protocol
       else                                                                      #     << File not ok >>
@@ -275,17 +283,25 @@ function -CMD_fcu(sType)
   0 return;
 }
 
-## Checks if all feature files contained in the "all" file list are present. 
+## Checks if all feature files contained in the "all" file list are present and
+## loadable. 
 function -CMD_fea()
 {
   "fea" -CMD_fcu return;
 }
 
 ## Checks if all signal and label files contained in the "all" file list are
-## present. 
+## present and loadable. 
 function -CMD_sig()
 {
   "sig" -CMD_fcu return;
+}
+
+## Checks if all transliteration files contained in the "all" file list are
+## present and loadable. 
+function -CMD_trl()
+{
+  "trl" -CMD_fcu return;
 }
 
 ## == MAIN PROGRAM ==                                                           # =====================================
