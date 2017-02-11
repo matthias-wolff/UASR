@@ -35,6 +35,7 @@
 "../util/lm.itp"   include;
 "../util/lx.itp"   include;
 "../util/os.itp"   include;
+"../util/par.itp"  include;
 "../util/uasr.itp" include;
 "../util/var.itp"  include;
 "../util/fea.itp"  include;
@@ -179,7 +180,6 @@ function -usage(sCmd)
       "\n       recfix.trg.off1 Activation offset          (default: -6)" -MSG;
       "\n       recfix.trg.off2 Deactivation offset        (default: 6)"  -MSG;
       "\n       recfix.trg.mino Minimal deactivation time  (default: 30)" -MSG;
-      "\n       recfix.trg.lda  Use this trained lda trigger model"       -MSG;
       "\n      Confidence configuration."                                 -MSG;
       "\n       recfix.cnf.mode Confid. mode (see nCNFM_* in maxdim.itp)" -MSG;
       "\n       recfix.cnf.tad  Threshold for acoustic distance"          -MSG;
@@ -810,8 +810,7 @@ function -PACK_recfix()
   ## Get parameter objects                                                      # -------------------------------------
   object iFI;  iFI      -PACK_feainfo;                                          # Get feature info object
   gmm    itGm; itGm     -PACK_gmm;                                              # Get gaussian mixture model
-  fst    itDlg;                                                                 # The dialog FST
-  object iSI;  iSI itDlg -PACK_sesinfo;                                         # Get session info object
+  object iSI;  iSI NULL -PACK_sesinfo;                                          # Get session info object
   # TODO: DLG
   # TODO: VAD
 
@@ -821,18 +820,17 @@ function -PACK_recfix()
   ## Pack it                                                                    # -------------------------------------
   1 var nrm;                                                                    # Init nomalization value
   .sFDsp -SH_rm;                                                                # Remove old output file
-  5 1  "version" "u16"     -PACK1;                                              # Pack version number
-  0 1  "_blank1" "u16"     -PACK1;                                              # Pack blank
-  nrm                      -PACK_sig;                                           # Pack frontend information
-  nrm                      -PACK_pfa nrm =;                                     # Pack primary feature analysis parameters
-  nrm iFI itGm.mean.dim    -PACK_sfa nrm =;                                     # Pack secondary feature analysis parameters
-  nrm itGm                 -PACK_gau nrm =;                                     # Pack gaussian parameters
-  nrm itGm.mmap            -PACK_mix nrm =;                                     # Pack mixture parameters
-  nrm iSI.itRN             -PACK_fsts;                                          # Pack recognition networks
-  nrm iSI.itRNr 0 "S" TRUE -PACK_fst;                                           # Pack reference recognition network
-  nrm itDlg     0 "S" TRUE -PACK_fst;                                           # Pack dialog grammar
-  nrm iSI.itGP             -PACK_cnf;                                           # Pack reference recognition network
-  nrm                      -PACK_trg;                                           # Pack signal detection
+  4 1  "version" "u16"   -PACK1;                                                # Pack version number
+  0 1  "_blank1" "u16"   -PACK1;                                                # Pack blank
+  nrm                    -PACK_sig;                                             # Pack frontend information
+  nrm                    -PACK_pfa nrm =;                                       # Pack primary feature analysis parameters
+  nrm iFI itGm.mean.dim  -PACK_sfa nrm =;                                       # Pack secondary feature analysis parameters
+  nrm itGm               -PACK_gau nrm =;                                       # Pack gaussian parameters
+  nrm itGm.mmap          -PACK_mix nrm =;                                       # Pack mixture parameters
+  nrm iSI.itRN  0        -PACK_fst;                                             # Pack recognition network
+  nrm iSI.itRNr 0        -PACK_fst;                                             # Pack reference recognition network
+  nrm iSI.itGP           -PACK_cnf;                                             # Pack reference recognition network
+  nrm                    -PACK_trg;                                             # Pack signal detection
   "\n  => Final norm: $[nrm]"                                             -MSG; # Protocol
 }
 
@@ -953,7 +951,7 @@ sOutTyp "S" == if;                                                              
   "syn.model" sSynMod  "S" -CFG_get_ex sSynMod  =;                              #   Get synthesis model
 end;                                                                            # <<
 sOutTyp "F" == if;                                                              # For recfix >>
-  sCmd "vad" == if;                                                             #   Commands 'dlg' and 'vad' >>
+  sCmd "dlg" == sCmd "vad" == || if;                                            #   Commands 'dlg' and 'vad' >>
    "UNSUPPORTED command $[sCmd] for output type $[sOutTyp]" 0 -WARNING; quit;   #     Warn unsupported
   end;                                                                          #   <<
   "recfix.prnw"    0 -CFG_get var nPRNW;                                        #   Weight pruning threshold
