@@ -25,13 +25,15 @@
 ## along with UASR. If not, see <http://www.gnu.org/licenses/>.
 
 ## Create structure of pronunciation lexicon.
+##
 ## @cgen:index
 ## @param sFilter string
 ##          Line filter (see <a href="#clp_-LX_load" class="code">-LX_load</a>)
 ## @param idLex data
-##          Lexicon data instance
+##          Lexicon data instance. Previous content will be deleted.
 function -LX_init(sFilter,idLex)
 {
+  idLex -reset;
   sFilter if "~FLT" 255 idLex -addcomp; end
   "ORTH"            255 idLex -addcomp;
   "PHON"            255 idLex -addcomp;
@@ -39,7 +41,6 @@ function -LX_init(sFilter,idLex)
   "NADT"   -type double idLex -addcomp;
   "NEDT"   -type double idLex -addcomp;
   "LEN"             255 idLex -addcomp;
-  return
 }
 
 ## Loads a pronunciation lexicon from a text file. Each line in the file defines one lexicon entry. Pronunciation
@@ -77,16 +78,27 @@ function -LX_init(sFilter,idLex)
 ## @return <code>TRUE</code> if successfull, <code>FALSE</code> otherwise
 function -LX_load(sFile,sFilter,idLex)
 {
-  file iF;
-  sFilter if
-    sFilter iF -set line_flt;
-    "~FLT" 8 idLex -addcomp;
-  end
-  idLex -reset;
-  sFilter idLex -LX_init;
-  sFile "ascii" idLex iF -import ?error if FALSE return; end
-  sFilter if idLex 0 1 idLex -delete; end
-  TRUE return;
+  data idPar;                                                                   # Content of Partitur file
+  var  nC;                                                                      # Loop counter
+
+  sFilter idLex -LX_init;                                                       # Initialize empty lexicon
+  sFile sFilter idPar -PAR_load not if                                          # Load Partitur file, if failed >>
+    "Cannot load lexicon from file $[sFile]."                           -ERROR; #   Error message
+    FALSE return;                                                               #   Return indicating failure
+  end                                                                           # <<
+  idPar " \t" "split" idPar -strop;                                             # Split Partitur lines into fields
+  0 nC =; :nC<min(idPar.dim,idLex.dim): while                                   # Loop over fields (=components) >>
+    ( nC idLex -get_comp_type ) ( nC idPar -get_comp_type ) != if               #   Different type than in idLex >>
+      nC 1 idPar /comp -mark;                                                   #     Mark component
+      idPar ( nC idLex -get_comp_type ) idPar /mark /force -tconvert;           #     Forcibly concert type
+      idPar -unmark;                                                            #     Unmark all components
+    end                                                                         #   <<
+    nC ++=;                                                                     #   Next component
+  end                                                                           # <<
+  idPar idLex -cat;                                                             # Copy keeping component names
+
+  sFilter if idLex 0 1 idLex -delete; end                                       # Delete tier filter component
+  TRUE return;                                                                  # Return indicating success
 }
 
 ## Imports a database-dependent lexicon. The default implementation just calls

@@ -1,0 +1,151 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: Partitur file support
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013-2017 UASR contributors (see COPYRIGHT file)
+## - Chair of Communications Engineering, BTU Cottbus-Senftenberg
+## - Fraunhofer IKTS, Dresden
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Loads a Partitur file. A Partitur file is a text file containing different 
+## data tiers marked by an identifier "&lt;TID&gt;:" at the beginning of each 
+## line. Blank lines and lines starting with a hash tag (#) are ignored.
+## 
+## <h4>Example</h4> 
+## <p><pre class="code">
+## # Comment
+## FOO: what ever ...
+## &nbsp;
+## GRM: (S) H hundert (A) und (B) ZE
+## GRM: (A) (F)
+## GRM: (A) (B)
+## GRM: (S) (B)
+## &nbsp;
+## BAR: what ever ...</pre></p>
+##
+## <h4>Includes</h4>
+## <p>The special tier marker "<code>INC:</code>" allows including another 
+## Partitur file at the position of the include marker. Includes can be nested.
+## Cyclic includes will be detected and suppressed.</p>
+## <p><pre class="code">
+## FOO: what ever ...
+## &nbsp;
+## # Include another file
+## INC: otherfile.par
+## &nbsp;
+## BAR: what ever ...</pre></p>
+## <p>Include supports absolute and relative path names. "Relative" means 
+## relative to the primary Partitur file specified through the 
+## <code>sFile</code> argument.</p>
+##
+## @cgen:index
+## @param sFile string
+##          Path of Partitur file to be loaded.
+## @param sFilter string
+##          Tier filter (consider only lines starting with the given string), 
+##          "" or <code>NULL</code> will read all lines.
+## @param idPar data
+##          Will be filled with Partitur tier(s).
+## @return <code>TRUE</code> if successfull, <code>FALSE</code> otherwise
+function -PAR_load(sFile,sFilter,idPar)
+{
+  function -includeat(sFile,sFilter,nRec,idFiles,idPar)                         # Include Partitur file
+  {                                                                             # >>
+    file iF;                                                                    #   File processor
+    data idFile;                                                                #   Included Partitur file name as data
+    data idParI;                                                                #   Included Partitur lines
+    data idParT;                                                                #   Tailing Partitur lines
+    data idMrk;                                                                 #   Partitur line marker
+    data idAux;                                                                 #   Auxiliary data
+    var  bRet;   TRUE bRet =;                                                   #   Return value
+
+    ## Initialize                                                               #   - - - - - - - - - - - - - - - - - -
+    "#" iF -set comment;                                                        #   Set line comment character
+    ""  iF -set sep;                                                            #   Set token separator (none)
+    255 1 1 idFile -array; sFile 0 0 idFile -sstore;                            #   Get file name into idFile
+
+    ## Load Partitur file to include                                            #   - - - - - - - - - - - - - - - - - -
+    "\n     - Including @$[nRec] \"" sFile + "\"" +                    3 -MSGX; #   Log
+    idFile idFiles 0 0 idAux /noerror -gen_index ?error not if                  #   File already included >>
+      "File " sFile +  " has already been included. Ignored." +     1 -WARNING; #     Warning message
+      FALSE bRet =;                                                             #     Negative result
+    else                                                                        #   << File not yet included >>
+      sFile "ascii" idParI iF /strings -import ?error if FALSE bRet =; end      #     Load Partitur file
+      idFile idFiles -cat;                                                      #     Add to included files list
+    end                                                                         #   <<
+
+    ## Filter tiers                                                             #   - - - - - - - - - - - - - - - - - -
+    sFilter if                                                                  #   Tier filter active >>
+      idParI "INC:"  "search" idAux -strop; :idMrk=idAux.!=0;                   #     Not includes ...
+      idParI sFilter "search" idAux -strop; :idMrk=idMrk.&&(idAux.!=0);         #     ... and not matching filter
+      idMrk idParI /comp -dmark;                                                #     Mark
+      idParI 0 0 idParI /mark -delete;                                          #     Delete
+    end                                                                         #   <<
+
+    ## Insert included Partitur lines                                           #   - - - - - - - - - - - - - - - - - -
+    idPar nRec ++ idPar.nrec idParT /rec -select;                               #   Copy tailing lines
+    idPar nRec    idPar.nrec idPar  /rec -delete;                               #   Remove include and tailing lines
+    idParI idPar -cat;                                                          #   Append included lines
+    idParT idPar -cat;                                                          #   Append tailing lines
+
+    bRet return;                                                                #   Return result
+  }                                                                             # <<
+
+  ## Local variables                                                            # -------------------------------------
+  data idFile;
+  data idFiles;                                                                 # List if included files
+  data idAux;                                                                   # Auxiliary data
+  var  nIncAt;                                                                  # Include location (line number)
+  var  sCwd;   -cwd sCwd =;                                                     # Save working directory
+
+  ## Initialize                                                                 # -------------------------------------
+  { "$[sFile]" } idFile =; idFile "" "splitp" idFile -strop;                    # Split file name
+  :idFile[0,0]=="": if "." 0 0 idFile -sstore; end;                             # Normalize path component
+  "\n     Loading Partitur file \"${idFile[0,0]}/${idFile[0,1]}\""     3 -MSGX; # Log
+  sFilter if "\n     - Tier filter: \"$[sFilter]\"" 3 -MSGX; end                # Log
+  :idFile[0,0]: stdfile /dir -exists not if                                     # Dir. of Partitur file not existing >>
+    " File ${idFile[0,0]}/${idFile[0,1]} does not exist" -ERROR;                #   Error message
+    FALSE return;                                                               #   Return indicating failure
+  end                                                                           # <<
+  "\n     - Change dir to \"" :idFile[0,0]: + "\"" +                   3 -MSGX; # Log
+  :idFile[0,0]: -cd;                                                            # Change to directory
+
+  ## Include iteration                                                          # -------------------------------------
+  { "INC: ${idFile[0,1]}" } idPar =;                                            # Include main Partitur file
+  TRUE while                                                                    # Iterate forever >>
+    idPar "INC:" "search" idAux -strop; :idAux=(idAux.==0);                     #   Search "INC:" tier markers
+    :idAux.nrec==0: if break; end                                               #   Empt tier -> end if iteration
+    idAux 0 idAux -compress;                                                    #   Compress markers
+    :idAux[0,0]==0: if idAux 0 1 idAux /rec -delete; end                        #   Remove heading no-include markers
+    :idAux.nrec==0: if break; end                                               #   No markers left -> end of iteration 
+    :nIncAt=idAux[0,1];                                                         #   Get include position
+    idPar nIncAt 1 idAux /rec -select;                                          #   Get include statement
+    idAux " \t" "split" idAux -strop;                                           #   Split
+    idAux "?\$UASR_HOME?$UASR_HOME" "replace" idAux -strop;                     #   HACK: Replace $UASR_HOME
+    :idAux[0,1]: sFilter nIncAt idFiles idPar -includeat;                       #   Do include
+  end                                                                           # <<
+
+  ## Aftermath                                                                  # -------------------------------------
+  "\n     - Change dir to \"" sCwd + "\"" +                            3 -MSGX; # Log
+  sCwd -cd;                                                                     # Restore working directory
+  "\n     Done ($[idPar.nrec] lines)."                                 3 -MSGX; # Log
+  TRUE return;                                                                  # Return ok
+}
+
+## EOF

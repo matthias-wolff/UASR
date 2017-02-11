@@ -37,6 +37,7 @@
 "lm.itp"           include;                                                     # Language model
 "lx.itp"           include;                                                     # Lexicon
 "os.itp"           include;                                                     # Operating system dependent
+"par.itp"          include;                                                     # Partitur file support
 "prosody.itp"      include;                                                     # Prosody
 "rres.itp"         include;                                                     # recognizer(.exe) result post-proc.
 "sig.itp"          include;                                                     # Signals

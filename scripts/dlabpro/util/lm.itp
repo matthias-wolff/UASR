@@ -54,42 +54,43 @@
 ##          Path of text file to be loaded
 ## @param sFilter string
 ##          Line filter (consider only lines starting with the given string), 
-##          commit "" to read all lines
+##          "" to read all lines
 ## @param idRules data
 ##          Will be filled with the rule set
 ## @return <code>TRUE</code> if successfull, <code>FALSE</code> otherwise
 function -FSG_load(sFile,sFilter,idRules)
 {
-  file iF;
-  data idL;
-  data idR0;
-  data idR;
-  data idAux;
-  var  nL;
-  var  nR;
+  data idPar;                                                                   # Content of Partitur file 
+  data idR0;                                                                    # Left and first right sides of rules
+  data idR;                                                                     # Rule assembling buffer
+  data idAux;                                                                   # Auxiliary data
+  var  nR;                                                                      # Component counter
 
-  idRules -reset;
-  sFilter iF -set line_flt;
-  "\n\r" iF -set sep;
-  "" 255 idL -addcomp;
-  sFile "ascii" idL iF /strings -import ?error if FALSE return; end
-  idL "," "split" idL -strop;
-  
-  :idL[0]: " \t" "split" idR0 -strop;
-  sFilter if idR0 0 1 idR0 -delete; end
-  idR0 idRules =;
-  0 "LEFT" idRules -set_cname;
+  ## Load rules from file                                                       # -------------------------------------
+  idRules -reset;                                                               # Reset target
+  sFile sFilter idPar -PAR_load not if                                          # Load Partitur file, failed >>
+    "Cannot load grammar from file $[sFile]."                           -ERROR; #   Error message
+    FALSE return;                                                               #   Return indicating failure
+  end                                                                           # <<
 
-  1 nR =; label L_RULE; nR idL.dim < if
-    :idR0[0]: idR =; :idL[nR]: idR -join;
-    idR "" "len" idAux -strop;
-    :idAux[1].==0: idR -dmark;
-    idR 0 0 idR /mark -delete;
-    idR " \t" "split" idR -strop;
-    idR idRules -cat;
-    nR ++=; goto L_RULE;
-  end
-  TRUE return;
+  ## Make rule set                                                              # -------------------------------------
+  idPar "," "split" idPar -strop;                                               # Split multiple right sides of rules
+  :idPar[0]: " \t" "split" idR0 -strop;                                         # Split left side and first right side
+  sFilter if idR0 0 1 idR0 -delete; end                                         # Delete tier marker
+  idR0 idRules =;                                                               # Copy left and 1st right side
+  0 "LEFT" idRules -set_cname;                                                  # Name left side component
+
+  ## Convert any extra right side into separate rules                           # -------------------------------------
+  1 nR =; label L_RULE; nR idPar.dim < if                                       # Loop over extra right sides >>
+    :idR0[0]: idR =; :idPar[nR]: idR -join;                                     #   Join left and additional right side
+    idR "" "len" idAux -strop; :idAux[1].==0: idR -dmark;                       #   Mark empty right side and ...   
+    idR 0 0 idR /mark -delete;                                                  #   ... delete
+    idR " \t" "split" idR -strop;                                               #   Split right side into tokens
+    idR idRules -cat;                                                           #   Append rule
+    nR ++=; goto L_RULE;                                                        #   Next extra right side
+  end                                                                           # <<
+
+  TRUE return;                                                                  # Return indicaing success
 }
 
 ## Loads the rule set of a built-in finite state grammar. The following table lists the available grammars.

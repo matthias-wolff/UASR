@@ -1168,6 +1168,7 @@ end                                                                             
   "util/lab.itp"     include;                                         "." -MSG; #   Include label utilities
   "util/lm.itp"      include;                                         "." -MSG; #   Include lexicon utilities
   "util/lx.itp"      include;                                         "." -MSG; #   Include language model utilities
+  "util/par.itp"     include;                                         "." -MSG; #   Include Partitur file utilities
   "util/prosody.itp" include;                                         "." -MSG; #   Include prosody handling utilities
   "util/sig.itp"     include;                                         "." -MSG; #   Include signal utilities
   "util/spp.itp"     include;                                         "." -MSG; #   Include signal preprocessing utilities
