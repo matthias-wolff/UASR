@@ -310,8 +310,7 @@ function -MSG2(sMsg)
 /inline function -WARNING(sMsg,nLevel)
 {
   .__UTL_nElevel nLevel >= if
-    "\n$__FILE__($__LINE__): warning - " -echo;
-    sMsg -COLOR_warn -echo;
+    "\n$__FILE__($__LINE__): warning - " sMsg + -COLOR_warn /stderr -echo;
     .__UTL_nWarnings ++=;
   end
 }
@@ -325,11 +324,10 @@ function -MSG2(sMsg)
 /inline function -ERROR(sMsg)
 {
   .__UTL_nElevel 0 >= if
-    "\n$__FILE__($__LINE__): error - " -echo;
-    sMsg -COLOR_error -echo;
+    "\n$__FILE__($__LINE__): error - " sMsg + -COLOR_error /stderr -echo;
     .__UTL_nErrors ++=;
     .__UTL_nErrors 100 >= if
-       "\n\nFATAL: More than ${.__UTL_nErrors}. Terminating program." -COLOR_error -echo;
+       "\n\nFATAL: More than ${.__UTL_nErrors}. Terminating program." -COLOR_error /stderr -echo;
        1 quit;
     end
   end
@@ -346,11 +344,11 @@ function -MSG2(sMsg)
 /inline function -ASSERT(bCondition,sMsg)
 {
   bCondition if leave; end
-  "\n"                                               -COLOR_error -echo;
-  "\n*********** UASR ASSERTION FAILURE ***********" -COLOR_error -echo;
-  "\n Location: $__FILE__($__LINE__)"                -COLOR_error -echo;
-  "\n Reason  : $[sMsg]"                             -COLOR_error -echo;
-  "\n**********************************************" -COLOR_error -echo;
+  "\n"                                               -COLOR_error /stderr -echo;
+  "\n*********** UASR ASSERTION FAILURE ***********" -COLOR_error /stderr -echo;
+  "\n Location: $__FILE__($__LINE__)"                -COLOR_error /stderr -echo;
+  "\n Reason  : $[sMsg]"                             -COLOR_error /stderr -echo;
+  "\n**********************************************" -COLOR_error /stderr -echo;
   "ASSERTION FAILURE" break;
 }
 
