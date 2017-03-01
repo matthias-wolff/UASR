@@ -679,6 +679,7 @@ function -PACK_sesinfo(retSI,retDlg)
   fst    iSI.itRNr;                                                             # - The reference reognition network
   fst    iSI.itGP;                                                              # - The labelling transducer
   data   iSI.idLMtos;                                                           # - The grammar's output symbols 
+  fst    iSI.itSynGrm;                                                          # - The synthesis grammar
   hmm    itHMM;                                                                 # The HMAs
   data   idLX;                                                                  # The lexicon entries
   fst    itDlg;                                                                 # The dialog FST
@@ -738,6 +739,17 @@ function -PACK_sesinfo(retSI,retDlg)
   " done" -MSG2 "."                                                       -MSG; # Procotol
 
   iSI.itRN.os iSI.idLMtos =;                                                    # Copy grammar output symbols
+
+  ( "syn.grm" ""  "S"  -CFG_get_ex  ) var sSynGrmFile;                          # Get synthesis grammar file name
+  sSynGrmFile "" != if;                                                         # If it is set >>
+    "\n   - Compiling synthesis grammar ..."                             -MSG2; #   Protocol
+    data idSynLX;                                                               #   Synthesis lexicon
+    data idSynFsg;                                                              #   Synthesis fsg
+    sSynGrmFile "LEX:" idSynLX -LX_load;                                        #   Load lexicon
+    sSynGrmFile "GRM:" idSynFsg -FSG_load;                                      #   Load fsg
+    idSynFsg idSynLX NULL iSI.itSynGrm -FSG_compile;                            #   Compile grammar
+  end;                                                                          # <<
+  
 
   retDlg NULL != if; itDlg retDlg =; end;                                       # Return dialog model
   retSI  NULL != if; iSI   retSI  =; 1 return; end;                             # Return session info object
@@ -834,6 +846,7 @@ function -PACK_recfix()
   nrm itDlg     0 "S" TRUE -PACK_fst;                                           # Pack dialog grammar
   nrm iSI.itGP             -PACK_cnf;                                           # Pack reference recognition network
   nrm                      -PACK_trg;                                           # Pack signal detection
+  nrm iSI.itSynGrm 0 "B" TRUE -PACK_fst;                                        # Pack synthesis grammar network
   "\n  => Final norm: $[nrm]"                                             -MSG; # Protocol
 }
 
