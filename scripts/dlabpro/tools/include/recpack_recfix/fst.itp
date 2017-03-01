@@ -93,7 +93,7 @@ function -PACK_fst(nrm,itRN,nU,sTyp,bAct)
 	.nMAX_$[sTyp]FSTT_NUM dT -reallocate;
 
 	# perpare os
-	data dOS; iRN.os .nMAX_FSTO_LEN dOS /force -tconvert;
+	data dOS; :iRN.os[0]: .nMAX_FSTO_LEN dOS /force -tconvert;
 	.nMAX_FSTO_NUM dOS -reallocate;
 
 

@@ -861,7 +861,10 @@ function -PACK_recfix()
   nrm itDlg     0 "S" TRUE -PACK_fst;                                           # Pack dialog grammar
   nrm iSI.itGP             -PACK_cnf;                                           # Pack reference recognition network
   nrm                      -PACK_trg;                                           # Pack signal detection
-  nrm iSI.itSynGrm 0 "B" TRUE -PACK_fst;                                        # Pack synthesis grammar network
+  # Copy input symbols in itSynGrm to weights (TIS: only 8 bits)
+  :iSI.itSynGrm.td["~TIS"]: 0 1 "~LSR" iSI.itSynGrm.td -xstore;                 # Copy TIS to LSR
+  :iSI.itSynGrm.td["~TIS"].*0: 0 1 "~TIS" iSI.itSynGrm.td -xstore;              # Clear TIS
+  32768 iSI.itSynGrm 0 "B" TRUE -PACK_fst;                                      # Pack synthesis grammar network
   "\n  => Final norm: $[nrm]"                                             -MSG; # Protocol
 }
 
