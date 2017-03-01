@@ -743,11 +743,26 @@ function -PACK_sesinfo(retSI,retDlg)
   ( "syn.grm" ""  "S"  -CFG_get_ex  ) var sSynGrmFile;                          # Get synthesis grammar file name
   sSynGrmFile "" != if;                                                         # If it is set >>
     "\n   - Compiling synthesis grammar ..."                             -MSG2; #   Protocol
+    # Compile SynGrm                                                            #   ---------------------------
     data idSynLX;                                                               #   Synthesis lexicon
     data idSynFsg;                                                              #   Synthesis fsg
     sSynGrmFile "LEX:" idSynLX -LX_load;                                        #   Load lexicon
     sSynGrmFile "GRM:" idSynFsg -FSG_load;                                      #   Load fsg
     idSynFsg idSynLX NULL iSI.itSynGrm -FSG_compile;                            #   Compile grammar
+
+    # Unify symbol tables                                                       #   ---------------------------
+    data idAux; iSI.itSynGrm.os iSI.itRN.os 0 0 idAux /noerror -gen_index;      #   Find missing symbols in itRN
+    :idAux.<0: iSI.itSynGrm.os -dmark; iSI.itSynGrm.os 0 0 idAux /mark -select; #   |
+    idAux iSI.itRN.os -cat; iSI.itRN.os iSI.idLMtos =;                          #   Add symbols to itRN.os
+
+    # Map SynGrm to unified table                                               #   ---------------------------
+    :iSI.itSynGrm.td["~TOS"]: 0 iSI.itSynGrm.os 0 1 idAux -lookup;              #   Lookup symbols in unified table
+    idAux iSI.itRN.os 0 0 idAux /noerror -gen_index;                            #   Get new symbol index
+    idAux 0 1 "~TOS" iSI.itSynGrm.td -xstore;                                   #   Store in SynGrm
+    iSI.itRN.os iSI.itSynGrm.os =;                                              #   Copy symbol table
+
+    # Invert SynGrm                                                             #   ---------------------------
+    0 iSI.itSynGrm -invert;                                                     #   Invert SynGrm
   end;                                                                          # <<
   
 
