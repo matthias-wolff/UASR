@@ -1,0 +1,88 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Data packaging functions for fixpoint recognizer (recfix)
+##
+## AUTHOR : Frank Duckhorn
+## PACKAGE: uasr/scripts/dlabpro/tools/include/recpack_recfix
+
+## Copyright 2013-2016 UASR contributors (see COPYRIGHT file)
+## - Chair of Communications Engineering, BTU Cottbus-Senftenberg
+## - Fraunhofer IKTS, Dresden
+## - Chair of System Theory and Speech Technology, TU Dresden
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+#@uasrdoc: ignore
+
+function -PACK_xsyn(idSynWrds)
+{
+  # Get syn file name + remove it
+  .sFDsp var sFCfg;
+  sFCfg "?.cfg?.syn" "replace" -VAR_strop .sFDsp =
+  .sFDsp -SH_rm;
+
+  # Syn dir set ?
+  "syn.dir" "" "S" -CFG_get_ex var sDir;
+  sDir "" != if;
+    
+    # Read flist
+    data idFlst; "$[sDir]" "*.wav" FALSE idFlst -SH_find;
+    idFlst "?.wav?" "replace" idFlst -strop;
+    idFlst 32 idFlst /force -tconvert;
+
+    # Read wavs
+    data idSig;
+    data idSig1;
+    0 var f; f idFlst.nrec < while;
+      "$[sDir]/${idFlst[f,0]}.wav" "wav" idSig1 stdfile -import;
+      1 idSig1.nrec ones f .* idSig1 -join; # signal index
+      idSig1 idSig -cat;
+    f ++=; end;
+
+    # Join signal offset + length to idFlst
+    idSig 1 idSig1 -compress; idSig 1 1 idSig -delete; # compress & remove signal index
+    idSig1 0 1 idSig1 -delete; idSig1 -type UINT32 idSig1 -tconvert; # reduce to offset + length
+    idSig1 idFlst -join;
+
+    # Compress begin + end
+    data idAux;
+    data dLU; :idFlst[0]: "1" "left"  idAux -strop; idAux "_" "cmp" idAux -strop; :idAux.==0: dLU =; # at begin
+    data dRU; :idFlst[0]: "1" "right" idAux -strop; idAux "_" "cmp" idAux -strop; :idAux.==0: dRU =; # at end
+    data dFlst; :idFlst[0]: "?_?" "replace" dFlst -strop; dFlst idFlst -join; # unify words
+    dFlst 0 dFlst -sortup; dFlst 0 dFlst -compress; :dFlst[0]: dFlst =; # build unified word table
+
+    # Map to unified words
+    data dMap; idFlst dFlst 3 0 dMap -gen_index;
+    1 dFlst.nrec zeros idAux =; 0 1 idAux -fill; idAux ' idAux =;
+    ( idAux 1 idFlst.nrec ones * ) ( dFlst.nrec 1 ones dMap * ) .== dMap =;
+
+    # Find offset+length and join to unified words
+    1 2 idFlst -xfetch :(dLU.==0).&&(dRU.==0): .* dMap ' * dFlst -join;
+    1 2 idFlst -xfetch :(dLU.==1).&&(dRU.==0): .* dMap ' * dFlst -join;
+    1 2 idFlst -xfetch :(dLU.==0).&&(dRU.==1): .* dMap ' * dFlst -join;
+    1 2 idFlst -xfetch :(dLU.==1).&&(dRU.==1): .* dMap ' * dFlst -join;
+    dFlst -type UINT32 dFlst -tconvert;
+
+    # Pack it
+    dFlst.nrec 1 "num" "u32" -PACK1;
+    dFlst 0 0 "names" "mix" -PACK;
+    idSig 1 idSig.nrec "sig" "s16" -PACK;
+
+  end;
+
+  # Recover cfg file name  & copy word list
+  sFCfg .sFDsp =;
+  :dFlst[0]: idSynWrds =;
+}

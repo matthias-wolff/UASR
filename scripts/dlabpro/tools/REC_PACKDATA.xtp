@@ -58,6 +58,7 @@
 "include/recpack_recfix/gmm.itp"    include;
 "include/recpack_recfix/fst.itp"    include;
 "include/recpack_recfix/trg.itp"    include;
+"include/recpack_recfix/syn.itp"    include;
 
 ## Prints help on usage
 function -usage(sCmd)
@@ -749,6 +750,7 @@ function -PACK_sesinfo(retSI,retDlg)
     sSynGrmFile "LEX:" idSynLX -LX_load;                                        #   Load lexicon
     sSynGrmFile "GRM:" idSynFsg -FSG_load;                                      #   Load fsg
     idSynFsg idSynLX NULL iSI.itSynGrm -FSG_compile;                            #   Compile grammar
+    #"syngrm.svg" iSI.itSynGrm.is iSI.itSynGrm.os -1 iSI.itSynGrm -FST_render;                           "." -MSG2; #   Protocol
 
     # Unify symbol tables                                                       #   ---------------------------
     data idAux; iSI.itSynGrm.os iSI.itRN.os 0 0 idAux /noerror -gen_index;      #   Find missing symbols in itRN
@@ -840,13 +842,13 @@ function -PACK_recfix()
   gmm    itGm; itGm     -PACK_gmm;                                              # Get gaussian mixture model
   fst    itDlg;                                                                 # The dialog FST
   object iSI;  iSI itDlg -PACK_sesinfo;                                         # Get session info object
-  # TODO: DLG
-  # TODO: VAD
+
 
   data idHist; -UPFA_hist idHist =;
   idHist -NRM_Calc;
 
   ## Pack it                                                                    # -------------------------------------
+  data idSynWrds; idSynWrds -PACK_xsyn;                                         # Pack synthesis data
   1 var nrm;                                                                    # Init nomalization value
   .sFDsp -SH_rm;                                                                # Remove old output file
   5 1  "version" "u16"     -PACK1;                                              # Pack version number
@@ -861,6 +863,7 @@ function -PACK_recfix()
   nrm itDlg     0 "S" TRUE -PACK_fst;                                           # Pack dialog grammar
   nrm iSI.itGP             -PACK_cnf;                                           # Pack reference recognition network
   nrm                      -PACK_trg;                                           # Pack signal detection
+  # TODO: map iSI.itSynGrm.is to idSynWrds
   # Copy input symbols in itSynGrm to weights (TIS: only 8 bits)
   :iSI.itSynGrm.td["~TIS"]: 0 1 "~LSR" iSI.itSynGrm.td -xstore;                 # Copy TIS to LSR
   :iSI.itSynGrm.td["~TIS"].*0: 0 1 "~TIS" iSI.itSynGrm.td -xstore;              # Clear TIS
