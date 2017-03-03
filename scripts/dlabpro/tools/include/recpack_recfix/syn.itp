@@ -89,9 +89,20 @@ function -PACK_synsig(idSynWrds)
 
 function -PACK_syngrm(itSynGrm,idSynWrds)
 {
-  # TODO: map itSynGrm.is to idSynWrds
+  # Remove [ and ] in is
+  data idAux;
+  data idAux2;
+  { "[" "]" } ' itSynGrm.is 0 0 idAux -gen_index; # Get index for [ and ]
+  :itSynGrm.td["~TIS"]: idAux 0 0 idAux2 -gen_index; # Find [ and ] in TIS
+  :idAux2.<0: :itSynGrm.td["~TIS"]+1: .* 1 - 0 1 "~TIS" itSynGrm.td -xstore; # Remove [ and ] in TIS
+  itSynGrm 0 itSynGrm /lazy -minimize;
+
   # Copy input symbols in itSynGrm to weights (TIS: only 8 bits)
-  :itSynGrm.td["~TIS"]: 0 1 "~LSR" itSynGrm.td -xstore;                     # Copy TIS to LSR
-  :itSynGrm.td["~TIS"].*0-1: 0 1 "~TIS" itSynGrm.td -xstore;                # Clear TIS
+  :itSynGrm.td["~LSR"]=itSynGrm.td["~TIS"];                     # Copy TIS to LSR
+  :itSynGrm.td["~TIS"]=itSynGrm.td["~TIS"].*0-1;                # Clear TIS
+
+  # TODO: map itSynGrm.os to idSynWrds
+
+  # Pack it
   32768 itSynGrm 0 "Bw" TRUE -PACK_fst;                                     # Pack synthesis grammar network
 }
