@@ -26,7 +26,7 @@
 
 #@uasrdoc: ignore
 
-function -PACK_xsyn(idSynWrds)
+function -PACK_synsig(idSynWrds)
 {
   # Get syn file name + remove it
   .sFDsp var sFCfg;
@@ -85,4 +85,13 @@ function -PACK_xsyn(idSynWrds)
   # Recover cfg file name  & copy word list
   sFCfg .sFDsp =;
   :dFlst[0]: idSynWrds =;
+}
+
+function -PACK_syngrm(itSynGrm,idSynWrds)
+{
+  # TODO: map itSynGrm.is to idSynWrds
+  # Copy input symbols in itSynGrm to weights (TIS: only 8 bits)
+  :itSynGrm.td["~TIS"]: 0 1 "~LSR" itSynGrm.td -xstore;                     # Copy TIS to LSR
+  :itSynGrm.td["~TIS"].*0-1: 0 1 "~TIS" itSynGrm.td -xstore;                # Clear TIS
+  32768 itSynGrm 0 "Bw" TRUE -PACK_fst;                                     # Pack synthesis grammar network
 }

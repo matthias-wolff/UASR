@@ -36,15 +36,25 @@ function -PACK_fsts(nrm,itRN)
   nU ++=; end;
 }
 
+## @param nrm    Weight normalization factor
+## @param itRN   FST
+## @param nU     Unit index
+## @param sTyp   1. letter: S - Small, B - Big Variant
+##               2. letter: w - skip push_weights
+## @param bAct   Activate network
 function -PACK_fst(nrm,itRN,nU,sTyp,bAct)
 {
 	data idAux;
 	data idAux2;
 	fst iRN;
   1 var nXMUL;
+
+  "$[sTyp]  " "2" "left" -VAR_strop "1" "right" -VAR_strop var sTyp2;
+  sTyp "1" "left" -VAR_strop var sTyp1;
+
   nU itRN.ud.nrec < if;
   	itRN NULL nU iRN -copy_ui;
-	  iRN 0 iRN -push_weights;
+	  sTyp2 "w" != if; iRN 0 iRN -push_weights; end;
   else;
     "" iRN /fst /lsr -addunit;
     0 1 iRN -addstates;
@@ -81,7 +91,7 @@ function -PACK_fst(nrm,itRN,nU,sTyp,bAct)
 	:iS[1]: 1 idAux -QUANT_u16; idAux dS -join;
 	:iS[2]: 1 idAux -QUANT_u8;  idAux dS -join;
 	:iS[0]: 1 idAux -QUANT_u8;  idAux dS -join;
-	.nMAX_$[sTyp]FSTS_NUM dS -reallocate;
+	.nMAX_$[sTyp1]FSTS_NUM dS -reallocate;
 
 	# quant transitions
 	data dT;
@@ -90,7 +100,7 @@ function -PACK_fst(nrm,itRN,nU,sTyp,bAct)
 	:iT["~STK"]: 1           idAux -QUANT_s8;  idAux dT -join;
 	:iT["~TOS"]: 1           idAux -QUANT_s16; idAux dT -join;
 	:iT["~LSR"]: :32768/nrm: idAux -QUANT_s16; idAux dT -join;
-	.nMAX_$[sTyp]FSTT_NUM dT -reallocate;
+	.nMAX_$[sTyp1]FSTT_NUM dT -reallocate;
 
 	# perpare os
 	data dOS; :iRN.os[0]: .nMAX_FSTO_LEN dOS /force -tconvert;
