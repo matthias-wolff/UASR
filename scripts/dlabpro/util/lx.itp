@@ -187,7 +187,7 @@ function -LX_ladd_pause(sName,idPhonTab,idLX)
     end
   end
   sEntry if
-    ( "(" sEntry + "|)" + ) sEntry =;
+    ( "(" sEntry + ")" + ) sEntry =;
     sName sEntry idLX -LX_ladd; 
   end
 }
