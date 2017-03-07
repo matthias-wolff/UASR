@@ -860,7 +860,7 @@ function -PACK_recfix()
   nrm itGm.mmap            -PACK_mix nrm =;                                     # Pack mixture parameters
   nrm iSI.itRN             -PACK_fsts;                                          # Pack recognition networks
   nrm iSI.itRNr 0 "S" TRUE -PACK_fst;                                           # Pack reference recognition network
-  nrm itDlg     0 "S" TRUE -PACK_fst;                                           # Pack dialog grammar
+  nrm itDlg    0 "Sw" TRUE -PACK_fst;                                           # Pack dialog grammar
   nrm iSI.itGP             -PACK_cnf;                                           # Pack reference recognition network
   nrm                      -PACK_trg;                                           # Pack signal detection
   iSI.itSynGrm idSynWrds   -PACK_syngrm;                                        # Pack synthesis grammar
