@@ -1,0 +1,146 @@
+## UASR: Unified Approach to Speech Synthesis and Recognition
+## - Utility functions: Statistics
+##
+## AUTHOR : Matthias Wolff
+## PACKAGE: uasr/scripts/dlabpro/util
+
+## Copyright 2013-2017 UASR contributors (see COPYRIGHT file)
+## - Chair of Communications Engineering, BTU Cottbus-Senftenberg
+## - Fraunhofer IKTS, Dresden
+##
+## This file is part of UASR.
+##
+## UASR is free software: you can redistribute it and/or modify it under the
+## terms of the GNU Lesser General Public License as published by the Free
+## Software Foundation, either version 3 of the License, or (at your option)
+## any later version.
+##
+## UASR is distributed in the hope that it will be useful, but WITHOUT ANY
+## WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+## FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+## details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with UASR. If not, see <http://www.gnu.org/licenses/>.
+
+## Evaluates a hypergeometric distribution. <p>See R. Hoffmann, M. Wolff: 
+## Intelligente Signalverabeitung 2, Springer-Vieweg, 2015. pp. 136-141.</p>
+##
+## @cgen:index
+## @param nu number 
+##         Argument
+## @param n number 
+##          Parameter n of hypergeometric distribution.
+## @param KA number 
+##          Parameter KA of hypergeometric distribution.
+## @param K number 
+##          Parameter K of hypergeometric distribution.
+## @return Probability of argument given parameters.
+function -STAT_hgeodist(nu,n,KA,K)
+{
+  var lnp;
+  :lnp = lgamma(n+1) + lgamma(K-n+1) + lgamma(KA+1) + lgamma(K-KA+1);
+  :lnp = lnp - lgamma(nu+1) - lgamma(n-nu+1) - lgamma(KA-nu+1);
+  :lnp = lnp - lgamma(K+nu-KA-n+1) - lgamma(K+1);
+  :exp(lnp): return;
+}
+
+## Computes a quota with 95% Clopper-Pearson interval. <p>See R. Hoffmann, 
+## M. Wolff: Intelligente Signalverabeitung 2 - Signalerkennung, 
+## Springer-Vieweg, 2015. pp. 132-136.
+##
+## @cgen:index
+## @param n number 
+##          No. of hits.
+## @param K number
+##          Sample size.
+## @return 
+##    A data table with the components "q" (quota), "q+" (difference to upper 
+##    bound of Clopper-Pearson interval), "q-" (difference to lower bound of 
+##    Clopper-Pearson interval), "n" (n), and "K" (K).
+## @see -STAT_quotas_equal_p
+function -STAT_quota(n,K)
+{
+  data idQ;                                                                     # Result table
+  ( 5 1 zeros ) idQ =; { "q" "q+" "q-" "n" "K" } ' 0 idQ -set_cnames;           # Initialize structure
+  :idQ[0,"q"]=nan; :idQ[0,"n"]=n; :idQ[0,"K"]=K;                                # Initialize values
+
+  K 0 <= if idQ return; end;                                                    # Divisor zero -> no quota
+  var q;  :q=n/K;                                                               # Quota
+  var ciU :ciU=max(n/K,min(1,1-betaquant(0.025,K-n,n+1)));                      # Upper bound of confidence interval
+  var ciL :ciL=max(0,min(n/K,1-betaquant(0.975,K-n+1,n)));                      # Lower bound of confidence interval
+
+  :idQ[0,"q"]=q; :idQ[0,"q+"]=ciU-q; :idQ[0,"q-"]=q-ciL;                        # Fill in values
+  idQ return;                                                                   # Return table
+}
+
+## Fisher's exact test of the hypothesis that quotas nA/KA and nB/KB are equal. 
+## <p>See R. Hoffmann, M. Wolff: Intelligente Signalverabeitung 2, 
+## Springer-Vieweg, 2015. pp. 136-141.</p>
+##
+## @cgen:index
+## @param nA number 
+##          No. of hits in experiment A.
+## @param KA number 
+##          Sample size of experiment A.
+## @param nB number 
+##          No. of hits in experiment B.
+## @param KB number
+##          Sample size of experiment B.
+## @return The two-tailed p-value.
+## @see -STAT_quota
+function -STAT_quotas_equal_p(nA,KA,nB,KB)
+{
+  var nu;                                                                       # Argument of hypergeom. distribution
+  var K;  :K=KA+KB;                                                             # Total no. of samples
+  var n;  :n=nA+nB;                                                             # Total no. of hits
+  var p0; ( nA n KA K -STAT_hgeodist ) p0 =;                                    # P_hgeo(nA;n,KA,K)
+  var p;                                                                        # Probability
+  var P;                                                                        # P-value
+  
+  0 nu =; nu KA <= while                                                        # Loop over argument >>
+    ( nu n KA K -STAT_hgeodist ) p =;                                           #   Compute probability
+    :p<=p0: if                                                                  #   Smaller than P_hgeo(nA;n,KA,K) >> 
+      :P+=p;                                                                    #     Aggregate p-value
+    end                                                                         #   <<
+    nu ++=;                                                                     #   Next argument
+  end                                                                           # <<
+
+  P return;                                                                     # Return p-value
+}
+
+## Pretty-prints a quota.
+##
+## @param sPrefix string 
+##          Print line prefix.
+## @param n number 
+##          No. of hits.
+## @param K number 
+##          Sample size.
+## @param sMode string 
+##          "latex" (LaTeX format /w German numbers) or "plain" (plaint text).
+## @return void
+function -STAT_print_quota(sPrefix,n,K,sMode)
+{
+  data idQ; ( n K -STAT_quota ) idQ =;                                          # Get quota
+  :idQ[0,"q" ]=round(idQ[0,"q" ]*1000)/10;                                      # Convert q to percent and round
+  :idQ[0,"q+"]=round(idQ[0,"q+"]*1000)/10;                                      # Convert q+ to percent and round
+  :idQ[0,"q-"]=round(idQ[0,"q-"]*1000)/10;                                      # Convert q- to percent and round
+
+  sPrefix                                                                -echo; # Log
+  sMode "latex" == if                                                           # Latex mode >>
+    " \$"                                                                -echo; #   Log
+    ( :idQ[0,"q"]: 0 1 -FMT_f ) "|.|,\\!" "replace" -VAR_strop           -echo; #   Log
+    "^{+"                                                                -echo; #   Log
+    ( :idQ[0,"q+"]: 0 1 -FMT_f ) "|.|," "replace" -VAR_strop             -echo; #   Log
+    "}_{-"                                                               -echo; #   Log
+    ( :idQ[0,"q-"]: 0 1 -FMT_f ) "|.|," "replace" -VAR_strop             -echo; #   Log
+    "}\$     $[n]/$[K]"                                                  -echo; #   Log
+  else                                                                          # << Plain text mode >>
+    ( :idQ[0,"q"]: 5 1 -FMT_f ) "%" +                                    -echo; #   Log
+    " (+" ( :idQ[0,"q+"]: -4 1 -FMT_f ) +                                -echo; #   Log
+    " -"  ( :idQ[0,"q-"]: -4 1 -FMT_f ) + ")" +                          -echo; #   Log
+  end                                                                           # <<
+}
+
+## EOF
