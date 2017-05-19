@@ -96,6 +96,7 @@ function -PACK_syngrm(itSynGrm,idSynWrds)
   :itSynGrm.td["~TIS"]: idAux 0 0 idAux2 -gen_index; # Find [ and ] in TIS
   :idAux2.<0: :itSynGrm.td["~TIS"]+1: .* 1 - 0 1 "~TIS" itSynGrm.td -xstore; # Remove [ and ] in TIS
   itSynGrm 0 itSynGrm /lazy -minimize;
+  #itSynGrm.sd 1 1 itSynGrm.sd -delete; "syngrm.svg" itSynGrm.is itSynGrm.os -1 itSynGrm -FST_render;
 
   # Copy input symbols in itSynGrm to weights (TIS: only 8 bits)
   :itSynGrm.td["~LSR"]=itSynGrm.td["~TIS"];                     # Copy TIS to LSR

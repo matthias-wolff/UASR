@@ -851,7 +851,7 @@ function -PACK_recfix()
   data idSynWrds; idSynWrds -PACK_synsig;                                       # Pack synthesis signals
   1 var nrm;                                                                    # Init nomalization value
   .sFDsp -SH_rm;                                                                # Remove old output file
-  5 1  "version" "u16"     -PACK1;                                              # Pack version number
+  6 1  "version" "u16"     -PACK1;                                              # Pack version number
   0 1  "_blank1" "u16"     -PACK1;                                              # Pack blank
   nrm                      -PACK_sig;                                           # Pack frontend information
   nrm                      -PACK_pfa nrm =;                                     # Pack primary feature analysis parameters

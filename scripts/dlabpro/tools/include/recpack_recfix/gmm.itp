@@ -124,16 +124,21 @@ function -PACK_mix(nrm,iMmap)
 
 	end;
 
-	dMIXI.dim var nmix;
+  :dMIXI.nrec>.nMAX_MIX_GAU: if;
+		"\n  WARN: Numer of Gaussians per mixture exceeds maximum (.nMAX_MIX_GAU)" 0 -WARNING;
+    .nMAX_MIX_GAU dMIXI -reallocate;
+  end;
+  .nMAX_MIX_GAU dMIXW -reallocate;
+  :dMIXI.nrec<.nMAX_MIX_GAU: if;
+    dMIXI.dim 1 ones { -1 } * 1 :.nMAX_MIX_GAU-dMIXI.nrec: ones * dMIXI -cat;
+  end;
 
-	# Count components of mixtures
-	data dNGAU; :dMIXI.>=0: NULL 0 "sum" dNGAU /rec -aggregate;
+	dMIXI.dim var nmix;
 
 	# Combine + quant dMIXW and dMIXI
 	dMIXI :dMIXI.dim*dMIXI.nrec: 1 dMIXI -reshape;
 	dMIXW dMIXI.nrec             1 dMIXW -reshape;
 	:dMIXW.*(32768/nrm): dMIXI -join;
-	:dMIXI[0].>=0: dMIXI -dmark; dMIXI 0 0 dMIXI /mark -select;
 
 	# Generate ladd table
 	data dLADD; -type double 1 .nMAX_LAD_NUM dLADD -array;
@@ -147,7 +152,6 @@ function -PACK_mix(nrm,iMmap)
 	# Pack it
 	nmix                   1 "mix.nmix" "u16" -PACK1;
 	:dNLADD[0,0]:          1 "mix.nlad" "u16" -PACK1;
-	dNGAU   1 .nMAX_MIX_NUM                   "mix.ngau" "u16" -PACK;
 	dMIXI ' 1 :.nMAX_MIX_NUM*.nMAX_MIX_GAU*2: "mix.m"    "s16" -PACK;
 	dLADD   :32768/nrm: .nMAX_LAD_NUM         "mix.lad"  "s16" -PACK;
 	"\n  norm mix: $[nrm]" -MSG;
