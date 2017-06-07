@@ -57,7 +57,7 @@ end                                                                             
 "\n// Database        : $[sDb]"                                           -MSG; # Protocol
 -DB_version sDBrev =;                                                           # Get database version
 ( sDBrev "" != ) ( sDBrev "?" != ) &&  if                                       # String rev number exists  >>  
-  "\n//                   Revision $[sDBrev]"                              -MSG;#   Protocol svn version if existing 
+  "\n//                   Revision $[sDBrev]"                             -MSG; #   Protocol svn version if existing 
 end                                                                             # <<
 
 "\n// Plug-in script  : "                                                 -MSG; # Protocol
@@ -70,13 +70,21 @@ sBuf if                                                                         
   end                                                                           #   <<
   "$[sBuf]"                                                               -MSG; #   Protocol
 else                                                                            # << include was not configured >>
+  "Trying to load \"$[sDirScr]/dlabpro/$[sDb].itp\" ..."               3 -MSGX; #   Protocol
+  "\n//                   "                                            3 -MSGX; #     Protocol
   "$[sDirScr]/dlabpro/$[sDb].itp" /noerror include ?error not if                #   Std. database include file found >>
     "$[sDirScr]/dlabpro/$[sDb].itp"                                       -MSG; #     Say so
+    "\n//                   ... ok"                                    3 -MSGX; #     Protocol
   else                                                                          #   << not found >>
+    " not found\n//                   "                                3 -MSGX; #     Protocol
+    "Trying to load \"$[sDirInfo]/$[sDb].itp\" ..."                    3 -MSGX; #     Protocol
+    "\n//                   "                                          3 -MSGX; #     Protocol
     "$[sDirInfo]/$[sDb].itp" /noerror include ?error if                         #     Try at old location, not found >>
       "n/a"                                                               -MSG; #       Say so
+      "\n//                   ... not found"                           3 -MSGX; #       Protocol
     else                                                                        #    << found >>
       "$[sDirInfo]/$[sDb].itp"                                            -MSG; #       Say so
+      "\n//                   ... ok"                                  3 -MSGX; #       Protocol
     end                                                                         #    <<
   end                                                                           #  <<
 end                                                                             # <<
