@@ -145,7 +145,7 @@ function -TOPOHLP_Trans(itHMM,itUsed,idLenMean,idTrans,sWriteStat)
 		idMsf.nrec nLenSum +=;                                                      #   Add path length to length sum
 		nLenCount ++=;                                                              #   Increment path counter
 
-		idMsf iFI itRN -1 "1A" itRres -AM_decode;                                   #   Decode
+		idMsf iFI itRN -1 "1A" "$[iF.sfile]" itRres -AM_decode;                     #   Decode
 		itUsed NULL != if;                                                          #   If itUSed to be created >>
 			itRres itTmp =;                                                           #     Copy recognition result
 			-1 itTmp -remove_ex_loops;                                                #     Remove loops from result
@@ -618,7 +618,7 @@ function -HMM_Act_split(itHMM)
 {
   var    nMinRc;  "am.train.split.minrc" -1   "S" -CFG_get_ex nMinRc =;         # Min. ref. counter for state split
   var      nNum;  "am.train.split.num"    0   "S" -CFG_get_ex nNum =;           # Number of gaussians to split
-  var     sKrit;  "am.train.split.krit" "var" "S" -CFG_get_ex sKrit =;          # Kriterium für Selection
+  var     sKrit;  "am.train.split.krit" "var" "S" -CFG_get_ex sKrit =;          # Kriterium fuer Selection
   var      sNum;                                                                # String describing num. of G.
 
   nNum 0 < if; itHMM.gm -get_n_valid_gauss nNum * -1 * 0.5 + ent nNum =; end;   # Negativ gauss num -> perc. of G.

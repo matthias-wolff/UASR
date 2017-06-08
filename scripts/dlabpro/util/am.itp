@@ -179,9 +179,11 @@ function -AM_adapt(iS,nWmn,nWcv,itAM)
 ##            <tr><td>A</td><td>Use synchron a* search</td></tr>
 ##            <tr><td>F</td><td>Use forward-backward algorithm</td></tr>
 ##          </table>
+## @param sTID string
+##          Unique turn ID of source data for logs and dumps, can be <code>NULL</code>
 ## @param itDst fst
 ##          The recognition result
-function -AM_decode(idSrc,iFI,itAM,nUnit,sMode,itDst)
+function -AM_decode(idSrc,iFI,itAM,nUnit,sMode,sTID,itDst)
 {
   fst  itRNU;                                                                   # Recognition network of current unit
   fst  itRRU;                                                                   # Recognition result of current unit
@@ -233,6 +235,7 @@ function -AM_decode(idSrc,iFI,itAM,nUnit,sMode,itDst)
   end                                                                           # <<
   nMode1 2 <= if                                                                # Compute neg. log. densities >>
     nMode1 2 == if idSrc idMsf -copy; end                                       #   Secondary features committed
+    ( sTID "" != ) if "fea/$[sTID].txt" idMsf -DUMP_data; end                   #   Dump feature data
     idMsf NULL idNld itAM.gm /neglog -density;                      #"0" -MSG2; #   Compute neg.log. Gaussian densities
   end                                                                           # <<
   nMode1 3 == if idSrc idNld -copy; end                             #"1" -MSG2; # Neg. log. density array committed
