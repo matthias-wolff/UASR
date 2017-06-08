@@ -1856,8 +1856,8 @@ function -HMM_ite(iF,sSns,iFI,bBw,bLab,itHMM)
   var  nTst;                                                                    # Total sample time
   var  nOfs;                                                                    # Label offset (in frames)
   var  nLen;                                                                    # Label length (in frames)
-  var  sSnsExt; ( sSns -SNS_get_ext ) sSnsExt =;                                # Sensor-based file extension
-  var  sOsg;    "" sOsg -sset;                                                  # Extra options for hmm -setup_gmm
+  var  sSxt; ( sSns -SNS_get_ext ) sSxt =;                                      # Sensor-based file extension
+  var  sOsg; "" sOsg -sset;                                                     # Extra options for hmm -setup_gmm
 
   ## Initialize/validate                                                        # -------------------------------------
   itHMM -AM_check not if "Acoustic model corrupt" -ERROR FALSE return end;      # Check acoustic model
@@ -1891,7 +1891,7 @@ function -HMM_ite(iF,sSns,iFI,bBw,bLab,itHMM)
     iF sSns "A" idMsf -FEA_get not if nE ++=; goto L_FILE; end       "." -MSG2; #   Get primary feature vectors
     stdprof -begin_timer;                                                       #   Start measuring time
     idMsf iFI nMsf idMsf idLsf -FEA_sfa;                             "." -MSG2; #   Call secondary feature analysis
-    "fea/$[iF.sfile]$[sSnsExt].txt" idMsf -DUMP_data;                           #   Dump most significant features
+    "fea/$[iF.sfile]$[sSxt].txt" idMsf -DUMP_data;                              #   Dump most significant features
 
     ## Get label sequence                                                       #   -----------------------------------
     bLab if;                                                                    #   Use labels ? >>

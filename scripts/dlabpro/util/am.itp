@@ -235,7 +235,7 @@ function -AM_decode(idSrc,iFI,itAM,nUnit,sMode,sTID,itDst)
   end                                                                           # <<
   nMode1 2 <= if                                                                # Compute neg. log. densities >>
     nMode1 2 == if idSrc idMsf -copy; end                                       #   Secondary features committed
-    ( sTID "" != ) if "fea/$[sTID].txt" idMsf -DUMP_data; end                   #   Dump feature data
+    sTID if "fea/$[sTID].txt" idMsf -DUMP_data; end                             #   Dump feature data
     idMsf NULL idNld itAM.gm /neglog -density;                      #"0" -MSG2; #   Compute neg.log. Gaussian densities
   end                                                                           # <<
   nMode1 3 == if idSrc idNld -copy; end                             #"1" -MSG2; # Neg. log. density array committed
