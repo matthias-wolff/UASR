@@ -528,7 +528,7 @@
   <p>The standard command line options are accepted (see <a href="#usage">Usage</a>).</p>
 
   <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
-  <a name="index:cfgHmmt" title="Configuration Keys | HMM.xtp trn"></a>
+  <a name="index:cfgHmme" title="Configuration Keys | HMM.xtp evl"></a>
   <h4>Configuration</h4>
   <p><code>HMM.xtp evl</code> as a UASR application is configured through a <a
   href="util/cfg.itp.html#index:cfgf">UASR configuration file</a> argument <code>$2</code>). The configuration file
@@ -1088,6 +1088,13 @@
   	<tr><td class="hidden" colspan="4">&nbsp;</td></tr>
   	<tr><td class="rowgroup" colspan="4">Important common keys</td></tr>
     <tr><td><code>uasr.customize </code></td><td>string</td><td> </td><td>Custom include script (path absolute or relative to script accessing the key)</td></tr>
+    <tr><td><code>uasr.dump</code></td><td>string</td><td></td><td>Dump data actually used for training to ASCII files in <code>&lt;uasr.dir.log&gt;/dump</code>, comma-separated list of the following items<pre>
+  "all" - EVERYTING
+  "cls" - reserved (use "all") - classes list
+  "cfg" - reserved (use "all") - UASR configuration
+  "fea" - reserved (use "all") - final features used for training and test
+  "fls" - reserved (use "all") - file lists
+</pre></td></tr>
     <tr><td><code>uasr.db        </code></td><td>string</td><td>"vm"</td><td>Data base name</td></tr>
     <tr><td><code>uasr.db.include</code></td><td>string</td><td>"db/&lt;uasr.db&gt;.itp"</td><td>Database dependent include script (path absolute or relative to script accessing the key)</td></tr>
     <tr><td><code>uasr.exp</code></td><td>string</td><td>""</td><td>Experiment code</td></tr>
@@ -1808,7 +1815,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">HMM.xtp(1074)</td>
+      <td class="hidden">HMM.xtp(1086)</td>
     </tr>
   </table>
   </div>
