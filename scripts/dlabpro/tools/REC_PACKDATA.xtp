@@ -433,106 +433,6 @@ function -FSG_normalize(itLMsrc,itLMdst)
   itE return;                                                                   # Return edit transducer
 }
 
-## Adds a unit to the recognition network
-##
-## @param sFile string
-##          The path of text file to be loaded.
-## @param sFilter string
-##          The line filter (consider only lines starting with the given string),
-##          use "" to read all lines.
-## @param iSI object
-##          The pre-initialized session info object to continue. The function
-##          relies on the following fields:
-##          <ul>
-##            <li><code>iSI.itLX</code> (lexicon FST)</li>
-##            <li><code>iSI.itRNr</code> (reference recognition network)</li>
-##          </ul>
-function -RN_add_unit(sFile,sFilter,iSI)
-{
-  fst  itAM;                                                                    # The HMAs (union and closed)
-  fst  itLX;                                                                    # The lexicon FST
-  fst  itLM;                                                                    # The grammar FST
-  fst  itRN;                                                                    # The recognition network
-  fst  itAux;                                                                   # Auxiliary FST
-  data idFsg;                                                                   # The grammar rule set
-  data idFsg2;                                                                  # The common grammar rule set
-  var  s; 
-
-  "\n   - Loading grammar from \"$[.sFsgFile]\" [$[sFilter]] ..."        -MSG2; # Protocol
-  sFile sFilter idFsg -FSG_load                                                 # Load grammar rules
-  not if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."        -MSG; # Check for errors
-  sFilter "GRM:" != if                                                          # Not loading the common grammar >>
-    "\n   - Loading common grammar from \"$[.sFsgFile]\" [GRM:] ..."     -MSG2; #   Protocol
-    sFile "GRM:" idFsg2 -FSG_load                                               #   Load grammar rules
-    not if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2;                #   Check for errors
-    idFsg2.dim idFsg.dim > if                                                   #   Concatenate rule sets
-      idFsg idFsg2 -cat; idFsg2 idFsg -copy;                                    #   ...
-    else                                                                        #   ...
-      idFsg2 idFsg -cat;                                                        #   ...
-    end                                                               "." -MSG; #   ...
-  end                                                                           # <<
-
-  "\n   - Compiling grammar ."                                           -MSG2; # Protocol
-  1 .__UTL_nElevel =;                                                           # Switch unused rules warnings off
-  idFsg iSI.itLX.os NULL itLM -FSG_compile;                          "." -MSG2; # Compile grammar (string -> FST)
-  #itLM -1 itLM /lazy -minimize;                                                # Lazily minimize
-  #itLM.sd ( "~NAM" itLM.sd -find_comp ) 1 itLM.sd -delete;                      # Remove state names
-  .bExpOfst if                                                                  # Export openFST? Yes >>
-    "$[.sDirOut]/" ( sFilter "#:#.txt" "replace" -VAR_strop ) + s =;            #   Make file name
-    "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
-    s "fsm-t" itLM stdfile /noerror -export                                     #   Export openFST
-    ?error if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."   -MSG; #   Check for errors
-  end                                                                           # <<
-  .bRender if                                                                   # Rendering grammar? Yes >>
-    "$[.sDirOut]/" ( sFilter "#:#.svg" "replace" -VAR_strop ) + s =;            #   Make file name
-    "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
-    s itLM.is itLM.os -1 itLM -FST_render;                           "." -MSG2; #   Protocol
-  end                                                                           # <<
-  ( itLM itLM -FSG_normalize ) itAux =;                              "." -MSG2; # Normalize FVR output symbols
-  itLM 0 itLM /lazy -minimize;
-  .bRender if                                                                   # Rendering grammar? Yes >>
-    "$[.sDirOut]/" ( sFilter "#:#.normalized.svg" "replace" -VAR_strop ) + s =; #   Make file name
-    "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
-    s itLM.is itLM.os -1 itLM -FST_render;                           "." -MSG2; #   Protocol
-    "$[.sDirOut]/" ( sFilter "#:#.normalizer.svg" "replace" -VAR_strop ) + s =; #   Make file name
-    "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
-    s itAux.is itAux.os -1 itAux -FST_render;                        "." -MSG2; #   Protocol
-    "\n   - Check square bracket parity of output language ..."          -MSG2; #   Protocol
-    fst itCheck;                                                                #   Check error path
-    ( itLM itCheck fvrtools -fsg_fvr_check ) not if                             #   Check output symb. brace parity >>
-      " FAILED" -COLOR_red                                               -MSG2; #      Protocol
-      "$[.sDirOut]/" ( sFilter "#:#_ErrDetect.svg" "replace" -VAR_strop ) + s =;#      Make file name
-      s itCheck.is itCheck.os -1 itCheck -FST_render;                "." -MSG2; #      Protocol
-    else                                                                        #      is check correct?
-      " ok"                                                              -MSG2; #      Protocol
-    end                                                                         #   <<
-    #"GRM.fst" itLM -save                                                       #   save grammer extra
-  end                                                                           # <<
-
-  "\n   - Compiling word recognition network "                           -MSG2; # Protocol
-  iSI.itLX itLX -LX_unify;                                                      # Kleene-closure of lexicon FST
-  iSI.itRNr itAM -copy;                                                         # Get phoneme loop
-  0 0 0 itAM -addtrans { -1 -1 0 };                                             # Prepare HMAs for composition
-  0 itLX /noerror -loops { -1 -1 0 };                                "." -MSG2; # Prepare lex for composition
-  itAM itLX 0 0 itAux /noeps /noint -compose;                        "." -MSG2; # Compose: hma o lex
-  itAux 0 itAux /lazy -minimize;                                                # Minimize and
-  itAux 0 itAux -close;                                                         # Close (hma o lex)
-
-  "\n   - Compiling recognition network "                                -MSG2; # Protocol
-  0 0 0 itAux -addtrans { -1 -1 0 };                                            # Prepare (hma o lex) for composition
-  0 itLM /noerror -loops { -1 -1 0 };                                "." -MSG2; # Prepare grammar for composition
-  itAux itLM 0 0 itRN /noeps /noint -compose;                        "." -MSG2; # Compose: (hma o lex) o grm
-  itRN 0 itRN /lazy -minimize;                                       "." -MSG2; # Minimize result ->recognition network
-
-  "~STK" itRN.td -find_comp 0 < if                                              # No stack token component >>
-    "~STK" ( 2 itRN.td -get_comp_type ) itRN.td -addcomp;                       #   Add comp. (of input symbol type)
-  end                                                                           # <<
-  :itRN.td["~TOS"]=itRN.td["~TOS"]+((itRN.td["~TOS"].>=0)*iSI.itRN.os.nrec);    # Adjust non-epsilon output symbols
-  itRN.os iSI.itRN.os -cat;                                                     # Append output symbol table
-  itRN iSI.itRN -cat;                                                           # Append to recognition network
-  " done (${itRN.sd.nrec} states, ${itRN.td.nrec} transitions)" -MSG2 "." -MSG; # Protocol
-}
-
 ## Packs the feature info file.
 function -PACK_feainfo(retFI)
 {
@@ -679,6 +579,111 @@ function -PACK_sesinfo(retSI,retDlg)
     idSymRef idSymDst =;                                                        #   Copy symbol table
   }
 
+  ## Adds a unit to the recognition network
+  ##
+  ## @param sFile string
+  ##          The path of text file to be loaded.
+  ## @param sFilter string
+  ##          The line filter (consider only lines starting with the given string),
+  ##          use "" to read all lines.
+  ## @param iSI object
+  ##          The pre-initialized session info object to continue. The function
+  ##          relies on the following fields:
+  ##          <ul>
+  ##            <li><code>iSI.itLX</code> (lexicon FST)</li>
+  ##            <li><code>iSI.itRNr</code> (reference recognition network)</li>
+  ##          </ul>
+  function -RN_add_unit(sFile,sFilter,iSI)
+  {
+    fst  itAM;                                                                    # The HMAs (union and closed)
+    fst  itLX;                                                                    # The lexicon FST
+    fst  itLM;                                                                    # The grammar FST
+    fst  itRN;                                                                    # The recognition network
+    fst  itAux;                                                                   # Auxiliary FST
+    data idFsg;                                                                   # The grammar rule set
+    data idFsg2;                                                                  # The common grammar rule set
+    var  s; 
+
+    "\n   - Loading grammar from \"$[.sFsgFile]\" [$[sFilter]] ..."        -MSG2; # Protocol
+    sFile sFilter idFsg -FSG_load                                                 # Load grammar rules
+    not if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."        -MSG; # Check for errors
+    sFilter "GRM:" != if                                                          # Not loading the common grammar >>
+      "\n   - Loading common grammar from \"$[.sFsgFile]\" [GRM:] ..."     -MSG2; #   Protocol
+      sFile "GRM:" idFsg2 -FSG_load                                               #   Load grammar rules
+      not if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2;                #   Check for errors
+      idFsg2.dim idFsg.dim > if                                                   #   Concatenate rule sets
+        idFsg idFsg2 -cat; idFsg2 idFsg -copy;                                    #   ...
+      else                                                                        #   ...
+        idFsg2 idFsg -cat;                                                        #   ...
+      end                                                               "." -MSG; #   ...
+    end                                                                           # <<
+
+    "\n   - Compiling grammar ."                                           -MSG2; # Protocol
+    1 .__UTL_nElevel =;                                                           # Switch unused rules warnings off
+    idFsg iSI.itLX.os NULL itLM -FSG_compile;                          "." -MSG2; # Compile grammar (string -> FST)
+    #itLM -1 itLM /lazy -minimize;                                                # Lazily minimize
+    #itLM.sd ( "~NAM" itLM.sd -find_comp ) 1 itLM.sd -delete;                      # Remove state names
+    .bExpOfst if                                                                  # Export openFST? Yes >>
+      "$[.sDirOut]/" ( sFilter "#:#.txt" "replace" -VAR_strop ) + s =;            #   Make file name
+      "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
+      s "fsm-t" itLM stdfile /noerror -export                                     #   Export openFST
+      ?error if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."   -MSG; #   Check for errors
+    end                                                                           # <<
+    .bRender if                                                                   # Rendering grammar? Yes >>
+      "$[.sDirOut]/" ( sFilter "#:#.svg" "replace" -VAR_strop ) + s =;            #   Make file name
+      "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
+      s itLM.is itLM.os -1 itLM -FST_render;                           "." -MSG2; #   Protocol
+    end                                                                           # <<
+    ( itLM itLM -FSG_normalize ) itAux =;                              "." -MSG2; # Normalize FVR output symbols
+    itLM 0 itLM /lazy -minimize;
+    .bRender if                                                                   # Rendering grammar? Yes >>
+      "$[.sDirOut]/" ( sFilter "#:#.normalized.svg" "replace" -VAR_strop ) + s =; #   Make file name
+      "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
+      s itLM.is itLM.os -1 itLM -FST_render;                           "." -MSG2; #   Protocol
+      "$[.sDirOut]/" ( sFilter "#:#.normalizer.svg" "replace" -VAR_strop ) + s =; #   Make file name
+      "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
+      s itAux.is itAux.os -1 itAux -FST_render;                        "." -MSG2; #   Protocol
+      "\n   - Check square bracket parity of output language ..."          -MSG2; #   Protocol
+      fst itCheck;                                                                #   Check error path
+      ( itLM itCheck fvrtools -fsg_fvr_check ) not if                             #   Check output symb. brace parity >>
+        " FAILED" -COLOR_red                                               -MSG2; #      Protocol
+        "$[.sDirOut]/" ( sFilter "#:#_ErrDetect.svg" "replace" -VAR_strop ) + s =;#      Make file name
+        s itCheck.is itCheck.os -1 itCheck -FST_render;                "." -MSG2; #      Protocol
+      else                                                                        #      is check correct?
+        " ok"                                                              -MSG2; #      Protocol
+      end                                                                         #   <<
+      #"GRM.fst" itLM -save                                                       #   save grammer extra
+    
+    end                                                                           # <<
+
+    "~STK" itLM.td -find_comp 0 < if                                              # No stack token component >>
+      "~STK" ( 2 itLM.td -get_comp_type ) itLM.td -addcomp;                       #   Add comp. (of input symbol type)
+    end                                                                           # <<
+    iSI.itLM.ud -is_empty not if;
+      iSI.itLM.os itLM.td "~TOS" itLM.os -unify_symbols;
+    end;
+    itLM iSI.itLM -cat;
+
+    "\n   - Compiling word recognition network "                           -MSG2; # Protocol
+    iSI.itLX itLX -LX_unify;                                                      # Kleene-closure of lexicon FST
+    iSI.itRNr itAM -copy;                                                         # Get phoneme loop
+    0 0 0 itAM -addtrans { -1 -1 0 };                                             # Prepare HMAs for composition
+    0 itLX /noerror -loops { -1 -1 0 };                                "." -MSG2; # Prepare lex for composition
+    itAM itLX 0 0 itAux /noeps /noint -compose;                        "." -MSG2; # Compose: hma o lex
+    itAux 0 itAux /lazy -minimize;                                                # Minimize and
+    itAux 0 itAux -close;                                                         # Close (hma o lex)
+
+    "\n   - Compiling recognition network "                                -MSG2; # Protocol
+    0 0 0 itAux -addtrans { -1 -1 0 };                                            # Prepare (hma o lex) for composition
+    0 itLM /noerror -loops { -1 -1 0 };                                "." -MSG2; # Prepare grammar for composition
+    itAux itLM 0 0 itRN /noeps /noint -compose;                        "." -MSG2; # Compose: (hma o lex) o grm
+    itRN 0 itRN /lazy -minimize;                                       "." -MSG2; # Minimize result ->recognition network
+
+    itRN iSI.itRN -cat;                                                           # Append to recognition network
+    " done (${itRN.sd.nrec} states, ${itRN.td.nrec} transitions)" -MSG2 "." -MSG; # Protocol
+  }
+
+
   "\n   Packing session info file ."                                      -MSG; # Protocol
   ( .sFsgFile not ) ( .sCmd "rec" == ) && if                                    # No grammar file specified >>
     " SKIPPED (no grammar file specified through key <uasr.lm.fsg>!)"           #   |
@@ -693,6 +698,7 @@ function -PACK_sesinfo(retSI,retDlg)
 
   object iSI;                                                                   # The session info file
   fst    iSI.itLX;                                                              # - The lexicon FST
+  fst    iSI.itLM;                                                              # - The grammar FST
   fst    iSI.itRN;                                                              # - The recognition network
   fst    iSI.itRNr;                                                             # - The reference reognition network
   fst    iSI.itGP;                                                              # - The labelling transducer
