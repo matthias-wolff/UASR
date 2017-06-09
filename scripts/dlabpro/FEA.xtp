@@ -330,7 +330,7 @@ function -CMD_cpy()
   var  sDirOut; ( "out"        ""       -CFG_get_path  ) sDirOut -sset;         # Output directory
   var  nSns;                                                                    # Sensor index
   var  sSns;                                                                    # Normalized sensor name
-  var  sSnsExt;                                                                 # Sensor file extension
+  var  sSxt;                                                                    # Sensor file extension
   var  sF;                                                                      # Output file name
   "\n   - Data set      : $[sDset]"                                       -MSG; # Protocol
   .__CFG_bNwr if "\n   - Write protect : " "ON" -COLOR_yellow + -MSG; end       # Protocol
@@ -339,14 +339,14 @@ function -CMD_cpy()
   :idSns[0,0]: if "\n// No. of sensors  : $[idSns.nrec]" -MSG; end              # Protocol
   0 nSns =; nSns idSns.nrec < while                                             # Loop over sensors >>
     "" sSns =; :idSns[nSns,0]: if "${idSns[nSns,0]}" sSns =; end                #   Normalize sensor name
-    ( sSns -SNS_get_ext ) sSnsExt =;                                            #   Get sensor file extension
+    ( sSns -SNS_get_ext ) sSxt =;                                               #   Get sensor file extension
     "\n" -MSG; sSns if "\n   Sensor $[sSns]" -MSG; end                          #   Protocol
     "\n   Copying $[iF.len] feature files ..." -MSG; 0 1 -PBAR;                 #   Begin progress bar
     iF -reset; iF -next while                                                   #   Loop over files >>
       "\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "                 -MSG2; #     Protocol
       :(iF.nfile+1)/iF.len: 1 -PBAR;                                            #     Display progress
       iF sSns "A" idFea -FEA_get not if continue; end                "." -MSG2; #     Get primary feature vectors
-      "$[sDirOut]/$[iF.sfile]$[sSnsExt].$[.__sExtFea]" sF =;                    #     Make path name of feature file
+      "$[sDirOut]/$[iF.sfile]$[sSxt].$[.__sExtFea]" sF =;                       #     Make path name of feature file
 			" -> $[sF]"                                                        -MSG2; #     Protocol     
       .__CFG_bNwr not if                                                        #     Not write protected >>     
         sF idFea -FEA_save if " ... ok" else " ... FAILED" end -MSG2;           #       Save feature file

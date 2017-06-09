@@ -582,4 +582,27 @@ function -SAVE(sFile,sFormat,iObject)
   end                                                                           # <<
 }
 
+## Dumps data as ASCII file.
+##
+## @cgen:index
+## @global &lt;uasr.dump&gt;    R
+## @global &lt;uasr.dir.log&gt; R
+## @param sFile string
+##          The file name relative to the dump folder 
+##          <code>&lt;dir.log&gt;/dump</code>.
+## @param idData data
+##          The data instance to save (cannot be <code>NULL</code>).
+## @return void
+function -DUMP_data(sFile,idData)
+{
+  ( ( "dump" "" "S" -CFG_get_ex ) "" == ) if leave; end                        # Leave if not in dump mode
+  var sDirDump; ( ( "log" "S" -CFG_get_path ) "/dump" + ) sDirDump =;          # Get dump folder
+  "\n     - ASCII-dumping $[sDirDump]/$[sFile] ..."                   3 -MSGX; # Log message
+  "$[sDirDump]/$[sFile]" "ascii" idData stdfile -export ?error not if          # Dump ASCII file, ok >>
+    " done"                                                             -MSG2; #   Log message
+  else                                                                         # << failed >>
+    " FAILED" -COLOR_error                                              -MSG2; #   Log message
+  end                                                                          # <<
+}
+
 ## EOF

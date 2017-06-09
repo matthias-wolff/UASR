@@ -955,10 +955,12 @@ function -CMD_trn()
   var    nEb;                                                                   # Best evaluation result of split
   var    sBuf;                                                                  # String buffer
   var    sDirModel;                                                             # Model directory
+  var    sDirLog;                                                               # Log directory
 
   ## Initialize                                                                 # -------------------------------------
   "\n\n// HMM TRAINING"                                                   -MSG; # Protocol
-  "model"  "S" -CFG_get_path sDirModel =;                                       # Silently get model directory
+  "model" "S" -CFG_get_path sDirModel =;                                        # Silently get model directory
+  "log"   "S" -CFG_get_path sDirLog =;                                          # Silently get log directory
   "am.train.splitbest" FALSE -CFG_get bSplitBest =;                             # Use best HMM for split
   -SNS_get_tab idSns =;                                                         # Get sensor table
   -HMM_set_eval_mode nEval =;                                                   # Get evaluation mode
@@ -999,8 +1001,18 @@ function -CMD_trn()
     bTidy not if "tidying "    -MSG; end                                        #   Protocol (skip folder tidying)
   end                                                                           # <<
   .__CFG_bNwr if "\n   - Write protect : " "ON" -COLOR_yellow + -MSG; end       # Protocol
+
+  ## - Log input data dump mode                                                 # - - - - - - - - - - - - - - - - - - -
+  ( ( "dump" "" "S" -CFG_get_ex ) "" != ) if                                    # Dump mode >>
+    "\n// Dump input data : YES, to $[sDirLog]/dump"                      -MSG; #   Protocol
+    idAux -CFG_dump; idAux 0 idAux -sortup;                                     #   Get config as data
+    "uasr-config.txt" idAux -DUMP_data;                                         #   Dump to file
+  end                                                                           # <<
+
+  ## - Remove info file                                                         # - - - - - - - - - - - - - - - - - - -
   bIte if FALSE -infofile; end                                                  # Remove info file
-  ## - DEBUG: Testing the control flow
+
+  ## - DEBUG: Testing the control flow                                          # - - - - - - - - - - - - - - - - - - -
   #/disarm -FEA_analyze { "\n -FEA_analyze()"                                                            -echo; }
   #/disarm -HMM_eval    { "\n -HMM_eval(\$[sSns],\$[nSpl],\$[nIte])"                          -echo; 1. return; }
   #/disarm -HMM_assess  { "\n -HMM_assess(\$[sSns],\$[nSpl],\$[nIte])"                        -echo; 1. return; }

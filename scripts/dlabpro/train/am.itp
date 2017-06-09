@@ -174,6 +174,7 @@ function -FEA_analyze(idLtb,iFI,sSns)
 
   ## Standardization statistics                                                 # -------------------------------------
   "sfa" "std" "," -CFG_get_item 0 >= if                                         # Doing standardization >>
+    "stat.flst.txt" iF.flist_data -DUMP_data;                                   #   Dump stat file list
     "\n\n   Vector standardization statistics"                            -MSG; #   Protocol
     iF sSns NULL iFI iS -FEA_stat;                                              #   Gather feature pool statistics
     idAux iS -mean; :iFI.idX = -1*idAux;                                        #   Get feature offset vector
@@ -187,9 +188,11 @@ function -FEA_analyze(idLtb,iFI,sSns)
   sSns if "\n   - Sensor ID     : $[sSns]" -MSG; end                            # Protocol
   "stat_t" "" -CFG_get_flist iF -set flist;                                     # Set lin. fea. trafo. stats. file list
   "sfa" "pca" "," -CFG_get_item 0 >= if                                         # Doing PCA
+    "stat_t.flst.txt" iF.flist_data -DUMP_data;                                 #   Dump stat_t file list
     iF sSns idLtb nMsf iFI -FEA_pca;                                            #   Make PCA feature trafo. matrix
   end                                                                           # <<
   "sfa" "ica" "," -CFG_get_item 0 >= if                                         # Doing PCA
+    "stat_t.flst.txt" iF.flist_data -DUMP_data;                                 #   Dump stat_t file list
     iF sSns nMsf iFI -FEA_ica;                                                  #   Make ICA feature trafo. matrix
   end                                                                           # <<
 
@@ -230,6 +233,7 @@ function -HMM_create(nDim,itHMM)
   var nLsf;                                                                     # Number of least significant features
   ( "sfa" "red" "," -CFG_get_item ) 0 < if nDim nMsf - nLsf =; end              # LSF's only if trafo. matrix not red.
   data idHMM; -LAB_get_tab idHMM =;                                   "." -MSG; # Get HMM list from label table
+  "classes.txt" idHMM -DUMP_data;                                               # Dump HMM set
   nMsf idHMM nLsf nStsL 0 0 itHMM -setup_ex;                          "." -MSG; # Create HMM's
   idHMM 0 1 idHMM -delete;                                                      # Delete model name component
   idHMM itHMM.ud -join;                                               "." -MSG; # Join other components to unit descr.
@@ -310,6 +314,7 @@ function -HMM_init(itHMM,sSns)
   "\n"                                                                    -MSG; # Protocol (verbose level 2)
 
   ## HMM initialization                                                         # -------------------------------------
+  "train.flst.txt" iF.flist_data -DUMP_data;                                    # Dump training file list
   iF sSns iFI FALSE TRUE itHMM -HMM_ite if                                      # Initialize HMM's >> (successful)
     itHMM -HMM_setup;                                                           #   Set 'em up
     "${sDirModel}/0_0$[sSxt].hmm" itHMM -HMM_save;                   "\n" -MSG; #   Save models, protocol
@@ -372,6 +377,7 @@ function -HMM_update(itHMM,sSns,nSpl,nIte)
   ## HMM training iteration                                                     # -------------------------------------
   "\n   " itHMM.gm if "Updating" else "Initializing" end +                      # Protocol
     " $[itHMM.ud.nrec] models with $[iF.len] samples ..." +               -MSG; # |
+  "train.flst.txt" iF.flist_data -DUMP_data;                                    # Dump training file list
   .__CFG_nJobs 1 <= if                                                          # No parallel compution >>
     ( iF sSns iFI bBw bLab itHMM -HMM_ite ) bOk =;                              #   Do it yourself...
   else                                                                          # << Parallel computation >>
@@ -565,7 +571,7 @@ function -HMM_assess(itHMM,sSns,nSpl,nIte)
     "\n FAILED"                                                           -MSG; #   Protocol
     leave;                                                                      #   Leave function
   end                                                                           # <<
-  NULL NULL itHMM -1 "1L" NULL -AM_decode;                           "." -MSG2; # Init decoder
+  NULL NULL itHMM -1 "1L" NULL NULL -AM_decode;                      "." -MSG2; # Init decoder
 
   ## Assessment                                                                 # -------------------------------------
   iP -begin_timer;                                                              # Start timer
@@ -577,6 +583,7 @@ function -HMM_assess(itHMM,sSns,nSpl,nIte)
     idAux idF -join;                                                            #   Join to file list
   end                                                                           # <<
   "\n   Assessing $[iF.len] samples by $[itHMM.ud.nrec] models ..."       -MSG; # Protocol
+  "test.flst.txt" iF.flist_data -DUMP_data;                                     # Dump test file list
   0 1 -PBAR;                                                                    # Begin progress bar
   label L_FILE; iF -next                                                        # Loop over files
   if                                                                            # >>
@@ -584,7 +591,7 @@ function -HMM_assess(itHMM,sSns,nSpl,nIte)
     :(iF.nfile+1)/iF.len: 1 -PBAR;                                              #   Display progress
     iF sSns "A" idMsf -FEA_get not if goto L_FILE end;               "." -MSG2; #   Get primary feature vectors
     stdprof -begin_timer;                                                       #   Start measuring time
-    idMsf iFI itHMM -1 "1A" itRres -AM_decode;                       "." -MSG2; #   Decode
+    idMsf iFI itHMM -1 "1A" "$[iF.sfile]$[sSxt]" itRres -AM_decode;  "." -MSG2; #   Decode
     :itRres.ud[0]   : idAux -copy;                                              #   Copy unit names from recog. result
     :itRres.ud["GW"]: idAux -join;                                              #   Copy weights from rec. result
     .__UTL_nVlevel 1 > if                                                       #   Verbose level >1
@@ -603,7 +610,7 @@ function -HMM_assess(itHMM,sSns,nSpl,nIte)
   "done\n"                                                                -MSG; # Protocol
 
   ## Aftermath                                                                  # -------------------------------------
-  NULL NULL itHMM -1 "1F" NULL -AM_decode;                           "." -MSG2; # Free decoder
+  NULL NULL itHMM -1 "1F" NULL NULL -AM_decode;                      "." -MSG2; # Free decoder
   sPre sSxt itHMM.ud idF idAsc -XXM_assess_log nCor =;                          # Create/continue log file
   sPre sSxt itHMM.ud idF idAsc -XXM_assess_hist;                                # Create/continue assmnt. histograms
 
@@ -1276,11 +1283,12 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
       itRN 0 itRN /lazy -minimize;                                              #     Lazy minimization of rec. net.
     end                                                             " ok" -MSG; #   <<
   end                                                                           # <<
-  sMd1 "0" == if NULL NULL itRN -1 "3L$[sDmd]" NULL -AM_decode end;             # Init decoder
+  sMd1 "0" == if NULL NULL itRN -1 "3L$[sDmd]" NULL NULL -AM_decode end;        # Init decoder
 
   ## HMM process                                                                # -------------------------------------
   itHMM sSns nSpl nIte "F" NULL NULL iL $[sResFnc];                             # Initialize result function
   "\n\n   $[sMsn]: $[iF.len] samples, $[itHMM.ud.nrec] HMMs ..."          -MSG; # Protocol
+  "$[sDatSet].flst.txt" iF.flist_data -DUMP_data;                               # Dump dataset file list
   0 1 -PBAR;                                                                    # Begin progress bar
   iF -next while                                                                # Loop over files >>
     "\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "                   -MSG2; #   Protocol
@@ -1334,9 +1342,9 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
     ## Decode                                                                   #   - - - - - - - - - - - - - - - - - -
     stdprof -begin_timer;                                                       #   Start timer
     idNld -is_empty not if                                                      #   BYO Gaussian densities >>
-      idNld iFI itRN -1 "3A$[sDmd]" itRes -AM_decode;                           #       Decode
+      idNld iFI itRN -1 "3A$[sDmd]" "$[iF.sfile]$[sSxt]" itRes -AM_decode;      #       Decode
     else                                                                        #   << Just bring primary features >> 
-      idFea iFI itRN -1 "1A$[sDmd]" itRes -AM_decode;                           #     Decode
+      idFea iFI itRN -1 "1A$[sDmd]" "$[iF.sfile]$[sSxt]" itRes -AM_decode;      #     Decode
     end                                                                         #   <<
     NULL stdprof -end_timer;                                                    #   End timer
     :itRes.ud.nrec==0: if;                                                      #   HACK: Create dummy result if empty >>
@@ -1408,7 +1416,7 @@ function -HMM_process(itHMM,sSns,nSpl,nIte,sDatSet,sResFnc,sMode)
   end                                                                           # <<
   "\n   "                                                                -MSG2; # Protocol
   "done\n"                                                                -MSG; # Protocol
-  sMd1 "0" == if NULL NULL itRN -1 "3F$[sDmd]" NULL -AM_decode end;             # Free decoder
+  sMd1 "0" == if NULL NULL itRN -1 "3F$[sDmd]" NULL NULL -AM_decode end;        # Free decoder
   nCnt iF.len < if                                                              # Not all turns have been processed >>
     "${iF.len-nCnt} of $[iF.len] samples not processed." sAux =;                #   Make warning text
     .__UTL_nVlevel 2 < if "$[sAux] Re-run with option -v2!" sAux =; end         #   Include extra hint
@@ -1848,7 +1856,8 @@ function -HMM_ite(iF,sSns,iFI,bBw,bLab,itHMM)
   var  nTst;                                                                    # Total sample time
   var  nOfs;                                                                    # Label offset (in frames)
   var  nLen;                                                                    # Label length (in frames)
-  var  sOsg;   "" sOsg -sset;                                                   # Extra options for hmm -setup_gmm
+  var  sSxt; ( sSns -SNS_get_ext ) sSxt =;                                      # Sensor-based file extension
+  var  sOsg; "" sOsg -sset;                                                     # Extra options for hmm -setup_gmm
 
   ## Initialize/validate                                                        # -------------------------------------
   itHMM -AM_check not if "Acoustic model corrupt" -ERROR FALSE return end;      # Check acoustic model
@@ -1882,6 +1891,7 @@ function -HMM_ite(iF,sSns,iFI,bBw,bLab,itHMM)
     iF sSns "A" idMsf -FEA_get not if nE ++=; goto L_FILE; end       "." -MSG2; #   Get primary feature vectors
     stdprof -begin_timer;                                                       #   Start measuring time
     idMsf iFI nMsf idMsf idLsf -FEA_sfa;                             "." -MSG2; #   Call secondary feature analysis
+    "fea/$[iF.sfile]$[sSxt].txt" idMsf -DUMP_data;                              #   Dump most significant features
 
     ## Get label sequence                                                       #   -----------------------------------
     bLab if;                                                                    #   Use labels ? >>
@@ -1905,13 +1915,13 @@ function -HMM_ite(iF,sSns,iFI,bBw,bLab,itHMM)
     end;                                                                        #   <<
 
     itHMM.gm if                                                                 #   Regular update >>
-			bBw if                                                                    #     Baum-Welch training >>
- 	    	idAxs 0 2 3 idAux itHMM /nomix -gen_map;                                #       Create density computation map
- 	      idMsf NULL  idNld itHMM.gm /neglog /nomix -density;                     #       Compute neg. log. densities
- 			else                                                                      #     << Viterbi training >>
- 	      idAxs 0 2 3 idAux itHMM -gen_map;                                       #       Create density computation map
+      bBw if                                                                    #     Baum-Welch training >>
+        idAxs 0 2 3 idAux itHMM /nomix -gen_map;                                #       Create density computation map
+        idMsf NULL  idNld itHMM.gm /neglog /nomix -density;                     #       Compute neg. log. densities
+      else                                                                      #     << Viterbi training >>
+        idAxs 0 2 3 idAux itHMM -gen_map;                                       #       Create density computation map
         idMsf idAux idNld itHMM.gm /neglog -density;                            #       Compute neg. log. densities
- 			end                                                                       #     <<
+      end                                                                       #     <<
     end                                                              "." -MSG2; #   <<
 
     0 nL =; label L_LABEL; nL idAxs.nrec < if                                   #   Loop over labels >>
@@ -1928,9 +1938,9 @@ function -HMM_ite(iF,sSns,iFI,bBw,bLab,itHMM)
           idLsf nOfs nLen idLsfL /rec -select;                                  #       Get label's LSF
           itHMM.gm if                                                           #       Regular update >>
             idNld nOfs nLen idNldL /rec -select;                                #       Get label's neg. log. densities
-						bBw if                                                              #         Baum-Welch training >>
-							nU idNldL idA itHMM -bwalpha;                                     #           Get alpha values
-							idA idMsfL idLsfL nU itHMM /fast -bwupdate;                       #           Update acoustic model
+            bBw if                                                              #         Baum-Welch training >>
+              nU idNldL idA itHMM -bwalpha;                                     #           Get alpha values
+              idA idMsfL idLsfL nU itHMM /fast -bwupdate;                       #           Update acoustic model
           	else                                                                #         << Viterbi training >>
               itHMM nU idNldL itAux -sdp;                                       #           Viterbi search of best path
               :itHMM.ud[nU,nIcNld]+=itAux.gw;                                   #           Update neg-log. comp. in itHMM.ud
