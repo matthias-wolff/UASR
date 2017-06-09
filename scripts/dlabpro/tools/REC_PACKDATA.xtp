@@ -59,6 +59,7 @@
 "include/recpack_recfix/fst.itp"    include;
 "include/recpack_recfix/trg.itp"    include;
 "include/recpack_recfix/syn.itp"    include;
+"include/recpack_recfix/wom.itp"    include;
 
 ## Prints help on usage
 function -usage(sCmd)
@@ -662,6 +663,22 @@ function -PACK_hmm(retHMM)
 ## </table>
 function -PACK_sesinfo(retSI,retDlg)
 {
+  function -unify_symbols(idSymRef,idTd,sComp,idSymDst)
+  {
+    data idAux;
+
+    # Unify symbol tables                                                       #   ---------------------------
+    idSymDst idSymRef 0 0 idAux /noerror -gen_index;                            #   Find missing symbols in idSymRef
+    :idAux.<0: idSymDst -dmark; idSymDst 0 0 idAux /mark -select;               #   |
+    idAux idSymRef -cat;                                                        #   Add symbols to idSymRef
+
+    # Map SymDst to unified table                                               #   ---------------------------
+    :idTd[sComp]: 0 idSymDst 0 1 idAux -lookup;                                 #   Lookup symbols in old table
+    idAux idSymRef 0 0 idAux /noerror -gen_index;                               #   Get new symbol index
+    idAux 0 1 sComp idTd -xstore;                                               #   Store in idTd
+    idSymRef idSymDst =;                                                        #   Copy symbol table
+  }
+
   "\n   Packing session info file ."                                      -MSG; # Protocol
   ( .sFsgFile not ) ( .sCmd "rec" == ) && if                                    # No grammar file specified >>
     " SKIPPED (no grammar file specified through key <uasr.lm.fsg>!)"           #   |
@@ -681,6 +698,7 @@ function -PACK_sesinfo(retSI,retDlg)
   fst    iSI.itGP;                                                              # - The labelling transducer
   data   iSI.idLMtos;                                                           # - The grammar's output symbols 
   fst    iSI.itSynGrm;                                                          # - The synthesis grammar
+  fst    iSI.itWom;                                                             # - The world model
   hmm    itHMM;                                                                 # The HMAs
   data   idLX;                                                                  # The lexicon entries
   fst    itDlg;                                                                 # The dialog FST
@@ -752,21 +770,28 @@ function -PACK_sesinfo(retSI,retDlg)
     idSynFsg idSynLX NULL iSI.itSynGrm -FSG_compile;                            #   Compile grammar
     #"syngrm.svg" iSI.itSynGrm.is iSI.itSynGrm.os -1 iSI.itSynGrm -FST_render;                           "." -MSG2; #   Protocol
 
-    # Unify symbol tables                                                       #   ---------------------------
-    data idAux; iSI.itSynGrm.os iSI.itRN.os 0 0 idAux /noerror -gen_index;      #   Find missing symbols in itRN
-    :idAux.<0: iSI.itSynGrm.os -dmark; iSI.itSynGrm.os 0 0 idAux /mark -select; #   |
-    idAux iSI.itRN.os -cat; iSI.itRN.os iSI.idLMtos =;                          #   Add symbols to itRN.os
-
-    # Map SynGrm to unified table                                               #   ---------------------------
-    :iSI.itSynGrm.td["~TOS"]: 0 iSI.itSynGrm.os 0 1 idAux -lookup;              #   Lookup symbols in unified table
-    idAux iSI.itRN.os 0 0 idAux /noerror -gen_index;                            #   Get new symbol index
-    idAux 0 1 "~TOS" iSI.itSynGrm.td -xstore;                                   #   Store in SynGrm
-    iSI.itRN.os iSI.itSynGrm.os =;                                              #   Copy symbol table
+    iSI.itRN.os iSI.itSynGrm.td "~TOS" iSI.itSynGrm.os -unify_symbols;
 
     # Invert SynGrm                                                             #   ---------------------------
     0 iSI.itSynGrm -invert;                                                     #   Invert SynGrm
   end;                                                                          # <<
   
+  ( "wom.dir" ""  "S"  -CFG_get_ex  ) var sWomDir;                              # Get world model directory
+  sWomDir "" != if;                                                             # If it is set >>
+    "\n   - Loading world models ..."                                    -MSG2; #   Protocol
+    data idLst; sWomDir "*.fst" TRUE idLst -SH_find;                            #   Find all model files
+    fst itMod;                                                                  #   Model variable
+    0 var f; f idLst.nrec < while;                                              #   Loop over model files >>
+      "$[sWomDir]/${idLst[f,0]}" itMod -restore;                                #     Load model
+      "~TOS" -type long itMod.td -addcomp;                                      #     Add output symbols
+      0 itMod -invert;                                                          #     Invert model
+      iSI.itRN.os itMod.td "~TOS" itMod.os -unify_symbols;                      #     Unify symbols with itRN
+      itMod iSI.itWom -cat;                                                     #     Cat to world model pool
+    f ++=; end;                                                                 #   <<
+  end;                                                                          # <<
+
+  iSI.itRN.os iSI.idLMtos =;
+  iSI.itRN.os iSI.itSynGrm.is =;
 
   retDlg NULL != if; itDlg retDlg =; end;                                       # Return dialog model
   retSI  NULL != if; iSI   retSI  =; 1 return; end;                             # Return session info object
@@ -851,7 +876,7 @@ function -PACK_recfix()
   data idSynWrds; idSynWrds -PACK_synsig;                                       # Pack synthesis signals
   1 var nrm;                                                                    # Init nomalization value
   .sFDsp -SH_rm;                                                                # Remove old output file
-  6 1  "version" "u16"     -PACK1;                                              # Pack version number
+  7 1  "version" "u16"     -PACK1;                                              # Pack version number
   0 1  "_blank1" "u16"     -PACK1;                                              # Pack blank
   nrm                      -PACK_sig;                                           # Pack frontend information
   nrm                      -PACK_pfa nrm =;                                     # Pack primary feature analysis parameters
@@ -864,6 +889,7 @@ function -PACK_recfix()
   nrm iSI.itGP             -PACK_cnf;                                           # Pack reference recognition network
   nrm                      -PACK_trg;                                           # Pack signal detection
   iSI.itSynGrm idSynWrds   -PACK_syngrm;                                        # Pack synthesis grammar
+  iSI.itWom                -PACK_wom;                                           # Pack synthesis grammar
   "\n  => Final norm: $[nrm]"                                             -MSG; # Protocol
 }
 

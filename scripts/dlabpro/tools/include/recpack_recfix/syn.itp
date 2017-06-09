@@ -51,44 +51,50 @@ function -PACK_synsig(idSynWrds)
       idSig1 idSig -cat;
     f ++=; end;
 
-    # Join signal offset + length to idFlst
-    idSig 1 idSig1 -compress; idSig 1 1 idSig -delete; # compress & remove signal index
-    idSig1 0 1 idSig1 -delete; idSig1 -type UINT32 idSig1 -tconvert; # reduce to offset + length
-    idSig1 idFlst -join;
+    idSig -is_empty not if;
 
-    # Compress begin + end
-    data idAux;
-    data dLU; :idFlst[0]: "1" "left"  idAux -strop; idAux "_" "cmp" idAux -strop; :idAux.==0: dLU =; # at begin
-    data dRU; :idFlst[0]: "1" "right" idAux -strop; idAux "_" "cmp" idAux -strop; :idAux.==0: dRU =; # at end
-    data dFlst; :idFlst[0]: "?_?" "replace" dFlst -strop; dFlst idFlst -join; # unify words
-    dFlst 0 dFlst -sortup; dFlst 0 dFlst -compress; :dFlst[0]: dFlst =; # build unified word table
+      # Join signal offset + length to idFlst
+      idSig 1 idSig1 -compress; idSig 1 1 idSig -delete; # compress & remove signal index
+      idSig1 0 1 idSig1 -delete; idSig1 -type UINT32 idSig1 -tconvert; # reduce to offset + length
+      idSig1 idFlst -join;
 
-    # Map to unified words
-    data dMap; idFlst dFlst 3 0 dMap -gen_index;
-    1 dFlst.nrec zeros idAux =; 0 1 idAux -fill; idAux ' idAux =;
-    ( idAux 1 idFlst.nrec ones * ) ( dFlst.nrec 1 ones dMap * ) .== dMap =;
+      # Compress begin + end
+      data idAux;
+      data dLU; :idFlst[0]: "1" "left"  idAux -strop; idAux "_" "cmp" idAux -strop; :idAux.==0: dLU =; # at begin
+      data dRU; :idFlst[0]: "1" "right" idAux -strop; idAux "_" "cmp" idAux -strop; :idAux.==0: dRU =; # at end
+      data dFlst; :idFlst[0]: "?_?" "replace" dFlst -strop; dFlst idFlst -join; # unify words
+      dFlst 0 dFlst -sortup; dFlst 0 dFlst -compress; :dFlst[0]: dFlst =; # build unified word table
 
-    # Find offset+length and join to unified words
-    1 2 idFlst -xfetch :(dLU.==0).&&(dRU.==0): .* dMap ' * dFlst -join;
-    1 2 idFlst -xfetch :(dLU.==1).&&(dRU.==0): .* dMap ' * dFlst -join;
-    1 2 idFlst -xfetch :(dLU.==0).&&(dRU.==1): .* dMap ' * dFlst -join;
-    1 2 idFlst -xfetch :(dLU.==1).&&(dRU.==1): .* dMap ' * dFlst -join;
-    dFlst -type UINT32 dFlst -tconvert;
+      # Map to unified words
+      data dMap; idFlst dFlst 3 0 dMap -gen_index;
+      1 dFlst.nrec zeros idAux =; 0 1 idAux -fill; idAux ' idAux =;
+      ( idAux 1 idFlst.nrec ones * ) ( dFlst.nrec 1 ones dMap * ) .== dMap =;
 
-    # Pack it
-    dFlst.nrec 1 "num" "u32" -PACK1;
-    dFlst 0 0 "names" "mix" -PACK;
-    idSig 1 idSig.nrec "sig" "s16" -PACK;
+      # Find offset+length and join to unified words
+      1 2 idFlst -xfetch :(dLU.==0).&&(dRU.==0): .* dMap ' * dFlst -join;
+      1 2 idFlst -xfetch :(dLU.==1).&&(dRU.==0): .* dMap ' * dFlst -join;
+      1 2 idFlst -xfetch :(dLU.==0).&&(dRU.==1): .* dMap ' * dFlst -join;
+      1 2 idFlst -xfetch :(dLU.==1).&&(dRU.==1): .* dMap ' * dFlst -join;
+      dFlst -type UINT32 dFlst -tconvert;
+
+      # Pack it
+      dFlst.nrec 1 "num" "u32" -PACK1;
+      dFlst 0 0 "names" "mix" -PACK;
+      idSig 1 idSig.nrec "sig" "s16" -PACK;
+
+      :dFlst[0]: idSynWrds =;
+    end;
 
   end;
 
   # Recover cfg file name  & copy word list
   sFCfg .sFDsp =;
-  :dFlst[0]: idSynWrds =;
 }
 
 function -PACK_syngrm(itSynGrm,idSynWrds)
 {
+  itSynGrm.ud.nrec not if; 1 itSynGrm 0 "B" FALSE -PACK_fst; leave; end;
+
   # Remove [ and ] in is
   data idAux;
   data idAux2;

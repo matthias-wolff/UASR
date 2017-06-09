@@ -26,49 +26,10 @@
 
 #@uasrdoc: ignore
 
-   4 var nMAX_SIG_CHS;
-8192 var nMAX_SIG_DELAY;
-2048 var nMAX_FRAME_DIM;
-  16 var nMAX_WVL_NUM;
-1024 var nMAX_PFA_DIM;
-  64 var nMAXr_PFA_DIM;
-  64 var nMAX_FIL_DIM;
-   4 var nMAX_SFA_A_NUM;
-  15 var nMAX_SFA_A_CL;
-  32 var nMAX_SFA_DIM;
-1536 var nMAX_GAU_NUM;
-  32 var nMAX_MIX_GAU;
- 192 var nMAX_MIX_NUM;
-2048 var nMAX_LAD_NUM;
-8192 var nMAX_BFSTS_NUM;
-16384 var nMAX_BFSTT_NUM;
- 256 var nMAX_SFSTS_NUM;
- 512 var nMAX_SFSTT_NUM;
- 512 var nMAX_FSTO_NUM;
-  64 var nMAX_FSTO_LEN;
- 128 var nMAX_TRG_MAP;
-  32 var nMAX_WOM_NUM;
+function -PACK_wom(itWom)
+{
+  0 var nM; nM .nMAX_WOM_NUM < while;
+    1 itWom nM "S" :nM<itWom.ud.nrec: -PACK_fst;
+  nM ++=; end;
+}
 
-   1 var nPFA_TYP_FFT; # 0x01
-   2 var nPFA_TYP_WVL; # 0x02
-   4 var nPFA_TYP_CEP; # 0x04
-  64 var nPFA_TYP_FIL; # 0x40
- 128 var nPFA_TYP_LOG; # 0x80
-
- 256 var nGMM_MIN_CLIP;
-
-   3 var nFST_NUM;
-
-   0 var nTRGM_FILE;
-   1 var nTRGM_SIG;
-   2 var nTRGM_FRM;
-   3 var nTRGM_PFA;
-   4 var nTRGM_SFA;
-   5 var nTRGM_MIX;
-   6 var nTRGM_LDA;
-  15 var nTRGM_MASK;
-  64 var nTRGM_THR_ABS;
- 128 var nTRGM_SEL_ID;
-
-   0 var nCNFM_NONE;
-   1 var nCNFM_AED;
