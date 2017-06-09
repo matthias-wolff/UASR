@@ -565,18 +565,24 @@ function -PACK_sesinfo(retSI,retDlg)
 {
   function -unify_symbols(idSymRef,idTd,sComp,idSymDst)
   {
-    data idAux;
+    idSymRef -is_empty if;
+      idSymDst idSymRef =;
+    else;
 
-    # Unify symbol tables                                                       #   ---------------------------
-    idSymDst idSymRef 0 0 idAux /noerror -gen_index;                            #   Find missing symbols in idSymRef
-    :idAux.<0: idSymDst -dmark; idSymDst 0 0 idAux /mark -select;               #   |
-    idAux idSymRef -cat;                                                        #   Add symbols to idSymRef
+      data idAux;
 
-    # Map SymDst to unified table                                               #   ---------------------------
-    :idTd[sComp]: 0 idSymDst 0 1 idAux -lookup;                                 #   Lookup symbols in old table
-    idAux idSymRef 0 0 idAux /noerror -gen_index;                               #   Get new symbol index
-    idAux 0 1 sComp idTd -xstore;                                               #   Store in idTd
-    idSymRef idSymDst =;                                                        #   Copy symbol table
+      # Unify symbol tables                                                       #   ---------------------------
+      idSymDst idSymRef 0 0 idAux /noerror -gen_index;                            #   Find missing symbols in idSymRef
+      :idAux.<0: idSymDst -dmark; idSymDst 0 0 idAux /mark -select;               #   |
+      idAux idSymRef -cat;                                                        #   Add symbols to idSymRef
+
+      # Map SymDst to unified table                                               #   ---------------------------
+      :idTd[sComp]: 0 idSymDst 0 1 idAux -lookup;                                 #   Lookup symbols in old table
+      idAux idSymRef 0 0 idAux /noerror -gen_index;                               #   Get new symbol index
+      idAux 0 1 sComp idTd -xstore;                                               #   Store in idTd
+      idSymRef idSymDst =;                                                        #   Copy symbol table
+
+    end;
   }
 
   ## Adds a unit to the recognition network
@@ -659,9 +665,8 @@ function -PACK_sesinfo(retSI,retDlg)
     "~STK" itLM.td -find_comp 0 < if                                              # No stack token component >>
       "~STK" ( 2 itLM.td -get_comp_type ) itLM.td -addcomp;                       #   Add comp. (of input symbol type)
     end                                                                           # <<
-    iSI.itLM.ud -is_empty not if;
-      iSI.itLM.os itLM.td "~TOS" itLM.os -unify_symbols;
-    end;
+    iSI.itLM.os itLM.td "~TOS" itLM.os -unify_symbols;
+    iSI.itLM.os iSI.itRN.os =;
     itLM iSI.itLM -cat;
 
     "\n   - Compiling word recognition network "                           -MSG2; # Protocol
