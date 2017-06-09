@@ -1,6 +1,6 @@
 #!/usr/bin/env dlabpro
 ## UASR: Unified Approach to Speech Synthesis and Recognition
-## - DNN training and evaluation
+## - Deep neural network training and classifier
 ##
 ## AUTHOR : Frank Duckhorn
 ## PACKAGE: uasr/scripts/dlabpro
