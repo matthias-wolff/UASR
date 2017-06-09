@@ -44,8 +44,10 @@
 16384 var nMAX_BFSTT_NUM;
  256 var nMAX_SFSTS_NUM;
  512 var nMAX_SFSTT_NUM;
- 512 var nMAX_FSTO_NUM;
-  64 var nMAX_FSTO_LEN;
+ 512 var nMAX_BSYM_NUM;
+  64 var nMAX_BSYM_LEN;
+  64 var nMAX_SSYM_NUM;
+  32 var nMAX_SSYM_LEN;
  128 var nMAX_TRG_MAP;
   32 var nMAX_WOM_NUM;
 

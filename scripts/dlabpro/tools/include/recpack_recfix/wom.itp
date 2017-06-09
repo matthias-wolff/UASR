@@ -29,7 +29,7 @@
 function -PACK_wom(itWom)
 {
   0 var nM; nM .nMAX_WOM_NUM < while;
-    1 itWom nM "S" :nM<itWom.ud.nrec: -PACK_fst;
+    "wom[$[nM]]" 1 itWom nM "S" :nM<itWom.ud.nrec: -PACK_fst;
   nM ++=; end;
 }
 

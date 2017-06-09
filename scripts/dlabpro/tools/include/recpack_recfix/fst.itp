@@ -26,13 +26,13 @@
 
 #@uasrdoc: ignore
 
-function -PACK_fsts(nrm,itRN)
+function -PACK_fsts(sName,nrm,itRN)
 {
   itRN.ud.nrec .nFST_NUM > if;
 		"\n  WARN: Too many recognition networks ($[itRN.ud.nrec]>$[.nFST_NUM])" 0 -WARNING;
   end;
   0 var nU; nU .nFST_NUM < while;
-    nrm itRN nU "B" :nU==0: -PACK_fst;
+    "$[sName][$[nU]]" nrm itRN nU "B" :nU==0: -PACK_fst;
   nU ++=; end;
 }
 
@@ -42,7 +42,7 @@ function -PACK_fsts(nrm,itRN)
 ## @param sTyp   1. letter: S - Small, B - Big Variant
 ##               2. letter: w - skip push_weights
 ## @param bAct   Activate network
-function -PACK_fst(nrm,itRN,nU,sTyp,bAct)
+function -PACK_fst(sName,nrm,itRN,nU,sTyp,bAct)
 {
 	data idAux;
 	data idAux2;
@@ -102,24 +102,34 @@ function -PACK_fst(nrm,itRN,nU,sTyp,bAct)
 	:iT["~LSR"]: :32768/nrm: idAux -QUANT_s16; idAux dT -join;
 	.nMAX_$[sTyp1]FSTT_NUM dT -reallocate;
 
-	# perpare os
-	data dOS; :iRN.os[0]: .nMAX_FSTO_LEN dOS /force -tconvert;
-	.nMAX_FSTO_NUM dOS -reallocate;
-
 
 	# Pack it
-	:iS.nrec*nXMUL: 1 "fst.xs"  "u16" -PACK1;
-	:iT.nrec*nXMUL: 1 "fst.xt"  "u16" -PACK1;
+	:iS.nrec*nXMUL: 1 "$[sName].fst.xs"  "u16" -PACK1;
+	:iT.nrec*nXMUL: 1 "$[sName].fst.xt"  "u16" -PACK1;
 	.nPRNW 0 == if;
-		32767 1 "fst.prnw" "s16" -PACK1;
+		32767 1 "$[sName].fst.prnw" "s16" -PACK1;
 	else;
-		.nPRNW :32768/nrm: "fst.prnw" "s16" -PACK1;
+		.nPRNW :32768/nrm: "$[sName].fst.prnw" "s16" -PACK1;
 	end;
-	bAct    1 "fst.active" "u8" -PACK1;
+	bAct    1 "$[sName].fst.active" "u8" -PACK1;
 	0       1 "_blank1" "u8" -PACK1;
-	dS    0 0 "fst.s"   "mix" -PACK;
-	dT    0 0 "fst.t"   "mix" -PACK;
-	dOS   0 0 "fst.os"  "mix" -PACK;
+	dS    0 0 "$[sName].fst.s"   "mix" -PACK;
+	dT    0 0 "$[sName].fst.t"   "mix" -PACK;
+}
+
+## @param sTyp   1. letter: S - Small, B - Big Variant
+function -PACK_sym(sName,idOS,sTyp)
+{
+	# perpare os
+	data dOS;
+  idOS -is_empty if;
+    .nMAX_$[sTyp]SYM_LEN 1 .nMAX_$[sTyp]SYM_NUM dOS -array;
+  else;
+    :idOS[0]: .nMAX_$[sTyp]SYM_LEN dOS /force -tconvert;
+	  .nMAX_$[sTyp]SYM_NUM dOS -reallocate;
+  end;
+
+	dOS   0 0 "sym.$[sName]"  "mix" -PACK;
 }
 
 

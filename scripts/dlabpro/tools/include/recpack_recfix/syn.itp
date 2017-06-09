@@ -93,7 +93,7 @@ function -PACK_synsig(idSynWrds)
 
 function -PACK_syngrm(itSynGrm,idSynWrds)
 {
-  itSynGrm.ud.nrec not if; 1 itSynGrm 0 "B" FALSE -PACK_fst; leave; end;
+  itSynGrm.ud.nrec not if; "syn" 1 itSynGrm 0 "B" FALSE -PACK_fst; leave; end;
 
   # Remove [ and ] in is
   data idAux;
@@ -111,5 +111,5 @@ function -PACK_syngrm(itSynGrm,idSynWrds)
   # TODO: map itSynGrm.os to idSynWrds
 
   # Pack it
-  32768 itSynGrm 0 "Bw" TRUE -PACK_fst;                                     # Pack synthesis grammar network
+  "syn" 32768 itSynGrm 0 "Bw" TRUE -PACK_fst;                                     # Pack synthesis grammar network
 }

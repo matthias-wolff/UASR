@@ -887,20 +887,24 @@ function -PACK_recfix()
   data idSynWrds; idSynWrds -PACK_synsig;                                       # Pack synthesis signals
   1 var nrm;                                                                    # Init nomalization value
   .sFDsp -SH_rm;                                                                # Remove old output file
-  7 1  "version" "u16"     -PACK1;                                              # Pack version number
+  8 1  "version" "u16"     -PACK1;                                              # Pack version number
   0 1  "_blank1" "u16"     -PACK1;                                              # Pack blank
   nrm                      -PACK_sig;                                           # Pack frontend information
   nrm                      -PACK_pfa nrm =;                                     # Pack primary feature analysis parameters
   nrm iFI itGm.mean.dim    -PACK_sfa nrm =;                                     # Pack secondary feature analysis parameters
   nrm itGm                 -PACK_gau nrm =;                                     # Pack gaussian parameters
   nrm itGm.mmap            -PACK_mix nrm =;                                     # Pack mixture parameters
-  nrm iSI.itRN             -PACK_fsts;                                          # Pack recognition networks
-  nrm iSI.itRNr 0 "S" TRUE -PACK_fst;                                           # Pack reference recognition network
-  nrm itDlg    0 "Sw" TRUE -PACK_fst;                                           # Pack dialog grammar
-  nrm iSI.itGP             -PACK_cnf;                                           # Pack reference recognition network
-  nrm                      -PACK_trg;                                           # Pack signal detection
-  iSI.itSynGrm idSynWrds   -PACK_syngrm;                                        # Pack synthesis grammar
-  iSI.itWom                -PACK_wom;                                           # Pack synthesis grammar
+  "rn"  iSI.itRN.os     "B"      -PACK_sym;                                     # Pack recognition network symbols
+  "phn" iSI.itRNr.os    "S"      -PACK_sym;                                     # Pack phoneme table
+  "syn" iSI.itSynGrm.os "B"      -PACK_sym;                                     # Pack synthesis symbols
+  "dlg" itDlg.os        "S"      -PACK_sym;                                     # Pack dialog output symbols
+  "rn"  nrm iSI.itRN             -PACK_fsts;                                    # Pack recognition networks
+  "rnr" nrm iSI.itRNr 0 "S" TRUE -PACK_fst;                                     # Pack reference recognition network
+  "dlg" nrm itDlg    0 "Sw" TRUE -PACK_fst;                                     # Pack dialog grammar
+  nrm iSI.itGP                   -PACK_cnf;                                     # Pack reference recognition network
+  nrm                            -PACK_trg;                                     # Pack signal detection
+  iSI.itSynGrm idSynWrds         -PACK_syngrm;                                  # Pack synthesis grammar
+  iSI.itWom                      -PACK_wom;                                     # Pack synthesis grammar
   "\n  => Final norm: $[nrm]"                                             -MSG; # Protocol
 }
 
