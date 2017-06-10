@@ -621,11 +621,23 @@ function -HMM_assess(itHMM,sSns,nSpl,nIte)
 	var ciU :ciU=max(n/K,min(1,1-betaquant(0.025,K-n,n+1)));                    #   Upper bound of confidence interval
 	var ciL :ciL=max(0,min(n/K,1-betaquant(0.975,K-n+1,n)));                    #   Lower bound of confidence interval
     
+    var sK; "am.assess.ite$[nSpl]_$[nIte]" sK =; sSns if ".$[sSns]" sK += end   #   Make reference result key
+    var nR; ( sK -1 "S" -CFG_get_ex ) nR -vset;                                 #   Silently get reference result
+    
     "\n\n   Evaluation result:"                                           -MSG; #   Protocol
     "\n   - Correct        : $[n] of $[K]"                                -MSG; #   Protocol (# hits, # samples)
     "\n   - Correctness    : ${round(n/K*1000)/10} %"                     -MSG; #   Protocol (Label correctness)
     " +${round((ciU-n/K)*1000)/10} -${round(abs(n/K-ciL)*1000)/10}"       -MSG; #   Protocol (95% confidence interv.)
     " ( HMM $[nSpl]_$[nIte]" ( sSns if ", $[sSns]" + end ) " )" +         -MSG; #   Protocol (HMM and sensor IDs)
+    nR 0 >= if                                                                  #   Have reference result >>
+      :round((n/K-nR)*1000)==0: if                                              #     Result equals reference >>
+        " - " ( "OK" -COLOR_green ) +                                     -MSG; #       Protocol
+      else                                                                      #     <<
+        " - " ( "UNEXPECTED" -COLOR_red ) + " (" +                        -MSG; #       Protocol
+        :n/K<nR: if "-" else "+" end                                      -MSG; #       Protocol (difference)
+        "${abs(round((n/K-nR)*1000)/10)} %)"                              -MSG; #       Protocol (difference)
+      end                                                                       #     <<
+    end                                                                         #   <<
     "\n   - Confidence lvl.: 95 %"                                        -MSG; #   Protocol (Confidence level)
   end                                                                           # <<
   { ${n/K} $[ciU] $[ciL] "$[nSpl]_$[nIte]" } idAux =;                           # Make global log entry
