@@ -502,7 +502,40 @@ The file extensions are:
     <tr><td><code>uasr.import.raw.header     </code></td><td>number</td><td>0      </td><td>Raw file header length [bytes]</td></tr>
     <tr><td><code>uasr.import.raw.nrec       </code></td><td>number</td><td>0      </td><td>Number of records to import (0 or negative for all)</td></tr>
     <tr><td><code>uasr.import.raw.rinc       </code></td><td>number</td><td>10     </td><td>Time increment between two feature vectors [ms] (<a href="fea.itp.html#clp_-FEA_import_raw" class="code">-FEA_import_raw</a> only!)</td></tr>
+    <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
     </tbody>
+
+    <tbody><!-- Reference results -->
+    <tr><td class="rowgroup" colspan="4">Reference results for test automation<br>
+      <span style="font-weight:normal">(so far respected by <a href="../HMM.xtp.html#clp_trn" class="code">HMM.xtp trn</a> only)</span></td></tr>
+    <tr><td><code>uasr.am.assess.ite0_0</code><br>...<br><code>uasr.am.assess.ite&lt;uasr.am.train.split&gt;_<br>&nbsp;&nbsp;&lt;uasr.am.train.ite&lt;i&gt;&gt;</code></td>
+      <td>number</td><td></td>
+      <td>Expected correct recognition quota. Only valid with <code>uasr.am.eval=assess</code> (or <code>uasr.am.eval=auto</code>
+      if <code>assess</code> is the default).</td></tr>
+    <tr><td><code>uasr.am.eval.ite0_0</code><br>...<br><code>uasr.am.eval.ite&lt;uasr.am.train.split&gt;_<br>&nbsp;&nbsp;&lt;uasr.am.train.ite&lt;i&gt;&gt;</code></td>
+      <td>string</td><td></td>
+      <td>Expected recognition result in the format <code>"&lt;cor&gt;,&lt;acc&gt;,&lt;ld&gt;"</code>, with
+        <ul>
+          <li><code>cor</code>: label correctness</li>
+          <li><code>acc</code>: label accuracy</li>
+          <li><code>ld</code>: label density (#recognized/#reference labels)</li>
+        </ul>
+        Only valid with <code>uasr.am.eval=eval</code> (or <code>uasr.am.eval=auto</code> if <code>eval</code> is the default).</td></tr>
+    <tr><td class="rowempty" colspan="4">&nbsp;</td></tr>
+    </tbody>
+
+    <tbody><!-- Debug settings -->
+    <tr><td class="rowgroup" colspan="4">Debug settings<br>
+      <span style="font-weight:normal">(so far respected by <a href="../HMM.xtp.html#clp_trn" class="code">HMM.xtp trn</a> only)</span></td></tr>
+    <tr><td><code>uasr.dump</code></td><td>string</td><td></td><td>Dump data actually used for training to ASCII files in <code>&lt;uasr.dir.log&gt;/dump</code>, comma-separated list of the following items<pre>
+  "all" - EVERYTING
+  "cls" - reserved (use "all") - classes list
+  "cfg" - reserved (use "all") - UASR configuration
+  "fea" - reserved (use "all") - final features used for training and test
+  "fls" - reserved (use "all") - file lists
+</pre></td></tr>
+    </tbody>
+
   </table><br>
   <a name="remarks"></a><h5 class="indent">Remarks</h5>
   <ul>
