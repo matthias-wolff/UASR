@@ -1498,7 +1498,7 @@ function -HMM_assess_global_log(sSns,nSpl,nIte,idLogEntry)
         end                                                                     #       <<
         nS ++=;                                                                 #       Next split
       end                                                                       #     <<
-      { "cor" "cu" "cl" "MID" } ' 0 idLog -set_cnames;                          #     Name log components
+      { "COR" "+COR" "-COR" "MID" } ' 0 idLog -set_cnames;                      #     Name log components
       "0,$[sOdi]\n0,$[sOdi]\n0,$[sOdi]\n1,$[sLdi]\n" idLog -set rtext;          #     Make display settings
     end                                                                         #   <<
     { "$[nSpl]_$[nIte]" } idLog 0 3 idAux -gen_index;                           #   Find line in log
