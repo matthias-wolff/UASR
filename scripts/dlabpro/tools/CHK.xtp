@@ -112,10 +112,10 @@ function -CMD_fls()
     sFlst "ascii" idF stdfile /strings /noerror -import;
   }
   
-	function -count(idF)
-	{
+  function -count(idF)
+  {
     "\n   - Entries       : $[idF.nrec]" -echo;
-	}
+  }
 
   function -unique(idF)
   {
@@ -149,7 +149,17 @@ function -CMD_fls()
     ( idAux.nrec 0 == ) bRes =;
     bRes if "disjoint" else "OVERLAPPING" end -echo;
     :bRes=not(bFrc)||bRes;
-    bRes if " - ok" else " - FAILURE" end -echo;
+    bRes if 
+      " - ok" -echo; 
+    else 
+      " - FAILURE" -echo;
+      -UASR_get_vlevel 1 > if
+        "\n     List of overlapping entries:" -echo;
+        idAux /list -print;
+      else
+        " (re-run with -v2!)" -echo;
+      end
+    end ;
     bRes return;
   }
 
