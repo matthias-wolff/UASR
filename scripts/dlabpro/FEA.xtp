@@ -222,7 +222,8 @@ function -CMD_ana()
       ## Aftermath                                                              #     . . . . . . . . . . . . . . . . .
       idFea.nrec idFea.rinc * 1000 / nCst =;                                    #     Compute sample time
       nCst nTst +=;                                                             #     Compute total sample time
-      " ok (RTF $[stdprof.time nCst / ent 1000 /] @ $[nCst] s)"          -MSG2; #     Protocol
+      " ok"                                                              -MSG2; #     Protocol
+      #" (RTF $[stdprof.time nCst / ent 1000 /] @ $[nCst] s)"             -MSG2; #     Protocol
       goto L_FILE;                                                              #     End of file loop
     end                                                                         #   <<
     "\n   " -MSG2; "done\n"                                               -MSG; #   Protocol
