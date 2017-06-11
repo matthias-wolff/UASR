@@ -252,11 +252,22 @@ function -HMM_create(nDim,itHMM)
 ## @global %lt;gmm.mindet&gt; R
 function -HMM_setup(itHMM)
 {
-  var sOptions; "" sOptions =;                                                  # Extra options for hmm -setup_gmm
-	( "am.train" "var" "," -CFG_get_item ) 0 >= if "/var" sOptions -sset; end     # Get xtra options for hmm -setup_gmm
-  var nMindet; ( "gmm.mindet" -1 "S" -CFG_get_ex ) nMindet =;                   # Min. determinant of cov. matrices
+  function -STATINFO(itHMM)                                                     # Print detailed statistics info
+  {                                                                             # >>
+    itHMM.pfsm -status;                                                         #   Statistics status
+    data idFrq; idFrq itHMM.pfsm -freq;                                         #   Get per-class sample sizes
+    var  i;                                                                     #   Loop counter
+    "\n   Class sample sizes"                                            -echo; #   Protocol
+    0 i =; i idFrq.nrec < while                                                 #   Loop over classes >>
+      "\n     ${itHMM.ud[i,0]}: ${idFrq[i,0]}"                           -echo; #     Print sample size
+      i ++=;                                                                    #     Next class
+    end                                                                         #   <<
+  }                                                                             # <<
 
-  .__UTL_nVlevel 1 > if itHMM.pfsm -status; end                                 # Protocol  (verbose level 2)
+  var sOptions; "" sOptions =;                                                  # Extra options for hmm -setup_gmm
+  ( "am.train" "var" "," -CFG_get_item ) 0 >= if "/var" sOptions -sset; end     # Get xtra options for hmm -setup_gmm
+  var nMindet; ( "gmm.mindet" -1 "S" -CFG_get_ex ) nMindet =;                   # Min. determinant of cov. matrices
+  .__UTL_nVlevel 1 > if itHMM -STATINFO; end                                    # Detailed statistics info
   "uasr.am.mapexp" 0 -CFG_get itHMM -set mapexp;                                # set MAP-exp from cfg. (def.: MAP off)
   -1 itHMM /usemap -probs;                                                      # Re-estimate transition weights
 #  -1 itHMM -priors;                                                            # Re-estimate HMM unigram probs.
@@ -601,7 +612,7 @@ function -HMM_assess(itHMM,sSns,nSpl,nIte)
     end                                                                         #   <<
     ( idAux ' ) idAsc -cat;                                                     #   Transpose and append to log
     "" stdprof -end_timer;                                                      #   Stop measuring time
-    " (RTF ${round(stdprof.time/nRinc/idMsf.nrec*1000)/1000})"           -MSG2; #   Protocol (real time percentage)
+    #" (RTF ${round(stdprof.time/nRinc/idMsf.nrec*1000)/1000})"           -MSG2; #   Protocol (real time percentage)
     ( nRinc idMsf.nrec * ) nTst +=;                                             #   Accumulate total sample time
     goto L_FILE;                                                                #   End of file loop
   end                                                                           # <<
@@ -852,7 +863,7 @@ function -HMM_eval_fnc(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)
     :idD=itRes.td["~TIS"]; :idD.==-1: idD /comp -dmark; idD 0 0 idD /mark -delete;# Get decoded Gaussians
     :itRes.td.rinc*idD.nrec/1000: iL.nTmeSmp +=;                                #   Accumulate sample time
     itRes.ud.descr0               iL.nTmeDec +=;                                #   Accumulate decoding time
-    ".(RTF=${ent(itRes.ud.descr0/itRes.td.rinc/idD.nrec*1E6+0.5)/1000})" -MSG2; #   Protocol
+    #".(RTF=${ent(itRes.ud.descr0/itRes.td.rinc/idD.nrec*1E6+0.5)/1000})" -MSG2; #   Protocol
 
     ## Compare phonetic labels and sequences                                    #   - - - - - - - - - - - - - - - - - -    
     ( "~PLB" itRes.td -find_comp ) 0 >= if                                      #   Have phonetic reference labels >>
@@ -1470,6 +1481,8 @@ function -HMM_assess_global_log(sSns,nSpl,nIte,idLogEntry)
   var  nS;                                                                      # Split
   var  nI;                                                                      # Iteration
   var  sFn;                                                                     # Log file name
+  var  sLdi;    "LabelDisplay"                                         sLdi =;  # Label display identifier
+  var  sOdi;    "Oscillogram"                                          sOdi =;  # Oscillogram display identifier
 
   ( .__CFG_bNwr not ) ( nSpl 0 >= ) && ( nIte 0 >= ) && if                      # No write prot.and regular eval.>>
     "$[sDirLog]/hmm_assess$[sSxt].data.xml" sFn =;                              #   Make log file name
@@ -1485,6 +1498,8 @@ function -HMM_assess_global_log(sSns,nSpl,nIte,idLogEntry)
         end                                                                     #       <<
         nS ++=;                                                                 #       Next split
       end                                                                       #     <<
+      { "cor" "cu" "cl" "MID" } ' 0 idLog -set_cnames;                          #     Name log components
+      "0,$[sOdi]\n0,$[sOdi]\n0,$[sOdi]\n1,$[sLdi]\n" idLog -set rtext;          #     Make display settings
     end                                                                         #   <<
     { "$[nSpl]_$[nIte]" } idLog 0 3 idAux -gen_index;                           #   Find line in log
     :idAux[0,0]>=0: if                                                          #   Found >>
@@ -1974,7 +1989,8 @@ function -HMM_ite(iF,sSns,iFI,bBw,bLab,itHMM)
     end                                                              "." -MSG2; #   <<
 
     "" stdprof -end_timer;                                                      #   Stop measurung time
-    " ok (RTF ${ent(stdprof.time/nRinc/idMsf.nrec*1000)/1000})"          -MSG2; #   Protocol
+    " ok"                                                                -MSG2; #   Protocol
+    #" (RTF ${ent(stdprof.time/nRinc/idMsf.nrec*1000)/1000})"             -MSG2; #   Protocol
     nRinc idMsf.nrec * nTst +=;                                                 #   Accumulate total sample time
     goto L_FILE;                                                                #   End of file loop
   end                                                                           # <<

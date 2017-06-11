@@ -339,7 +339,8 @@ function -TOPOHLP_UsedPath(itHMM,nPathNum,itUsed)
     end                                                              "." -MSG2; #   <<
 
     "" stdprof -end_timer;                                                      #   Stop measurung time
-    " ok (RTF $[stdprof.time nRinc / idMsf.nrec /])"                     -MSG2; #   Protocol
+    " ok"                                                                -MSG2; #   Protocol
+    #" (RTF $[stdprof.time nRinc / idMsf.nrec /])"                        -MSG2; #   Protocol
     nRinc idMsf.nrec * nTst +=;                                                 #   Accumulate total sample time
 #iFlist.nfile 20 < if;
     goto L_FILE;                                                                #   End of file loop
@@ -478,7 +479,8 @@ function -TOPOHLP_UsedPathRC(nTransNum,itHMM)
     end                                                              "." -MSG2; #   <<
 
     "" stdprof -end_timer;                                                      #   Stop measurung time
-    " ok (RTF $[stdprof.time nRinc / idMsf.nrec /])"                     -MSG2; #   Protocol
+    " ok"                                                                -MSG2; #   Protocol
+    #" (RTF $[stdprof.time nRinc / idMsf.nrec /])"                        -MSG2; #   Protocol
     nRinc idMsf.nrec * nTst +=;                                                 #   Accumulate total sample time
     goto L_FILE;                                                                #   End of file loop
   end                                                                           # <<
