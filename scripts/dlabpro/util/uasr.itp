@@ -599,9 +599,9 @@ function -DUMP_data(sFile,idData)
   var sDirDump; ( ( "log" "S" -CFG_get_path ) "/dump" + ) sDirDump =;          # Get dump folder
   "\n     - ASCII-dumping $[sDirDump]/$[sFile] ..."                   3 -MSGX; # Log message
   "$[sDirDump]/$[sFile]" "ascii" idData stdfile -export ?error not if          # Dump ASCII file, ok >>
-    " done"                                                             -MSG2; #   Log message
+    " done"                                                           3 -MSGX; #   Log message
   else                                                                         # << failed >>
-    " FAILED" -COLOR_error                                              -MSG2; #   Log message
+    " FAILED" -COLOR_error                                            3 -MSGX; #   Log message
   end                                                                          # <<
 }
 

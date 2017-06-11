@@ -437,7 +437,7 @@ function -CFG_get_flist(sKey,sMode)
   
   ## Protocol                                                                   # -------------------------------------
   sMode "S" "search" -VAR_strop 0 < if                                          # Not in silent mode >>
-    "\n   - " "File list" -14 -MSG_pad +                                        #   Print file list path
+    "\n   - " "Flist $[sKey]" -14 -MSG_pad +                                    #   Print file list path
       ": " + sFlist + " (${sType}, " +                                    -MSG; #  |
     sFlist stdfile -exists if                                                   #   Check if file list exists
      "exists)"                                                                  #     Exists
