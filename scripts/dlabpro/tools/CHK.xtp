@@ -119,9 +119,23 @@ function -CMD_fls()
 
   function -unique(idF)
   {
+    data idAux;
+  
     "\n   - Set unique    : " -echo;
     var bRes; ( idF -SET_is_unique ) bRes =;
-    bRes if "yes - ok" else "NO - FAILURE" end -echo;
+    bRes if 
+      "yes - ok" -echo;
+    else 
+      "NO - FAILURE" -echo;
+      -UASR_get_vlevel 1 > if
+        "\n     List of duplicate entries:" -echo;
+        idF 0 idAux -sortup; idAux 0 idAux -compress;
+        :idAux[2].>1: idAux /comp -dmark;
+        idAux 0 0 idAux /mark -select;
+        idAux 0 1 idAux /comp -select;
+        idAux /list /nonstop -print;
+      end
+    end;
     bRes return;
   }
   
@@ -155,9 +169,7 @@ function -CMD_fls()
       " - FAILURE" -echo;
       -UASR_get_vlevel 1 > if
         "\n     List of overlapping entries:" -echo;
-        idAux /list -print;
-      else
-        " (re-run with -v2!)" -echo;
+        idAux /list /nonstop -print;
       end
     end ;
     bRes return;
@@ -243,7 +255,9 @@ function -CMD_fls()
     "\n   - File lists seem to be ok.\n" -echo;
     0 return;
   else
-    "\n   - File lists are CORRUPT.\n" -echo;
+    "\n   - File lists are CORRUPT" -echo;
+    -UASR_get_vlevel 1 <= if " (re-run with option -v2 for details!)" -echo; end
+    ".\n" -echo;
     1 return;
   end
 }
