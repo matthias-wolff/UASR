@@ -64,6 +64,7 @@ function -CMD_DB_help()
 
 ## == MAIN PROGRAM ==                                                           # =====================================
 
+-UASR_silence;                                                                  # Suppress logo in -v0 mode
 "\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
 "\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
 "\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
