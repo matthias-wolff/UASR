@@ -27,7 +27,7 @@
 "amgmm.itp"             /noerror include;                                       # AM Gaussian par. reduction fnc.
 "amtopo.itp"            /noerror include;                                       # AM topology training functions
 "../util/histogram.itp" /noerror include;                                       # Histogram utilities
-"../util/ica.itp"                include;                                       # Fast-ICA utilities
+"../util/ica.itp"       /noerror include;                                       # Fast-ICA utilities
 
 ## Global instances
 fst  __AM_itAux;
