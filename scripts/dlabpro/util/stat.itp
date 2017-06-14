@@ -118,7 +118,13 @@ function -STAT_quotas_equal_p(nA,KA,nB,KB)
 ## @param K number 
 ##          Sample size.
 ## @param sMode string 
-##          "latex" (LaTeX format /w German numbers) or "plain" (plaint text).
+##          Print mode, one of the follwing:
+##          <table>
+##            <tr><th>Value   </th><th>Description          </th></tr>
+##            <tr><td>"tex"   </td><td>Latex                </td></tr>
+##            <tr><td>"tex-de"</td><td>Latex (German locale)</td></tr>
+##            <tr><td>"plain" </td><td>Plain text           </td></tr>
+##          </table>
 ## @return void
 function -STAT_print_quota(sPrefix,n,K,sMode)
 {
@@ -127,19 +133,20 @@ function -STAT_print_quota(sPrefix,n,K,sMode)
   :idQ[0,"q+"]=round(idQ[0,"q+"]*1000)/10;                                      # Convert q+ to percent and round
   :idQ[0,"q-"]=round(idQ[0,"q-"]*1000)/10;                                      # Convert q- to percent and round
 
-  sPrefix                                                                -echo; # Log
-  sMode "latex" == if                                                           # Latex mode >>
-    " \$"                                                                -echo; #   Log
-    ( :idQ[0,"q"]: 0 1 -FMT_f ) "|.|,\\!" "replace" -VAR_strop           -echo; #   Log
-    "^{+"                                                                -echo; #   Log
-    ( :idQ[0,"q+"]: 0 1 -FMT_f ) "|.|," "replace" -VAR_strop             -echo; #   Log
-    "}_{-"                                                               -echo; #   Log
-    ( :idQ[0,"q-"]: 0 1 -FMT_f ) "|.|," "replace" -VAR_strop             -echo; #   Log
-    "}\$     $[n]/$[K]"                                                  -echo; #   Log
+  sPrefix                                                                 -MSG; # Log
+  ( sMode "tex" "search" -VAR_strop ) 0 == if                                   # Latex mode >>
+    var bDe; ( "tex-de" sMode == ) bDe =;                                       #   German locale
+    " \$"                                                                 -MSG; #   Log
+    ( :idQ[0,"q"]: 0 1 -FMT_f ) bDe if "|.|,\\!" "replace" -VAR_strop end -MSG; #   Log
+    "^{+"                                                                 -MSG; #   Log
+    ( :idQ[0,"q+"]: 0 1 -FMT_f ) bDe if "|.|," "replace" -VAR_strop end   -MSG; #   Log
+    "}_{-"                                                                -MSG; #   Log
+    ( :idQ[0,"q-"]: 0 1 -FMT_f ) bDe if "|.|," "replace" -VAR_strop end   -MSG; #   Log
+    "}\$     $[n]/$[K]"                                                   -MSG; #   Log
   else                                                                          # << Plain text mode >>
-    ( :idQ[0,"q"]: 5 1 -FMT_f ) "%" +                                    -echo; #   Log
-    " (+" ( :idQ[0,"q+"]: -4 1 -FMT_f ) +                                -echo; #   Log
-    " -"  ( :idQ[0,"q-"]: -4 1 -FMT_f ) + ")" +                          -echo; #   Log
+    ( :idQ[0,"q"]: 5 1 -FMT_f ) "%" +                                     -MSG; #   Log
+    " (+" ( :idQ[0,"q+"]: -4 1 -FMT_f ) +                                 -MSG; #   Log
+    " -"  ( :idQ[0,"q-"]: -4 1 -FMT_f ) + ")" +                           -MSG; #   Log
   end                                                                           # <<
 }
 

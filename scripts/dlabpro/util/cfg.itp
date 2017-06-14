@@ -125,7 +125,12 @@ function -CFG_add(sFile,bTerm)
     end                                                                         #   <<
     sArg "-j" "search" -VAR_strop 0 == if                                       #   Cmd. line arg. starts with "-j" >>
       var nBuf;                                                                 #     Auxilary variable
-      sArg "-2" "right" -VAR_strop nBuf -vset;                                  #     Parse max. no. of jobs level
+      var sBuf; ( sArg "-2" "right" -VAR_strop ) sBuf =;                        #     Get arg. of -j
+      ( sBuf "" == ) ( sBuf "*" == ) || if                                      #     Is empty or "*"
+        1000000 nBuf =;                                                         #       Insanely large #of jobs
+      else                                                                      #     << other string >>
+        sBuf nBuf -vset;                                                        #       Parse max. no. of jobs level
+      end                                                                       #     <<
       nBuf 1 > if                                                               #     More than one job requested >>
         "Parallel computing is in an experimental stage!" 1 -WARNING;           #       Not such a good idea 
         nBuf .__CFG_nJobs =;                                                    #       Set it
