@@ -668,6 +668,12 @@ function -PACK_sesinfo(retSI,retDlg)
     iSI.itLM.os itLM.td "~TOS" itLM.os -unify_symbols;
     iSI.itLM.os iSI.itRN.os =;
     itLM iSI.itLM -cat;
+    "itLM.stk" "data" ?instance "iSI.itLM.stk" "data" ?instance not && if;
+      fst x; iSI.itLM x =;
+      data x.stk;
+      itLM.stk x.stk =;
+      x iSI.itLM =;
+    end;
 
     "\n   - Compiling word recognition network "                           -MSG2; # Protocol
     iSI.itLX itLX -LX_unify;                                                      # Kleene-closure of lexicon FST
