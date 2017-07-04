@@ -238,7 +238,7 @@ function -CFG_init(sFile,bTerm)
   end                                                                           # <<
 
   ## Load new configuration                                                     # -------------------------------------
-  sFile bTerm -CFG_add;                                                         # Add new file to config
+  ( sFile bTerm -CFG_add ) return                                               # Add new file to config
 }
 
 ## <p>Returns the value for a key from the session's configuration.</p>
