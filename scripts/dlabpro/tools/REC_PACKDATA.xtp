@@ -794,6 +794,12 @@ function -PACK_sesinfo(retSI,retDlg)
   end;                                                                          # <<
   
   ( "wom.dir" ""  "S"  -CFG_get_ex  ) var sWomDir;                              # Get world model directory
+  ( "wom.xtp" ""  "S"  -CFG_get_ex  ) var sWomXtp;                              # Get world model script 
+  sWomXtp "" != if;                                                             # If it is set >>
+    "$[.sDirOut]/WOM" sWomDir =;
+    "mkdir -p \"$[sWomDir]\"" -system;
+    "dlabpro --cd=\"$[sWomDir]\" \"$[sWomXtp]\"" -system;
+  end;                                                                          # <<
   sWomDir "" != if;                                                             # If it is set >>
     "\n   - Loading world models ..."                                    -MSG2; #   Protocol
     data idLst; sWomDir "*.fst" TRUE idLst -SH_find;                            #   Find all model files
