@@ -150,8 +150,10 @@ function -PACK_mix(nrm,iMmap)
 	end;
 	
 	# Pack it
-	nmix                   1 "mix.nmix" "u16" -PACK1;
+	:nmix-itGm.nvau:       1 "mix.ndec" "u16" -PACK1;
+	itGm.nvau              1 "mix.nvau" "u16" -PACK1;
 	:dNLADD[0,0]:          1 "mix.nlad" "u16" -PACK1;
+	0                      1 "_blank1"  "u16" -PACK1;
 	dMIXI ' 1 :.nMAX_MIX_NUM*.nMAX_MIX_GAU*2: "mix.m"    "s16" -PACK;
 	dLADD   :32768/nrm: .nMAX_LAD_NUM         "mix.lad"  "s16" -PACK;
 	"\n  norm mix: $[nrm]" -MSG;

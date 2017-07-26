@@ -455,7 +455,7 @@ function -PACK_feainfo(retFI)
 }
 
 ## Packs the acoustic model file.
-function -PACK_gmm(retGm)
+function -PACK_gmm(retGm,vauGm)
 {
   hmm  itHMM;                                                                   # The HMM
   gmm  itGm;
@@ -475,10 +475,32 @@ function -PACK_gmm(retGm)
   bGmmMix itHMM.gm.mmap NULL == && if itHMM -gmm_mix end;                       # Create mixtures
   itHMM.os -is_empty if :itHMM.ud["~NAM"]: itHMM.os = end;                      # Check/create HMM name table
   idM idC itHMM.gm -extract;                                                    # Get mean vectors and covariance matrizes
-  itHMM.gm.mmap NULL == if;                                                     # Setup without mixture map >>
+  vauGm NULL != if; vauGm.mean -is_empty not if;
+    # join mean+icov of vauGm
+    data idM2; data idC2;
+    idM2 idC2 vauGm -extract;
+    idM2 idM -cat;
+    idC2 idC -cat; idM.nrec idC -set nblock;
+  end; end;
+
+  0 var itGm.nvau;
+  itHMM.gm.mmap NULL == if;                                                     # Setup without mixture map >>a
+    # setup itGM without mixtures
     idM idC NULL itGm /float /icov -setup;                                      #   Setup Gaussians
-  else;                                                                         # << Setup with mixture map >>
-    itHMM.gm.mmap.tmx "lsadd" "add" INF iVM /float -setup;                      #   Setup maping object
+  else;                                                                         # << Setup with mixture map >>a
+    # setup itGM with mixtures
+    data idTmx; itHMM.gm.mmap.tmx idTmx =;
+    vauGm NULL != if; vauGm.mmap NULL != if;
+      # join mixtures of vauGm
+      vauGm.mmap.tmx.nrec itGm.nvau =;
+      data idTmx2;
+      vauGm.mmap.tmx.dim idTmx.nrec ones itHMM.gm.mmap.zero .* idTmx2 =;
+      idTmx.dim vauGm.mmap.tmx.nrec ones itHMM.gm.mmap.zero .* idTmx -cat;
+      vauGm.mmap.tmx idTmx2 -cat;
+      idTmx2 -type float idTmx2 -tconvert;
+      idTmx2 idTmx -join;
+    end; end;
+    idTmx "lsadd" "add" INF iVM /float -setup;                                  #   Setup maping object
     idM idC iVM itGm /float /icov -setup;                                       #   Setup Gaussians
   end;                                                                          # <<
   " done" -MSG2 "."                                                       -MSG; # Protocol
@@ -716,6 +738,7 @@ function -PACK_sesinfo(retSI,retDlg)
   data   iSI.idLMtos;                                                           # - The grammar's output symbols 
   fst    iSI.itSynGrm;                                                          # - The synthesis grammar
   fst    iSI.itWom;                                                             # - The world model
+  hmm    iSI.itVauHmm;                                                          # - The world model
   hmm    itHMM;                                                                 # The HMAs
   data   idLX;                                                                  # The lexicon entries
   fst    itDlg;                                                                 # The dialog FST
@@ -816,6 +839,11 @@ function -PACK_sesinfo(retSI,retDlg)
   iSI.itRN.os iSI.idLMtos =;
   iSI.itRN.os iSI.itSynGrm.is =;
 
+  ( "recfix.vau.hmm" ""  "S"  -CFG_get_ex  ) var sVauHmm;
+  sVauHmm "" != if;
+    sVauHmm iSI.itVauHmm -restore;
+  end;
+
   retDlg NULL != if; itDlg retDlg =; end;                                       # Return dialog model
   retSI  NULL != if; iSI   retSI  =; 1 return; end;                             # Return session info object
 
@@ -854,7 +882,7 @@ function -PACK_ssmg()
 {
   ## Get parameter objects                                                      # -------------------------------------
   object iFI;            iFI       -PACK_feainfo;                               # Get feature info object
-  gmm    itGm;           itGm      -PACK_gmm;                                   # Get gaussian mixture model
+  gmm    itGm;           itGm NULL -PACK_gmm;                                   # Get gaussian mixture model
   object iSI; fst itDlg; iSI itDlg -PACK_sesinfo;                               # Get session info object + dialog model
   object iVAD; .sVadFile iVAD -restore;                                         # Load vad model
 
@@ -886,10 +914,10 @@ function -PACK_ssmg()
 function -PACK_recfix()
 {
   ## Get parameter objects                                                      # -------------------------------------
-  object iFI;  iFI      -PACK_feainfo;                                          # Get feature info object
-  gmm    itGm; itGm     -PACK_gmm;                                              # Get gaussian mixture model
+  object iFI;  iFI -PACK_feainfo;                                               # Get feature info object
   fst    itDlg;                                                                 # The dialog FST
   object iSI;  iSI itDlg -PACK_sesinfo;                                         # Get session info object
+  gmm    itGm; itGm iSI.itVauHmm.gm -PACK_gmm;                                  # Get gaussian mixture model
 
 
   data idHist; -UPFA_hist idHist =;
@@ -899,7 +927,7 @@ function -PACK_recfix()
   data idSynWrds; idSynWrds -PACK_synsig;                                       # Pack synthesis signals
   1 var nrm;                                                                    # Init nomalization value
   .sFDsp -SH_rm;                                                                # Remove old output file
-  8 1  "version" "u16"     -PACK1;                                              # Pack version number
+  9 1  "version" "u16"     -PACK1;                                              # Pack version number
   0 1  "_blank1" "u16"     -PACK1;                                              # Pack blank
   nrm                      -PACK_sig;                                           # Pack frontend information
   nrm                      -PACK_pfa nrm =;                                     # Pack primary feature analysis parameters
@@ -910,6 +938,7 @@ function -PACK_recfix()
   "phn" iSI.itRNr.os    "S"      -PACK_sym;                                     # Pack phoneme table
   "syn" iSI.itSynGrm.os "B"      -PACK_sym;                                     # Pack synthesis symbols
   "dlg" itDlg.os        "S"      -PACK_sym;                                     # Pack dialog output symbols
+  "vau" iSI.itVauHmm.ud "S"      -PACK_sym;                                     # Pack dialog output symbols
   "rn"  nrm iSI.itRN             -PACK_fsts;                                    # Pack recognition networks
   "rnr" nrm iSI.itRNr 0 "S" TRUE -PACK_fst;                                     # Pack reference recognition network
   "dlg" nrm itDlg    0 "Sw" TRUE -PACK_fst;                                     # Pack dialog grammar
@@ -1056,7 +1085,7 @@ end;                                                                            
     end                                                                         #     <<
     "\n"                                                                  -MSG; #       Protocol
     ( sSkip "F" "search" -VAR_strop ) 0 < if NULL      -PACK_feainfo; end       #     Pack feature info file
-    ( sSkip "G" "search" -VAR_strop ) 0 < if NULL      -PACK_gmm;     end       #     Pack Gaussian mixture model file
+    ( sSkip "G" "search" -VAR_strop ) 0 < if NULL NULL -PACK_gmm;     end       #     Pack Gaussian mixture model file
     ( sSkip "S" "search" -VAR_strop ) 0 < if NULL NULL -PACK_sesinfo; end       #     Pack ession info file
     goto L_END;                                                                 #     --> End
   end                                                                           #   <<
