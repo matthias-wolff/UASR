@@ -160,3 +160,13 @@ function -PACK_mix(nrm,iMmap)
 
 	nrm return;
 }
+
+function -PACK_vau(nrm)
+{
+  "recfix.vau.minfrm"  100  "S" -CFG_get_ex var nMinFrm;
+  "recfix.vau.mindist" 10   "S" -CFG_get_ex var nMinDist;
+  :round(nMinDist*nrm): nrm =;
+
+	nMinFrm    1 "vau.minfrm"  "u16" -PACK1;
+	nMinDist   1 "vau.mindist" "s16" -PACK1;
+}
