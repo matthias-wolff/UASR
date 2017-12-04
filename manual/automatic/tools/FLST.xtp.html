@@ -377,10 +377,10 @@
   <div class="mframe2">
 
   <a name="spl_description"></a><h3>Description</h3>
-	<p>Filters a <a href="../util/cfg.itp.html#index:flists">file lists</a> for entries with a particular label (provided
-	the file list contains labels in a second coloumn), randomly selects a sepcified quantity of the remaining entries,
+	<p>Filters a <a href="../util/cfg.itp.html#index:flists">file list</a> for entries with a particular label (provided
+	the file list contains labels in a second column), randomly selects a specified quantity of the remaining entries,
 	saves the selected entries to one new file list and the unselected entries to another new file list. This program is
-	useful to disjoint create training, test and evaluation sets.</p>
+	useful to create disjoint training, test and evaluation sets.</p>
 
   <h4>Start and Command Line Options</h4>
 	<p>The program is started as follows:</p>
@@ -400,7 +400,7 @@
 		<tr>
 			<td><b>-P</b>l=&lt;label&gt;</td>
 			<td>Filter for label (2nd column in file list). Optional; if omitted all entries will be processed regardless of
-				their labels.</td>
+				their labels. If "*", perform operation for each label and concatenate the results.</td>
 		</tr>
 		<tr>
 			<td><b>-P</b>n=&lt;number&gt;</td>

@@ -34,6 +34,54 @@
 "$UASR_HOME/scripts/dlabpro/util/uasr.itp" include;
 "$UASR_HOME/scripts/dlabpro/util/var.itp"  include;
 
+## == Auxiliary functions ==
+
+## Randomly splits a file list.
+##
+## @param idF data
+##          The file list.
+## @param nSel integer
+##          The number of entries to pick randomly, -1 to use <code>nPep</code>.
+## @param nPep float
+##          The percentage of entries to pick randomly, -1 to use 
+##          <code>nSel</code>.
+## @param sLab string
+##          The label (2nd componentn in <code>idF</code>) to filter for, can
+##          be emtpy or <code>NULL</code> to omit label filtering.
+## @param idF1 data
+##          Data instance to be filled with picked entries, must <em>not</em>
+##          be identical with <code>idF</code> or <code>idF2</code>.
+## @param idF2 data
+##          Data instance to be filled with remaining entries, must 
+##          <em>not</em> be identical with <code>idF</code> or 
+##          <code>idF1</code>.
+## @return 0 if the caller should proceed, 1 if the caller should abort.
+function -FLST_spl(idF,nSel,nPep,sLab,idF1,idF2)
+{
+  data idI;                                                                     # Index object for filtering  
+
+  ## Filter for label (only if sLab specified)                                  # -------------------------------------
+  sLab if                                                                       # Label specified >>
+    idF { { "$[sLab]" } } 1 0 idI /noerror -gen_index;                          #   Search entries labelled sLab
+    :idI.==0: idF -dmark;                                                       #   Mark entries
+    idF 0 0 idF /mark /noerror -select ?error if                                #   Remove them, on error >>
+      "No entries labelled \"$[sLab]\" found. Aborting."                -ERROR; #     Error message
+      1 return;                                                                 #     Cannot go on ...
+    end                                                                         #   <<
+  end                                                                           # <<
+
+  ## Randomly split                                                             # -------------------------------------
+  nSel 0        < if idF.nrec nSel =; end                                       # Limit number of files to pick
+  nSel idF.nrec > if idF.nrec nSel =; end                                       # Limit number of files to pick
+  nPep 1.0 <= nPep 0.0 > && if :round(nPep*idF.nrec): nSel =; end               # calculate number of files to pick
+  idF nSel idF1 -SET_rss;                                                       # Random subset splitting
+  idF idF1 idF2 -SET_minus;                                                     # ...
+
+  0 return;                                                                     # Ok
+}
+
+## == Command handlers ==
+
 ## Prints help on usage
 function -CMD_usage(sCmd)
 {
@@ -99,15 +147,16 @@ function -CMD_usage(sCmd)
     "\n\n   ARGUMENTS:"                                                   -MSG;
       "\n     <flstfile>      file list file to be processed"             -MSG;
     "\n\n   OPTIONS:"                                                     -MSG;
-      "\n     -Pl=<label>     Filter for label (2nd column in file list)" -MSG;
+      "\n     -Pl=<label>     Filter for label (2nd column in file list) 1)" -MSG;
       "\n     -Pn=<number>    Number of entries to pick randomly"         -MSG;
       "\n     -Pp=<amount>    Amount (1.0=100%) of ent. to pick randomly" -MSG;
-      "\n     -Po1=<filename> First output file 1)"                       -MSG;
-      "\n     -Po2=<filename> Second output file 1)"                      -MSG;
-      "\n     -Pr=TRUE/FALSE  randomize file lists 2)"                    -MSG;
+      "\n     -Po1=<filename> First output file 2)"                       -MSG;
+      "\n     -Po2=<filename> Second output file 2)"                      -MSG;
+      "\n     -Pr=TRUE/FALSE  randomize file lists 3)"                    -MSG;
       "\n     -Psep=<sep>     file list column separator chars, e.g. \"\\t \""-MSG;
-    "\n\n     1) stdout if omitted, discarded if <filename> empty"        -MSG;
-      "\n     2) FALSE  if omitted"                                       -MSG;
+    "\n\n     1) if \"*\", perform operation for each label"              -MSG;
+      "\n     2) stdout if omitted, discarded if <filename> empty"        -MSG;
+      "\n     3) FALSE  if omitted"                                       -MSG;
     "\n\n   EXAMPLE:"                                                     -MSG;
     "\n\n     'dlabpro $__SFILE__.xtp spl all.flst -Pl=Z00 -Pn=100 -Po2='"-MSG;
       "\n     Filter entries labelled \"Z00\" from all.flst, randomly"    -MSG;
@@ -196,21 +245,26 @@ function -CMD_spl()
 	}                                                                             #
   
   data idF;                                                                     # File list to be split
+  data idFp;                                                                    # Part of file list to be split
   data idF1;                                                                    # Picked entries
   data idF2;                                                                    # Remaining entries
-  data idI;                                                                     # Index object for filtering
+  data idF1p;                                                                   # Part of picked entries
+  data idF2p;                                                                   # Part of remaining entries
+  data idLab;                                                                   # Label list
   var  sLab; ( "l"  ""   "S" -CFG_get_ex ) sLab -sset;                          # Get label name to filter for
   var  nSel; ( "n"  -1   "S" -CFG_get_ex ) nSel -vset;                          # Get number of entries to pick
   var  nPep; ( "p"  -1.0 "S" -CFG_get_ex ) nPep -vset;                          # Get amount (1.0=100%) of entries to pick  
   var  sOf1; ( "o1" "~"  "S" -CFG_get_ex ) sOf1 -sset;                          # Get name of first output file
   var  sOf2; ( "o2" "~"  "S" -CFG_get_ex ) sOf2 -sset;                          # Get name of second output file
   var  bRnd; ( "r" FALSE "S" -CFG_get_ex ) bRnd -bset;                          # Randomize?
+  var  nRet;                                                                    # Return value
 
   var  i;                                                                       # Loop counter
 
   ## Protocol                                                                   # -------------------------------------
   .__UTL_nVlevel 1 > if                                                         # On verbose level 2 and up >>
     "\n   Label to filter  : $[sLab]" -echo;                                    #   Protocol (label to filter for)
+    sLab "*" == if " (all)" -echo; end                                          #   Protocol (all labels mode)
     "\n   Entries to select: $[nSel]" -echo;                                    #   Protocol (no. of entries to pick)
     "\n   1st output file  : "        -echo; sOf1 -echo_ofx;                    #   Protocol (1st output filename)
     "\n   2nd output file  : "        -echo; sOf2 -echo_ofx;                    #   Protocol (2nd output filename)
@@ -222,22 +276,25 @@ function -CMD_spl()
   "$2" "ascii" idF stdfile /strings -import;                                    # Load file list
   idF.nrec 0 == if 1 return; end                                                # No entries, no service!
   
-  ## Filter for label (only if -Pl specified)                                   # -------------------------------------
-  sLab if                                                                       # Label specified >>
-    idF { { "$[sLab]" } } 1 0 idI /noerror -gen_index;                          #   Search entries labelled sLab
-    :idI.==0: idF -dmark;                                                       #   Mark entries
-    idF 0 0 idF /mark /noerror -select ?error if                                #   Remove them, on error >>
-      "No entries labelled \"$[sLab]\" found. Aborting."                -ERROR; #     Error message
-      1 return;                                                                 #     Cannot go on ...
+  ## Process input file list                                                    # -------------------------------------
+  sLab "*" == if                                                                # All labels mode >>
+    idF.dim 1 <= if                                                             #   File list has no labels >>
+      "File list does not contain labels. Aborting."                    -ERROR; #     Error message
+      1 return;                                                                 #     The end
     end                                                                         #   <<
+    idF 1 idLab -sortup;                                                        #   Sort ascendingly by labels
+    idLab 1 idLab -compress;                                                    #   RLE-compress label
+    0 i =; i idLab.nrec < while                                                 #   Loop over labels >>
+      idF idFp =;                                                               #     Copy input file list
+      ( idFp nSel nPep :idLab[i,0]: idF1p idF2p -FLST_spl ) nRet =;             #     Invoke worker
+      nRet 0 != if nRet return; end                                             #     If failed, terminate program
+      idF1p idF1 -cat; idF2p idF2 -cat;                                         #     Append results to global lists
+      i ++=;                                                                    #     Next label
+    end                                                                         #   <<
+  else                                                                          # << Single or no label mode >>
+    ( idF nSel nPep sLab idF1 idF2 -FLST_spl ) nRet =;                          #   Invoke worker
+    nRet 0 != if nRet return; end                                               #   If failed, terminate program
   end                                                                           # <<
-
-  ## Randomly split                                                             # -------------------------------------
-  nSel 0        < if idF.nrec nSel =; end                                       # Limit number of file to pick
-  nSel idF.nrec > if idF.nrec nSel =; end                                       # Limit number of file to pick
-  nPep 1.0 <= nPep 0.0 > && if :ent(nPep*idF.nrec): nSel =; end                 # calculate number of file to pick
-  idF nSel idF1 -SET_rss;                                                       # Random subset splitting
-  idF idF1 idF2 -SET_minus;                                                     # ...
 
   ## Output selected entries                                                    # -------------------------------------
   idF1.nrec 0 > if                                                              # Entries selected >>
