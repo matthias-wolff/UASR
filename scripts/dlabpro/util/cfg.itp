@@ -556,7 +556,7 @@ function -CFG_get_path(sKey,sMode)
   var sDirData;  ( "dir.data" "" "S" -CFG_get_ex             ) sDirData  -sset; # UASR data directory
   var sRoot;                                                                    # Database root directory
   var sEroot;                                                                   # Experiment root directory
-  var sName;     "???" sName =;                                                 # Clear text name of directory
+  var sName;     "($[sKey])" sName =;                                           # Clear text name of directory
   var bForce;    sMode "F" "search" -VAR_strop 0 >= bForce  =;                  # Force mode (do not fall back)
   var bSilent;   sMode "S" "search" -VAR_strop 0 >= bSilent =;                  # Silent mode
 
