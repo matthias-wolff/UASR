@@ -708,7 +708,7 @@ function -SNS_get_tab()
     "" sSns =;                                                                  #   Clear sensor name
   end                                                                           # <<
 
-  ## Load (an trim) sensor list                                                 # -------------------------------------
+  ## Load (and trim) sensor list                                                # -------------------------------------
   data idAux;                                                                   # Auxilary data instance
   var sDirInfo; "info" "S" -CFG_get_path sDirInfo =;                            # Info directory
   var sSlf; "am.sensors" "${sDirInfo}/sensors.txt" "S" -CFG_get_ex sSlf =;      # Sensor list file

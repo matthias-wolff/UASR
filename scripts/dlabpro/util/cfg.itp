@@ -505,9 +505,11 @@ function -CFG_get_flist(sKey,sMode)
 ##          Empty string (default operation) or any combination of the following characters
 ##          <table cellpadding="3" style="margin-top:6pt; margin-bottom:6pt;">
 ##            <tr><th>Character     </th><th>Description</th></tr>
-##            <tr><td><code>F</code></td><td>Force: do not fallback to common directory</td></tr>
+##            <tr><td><code>B</code></td><td>Fallback: consider common directory <em>only</em><sup>1)</sup></td></tr>
+##            <tr><td><code>F</code></td><td>Force: do not fallback to common directory<sup>1)</sup></td></tr>
 ##            <tr><td><code>S</code></td><td>Silent: do not print messages (except errors)</td></tr>
 ##          </table>
+##          <sup>1)</sup> mutually exclusive
 ## @return The path name
 ## @see -CFG_get_path_persistent
 function -CFG_get_path(sKey,sMode)
@@ -533,12 +535,16 @@ function -CFG_get_path(sKey,sMode)
     end                                                                         #   <<
     "${sEroot}/${sRelPath}" sPath =;                                            #   Experiment data directory
     bForce sPath stdfile /dir -exists || if                                     #   No fallback or dflt. path exists >>
-      sPath "default" -CFG_get_path_finish return;                              #     Return path
+      bFallback not if                                                          #     Fallback not enforced >>
+        sPath "default" -CFG_get_path_finish return;                            #       Return path
+      end                                                                       #    <<
     end                                                                         #   <<
     sAltPath if                                                                 #   Alternative path specified >>
       "${sEroot}/${sAltPath}" sPath =;                                          #     Experiment data directory
       sPath stdfile /dir -exists if                                             #     Path exists >>
-        sPath "alternative" -COLOR_yellow -CFG_get_path_finish return;          #       Return path
+        bFallback not if                                                        #       Fallback not enforced >>
+          sPath "alternative" -COLOR_yellow -CFG_get_path_finish return;        #         Return path
+        end                                                                     #       <<
       end                                                                       #     <<
       "${sRoot}/${sAltPath}" sPath =;                                           #     Data base directory
       sPath stdfile /dir -exists if                                             #     Path exists >>
@@ -557,8 +563,16 @@ function -CFG_get_path(sKey,sMode)
   var sRoot;                                                                    # Database root directory
   var sEroot;                                                                   # Experiment root directory
   var sName;     "($[sKey])" sName =;                                           # Clear text name of directory
-  var bForce;    sMode "F" "search" -VAR_strop 0 >= bForce  =;                  # Force mode (do not fall back)
-  var bSilent;   sMode "S" "search" -VAR_strop 0 >= bSilent =;                  # Silent mode
+  var bForce;    sMode "F" "search" -VAR_strop 0 >= bForce    =;                # Force mode (do not fall back)
+  var bFallback; sMode "B" "search" -VAR_strop 0 >= bFallback =;                # Force fallback mode
+  var bSilent;   sMode "S" "search" -VAR_strop 0 >= bSilent   =;                # Silent mode
+
+  ## Validate mode                                                              # -------------------------------------
+  bForce bFallback && if                                                        # "F" and "B" specified >>
+    "Modes \"B\" and  \"F\" of -CFG_get_path mutually exclusive. "              #   |
+    "Using \"F\"." +                                                1 -WARNING; #   Warning
+    FALSE bFallback =;                                                          #   Switch fallback mode off
+  end                                                                           # <<
 
   ## Initialize                                                                 # -------------------------------------
   "db"  "" "S" -CFG_get_ex sDb  =;                                              # Get data base identifier
