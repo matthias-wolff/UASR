@@ -1,5 +1,5 @@
 #!/usr/bin/env dlabpro
-## UASR: Unified Approach to Speech Synthesis and Recognition
+## UASR: Unified Approach to Signal Synthesis and Recognition
 ## - Data packaging tool for dLabPro recognizer
 ##
 ## AUTHOR : Frank Duckhorn, Matthias Wolff
@@ -1000,7 +1000,7 @@ function -PACK_vadinfo()
   ( "$1" "xtpx" == ) if " done.\n" -MSG; quit; end                              #   Quit after saving archive
 end                                                                             # <<
 -UASR_silence;                                                                  # Detect silent mode
-"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
+"\n// UASR - UNIFIED APPROACH TO SIGNAL SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
 "\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
 "\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
 "\n// dLabPro VID     : " -version +                                      -MSG; # Protocol
