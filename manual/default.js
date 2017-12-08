@@ -1,4 +1,4 @@
-// UASR: Unified Approach to Speech Synthesis and Recognition
+// UASR: Unified Approach to Signal Synthesis and Recognition
 // - Javascript functions for manual pages
 //
 // AUTHOR : Matthias Wolff
