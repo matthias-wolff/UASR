@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<!-- UASR: Unified Approach to Signal Synthesis and Recognition
 <
 <    AUTHOR : n/a
 <    PACKAGE: manual
@@ -527,6 +527,11 @@
       <td class="rowgroup" colSpan="2">Functions</td>
     </tr>
     <tr>
+      <td><a href="#clp_-FLST_spl"><code class="link">-FLST_spl</code></a></td>
+      <td><code><b>-FLST_spl</b>(idF,nSel,nPep,sLab,idF1,idF2)</code><br>&nbsp;<br> Randomly splits a file list.
+      </td>
+    </tr>
+    <tr>
       <td><a href="#clp_-CMD_usage"><code class="link">-CMD_usage</code></a></td>
       <td><code><b>-CMD_usage</b>(sCmd)</code><br>&nbsp;<br> Prints help on usage
 .
@@ -559,6 +564,123 @@
       </td>
     </tr>
   </table>
+  </div>
+  </div>
+  <div id="clp_-FLST_spl">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FLST_spl</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FLST_spl','-FLST_spl','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FLST_spl</b>(idF,nSel,nPep,sLab,idF1,idF2)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">tools/FLST.xtp(59)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Randomly splits a file list.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idF</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The file list.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">integer&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nSel</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The number of entries to pick randomly, -1 to use <code>nPep</code>.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">float&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nPep</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The percentage of entries to pick randomly, -1 to use
+          <code>nSel</code>.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sLab</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The label (2nd componentn in <code>idF</code>) to filter for, can
+          be emtpy or <code>NULL</code> to omit label filtering.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idF1</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with picked entries, must <em>not</em>
+          be identical with <code>idF</code> or <code>idF2</code>.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idF2</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data instance to be filled with remaining entries, must
+          <em>not</em> be identical with <code>idF</code> or
+          <code>idF1</code>.
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> 0 if the caller should proceed, 1 if the caller should abort.
+
   </div>
   </div>
   <div id="clp_-CMD_usage">
@@ -594,7 +716,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">tools/FLST.xtp(38)</td>
+      <td class="hidden">tools/FLST.xtp(86)</td>
     </tr>
   </table>
   </div>
@@ -648,7 +770,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">tools/FLST.xtp(151)</td>
+      <td class="hidden">tools/FLST.xtp(200)</td>
     </tr>
   </table>
   </div>
@@ -690,7 +812,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">tools/FLST.xtp(177)</td>
+      <td class="hidden">tools/FLST.xtp(226)</td>
     </tr>
   </table>
   </div>
@@ -732,7 +854,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">tools/FLST.xtp(277)</td>
+      <td class="hidden">tools/FLST.xtp(334)</td>
     </tr>
   </table>
   </div>
@@ -774,7 +896,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">tools/FLST.xtp(295)</td>
+      <td class="hidden">tools/FLST.xtp(352)</td>
     </tr>
   </table>
   </div>
@@ -816,7 +938,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">tools/FLST.xtp(346)</td>
+      <td class="hidden">tools/FLST.xtp(403)</td>
     </tr>
   </table>
   </div>
