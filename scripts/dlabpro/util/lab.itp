@@ -690,8 +690,8 @@ function -TRL_import(sDir,sTid,idTrl)
 ## </ol>
 ##
 ## @cgen:index
-## @global &lt;uasr.sensor&gt;      R
-## @global &lt;uasr.am. sensors&gt; R
+## @global &lt;uasr.sensor&gt;     R
+## @global &lt;uasr.am.sensors&gt; R
 ## @return The sensor table (<code>data</code> instance)
 function -SNS_get_tab()
 {
