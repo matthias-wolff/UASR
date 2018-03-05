@@ -192,7 +192,8 @@ function -FSG_load_builtin(sId,idRules)
 ##          Will be filled with the table of terminal output symbol found in the grammar rules (may be
 ##          <code>NULL</code>)
 ## @param itFsg fst
-##          Finite state grammar to be created
+##          Finite state grammar to be created. Set field <code>climit</code> to a value &gt;1 in order to limit 
+##          the number of non-terminal expansions (per rule, <i>&ndash;experimental&ndash;</i>) 
 ## @see -FSG_load
 function -FSG_compile(idRules,idTrmTab,idTosTab,itFsg)
 {
@@ -222,7 +223,7 @@ function -FSG_compile(idRules,idTrmTab,idTosTab,itFsg)
     ( itFsg.sd.nrec -- ) return;                                                #   Return its state index
   }                                                                             # <<
 
-  function -FSG_addtrans(nIni,nTer,sSym,idTrmTab,idTosTab,idStkTab,itFsg)       # Add a transition to the grammar FSM
+  function -FSG_addtrans(nIni,nTer,sSym,idTrmTab,idTosTab,idStkTab,nDpt,itFsg)  # Add a transition to the grammar FSM
   {                                                                             # >>
     sSym not if 0 nIni nTer itFsg -addtrans { "" -1 -1 0 0 }; leave; end        #   Unnamed transition -> epsilon
     data idAux;                                                                 #   Auxilary data instance
@@ -267,11 +268,12 @@ function -FSG_compile(idRules,idTrmTab,idTosTab,itFsg)
 			nStk nSignStk * nStk =;                                                   #     Add sign
     end                                                                         #   <<
     nLsr INF != if                                                              #   If weight not infinity >>
-      0 nIni nTer itFsg -addtrans { "$[sSym]" $[nTis] $[nTos] $[nLsr] $[nStk] };#     Add transition
+      0 nIni nTer itFsg -addtrans                                               #     |
+      { "$[sSym]" $[nTis] $[nTos] $[nLsr] $[nStk] $[nDpt] };                    #     Add transition
     end                                                                         #   <<
   }                                                                             # <<
 
-  function -FSG_expand(nIni0,nTer0,idR,idTrmTab,idTosTab,idStkTab,itFsg)        # Expand a rule
+  function -FSG_expand(nIni0,nTer0,idR,idTrmTab,idTosTab,idStkTab,nDpt,itFsg)   # Expand a rule
   {                                                                             # >>
     var nIni;                                                                   #   Current initial state
     var nTer;                                                                   #   Current terminal state
@@ -283,7 +285,7 @@ function -FSG_compile(idRules,idTrmTab,idTosTab,itFsg)
       else                                                                      #   << Reg. rule or not last symbol >>
         ( :idR[nS,1]: itFsg -FSG_findaddnode ) nTer =;                          #     Stubbornly create states
       end                                                                       #   <<
-      nIni nTer :idR[nS,0]: idTrmTab idTosTab idStkTab itFsg -FSG_addtrans;     #     Add new transition
+      nIni nTer :idR[nS,0]: idTrmTab idTosTab idStkTab nDpt itFsg -FSG_addtrans;#     Add new transition
       nTer nIni =; nS ++=; goto L_S;                                            #     Next right side symbol
     end                                                                         #   <<
   }                                                                             # <<
@@ -300,6 +302,8 @@ function -FSG_compile(idRules,idTrmTab,idTosTab,itFsg)
   var nTer;                                                                     # Current terminal state
   var nExS;                                                                     # Number expanded states
   var nExN;                                                                     # Number expanded non-terminals
+  var nDpt;                                                                     # Rule expansion depth
+  var nXDpt; :itFsg.climit>1: if itFsg.climit else 0 end nXDpt =;               # Max. rule expansion depth
 
   ## Prepare rule set                                                           # -------------------------------------
   0 nR =; label L_R1; nR idRules.nrec < if                                      # Loop over rules >>
@@ -333,17 +337,18 @@ function -FSG_compile(idRules,idTrmTab,idTosTab,itFsg)
 
   ## Create initial grammar FSA with non-terminal start transition 0 -"S"-> 1   # -------------------------------------
   itFsg -reset;                                                                 # Reset grammar FSM
-  "~NAM"        255 itFsg.sd -addcomp;                                          # Add state component (state names)
-  "~EXP" -type char itFsg.sd -addcomp;                                          # Add state component (expanded flag)
-  "~SYM"        255 itFsg.td -addcomp;                                          # Add trans. component (symbol names)
-  "~TIS" -type int  itFsg.td -addcomp;                                          # Add trans. component (TIS)
-  "~TOS" -type int  itFsg.td -addcomp;                                          # Add trans. component (TOS)
+  "~NAM" 255          itFsg.sd -addcomp;                                        # Add state component (state names)
+  "~EXP" -type char   itFsg.sd -addcomp;                                        # Add state component (expanded flag)
+  "~SYM" 255          itFsg.td -addcomp;                                        # Add trans. component (symbol names)
+  "~TIS" -type int    itFsg.td -addcomp;                                        # Add trans. component (TIS)
+  "~TOS" -type int    itFsg.td -addcomp;                                        # Add trans. component (TOS)
   "~LSR" -type double itFsg.td -addcomp;                                        # Add logarithmic weights
-  "~STK" -type int  itFsg.td -addcomp;                                          # Add stack symbol
+  "~STK" -type int    itFsg.td -addcomp;                                        # Add stack symbol
+  "~DPT" -type int    itFsg.td -addcomp;                                        # Add recursion depth counter
   "GRM"  itFsg -addunit;                                                        # Add grammar FSM
-  0 1   itFsg        -addstates { "S"  0        };                              # Add start state
-  0 1   itFsg /final -addstates { "F"  0        };                              # Add final state
-  0 0 1 itFsg        -addtrans  { "S" -2 -1 0 0 };                              # Add start transition
+  0 1   itFsg        -addstates { "S"  0          };                            # Add start state
+  0 1   itFsg /final -addstates { "F"  0          };                            # Add final state
+  0 0 1 itFsg        -addtrans  { "S" -2 -1 0 0 0 };                            # Add start transition
   idTrmTab itFsg.is -copy;                                                      # Copy input symbol table
   itFsg.os -reset; "~SYM" 255 itFsg.os -addcomp;                                # Create output symbol table
 
@@ -364,7 +369,7 @@ function -FSG_compile(idRules,idTrmTab,idTosTab,itFsg)
       "\n   - Expanding state (${itFsg.sd[nIni,1]})"                   5 -MSGX; #     Protocol
       0 nR =; label L_R2; nR idRules.nrec < if                                  #     Loop over rules >>
         :idR$[nR][0,1]==itFsg.sd[nIni,1]: if                                    #       Rule matches initial state >>
-          nIni -1 idR$[nR] itFsg.is itFsg.os idStkTab itFsg -FSG_expand;        #         Expand named state
+          nIni -1 idR$[nR] itFsg.is itFsg.os idStkTab 0 itFsg -FSG_expand;      #         Expand named state
           nExS ++=;                                                             #         Count expanding rules
           :idRules[nR,idRules.dim-1]=idRules[nR,idRules.dim-1]+1;               #         Update rule counter
         end                                                                     #       <<
@@ -376,7 +381,7 @@ function -FSG_compile(idRules,idTrmTab,idTosTab,itFsg)
       "\n   - Expanding state (${itFsg.sd[nTer,1]})"                   5 -MSGX; #     Protocol
       0 nR =; label L_R2; nR idRules.nrec < if                                  #     Loop over rules >>
         :idR$[nR][0,1]==itFsg.sd[nTer,1]: if                                    #       Rule matches initial state >>
-          nTer -1 idR$[nR] itFsg.is itFsg.os idStkTab itFsg -FSG_expand;        #         Expand named state
+          nTer -1 idR$[nR] itFsg.is itFsg.os idStkTab 0 itFsg -FSG_expand;      #         Expand named state
           nExS ++=;                                                             #         Count expanding rules
           :idRules[nR,idRules.dim-1]=idRules[nR,idRules.dim-1]+1;               #         Update rule counter
         end                                                                     #       <<
@@ -387,10 +392,17 @@ function -FSG_compile(idRules,idTrmTab,idTosTab,itFsg)
 
     ## Expand non-terminals                                                     #   - - - - - - - - - - - - - - - - - -
     :itFsg.td[nT,3]: -2 > if nT ++=; goto L_T; end                              #   Ignore terminal transitions   
-    "\n   - Expanding non-terminal \"${itFsg.td[nT,2]}\""              5 -MSGX; #   Protocol (verbose level 2)
+    :nDpt = itFsg.td[nT,"~DPT"];                                                #   Get current expansion depth
+    "\n   - Expanding non-terminal \"${itFsg.td[nT,2]}\""                       #   |
+    ", depth=$[nDpt]" +                                                5 -MSGX; #   Protocol (verbose level 2)
     0 nExN =; 0 nR =; label L_R3; nR idRules.nrec < if                          #   Loop over rules >>   
       :idR$[nR][0,0]==itFsg.td[nT,2]: if                                        #     Rule matches non-terminal >>
-        nIni nTer idR$[nR] itFsg.is itFsg.os idStkTab itFsg -FSG_expand;        #       Expand non-terminal
+        nDpt nXDpt < if                                                         #       Within depth limit >>
+          nIni nTer idR$[nR] itFsg.is itFsg.os idStkTab :nDpt+1: itFsg          #         |
+          -FSG_expand;                                                          #         Expand non-terminal
+        else                                                                    #       << Too deep >>
+          "\n     - Expansion aborted (too deep)"                      5 -MSGX; #         Protocol
+        end                                                                     #       <<
         nExN ++=;                                                               #       Count expanding rules
         :idRules[nR,idRules.dim-1]=idRules[nR,idRules.dim-1]+1;                 #       Update rule counter
       end                                                                       #     <<
@@ -411,7 +423,7 @@ function -FSG_compile(idRules,idTrmTab,idTosTab,itFsg)
     "\n   - Expanding state (${itFsg.sd[1,1]})"                        5 -MSGX; #   Protocol
     0 nR =; label L_R2; nR idRules.nrec < if                                    #   Loop over rules >>
       :idR$[nR][0,1]==itFsg.sd[1,1]: if                                         #     Rule matches initial state >>
-        1 -1 idR$[nR] itFsg.is itFsg.os idStkTab itFsg -FSG_expand;             #       Expand named state
+        1 -1 idR$[nR] itFsg.is itFsg.os idStkTab 0 itFsg -FSG_expand;           #       Expand named state
         :idRules[nR,idRules.dim-1]=idRules[nR,idRules.dim-1]+1;                 #       Update rule counter
         nExS ++=;                                                               #       Count expanding rules
       end                                                                       #     <<
@@ -433,6 +445,7 @@ function -FSG_compile(idRules,idTrmTab,idTosTab,itFsg)
   else                                                                          # << with stack symbols >>
     data itFsg.stk; idStkTab itFsg.stk =;                                       #   copy tab to itFst.stk
   end                                                                           # <<
+  itFsg.td ( "~DPT" itFsg.td -find_comp ) 1 itFsg.td -delete;                   # Remove recursion depth counter
   0 nR =; label L_R4; nR idRules.nrec < if;                                     # Loop over rules >>
     :idRules[nR,idRules.dim-1]: 0 == if;                                        #   Unused rules ? >>
       "Unused Rule: " idR$[nR] -FSG_print_rule +                    2 -WARNING; #     Warn
