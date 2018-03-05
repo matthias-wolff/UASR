@@ -1,4 +1,4 @@
-## UASR: Unified Approach to Speech Synthesis and Recognition
+## UASR: Unified Approach to Signal Synthesis and Recognition
 ## - Utility functions: For dLabPro class data
 ##
 ## AUTHOR : Matthias Wolff
@@ -199,6 +199,26 @@ function -DATA_mean(idSrc)
 	data idDst;
 	idSrc NULL 0 "mean" idDst /rec -aggregate;
 	idDst return;
+}
+
+## Computes the softmax of a sequence of vectors. Symbolic components will be
+## ignored.
+##
+## @param idSrc data
+##          Source vector sequece.
+## @param idDst data
+##          Destination vector sequece, may be identical with 
+##          <code>idSrc</code>.
+## @return void
+function -DATA_softmax(idSrc,idDst)
+{
+  data idSmx; idSrc idSmx -copy;                                                # Result (softmax)
+  data idAux;                                                                   # Auxiliary data
+
+  idSmx NULL 0 "min" idAux -aggregate;                                          # Get minimal value per vector
+  :idSmx=.exp(idSmx-idAux);                                                     # Subtract from vectors, exp
+  idSmx NULL 0 "sum" idAux -aggregate;                                          # Sum over vector components
+  :idDst = idSmx/idAux;                                                         # Normalize
 }
 
 ## Determines if two sets are equal, i.e. they contain the same elements

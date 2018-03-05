@@ -1,4 +1,4 @@
-## UASR: Unified Approach to Speech Synthesis and Recognition
+## UASR: Unified Approach to Signal Synthesis and Recognition
 ## - Utility functions: For dLabPro class fst
 ##
 ## AUTHOR : Matthias Wolff
@@ -39,6 +39,77 @@ function -FST_get_icw(itSrc)
   itSrc.NC_TD_LSR itSrc.td -find_comp nIcW =; nIcW 0 >= if nIcW return; end
   itSrc.NC_TD_TSR itSrc.td -find_comp nIcW =; nIcW 0 >= if nIcW return; end
   -1 return;
+}
+
+## Lists transitions matching a filter criterion.
+##
+## <h3>Remarks</h3>
+## <p>Use <code>idDst 0 itSrc.td 0 itSrc.td.dim idTrans <a href=
+## "javascript:__goDlabpro('automatic/data.html','mth_-lookup')">-lookup</a></code> 
+## to retrieve the matching transitions.</p>
+##
+## @cgen:index
+## @param nUnit int
+##          Zero-based unit index in <code>itSrc</code>, -1 for all units.
+## @param criterion 
+##          The filter criterion.
+## @param sMode string
+##          The filter mode, one of the following<br>
+##          <table class="indent" cellpadding="2">
+##            <tr>
+##              <th><code>sMode</code></th><th>Description</th>
+##              <th><code>arg</code></th>
+##            </tr>
+##            <tr>
+##              <td><code>"ini"</code></td><td>transitions originating at specified state</td>
+##              <td>zero-based state index (int)</td>
+##            </tr>
+##            <tr>
+##              <td><code>"ter"</code></td><td>transitions leading to specified state</td>
+##              <td>zero-based state index (int)</td>
+##            </tr>
+##          </table>
+## @param idDst data
+##          Data table to be filled with a list of zero-based absolute transition
+##          indices of matching transitions.
+## @param itSrc fst
+##          Finite state machine.
+## @return void
+function -FST_trans_filter(nUnit,criterion,sMode,idDst,itSrc)
+{
+  ## Validation of arguments                                                         # --------------------------------
+  idDst NULL == if "\"idDst\" must not be NULL" -ERROR; leave; end                   # Validate idDst
+  itSrc NULL == if "\"itSrc\" must not be NULL" -ERROR; leave; end                   # Validate itSrc
+
+  ## Local variables                                                                 # --------------------------------
+  data idAux;                                                                        # Auxiliary data
+
+  ## Make unit/transition index                                                      # --------------------------------
+  ( 1 itSrc.ud.nrec zeros ) idDst =; 0 1 idDst -fill;                                # List of unit indices
+  :itSrc.ud[itSrc.IC_UD_FT]: idDst -join;                                            # Join first transition index
+  :itSrc.ud[itSrc.IC_UD_XT]: idDst -join;                                            # Join number of transitions
+  idDst 0 1 2 idDst -expand;                                                         # Expand unit index
+  ( 1 idDst.nrec zeros ) idAux =; 0 1 idAux -fill; idAux idDst -join;                # Make and join transition index
+  { "nU" "nT" } ' 0 idDst -set_cnames;                                               # Name index components
+  
+  ## Filter for transition property                                                  # --------------------------------
+  "ini" sMode == if                                                                  # Initial state >>
+    :itSrc.td[itSrc.IC_TD_INI].==criterion: idDst /comp -dmark;                      #   Mark matching transitions
+  else "ter" sMode == if                                                             # << Terminal state >>
+    :itSrc.td[itSrc.IC_TD_TER].==criterion: idDst /comp -dmark;                      #   Mark matching transitions
+  else                                                                               # << Unknown filter mode >>
+    "\"sMode\" unknown" -ERROR;                                                      #   Error message
+    idDst -reset;                                                                    #   Reset destination table
+    leave;                                                                           #   leave function
+  end end                                                                            # <<
+  idDst 0 0 idDst /mark -select; idDst -unmark;                                      # Select matching trans. indices
+
+  ## Filter for unit index                                                           # --------------------------------
+  nUnit 0 >= if                                                                      # Unit specified >>
+    :idDst[0].==nUnit: idDst /comp -dmark;                                           #   Mark matching transitions
+    idDst 0 0 idDst /mark -select; idDst -unmark;                                    #   Select matching trans. indices
+  end                                                                                # <<
+  idDst 0 1 idDst -delete;                                                           # Remove unit index
 }
 
 ## Computes the Levenshtein distance between two finite state machines.

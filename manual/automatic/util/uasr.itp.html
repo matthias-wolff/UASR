@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<!-- UASR: Unified Approach to Signal Synthesis and Recognition
 <
 <    AUTHOR : n/a
 <    PACKAGE: manual
@@ -186,6 +186,11 @@
     <tr>
       <td><a href="#clp_-MSG2"><code class="link">-MSG2</code></a></td>
       <td><code><b>-MSG2</b>(sMsg)</code><br>&nbsp;<br> UASR message.
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#clp_-ERROR_int"><code class="link">-ERROR_int</code></a></td>
+      <td><code><b>-ERROR_int</b>(msg,nElv,sType)</code><br>&nbsp;<br> <i>&mdash; for internal use &mdash;</i> UASR error or warning.
       </td>
     </tr>
     <tr>
@@ -1399,6 +1404,85 @@
     </tr>  </table>
   </div>
   </div>
+  <div id="clp_-ERROR_int">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-ERROR_int</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-ERROR_int','-ERROR_int','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-ERROR_int</b>(msg,nElv,sType)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/uasr.itp(311)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> <i>&mdash; for internal use &mdash;</i> UASR error or warning.
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>msg</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The error message, a string or a data table of strings.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">integer&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nElv</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The error level of the message (ignored if <code>sType=="error"</code>).
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sType</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The type, <code>"error"</code> or <code>"warning"</code>.
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> void
+
+  </div>
+  </div>
   <div id="clp_-WARNING">
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
@@ -1432,7 +1516,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(310)</td>
+      <td class="hidden">util/uasr.itp(354)</td>
     </tr>
   </table>
   </div>
@@ -1500,7 +1584,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(324)</td>
+      <td class="hidden">util/uasr.itp(369)</td>
     </tr>
   </table>
   </div>
@@ -1557,7 +1641,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(344)</td>
+      <td class="hidden">util/uasr.itp(390)</td>
     </tr>
   </table>
   </div>
@@ -1625,7 +1709,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(366)</td>
+      <td class="hidden">util/uasr.itp(413)</td>
     </tr>
   </table>
   </div>
@@ -1696,7 +1780,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(394)</td>
+      <td class="hidden">util/uasr.itp(441)</td>
     </tr>
   </table>
   </div>
@@ -1753,7 +1837,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(424)</td>
+      <td class="hidden">util/uasr.itp(471)</td>
     </tr>
   </table>
   </div>
@@ -1810,7 +1894,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(451)</td>
+      <td class="hidden">util/uasr.itp(498)</td>
     </tr>
   </table>
   </div>
@@ -1854,7 +1938,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(464)</td>
+      <td class="hidden">util/uasr.itp(511)</td>
     </tr>
   </table>
   </div>
@@ -1901,7 +1985,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(474)</td>
+      <td class="hidden">util/uasr.itp(521)</td>
     </tr>
   </table>
   </div>
@@ -1948,7 +2032,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(487)</td>
+      <td class="hidden">util/uasr.itp(534)</td>
     </tr>
   </table>
   </div>
@@ -2007,7 +2091,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(509)</td>
+      <td class="hidden">util/uasr.itp(556)</td>
     </tr>
   </table>
   </div>
@@ -2054,7 +2138,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(523)</td>
+      <td class="hidden">util/uasr.itp(570)</td>
     </tr>
   </table>
   </div>
@@ -2099,7 +2183,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(535)</td>
+      <td class="hidden">util/uasr.itp(582)</td>
     </tr>
   </table>
   </div>
@@ -2144,7 +2228,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(545)</td>
+      <td class="hidden">util/uasr.itp(592)</td>
     </tr>
   </table>
   </div>
@@ -2200,7 +2284,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(566)</td>
+      <td class="hidden">util/uasr.itp(613)</td>
     </tr>
   </table>
   </div>
@@ -2286,7 +2370,7 @@
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/uasr.itp(596)</td>
+      <td class="hidden">util/uasr.itp(643)</td>
     </tr>
   </table>
   </div>

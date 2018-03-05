@@ -1,5 +1,5 @@
 #!/usr/bin/env dlabpro
-## UASR: Unified Approach to Speech Synthesis and Recognition
+## UASR: Unified Approach to Signal Synthesis and Recognition
 ## - Support vector machine classifier
 ##
 ## AUTHOR  : Steffen Werner, Matthias Wolff
@@ -631,7 +631,7 @@ function -CMD_fpar()
 
 ## == MAIN PROGRAM ==                                                           # =====================================
 
-"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
+"\n// UASR - UNIFIED APPROACH TO SIGNAL SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
 "\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
 "\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
 "\n// dLabPro VID     : " -version +                                      -MSG; # Protocol

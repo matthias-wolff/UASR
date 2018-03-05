@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<!-- UASR: Unified Approach to Speech Synthesis and Recognition
+<!-- UASR: Unified Approach to Signal Synthesis and Recognition
 <
 <    AUTHOR : n/a
 <    PACKAGE: manual
@@ -104,6 +104,11 @@ no such component exists.
       </td>
     </tr>
     <tr>
+      <td><a href="#clp_-FST_trans_filter"><code class="link">-FST_trans_filter</code></a></td>
+      <td><code><b>-FST_trans_filter</b>(nUnit,criterion,sMode,idDst,itSrc)</code><br>&nbsp;<br> Lists transitions matching a filter criterion.
+      </td>
+    </tr>
+    <tr>
       <td><a href="#clp_-FST_lvnstn"><code class="link">-FST_lvnstn</code></a></td>
       <td><code><b>-FST_lvnstn</b>(itSrc1,itSrc2,nUnit1,nUnit2,idCost,idConf,idDst)</code><br>&nbsp;<br> Computes the Levenshtein distance between two finite state machines.
       </td>
@@ -186,6 +191,127 @@ The component index
 
   </div>
   </div>
+  <div id="clp_-FST_trans_filter">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td nowrap width="25%" class="navbar">
+        Function <span class="mid">-FST_trans_filter</span>
+      </td>
+      <td nowrap width="75%" class="navbar" style="text-align:right;">
+        <a class="navbar" href="javascript:__PrintSection('clp_-FST_trans_filter','-FST_trans_filter','../..');"><img
+        src="../../resources/print.gif" width="16" height="16" border="0" style="vertical-align:middle;"
+        alt="Print"></a> 
+        <a class="navbar" href="#functions">Functions</a>
+        <a class="navbar" href="#">Script</a>
+        <a class="navbar" href="index.html">Package</a>
+        <a class="navbar" href="../../automatic/kwdindex.html">Keyword Index</a>
+        <a class="navbar" href="../../automatic/fncindex.html">Function Index</a>
+        <a class="navbar" href="../../home.html">Home</a>
+      </td>
+    </tr>
+  </table>
+  <div class="mframe">
+  <table cellSpacing="0" cellPadding="0" border="0"> 
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Signature</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden"><code><b>-FST_trans_filter</b>(nUnit,criterion,sMode,idDst,itSrc)</code></td>
+    </tr>
+    <tr>
+      <td class="hidden"></td>
+      <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">Source</td>
+      <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
+      <td class="hidden">util/fst.itp(78)</td>
+    </tr>
+  </table>
+  </div>
+  <div class="mframe2">
+    <h3>Description</h3> Lists transitions matching a filter criterion.
+ <h3>Remarks</h3>
+ <p>Use <code>idDst 0 itSrc.td 0 itSrc.td.dim idTrans <a href=
+ "javascript:__goDlabpro('automatic/data.html','mth_-lookup')">-lookup</a></code>
+ to retrieve the matching transitions.</p>
+ 
+
+  <h3>Parameters</h3>
+  <table>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">int&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>nUnit</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Zero-based unit index in <code>itSrc</code>, -1 for all units.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>criterion</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The filter criterion.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">string&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>sMode</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          The filter mode, one of the following<br>
+          <table class="indent" cellpadding="2">
+            <tr>
+              <th><code>sMode</code></th><th>Description</th>
+              <th><code>arg</code></th>
+            </tr>
+            <tr>
+              <td><code>"ini"</code></td><td>transitions originating at specified state</td>
+              <td>zero-based state index (int)</td>
+            </tr>
+            <tr>
+              <td><code>"ter"</code></td><td>transitions leading to specified state</td>
+              <td>zero-based state index (int)</td>
+            </tr>
+          </table>
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">data&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>idDst</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Data table to be filled with a list of zero-based absolute transition
+          indices of matching transitions.
+
+      </td>
+    </tr>
+    <tr>
+      <td class="hidden">&nbsp;&nbsp;</td>
+      <td class="hidden">fst&nbsp;
+      </td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden"><code><b>itSrc</b></code></td>
+      <td class="hidden">&nbsp;</td>
+      <td class="hidden">          Finite state machine.
+
+      </td>
+    </tr>  </table>
+    <h3>Return value</h3> void
+
+  </div>
+  </div>
   <div id="clp_-FST_lvnstn">
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
@@ -219,7 +345,7 @@ The component index
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/fst.itp(82)</td>
+      <td class="hidden">util/fst.itp(154)</td>
     </tr>
   </table>
   </div>
@@ -363,7 +489,7 @@ The component index
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/fst.itp(127)</td>
+      <td class="hidden">util/fst.itp(199)</td>
     </tr>
   </table>
   </div>
@@ -518,7 +644,7 @@ The component index
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/fst.itp(294)</td>
+      <td class="hidden">util/fst.itp(366)</td>
     </tr>
   </table>
   </div>
@@ -634,7 +760,7 @@ The component index
       <td class="hidden">&nbsp;&nbsp;&nbsp;</td>
       <td class="hidden">Source</td>
       <td class="hidden">:&nbsp;&nbsp;&nbsp;</td>
-      <td class="hidden">util/fst.itp(337)</td>
+      <td class="hidden">util/fst.itp(409)</td>
     </tr>
   </table>
   </div>

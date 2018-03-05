@@ -1,5 +1,5 @@
 #!/usr/bin/env dlabpro
-## UASR: Unified Approach to Speech Synthesis and Recognition
+## UASR: Unified Approach to Signal Synthesis and Recognition
 ## - Code fragment: Cut diphones and generate diphone state sequence inventory
 ##
 ## AUTHOR : Guntram Strecha

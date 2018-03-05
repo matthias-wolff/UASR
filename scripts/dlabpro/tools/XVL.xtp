@@ -1,5 +1,5 @@
 #!/usr/bin/env dlabpro
-## UASR: Unified Approach to Speech Synthesis and Recognition
+## UASR: Unified Approach to Signal Synthesis and Recognition
 ## - Cross validation tool
 ##
 ## AUTHOR : Matthias Wolff
@@ -238,7 +238,7 @@ function -CMD_rmt()
 
 ## == MAIN PROGRAM ==                                                           # =====================================
 
-"\n// UASR - UNIFIED APPROACH TO SPEECH SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
+"\n// UASR - UNIFIED APPROACH TO SIGNAL SYNTHESIS AND RECOGNITION"        -MSG; # Protocol               
 "\n// $__SFILE__.xtp"                                                     -MSG; # Protocol
 "\n// Process         : $HOSTNAME/" -pid +                                -MSG; # Protocol
 "\n// dLabPro VID     : " -version +                                      -MSG; # Protocol

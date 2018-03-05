@@ -1,4 +1,4 @@
-## UASR: Unified Approach to Speech Synthesis and Recognition
+## UASR: Unified Approach to Signal Synthesis and Recognition
 ## - Data packaging functions for fixpoint recognizer (recfix)
 ##
 ## AUTHOR : Frank Duckhorn
@@ -28,44 +28,16 @@
 
 function -PACK_trg(nrm)
 {
-  "recfix.trg.lda" "" "S" -CFG_get_ex var sLda;
-  var nMode; "recfix.trg.mode" :.nTRGM_FRM+.nTRGM_SEL_ID: "S" -CFG_get_ex nMode -vset;
-  var nThr1; "recfix.trg.thr1" 0.03 "S" -CFG_get_ex nThr1 -vset;
-  var nThr2; "recfix.trg.thr2" 0.02 "S" -CFG_get_ex nThr2 -vset;
-  var nOff1; "recfix.trg.off1"   -6 "S" -CFG_get_ex nOff1 -vset;
-  var nOff2; "recfix.trg.off2"    6 "S" -CFG_get_ex nOff2 -vset;
-  var nMinO; "recfix.trg.mino"   30 "S" -CFG_get_ex nMinO -vset;
-  data dSEL; { 0 .nMAX_FRAME_DIM } dSEL =;
-  data dW; { 1 } dW =;
+	# Pack it
+  var x;
+  "recfix.trg.mode" :.nTRGM_FRM+.nTRGM_SEL_ID: "S" -CFG_get_ex x -vset; x 1 "trg.mode" "u8"  -PACK1;
+  0       1 "_blank1"  "u8"  -PACK1;
+  "recfix.trg.thr1" 0.03 "S" -CFG_get_ex x -vset; x 0 "trg.thr1" "s16"  -PACK1;
+  "recfix.trg.thr2" 0.02 "S" -CFG_get_ex x -vset; x 0 "trg.thr2" "s16"  -PACK1;
+  "recfix.trg.off1"   -6 "S" -CFG_get_ex x -vset; x 1 "trg.off1" "s16"  -PACK1;
+  "recfix.trg.off2"    6 "S" -CFG_get_ex x -vset; x 1 "trg.off2" "s16"  -PACK1;
+  "recfix.trg.mino"   30 "S" -CFG_get_ex x -vset; x 1 "trg.off2" "u16"  -PACK1;
 
-  sLda "" != if;
-    data idLda; sLda idLda -restore;
-    :idLda[0]-idLda[1]: idLda =;
-
-    :idLda[0,0]: var thr;
-    idLda 0 1 dW /rec -delete;
-
-    .nTRGM_LDA nMode =;
-    :nThr1=-thr/nrm;
-    :nThr2=nThr1;
-
-    -type double 1 :idLda.nrec/16: dSEL -array; 65535 0 dSEL -fill;
-    :idLda.nrec%16: 0 != if;
-      { ${pow(2,idLda.nrec%16)-1} } dSEL -cat;
-    end;
-
-  end;
-
-  # Pack it
-  nMode 1 "trg.mode" "u8"  -PACK1;
-  0     1 "_blank1"  "u8"  -PACK1;
-  nThr1 0 "trg.thr1" "s16"  -PACK1;
-  nThr2 0 "trg.thr2" "s16"  -PACK1;
-  nOff1 1 "trg.off1" "s16"  -PACK1;
-  nOff2 1 "trg.off2" "s16"  -PACK1;
-  nMinO 1 "trg.mino" "u16"  -PACK1;
-
-  dSEL 1 :.nMAX_TRG_MAP/16: "trg.sel"  "u16" -PACK;
-  dW   0  .nMAX_TRG_MAP     "trg.w"    "s16" -PACK;
+  { 0 .nMAX_FRAME_DIM } 1 :.nMAX_TRG_MAP/16: "trg.sel"  "u16" -PACK;
 }
 
