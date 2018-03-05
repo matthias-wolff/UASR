@@ -831,7 +831,7 @@ function -PACK_sesinfo(retSI,retDlg)
     0 var f; f idLst.nrec < while;                                              #   Loop over model files >>
       "$[sWomDir]/${idLst[f,0]}" itMod -restore;                                #     Load model
       "~TOS" -type long itMod.td -addcomp;                                      #     Add output symbols
-      0 itMod -invert;                                                          #     Invert model
+      -1 itMod -invert;                                                         #     Invert model
       iSI.itRN.os itMod.td "~TOS" itMod.os -unify_symbols;                      #     Unify symbols with itRN
       itMod iSI.itWom -cat;                                                     #     Cat to world model pool
     f ++=; end;                                                                 #   <<
