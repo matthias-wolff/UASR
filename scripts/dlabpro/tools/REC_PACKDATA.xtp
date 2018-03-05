@@ -826,6 +826,7 @@ function -PACK_sesinfo(retSI,retDlg)
   sWomDir "" != if;                                                             # If it is set >>
     "\n   - Loading world models ..."                                    -MSG2; #   Protocol
     data idLst; sWomDir "*.fst" TRUE idLst -SH_find;                            #   Find all model files
+    idLst 0 idLst -sortup;
     fst itMod;                                                                  #   Model variable
     0 var f; f idLst.nrec < while;                                              #   Loop over model files >>
       "$[sWomDir]/${idLst[f,0]}" itMod -restore;                                #     Load model
