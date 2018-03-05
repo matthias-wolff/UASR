@@ -299,50 +299,6 @@ function -MSG2(sMsg)
   .__UTL_nVlevel 2 >= if sMsg -echo; end
 }
 
-## <i>&mdash; for internal use &mdash;</i> UASR error or warning.
-##
-## @param msg 
-##          The error message, a string or a data table of strings.
-## @param nElv integer
-##          The error level of the message (ignored if <code>sType=="error"</code>).
-## @param sType string
-##          The type, <code>"error"</code> or <code>"warning"</code>.
-## @return void
-function -ERROR_int(msg,nElv,sType)
-{
-  .__UTL_nElevel nElv < if leave; end                                                # Error level too low -> leave
-  ( sType "error" == ) ( .__UTL_nElevel 0 < ) && if leave; end                       # Errors suppressed -> leave 
-  data idMsg;                                                                        # Message buffer
-  var  i;
-  msg idMsg /noerror -copy ?error if                                                 # Try to copy arg., if failed >>
-    255 1 1 idMsg -array; msg 0 0 idMsg -sstore;                                     #   Treat arg as string
-  end                                                                                # <<
-  data idStk; idStk -stacktrace; 
-  idStk 0 2 idStk /rec -delete;                       # Get stack trace and remove head
-  "\n" :idStk[0,0]: + ": " + sType + " - " + :idMsg[0,0]: +                          # |
-  ( sType "error" == ) if -COLOR_error else -COLOR_warn end           /stderr -echo; # Print head of stack and message  
-  1 i =; i idMsg.nrec < while                                                        # Loop over remaining msg.lines >>
-    "\n" :idMsg[i,0]: +                                                              #   |
-    ( sType "error" == ) if -COLOR_error else -COLOR_warn end         /stderr -echo; #   Print
-    i ++=;                                                                           #   Next line
-  end                                                                                # <<
-  1 i =; i idStk.nrec < while                                                        # Loop over remaining msg.lines >>
-    "\nat " :idStk[i,0]: +                                                           #   |
-    ( sType "error" == ) if -COLOR_error else -COLOR_warn end         /stderr -echo; #   Print
-    i ++=;                                                                           #   Next line
-  end                                                                                # <<
-  ( sType "error" == ) if                                                            # Is error message >>
-    .__UTL_nErrors ++=;                                                              #   Count errors
-    .__UTL_nErrors 100 >= if                                                         #   To many errors >>
-       "\n\nFATAL: More than 100. Terminating program." -COLOR_error  /stderr -echo; #     Print
-       1 quit;                                                                       #     Terminate program
-    end                                                                              #   <<
-  end                                                                                # <<
-  ( sType "warning" == ) if                                                          # Is warning message >>
-    .__UTL_nWarnings ++=;                                                            #   Count warnings
-  end                                                                                # <<
-}
-
 ## UASR warning. The warning will only be printed if <code>nLevel</code> is
 ## greater or equal the error level <code>.__UTL_nElevel</code>.
 ##
@@ -353,7 +309,6 @@ function -ERROR_int(msg,nElv,sType)
 ##          The error level of the message
 /inline function -WARNING(sMsg,nLevel)
 {
-  ## TODO: Invoke <sMsg nLevel "warning" -ERROR_int;>
   .__UTL_nElevel nLevel >= if
     "\n$__FILE__($__LINE__): warning - " sMsg + -COLOR_warn /stderr -echo;
     .__UTL_nWarnings ++=;
@@ -368,7 +323,6 @@ function -ERROR_int(msg,nElv,sType)
 ##          The error message
 /inline function -ERROR(sMsg)
 {
-  ## TODO: Invoke <sMsg 1 "error" -ERROR_int;>
   .__UTL_nElevel 0 >= if
     "\n$__FILE__($__LINE__): error - " sMsg + -COLOR_error /stderr -echo;
     .__UTL_nErrors ++=;
@@ -389,14 +343,13 @@ function -ERROR_int(msg,nElv,sType)
 ##          Short message describing the reason of the failure
 /inline function -ASSERT(bCondition,sMsg)
 {
-  bCondition not if 
-    "\n"                                               -COLOR_error /stderr -echo;
-    "\n*********** UASR ASSERTION FAILURE ***********" -COLOR_error /stderr -echo;
-    "\n Location: $__FILE__($__LINE__)"                -COLOR_error /stderr -echo;
-    "\n Reason  : $[sMsg]"                             -COLOR_error /stderr -echo;
-    "\n**********************************************" -COLOR_error /stderr -echo;
-    "ASSERTION FAILURE" break;
-  end
+  bCondition if leave; end
+  "\n"                                               -COLOR_error /stderr -echo;
+  "\n*********** UASR ASSERTION FAILURE ***********" -COLOR_error /stderr -echo;
+  "\n Location: $__FILE__($__LINE__)"                -COLOR_error /stderr -echo;
+  "\n Reason  : $[sMsg]"                             -COLOR_error /stderr -echo;
+  "\n**********************************************" -COLOR_error /stderr -echo;
+  "ASSERTION FAILURE" break;
 }
 
 ## Displays a progress bar ranging from 0 to 100 per cent.
