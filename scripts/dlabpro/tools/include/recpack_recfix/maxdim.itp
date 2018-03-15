@@ -75,5 +75,4 @@
    0 var nCNFM_NONE;
    1 var nCNFM_AED;
 
-  64 var nMAX_SLST_NUM;
   32 var nMAX_SL_W;
