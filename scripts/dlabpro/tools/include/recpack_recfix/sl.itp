@@ -34,8 +34,8 @@ function -PACK_sl()
   60    1   "sl.maxst"      "u16" -PACK1;
   0.2   0   "sl.forgetfac"  "u16" -PACK1;
   3000  1   "sl.forgettime" "u16" -PACK1;
-  1     nRF "sl.rewardminw" "s16" -PACK1;
+  1     nRF "sl.dirrew"     "s16" -PACK1;
+  1     nRF "sl.minautow"   "s16" -PACK1;
   0.9   0   "sl.discount"   "u16" -PACK1;
-  0     1   "_blank1"       "u16" -PACK1;
 }
 
