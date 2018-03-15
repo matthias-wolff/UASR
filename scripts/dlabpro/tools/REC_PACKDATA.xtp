@@ -59,6 +59,7 @@
 "include/recpack_recfix/fst.itp"    include;
 "include/recpack_recfix/trg.itp"    include;
 "include/recpack_recfix/syn.itp"    include;
+"include/recpack_recfix/sl.itp"     include;
 
 ## Prints help on usage
 function -usage(sCmd)
@@ -927,7 +928,7 @@ function -PACK_recfix()
   data idSynWrds; idSynWrds -PACK_synsig;                                       # Pack synthesis signals
   1 var nrm;                                                                    # Init nomalization value
   .sFDsp -SH_rm;                                                                # Remove old output file
-  11 1  "version" "u16"     -PACK1;                                             # Pack version number
+  12 1  "version" "u16"     -PACK1;                                             # Pack version number
   0 1  "_blank1" "u16"     -PACK1;                                              # Pack blank
   nrm                      -PACK_sig;                                           # Pack frontend information
   nrm                      -PACK_pfa nrm =;                                     # Pack primary feature analysis parameters
@@ -949,7 +950,7 @@ function -PACK_recfix()
   iSI.itSynGrm idSynWrds         -PACK_syngrm;                                  # Pack synthesis grammar
   "wom" 1 iSI.itWom     "S" .nMAX_WOM_NUM iSI.itWom.ud.nrec -PACK_fsts;         # Pack world models
   nrm                            -PACK_vau;                                     # Pack voice auth. config
-  0 1  "_blank4" "u32"     -PACK1;                                              # Pack blank
+                                 -PACK_sl;                                      # Pack strategy learning config
   "\n  => Final norm: $[nrm]"                                             -MSG; # Protocol
 }
 
