@@ -1,4 +1,4 @@
-## UASR: Unified Approach to Signal Synthesis and Recognition
+## UASR: Unified Approach to Speech Synthesis and Recognition
 ## - Data packaging functions for fixpoint recognizer (recfix)
 ##
 ## AUTHOR : Frank Duckhorn
@@ -74,3 +74,5 @@
 
    0 var nCNFM_NONE;
    1 var nCNFM_AED;
+
+  32 var nMAX_SL_W;

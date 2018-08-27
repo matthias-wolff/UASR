@@ -59,7 +59,7 @@
 "include/recpack_recfix/fst.itp"    include;
 "include/recpack_recfix/trg.itp"    include;
 "include/recpack_recfix/syn.itp"    include;
-"include/recpack_recfix/wom.itp"    include;
+"include/recpack_recfix/sl.itp"     include;
 
 ## Prints help on usage
 function -usage(sCmd)
@@ -826,11 +826,12 @@ function -PACK_sesinfo(retSI,retDlg)
   sWomDir "" != if;                                                             # If it is set >>
     "\n   - Loading world models ..."                                    -MSG2; #   Protocol
     data idLst; sWomDir "*.fst" TRUE idLst -SH_find;                            #   Find all model files
+    idLst 0 idLst -sortup;
     fst itMod;                                                                  #   Model variable
     0 var f; f idLst.nrec < while;                                              #   Loop over model files >>
       "$[sWomDir]/${idLst[f,0]}" itMod -restore;                                #     Load model
       "~TOS" -type long itMod.td -addcomp;                                      #     Add output symbols
-      0 itMod -invert;                                                          #     Invert model
+      -1 itMod -invert;                                                         #     Invert model
       iSI.itRN.os itMod.td "~TOS" itMod.os -unify_symbols;                      #     Unify symbols with itRN
       itMod iSI.itWom -cat;                                                     #     Cat to world model pool
     f ++=; end;                                                                 #   <<
@@ -927,7 +928,7 @@ function -PACK_recfix()
   data idSynWrds; idSynWrds -PACK_synsig;                                       # Pack synthesis signals
   1 var nrm;                                                                    # Init nomalization value
   .sFDsp -SH_rm;                                                                # Remove old output file
-  10 1  "version" "u16"     -PACK1;                                             # Pack version number
+  12 1  "version" "u16"     -PACK1;                                             # Pack version number
   0 1  "_blank1" "u16"     -PACK1;                                              # Pack blank
   nrm                      -PACK_sig;                                           # Pack frontend information
   nrm                      -PACK_pfa nrm =;                                     # Pack primary feature analysis parameters
@@ -939,14 +940,17 @@ function -PACK_recfix()
   "syn" iSI.itSynGrm.os "B"      -PACK_sym;                                     # Pack synthesis symbols
   "dlg" itDlg.os        "S"      -PACK_sym;                                     # Pack dialog output symbols
   "vau" iSI.itVauHmm.ud "S"      -PACK_sym;                                     # Pack dialog output symbols
-  "rn"  nrm iSI.itRN             -PACK_fsts;                                    # Pack recognition networks
+  0 1  "_blank2" "u32"     -PACK1;                                              # Pack blank
+  "rn"  nrm iSI.itRN    "B" .nFST_NUM 1 -PACK_fsts;                             # Pack recognition networks
   "rnr" nrm iSI.itRNr 0 "S" TRUE -PACK_fst;                                     # Pack reference recognition network
   "dlg" nrm itDlg    0 "Sw" TRUE -PACK_fst;                                     # Pack dialog grammar
   nrm iSI.itGP                   -PACK_cnf;                                     # Pack reference recognition network
   nrm                            -PACK_trg;                                     # Pack signal detection
+  0 1  "_blank3" "u32"     -PACK1;                                              # Pack blank
   iSI.itSynGrm idSynWrds         -PACK_syngrm;                                  # Pack synthesis grammar
-  iSI.itWom                      -PACK_wom;                                     # Pack synthesis grammar
+  "wom" 1 iSI.itWom     "S" .nMAX_WOM_NUM iSI.itWom.ud.nrec -PACK_fsts;         # Pack world models
   nrm                            -PACK_vau;                                     # Pack voice auth. config
+                                 -PACK_sl;                                      # Pack strategy learning config
   "\n  => Final norm: $[nrm]"                                             -MSG; # Protocol
 }
 

@@ -1,4 +1,4 @@
-## UASR: Unified Approach to Signal Synthesis and Recognition
+## UASR: Unified Approach to Speech Synthesis and Recognition
 ## - Data packaging functions for fixpoint recognizer (recfix)
 ##
 ## AUTHOR : Frank Duckhorn
@@ -26,14 +26,24 @@
 
 #@uasrdoc: ignore
 
-function -PACK_fsts(sName,nrm,itRN)
+data dFSTS_S;
+data dFSTS_T;
+FALSE var bFSTS;
+
+function -PACK_fsts(sName,nrm,itRN,sTyp,nNum,nAct)
 {
-  itRN.ud.nrec .nFST_NUM > if;
+  itRN.ud.nrec nNum > if;
 		"\n  WARN: Too many recognition networks ($[itRN.ud.nrec]>$[.nFST_NUM])" 0 -WARNING;
   end;
-  0 var nU; nU .nFST_NUM < while;
-    "$[sName][$[nU]]" nrm itRN nU "B" :nU==0: -PACK_fst;
+  TRUE .bFSTS =;
+  .dFSTS_S -reset;
+  .dFSTS_T -reset;
+  0 var nU; nU nNum < while;
+    "$[sName][$[nU]]" nrm itRN nU sTyp :nU<nAct: -PACK_fst;
   nU ++=; end;
+  .dFSTS_S    0 0 "$[sName].fst_s"     "mix" -PACK;
+	.dFSTS_T    0 0 "$[sName].fst_t"     "mix" -PACK;
+  FALSE .bFSTS =;
 }
 
 ## @param nrm    Weight normalization factor
@@ -104,6 +114,8 @@ function -PACK_fst(sName,nrm,itRN,nU,sTyp,bAct)
 
 
 	# Pack it
+	.nMAX_$[sTyp1]FSTS_NUM 1 "$[sName].fst.as" "u16" -PACK1;
+	.nMAX_$[sTyp1]FSTT_NUM 1 "$[sName].fst.at" "u16" -PACK1;
 	:iS.nrec*nXMUL: 1 "$[sName].fst.xs"  "u16" -PACK1;
 	:iT.nrec*nXMUL: 1 "$[sName].fst.xt"  "u16" -PACK1;
 	.nPRNW 0 == if;
@@ -112,9 +124,19 @@ function -PACK_fst(sName,nrm,itRN,nU,sTyp,bAct)
 		.nPRNW :32768/nrm: "$[sName].fst.prnw" "s16" -PACK1;
 	end;
 	bAct    1 "$[sName].fst.active" "u8" -PACK1;
-	0       1 "_blank1" "u8" -PACK1;
-	dS    0 0 "$[sName].fst.s"   "mix" -PACK;
-	dT    0 0 "$[sName].fst.t"   "mix" -PACK;
+	0       1 "$[sName].unsorted"   "u8" -PACK1;
+	0       1 "_blank1"            "u32" -PACK1;
+	0       1 "$[sName].fst.s"     "u32" -PACK1;
+	0       1 "$[sName].fst.t"     "u32" -PACK1;
+	0       1 "_blank2"            "u32" -PACK1;
+	0       1 "_blank3"            "u32" -PACK1;
+  .bFSTS if;
+    dS .dFSTS_S -cat;
+    dT .dFSTS_T -cat;
+  else;
+    dS    0 0 "$[sName].fst_s"     "mix" -PACK;
+	  dT    0 0 "$[sName].fst_t"     "mix" -PACK;
+  end;
 }
 
 ## @param sTyp   1. letter: S - Small, B - Big Variant
