@@ -825,7 +825,7 @@ function -FEA_pfa_lmag(idSig,idPM,idFea)
     ".__FEA_iPfa" "" ?instance not if                                           #   Check session's FBAproc (failed) >>
       "Could not get primary feature analysis processor" -ERROR; leave;         #     Error
     else                                                                        #   << ok, do special initialization
-      :pow(2,.__FEA_iPfa.order-1): .__FEA_iPfa -set out_dim;                    #     Set anti aliasing lowpass cutoff
+      :pow(2,.__FEA_iPfa.order-1)+0.5: .__FEA_iPfa -set out_dim;                #     Set anti aliasing lowpass cutoff
     end                                                                         #   <<
   end                                                                           # <<
 
