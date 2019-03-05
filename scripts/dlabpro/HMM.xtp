@@ -1101,7 +1101,7 @@ function -CMD_adp()
   "\n\n// HMM ADAPTATION"                                                 -MSG; # Protocol
 
   var sDbId;    ( "uasr.db" "vm.de" -CFG_get      ) sDbId   =;                  # UASR database
-  var sDirInfo; ( "info"    ""      -CFG_get_path ) DirInfo	=;                  # UASR info files path
+  var sDirInfo; ( "info"    ""      -CFG_get_path ) sDirInfo	=;                # UASR info files path
   
   #"${sDirInfo}/${iConfFile}" TRUE -CFG_init;
 
