@@ -546,10 +546,13 @@ function -LM_get(idLX,itLM)
 
   ## Default                                                                    # -------------------------------------
 label L_DEFAULT;                                                                # Default language model
+   var nWrdPen; ( "lm.wrdpen" 0 "S" -CFG_get_ex ) nWrdPen -vset;                # Get word penality
    itLM -reset;                                                                 # Reset grammar transducer
    "GRM" itLM /fst /lsr -addunit;                                               # Add one grammar unit
    0 1 itLM /final -addstates;                                                  # Add one central state
-   nW idLX.nrec < while 0 0 0 itLM -addtrans { $[nW] $[nW] 0 }; nW ++=; end     # Add a transition for every lexicon entry
+   nW idLX.nrec < while;                                                        # Loop over lexicon entries >>
+    :idLX[nW,0]: "<OOV>" != if; 0 0 0 itLM -addtrans { $[nW] $[nW] $[nWrdPen] }; end; # Add a transition for every lexicon entry without <OOV>
+   nW ++=; end                                                                  # <<
    idLX itLM.is -copy;                                                          # Set input symbol table
    idLX itLM.os -copy;                                                          # Set output symbol table
 }
