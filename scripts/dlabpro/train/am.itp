@@ -2028,6 +2028,8 @@ function -HMM_adapt_fnc(itHMM,sSns,nSpl,nIte,sHint,iF,itRes,iL)
     data       idFea;                                                           # Primary feature vector sequence
     data       idLab;                                                           # Label sequence
     
+    "[GW=" :round(itRes.ud[0,"GW"]*100)/100: + "]" + -MSG2;
+
     iF NULL "" idFea -FEA_get;                                                  # Get feature vectors
     idFea iFI ( itHMM -get_dim ) idFea NULL -FEA_sfa;                          	# Do secondary feature analysis
 
