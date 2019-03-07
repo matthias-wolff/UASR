@@ -549,16 +549,25 @@ label L_DEFAULT;                                                                
    var nWrdPen; ( "lm.wrdpen" 0 "S" -CFG_get_ex ) nWrdPen -vset;                # Get word penality
    itLM -reset;                                                                 # Reset grammar transducer
    "GRM" itLM /fst /lsr -addunit;                                               # Add one grammar unit
-   0 1 itLM /final -addstates;                                                  # Add one central statea
-   data idSel; idLX "<" "search" idSel -strop; :idSel.<0: sum idSel =;          # Find entries without "<"
-   :idSel[0,0]>0: if;                                                           # If there are words without "<" >>
-     idLX "<OOV>" "cmp" idSel -strop;                                           #   Select all words except "<OOV>"
+   data idSel; idLX "<" "search" idSel -strop; :idSel.<0: idSel =;              # Find entries without "<"
+   0 0 idSel sum -fetch 0 > if;                                                 # If there are words without "<" >>
+     0 1 itLM -addstates;                                                       #   Add one initial state
+     0 1 itLM /final -addstates;                                                #   Add one final state
+     nW idLX.nrec < while;                                                      #   Loop over lexicon entries >>
+       :idLX[nW,0]: "<PAU>" == if;    
+         0 0 0 itLM -addtrans { $[nW] -1 0 };                                     #     Add a transition for every lexicon entry
+         0 1 1 itLM -addtrans { $[nW] -1 0 };                                     #     Add a transition for every lexicon entry
+       else; :idLX[nW,0]: "<OOV>" != if;    
+         0 0 1 itLM -addtrans { $[nW] $[nW] $[nWrdPen] };                         #     Add a transition for every lexicon entry
+         0 1 1 itLM -addtrans { $[nW] $[nW] $[nWrdPen] };                         #     Add a transition for every lexicon entry
+       endif; endif;
+     nW ++=; end                                                                #   <<
    else;                                                                        # << else >>
-     1 idLX.nrec ones idSel =;                                                  #   Select all words
+     0 1 itLM /final -addstates;                                                #   Add one central state
+     nW idLX.nrec < while;                                                      #   Loop over lexicon entries >>
+       0 0 0 itLM -addtrans { $[nW] $[nW] $[nWrdPen] };                         #     Add a transition for every lexicon entry
+     nW ++=; end                                                                #   <<
    end;                                                                         # <<
-   nW idLX.nrec < while;                                                        # Loop over lexicon entries >>
-    :idSel[nW,0]: if; 0 0 0 itLM -addtrans { $[nW] $[nW] $[nWrdPen] }; end;     #   Add a transition for every selected lexicon entry
-   nW ++=; end                                                                  # <<
    idLX itLM.is -copy;                                                          # Set input symbol table
    idLX itLM.os -copy;                                                          # Set output symbol table
 }
