@@ -178,13 +178,14 @@ function -SIG_import_wav(sDir,sTid,idSig)
 {
   var nAquant; "sig.aquant" 16 -CFG_get nAquant =;                              # Get quantization resolution
   var nSrate;  "sig.srate"   0 -CFG_get nSrate  =;                              # Get sampling rate
+  var nAmp;    "sig.amp"     1 -CFG_get nAmp    =;                              # Get signal amplification
 
   idSig -reset;                                                                 # Reset destination instance
   "${sDir}/${sTid}.wav" "wav" idSig stdfile -import;                            # Import wav file
 ## FIX: Do not forcibly change sample rate, care for mismatch later! -->
 #  nSrate if ( 1000 nSrate / ) idSig -set rinc; end                              # Correct sampling rate if configured
 ## <--
-  idSig :2^(nAquant-1): scale idSig =;                                          # Convert amplitude to -1<=s(k)<=1
+  idSig :2^(nAquant-1): scale nAmp .* idSig =;                                  # Convert amplitude to -1<=s(k)<=1
   .__UTL_nVlevel 3 >= if                                                        # On verbose level 3 >>
     data idAux;                                                                 #   Auxilary data instance
     idSig abs NULL 0 "max" idAux /rec -aggregate;                               #   Get signal peak
