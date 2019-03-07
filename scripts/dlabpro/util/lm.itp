@@ -549,9 +549,15 @@ label L_DEFAULT;                                                                
    var nWrdPen; ( "lm.wrdpen" 0 "S" -CFG_get_ex ) nWrdPen -vset;                # Get word penality
    itLM -reset;                                                                 # Reset grammar transducer
    "GRM" itLM /fst /lsr -addunit;                                               # Add one grammar unit
-   0 1 itLM /final -addstates;                                                  # Add one central state
+   0 1 itLM /final -addstates;                                                  # Add one central statea
+   data idSel; idLX "<" "search" idSel -strop; :idSel.<0: sum idSel =;          # Find entries without "<"
+   :idSel[0,0]>0: if;                                                           # If there are words without "<" >>
+     idLX "<OOV>" "cmp" idSel -strop;                                           #   Select all words except "<OOV>"
+   else;                                                                        # << else >>
+     1 idLX.nrec ones idSel =;                                                  #   Select all words
+   end;                                                                         # <<
    nW idLX.nrec < while;                                                        # Loop over lexicon entries >>
-    :idLX[nW,0]: "<OOV>" != if; 0 0 0 itLM -addtrans { $[nW] $[nW] $[nWrdPen] }; end; # Add a transition for every lexicon entry without <OOV>
+    :idSel[nW,0]: if; 0 0 0 itLM -addtrans { $[nW] $[nW] $[nWrdPen] }; end;     #   Add a transition for every selected lexicon entry
    nW ++=; end                                                                  # <<
    idLX itLM.is -copy;                                                          # Set input symbol table
    idLX itLM.os -copy;                                                          # Set output symbol table
