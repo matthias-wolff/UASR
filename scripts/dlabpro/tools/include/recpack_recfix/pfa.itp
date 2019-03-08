@@ -216,4 +216,25 @@ function -NRM_Calc(idHist)
     :idMax[nMaxId,nH]*nMaxInc: nNrm =;
     { "uasr.recfix.nrm.${idName[nH,0]}" "$[nNrm]" } .__CFG_idCfg -cat;
   end; nH ++=; end;
+# idHist idMax -NRM_ana
+}
+
+#"$HOME/scripts/plot.itp" include;
+function -NRM_ana(idHist,idMax)
+{
+  data idX;
+  1 idHist.nrec ones idX =;
+  "" 0 idX -rindex;
+  10 :idX/999*20-15: .^ idX =;
+  idHist idX -join;
+
+  data idLab;
+  idHist idLab -get_cnames;
+  idLab " -cn " "rcat" idLab -strop;
+
+  idX "-xlog -ylog -cn ${idLab[0,0]}" -plot;
+
+  :.__CFG_idCfg.nrec-idHist.dim: idHist.dim .__CFG_idCfg /rec -xfetch -print;
+
+  idMax -print;
 }
