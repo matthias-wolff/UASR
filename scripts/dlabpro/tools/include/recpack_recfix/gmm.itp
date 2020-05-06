@@ -38,11 +38,14 @@ function -PACK_gau(nrm,itGm)
 	idICov.nblock itGm.cdet -set nblock;
 	idMean -type double idMean -tconvert;
 	idICov -type double idICov -tconvert;
+  data idCdet;
+  itGm.cdet idCdet =;
+	idICov.nblock idCdet -set nblock;
 
 	# Precalculate
 	data idGamma; 
 		idMean ' idICov * idMean *
-		itGm.cdet .ln :ln(2*PI)*idMean.dim: + +
+		idCdet .ln :ln(2*PI)*idMean.dim: + +
 		0.5 .* idGamma =;
 	idGamma :itGm.cdet.!=0: .* :itGm.cdet.==0: 500 .* + idGamma =; # set for invalid Gaussians gamma=500
 	data idBeta;  idICov idMean * -1 .* idBeta =;
