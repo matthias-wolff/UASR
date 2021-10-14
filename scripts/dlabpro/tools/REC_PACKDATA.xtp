@@ -632,37 +632,46 @@ function -PACK_sesinfo(retSI,retDlg)
     data idFsg2;                                                                  # The common grammar rule set
     var  s; 
 
-    "\n   - Loading grammar from \"$[.sFsgFile]\" [$[sFilter]] ..."        -MSG2; # Protocol
-    sFile sFilter idFsg -FSG_load                                                 # Load grammar rules
-    not if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."        -MSG; # Check for errors
-    sFilter "GRM:" != if                                                          # Not loading the common grammar >>
-      "\n   - Loading common grammar from \"$[.sFsgFile]\" [GRM:] ..."     -MSG2; #   Protocol
-      sFile "GRM:" idFsg2 -FSG_load                                               #   Load grammar rules
-      not if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2;                #   Check for errors
-      idFsg2.dim idFsg.dim > if                                                   #   Concatenate rule sets
-        idFsg idFsg2 -cat; idFsg2 idFsg -copy;                                    #   ...
-      else                                                                        #   ...
-        idFsg2 idFsg -cat;                                                        #   ...
-      end                                                               "." -MSG; #   ...
-    end                                                                           # <<
+    "fsm-t" sFilter == if;
+      "\n   - Loading language model from \"$[.sFsgFile]\" ..."              -MSG2; # Protocol
+      sFile sFilter itLM stdfile -import;                                           # Load grammar rules
+      ( "~TSR" itLM.td -find_comp ) "~LSR" -set_cname;                              # Fix weight semiring
+      data idMap; itLM.is iSI.itLX.os 0 0 idMap -gen_index;                         # Map input symbols to lexicon
+      :itLM.td["~TIS"]: 0 idMap 0 1 idMap -lookup { -1 };                           # |
+      idMap 0 1 "~TIS" itLM.td -xstore; iSI.itLX.os itLM.is =;                      # |
+    else;
+      "\n   - Loading grammar from \"$[.sFsgFile]\" [$[sFilter]] ..."        -MSG2; # Protocol
+      sFile sFilter idFsg -FSG_load                                                 # Load grammar rules
+      not if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."        -MSG; # Check for errors
+      sFilter "GRM:" != if                                                          # Not loading the common grammar >>
+        "\n   - Loading common grammar from \"$[.sFsgFile]\" [GRM:] ..."     -MSG2; #   Protocol
+        sFile "GRM:" idFsg2 -FSG_load                                               #   Load grammar rules
+        not if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2;                #   Check for errors
+        idFsg2.dim idFsg.dim > if                                                   #   Concatenate rule sets
+          idFsg idFsg2 -cat; idFsg2 idFsg -copy;                                    #   ...
+        else                                                                        #   ...
+          idFsg2 idFsg -cat;                                                        #   ...
+        end                                                               "." -MSG; #   ...
+      end                                                                           # <<
 
-    "\n   - Compiling grammar ."                                           -MSG2; # Protocol
-    1 .__UTL_nElevel =;                                                           # Switch unused rules warnings off
-    idFsg iSI.itLX.os NULL itLM -FSG_compile;                          "." -MSG2; # Compile grammar (string -> FST)
-    #itLM -1 itLM /lazy -minimize;                                                # Lazily minimize
-    #itLM.sd ( "~NAM" itLM.sd -find_comp ) 1 itLM.sd -delete;                      # Remove state names
-    .bExpOfst if                                                                  # Export openFST? Yes >>
-      "$[.sDirOut]/" ( sFilter "#:#.txt" "replace" -VAR_strop ) + s =;            #   Make file name
-      "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
-      s "fsm-t" itLM stdfile /noerror -export                                     #   Export openFST
-      ?error if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."   -MSG; #   Check for errors
-    end                                                                           # <<
-    .bRender if                                                                   # Rendering grammar? Yes >>
-      "$[.sDirOut]/" ( sFilter "#:#.svg" "replace" -VAR_strop ) + s =;            #   Make file name
-      "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
-      s itLM.is itLM.os -1 itLM -FST_render;                           "." -MSG2; #   Protocol
-    end                                                                           # <<
-    ( itLM itLM -FSG_normalize ) itAux =;                              "." -MSG2; # Normalize FVR output symbols
+      "\n   - Compiling grammar ."                                           -MSG2; # Protocol
+      1 .__UTL_nElevel =;                                                           # Switch unused rules warnings off
+      idFsg iSI.itLX.os NULL itLM -FSG_compile;                          "." -MSG2; # Compile grammar (string -> FST)
+      #itLM -1 itLM /lazy -minimize;                                                # Lazily minimize
+      #itLM.sd ( "~NAM" itLM.sd -find_comp ) 1 itLM.sd -delete;                      # Remove state names
+      .bExpOfst if                                                                  # Export openFST? Yes >>
+        "$[.sDirOut]/" ( sFilter "#:#.txt" "replace" -VAR_strop ) + s =;            #   Make file name
+        "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
+        s "fsm-t" itLM stdfile /noerror -export                                     #   Export openFST
+        ?error if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."   -MSG; #   Check for errors
+      end                                                                           # <<
+      .bRender if                                                                   # Rendering grammar? Yes >>
+        "$[.sDirOut]/" ( sFilter "#:#.svg" "replace" -VAR_strop ) + s =;            #   Make file name
+        "\n   - Writing \"$[s]\" ..."                                        -MSG2; #   Protocol
+        s itLM.is itLM.os -1 itLM -FST_render;                           "." -MSG2; #   Protocol
+      end                                                                           # <<
+      ( itLM itLM -FSG_normalize ) itAux =;                              "." -MSG2; # Normalize FVR output symbols
+    end
     itLM 0 itLM /lazy -minimize;
     .bRender if                                                                   # Rendering grammar? Yes >>
       "$[.sDirOut]/" ( sFilter "#:#.normalized.svg" "replace" -VAR_strop ) + s =; #   Make file name
@@ -760,9 +769,15 @@ function -PACK_sesinfo(retSI,retDlg)
     .sFsgFile "DLG:" itDlg -FSG_load_dialog                                     #   Load grammar rules
     not if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."      -MSG; #   Check for errors
   end                                                                           # <<
-  "\n   - Loading lexicon from \"$[.sFsgFile]\" [LEX:] ..."              -MSG2; # Protocol
-  .sFsgFile "LEX:" idLX  -LX_load                                               # Load lexicon entries
-  not if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."        -MSG; # Check for errors
+  "" .sLexFile != if;
+    "\n   - Loading lexicon from \"$[.sLexFile]\" ... "              -MSG2; # Protocol
+    .sLexFile "" idLX  -LX_load                                               # Load lexicon entries
+    not if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."        -MSG; # Check for errors
+  else;
+    "\n   - Loading lexicon from \"$[.sFsgFile]\" [LEX:] ..."              -MSG2; # Protocol
+    .sFsgFile "LEX:" idLX  -LX_load                                               # Load lexicon entries
+    not if " FAILED" -COLOR_red -MSG; 0 return; end " ok" -MSG2; "."        -MSG; # Check for errors
+  end;
 
   "\n   - Preparing HMMs "                                               -MSG2; # Protocol
   bGmmMix itHMM.gm.mmap NULL == && if itHMM -gmm_mix end;                       # Create mixtures
@@ -789,9 +804,11 @@ function -PACK_sesinfo(retSI,retDlg)
       .sFsgFile "GRM.${itDlg.sd[nS,nC]}:" iSI -RN_add_unit;                     #     Add recognition network
       nS ++=;                                                                   #     Next dialog state
     end                                                                         #   <<
+  else .sLmFile "" != if                                                        # << Language model mode >>
+    .sLmFile "fsm-t" iSI -RN_add_unit;                                          #   Add recognition network
   else                                                                          # << Simple grammar mode >>
     .sFsgFile "GRM:" iSI -RN_add_unit;                                          #   Add recognition network
-  end                                                                           # <<
+  end end                                                                       # <<
 
   "\n   - Compiling labelling transducer ..."                            -MSG2; # Protocol
   itHMM iSI.itGP -LAB_get_fst;                                                  # Create labelling transducer
@@ -1035,6 +1052,8 @@ var sFiFile;  "$[sDirMod]/feainfo.object"         sFiFile  =;                   
 var sAm;      ( "am.model" "3_10" -CFG_get      ) sAm      =;                   # Get acoustic model ID
 var sAmFile   "$[sDirMod]/$[sAm].hmm"             sAmFile  =;                   # Acoustic model file
 var sFsgFile; ( "lm.fsg"  ""  "S"  -CFG_get_ex  ) sFsgFile =;                   # Grammar file
+var sLmFile;  ( "lm.imp"  ""  "S"  -CFG_get_ex  ) sLmFile  =;                   # Language model file
+var sLexFile; ( "lx"      ""  "S"  -CFG_get_ex  ) sLexFile =;                   # Lexicon file
 var sDlgFile; ( "dlg.fsg" ""  "S"  -CFG_get_ex  ) sDlgFile =;                   # Dialog file
 var sDirOut;  ( "out"     "." "S"  -CFG_get_ex  ) sDirOut  =;                   # Output directory
 var bRender;  ( ( "render" "" "S"  -CFG_get_ex  ) "yes"     == ) bRender  =;    # FST rendering flag 
