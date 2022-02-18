@@ -854,6 +854,11 @@ function -PACK_sesinfo(retSI,retDlg)
     f ++=; end;                                                                 #   <<
   end;                                                                          # <<
 
+  ## Remove <EPS>
+  data idAux;
+  { "<EPS>" } iSI.itRN.os 0 0 idAux /noerror -gen_index;
+  :iSI.itRN.td["~TOS"].!=idAux[0,0]: :iSI.itRN.td["~TOS"]+1: .* 1 - 0 1 "~TOS" iSI.itRN.td -xstore;
+
   iSI.itRN.os iSI.idLMtos =;
   iSI.itRN.os iSI.itSynGrm.is =;
 
